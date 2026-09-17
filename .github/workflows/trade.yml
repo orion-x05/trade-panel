@@ -1,0 +1,44 @@
+name: AI交易引擎定时任务
+
+# 每天交易时间自动运行
+on:
+  schedule:
+    # 北京时间 9:35, 10:00, 10:30, 11:00, 11:30, 13:30, 14:00, 14:30, 15:00
+    - cron: '35 1 * * *'   # 9:35 北京时间
+    - cron: '0 2 * * *'    # 10:00
+    - cron: '30 2 * * *'   # 10:30
+    - cron: '0 3 * * *'    # 11:00
+    - cron: '30 3 * * *'   # 11:30
+    - cron: '30 5 * * *'   # 13:30
+    - cron: '0 6 * * *'    # 14:00
+    - cron: '30 6 * * *'   # 14:30
+    - cron: '0 7 * * *'    # 15:00
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: pip install requests
+
+      - name: 运行交易引擎
+        run: python trade_engine.py
+
+      - name: 提交更新
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "auto: 交易引擎更新 $(date)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
