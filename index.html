@@ -5163,13 +5163,15 @@ function calcTradeQuality(role,P,i){
       if(v>=1.5)score++;
       break;
     }
-    case"D2":{ /* 多因子共识核心：KDJ金叉+量能适中+RSI健康+均线多头+涨幅适中 */
-      total=5;
-      if(kdjGolden&&P.K[i]<70)score++;
-      if(v>=1.0&&v<=2.0)score++;
-      if(rsi>=50&&rsi<=65)score++;
-      if(ma5>P.ma10[i]&&P.ma10[i]>ma20&&ma20Up)score++;
-      if(chg>=1&&chg<=4)score++;
+    case"D2":{ /* 多因子共识：KDJ金叉 + 7个条件满足4个以上（放宽，增加交易频率） */
+      total=7;
+      if(kdjGolden&&P.K[i]<70)score++; /* KDJ金叉（这个是必要条件，已经在buySignal里判断了） */
+      if(v>=0.8&&v<=2.5)score++; /* 量能适中 */
+      if(rsi>=45&&rsi<=70)score++; /* RSI健康 */
+      if(ma5>P.ma10[i]&&P.ma10[i]>ma20)score++; /* 均线多头 */
+      if(ma20Up)score++; /* MA20向上 */
+      if(chg>=0.5&&chg<=5)score++; /* 涨幅适中 */
+      if(ret20>0)score++; /* 相对强势 */
       break;
     }
     case"D3":{ /* 多空辩论核心：KDJ金叉+多方占优+均线多头+大资金不流出 */
@@ -5319,23 +5321,27 @@ function buySignal(role,P,i){
       return ret20>0 && ma5>ma20 && c>ma20 && c<=ma20*1.03;
     }
     case"D2":{
-      /* D2多因子共识：必须KDJ金叉+放量+RSI区间+均线多头 */
+      /* D2多因子共识：KDJ金叉 + 多因子综合评分（放宽条件，增加交易频率） */
       if(!kdjGolden||kdjTooHigh)return false; /* D2需要KDJ金叉 */
-      /* 优化后：提高门槛，降低交易频率，提高胜率 */
-      /* 1. 必须放量：量比1.0-2.0（原来0.8-1.6太宽） */
-      if(v<1.0||v>2.0)return false;
-      /* 2. RSI必须在更精确的区间：50-65（原来45-70太宽） */
-      if(P.rsi[i]<50||P.rsi[i]>65)return false;
-      /* 3. 均线多头排列：MA5>MA10>MA20，且MA20向上倾斜 */
+      /* 多因子打分：满足一条加1分，≥4分就买入（原来要求全部满足，太严格） */
+      let d2Score = 0;
+      /* 1. 量能适中：量比0.8-2.5 */
+      if(v>=0.8&&v<=2.5)d2Score++;
+      /* 2. RSI健康：45-70 */
+      if(P.rsi[i]>=45&&P.rsi[i]<=70)d2Score++;
+      /* 3. 均线多头：MA5>MA10>MA20 */
+      if(ma5>P.ma10[i]&&P.ma10[i]>ma20)d2Score++;
+      /* 4. MA20向上 */
       const ma20_5ago_d2=i>=5?P.ma20[i-5]:ma20;
-      if(!(ma5>P.ma10[i]&&P.ma10[i]>ma20&&ma20>ma20_5ago_d2))return false;
-      /* 4. 当日涨幅1%-4%：不追高也不买太弱的 */
-      if(chg<1||chg>4)return false;
-      /* 5. 相对强势：近20日必须跑赢大盘 */
-      if(ret20<=0)return false;
-      /* 6. 收盘价在MA5上方但偏离不超3% */
-      if((c-ma5)/ma5>0.03)return false;
-      return true;
+      if(ma20>ma20_5ago_d2)d2Score++;
+      /* 5. 涨幅适中：0.5%-5% */
+      if(chg>=0.5&&chg<=5)d2Score++;
+      /* 6. 相对强势：近20日跑赢大盘 */
+      if(ret20>0)d2Score++;
+      /* 7. 收盘价在MA5上方 */
+      if(c>ma5)d2Score++;
+      /* ≥4分就买入（7个条件满足4个以上） */
+      return d2Score>=4;
     }
     case"D3":{
       /* D3多空辩论：必须KDJ金叉+多方占优 */
