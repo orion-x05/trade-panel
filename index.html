@@ -1313,7 +1313,7 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div class="table-wrap">
         <table class="research-table">
           <thead><tr>
-            <th>排名</th><th>股票代码</th><th>名称</th><th>五行趋势</th><th>研究结论</th><th>趋势透支分</th><th>量价动量分</th><th>筹码健康分</th><th>综合评分</th><th>因子建议</th>
+            <th>排名</th><th>股票代码</th><th>名称</th><th>五行</th><th>结论</th><th>成交量</th><th>换手率</th><th>量比</th><th>透支分</th><th>动量分</th><th>筹码分</th><th>综合评分</th><th>建议</th>
           </tr></thead>
           <tbody id="researchBody"></tbody>
         </table>
@@ -2048,7 +2048,9 @@ function fetchRealQuotes(force){
         p.chg=chg;
         p.name = arr[1] || p.name; // 同步更新股票名称
         p.ma5=price;p.ma20=price;
-        p.vol=parseFloat(arr[38])||1;
+        p.volume = parseFloat(arr[6])||0; // 成交量（手）
+        p.turnover = parseFloat(arr[38])||0; // 换手率（%）
+        p.vol = parseFloat(arr[49])||1; // 量比（arr[49]是量比，不是arr[38]）
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
         okCount++;
       });
@@ -2099,7 +2101,10 @@ function emFallback(){
         if(!price||price<=0)return;
         const prev=parseFloat(it.f18)||(price/(1+(chg||0)/100));
         p.price=price; p.chg=chg||0; p.prevClose=prev; p.open=p.open||price;
-        p.ma5=price;p.ma20=price; p.vol=1;
+        p.ma5=price;p.ma20=price; 
+        p.volume = parseFloat(it.f5)||0; // 成交量（手）
+        p.turnover = parseFloat(it.f8)||0; // 换手率
+        p.vol = parseFloat(it.f10)||1; // 量比
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
         ok++;
       });
@@ -4824,7 +4829,8 @@ function renderResearch(){
     const gateCls=gate<=20?"sc-bad":gate>=55?"sc-good":"sc-mid";
     const compCls=comp>=65?"sc-good":comp<=40?"sc-bad":"sc-mid";
     rows.push({code:st.code,name:st.name,sector:st.sector,wx:st.wx||"—",gate,gateCls,conc,cls,
-      over,overCls,mom,momCls,chip,chipCls,comp,compCls,halted});
+      over,overCls,mom,momCls,chip,chipCls,comp,compCls,halted,
+      volume:st.volume||0, turnover:st.turnover||0, volRatio:st.vol||1});
   });
   rows.sort((a,b)=>b.comp-a.comp);
   body.innerHTML=rows.map((r,idx)=>{
@@ -4839,6 +4845,9 @@ function renderResearch(){
       <td class="rt-name">${r.name}</td>
       <td style="color:${wxColor};font-weight:600">${r.wx}</td>
       <td class="rt-conc ${r.cls}">${r.conc}</td>
+      <td style="font-size:11px;color:var(--text-dim)">${r.volume>=10000?(r.volume/10000).toFixed(1)+"万":r.volume.toFixed(0)}</td>
+      <td style="font-size:11px;color:var(--text-dim)">${r.turnover.toFixed(2)}%</td>
+      <td style="font-size:11px;color:${r.volRatio>=1.5?'#ef4444':r.volRatio>=1?'#fbbf24':'#22c55e'}">${r.volRatio.toFixed(2)}</td>
       <td class="rt-score ${r.overCls}">${r.over.toFixed(1)}</td>
       <td class="rt-score ${r.momCls}">${r.mom.toFixed(1)}</td>
       <td class="rt-score ${r.chipCls}">${r.chip.toFixed(1)}</td>
