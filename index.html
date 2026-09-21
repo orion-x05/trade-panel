@@ -4130,6 +4130,8 @@ function showDetail(code){
     <h4 style="margin-top:16px">日K线 · 红涨绿跌（${st.code}）</h4>
     <div id="detailTech" style="width:100%;height:430px;border:1px solid var(--border-soft);border-radius:8px;background:rgba(0,0,0,.18)"></div>
     <div id="detailTechSub" class="tech-sub" style="margin-top:10px"></div>
+    <h4 style="margin-top:16px">⏱️ 当日分时图（${st.code}）</h4>
+    <div id="detailMinute" style="width:100%;height:280px;border:1px solid var(--border-soft);border-radius:8px;background:rgba(0,0,0,.18)"></div>
     <div style="font-size:11.5px;color:var(--text-faint);margin-top:14px">成交前共同批次复核 · 模拟盘仅记账，不下实单</div>`;
   
   $("modalMask").classList.add("show");
@@ -4207,6 +4209,45 @@ async function renderDetailTech(code){
       </div>
       <div class="tech-card"><h5>主力当日意图</h5><span class="intent-tag ${intent.cls}">${intent.tag}</span><br>${intent.text}</div>`;
   }catch(e){if(window.console)console.warn("detailTech",e);}
+  /* 渲染分时图 */
+  renderDetailMinute(code);
+}
+let minuteChart=null;
+async function renderDetailMinute(code){
+  const el=document.getElementById("detailMinute");if(!el)return;
+  if(!minuteChart&&window.echarts)minuteChart=echarts.init(el);
+  const tx=(code[0]==="6"?"sh":"sz")+code;
+  try{
+    const resp=await fetch(`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`);
+    const jd=await resp.json();
+    const data=jd.data&&jd.data[tx]&&jd.data[tx].data?jd.data[tx].data:[];
+    const prevClose=jd.data&&jd.data[tx]&&jd.data[tx].qt?parseFloat(jd.data[tx].qt[4]):0;
+    if(!data.length){if(minuteChart)minuteChart.clear();return;}
+    const times=[],prices=[],avgs=[],vols=[];
+    data.forEach(d=>{
+      times.push(d[0]);
+      prices.push(parseFloat(d[1]));
+      avgs.push(parseFloat(d[2]));
+      vols.push(parseFloat(d[3]));
+    });
+    const minP=Math.min(...prices),maxP=Math.max(...prices);
+    const range=Math.max(maxP-minP,prevClose*0.02);
+    minuteChart.setOption({animation:false,backgroundColor:"transparent",
+      tooltip:{trigger:"axis",axisPointer:{type:"cross"},formatter:p=>{
+        const i=p[0].dataIndex;
+        return `${times[i]}<br/>价格：${prices[i].toFixed(2)}<br/>均价：${avgs[i].toFixed(2)}<br/>成交量：${vols[i]}手`;
+      }},
+      grid:[{left:56,right:18,top:20,height:"58%"},{left:56,right:18,top:"75%",height:"18%"}],
+      xAxis:[{type:"category",data:times,gridIndex:0,axisLabel:{show:false,interval:29}},{type:"category",data:times,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9,interval:29}}],
+      yAxis:[{scale:true,gridIndex:0,min:minP-range*0.1,max:maxP+range*0.1,axisLabel:{color:"#8b949e",fontSize:10},splitLine:{lineStyle:{color:"rgba(255,255,255,.06)"}}},{scale:true,gridIndex:1,axisLabel:{show:false},splitLine:{show:false}}],
+      series:[
+        {name:"价格",type:"line",data:prices,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f2555a",width:1.5},areaStyle:{color:"rgba(242,85,90,.1)"}},
+        {name:"均价",type:"line",data:avgs,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1,type:"dashed"}},
+        {name:"成交量",type:"bar",data:vols,xAxisIndex:1,yAxisIndex:1,itemStyle:{color:(p)=>prices[p.dataIndex]>=avgs[p.dataIndex]?"#f2555a":"#3ecf8e"}}
+      ]
+    },true);
+    if(minuteChart.resize)minuteChart.resize();
+  }catch(e){if(window.console)console.warn("detailMinute",e);}
 }
 function closeModal(){$("modalMask").classList.remove("show");}
 $("modalMask").addEventListener("click",e=>{if(e.target.id==="modalMask")closeModal();});

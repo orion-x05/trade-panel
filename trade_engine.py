@@ -317,7 +317,20 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
     return candidates[0]
 
 def do_buy(player, code, st, score, reason):
-    budget = player["cash"] * 0.2
+    """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓）"""
+    # 【仓位动态调整】根据历史胜率调整单笔仓位比例
+    trades = player.get("trades", [])
+    sells = [t for t in trades if t["type"] == "sell"]
+    wins = [t for t in sells if t.get("profit", 0) > 0]
+    win_rate = len(wins) / len(sells) if sells else 0.5
+    # 胜率>60%：仓位提升到25%；胜率<40%：仓位降低到15%；其他：20%
+    if win_rate > 0.6:
+        position_ratio = 0.25
+    elif win_rate < 0.4:
+        position_ratio = 0.15
+    else:
+        position_ratio = 0.20
+    budget = player["cash"] * position_ratio
     qty = int(budget / st["price"] / 100) * 100
     if qty < 100:
         print(f"  {player['id']} 资金不足，跳过 {st['name']}")
