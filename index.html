@@ -1864,6 +1864,85 @@ function alertSellSignal(role, stockName, code, price, profit){
   <div class="modal" id="modalBody"></div>
 </div>
 
+<!-- 右侧侧边详情面板 -->
+<div class="side-panel-mask" id="sidePanelMask" onclick="closeSidePanel()"></div>
+<div class="side-panel" id="sidePanel">
+  <div class="side-panel-header" id="sidePanelHeader">
+    <div class="side-panel-title">
+      <span id="sidePanelName">—</span>
+      <span id="sidePanelCode" style="color:#8b949e;font-size:13px;margin-left:8px">—</span>
+    </div>
+    <button class="side-panel-close" onclick="closeSidePanel()">✕</button>
+  </div>
+  <div class="side-panel-body" id="sidePanelBody">
+    <div style="padding:40px;text-align:center;color:#8b949e">加载中...</div>
+  </div>
+</div>
+
+<style>
+/* 右侧侧边详情面板 */
+.side-panel-mask{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.5);z-index:9998;
+  opacity:0;visibility:hidden;transition:opacity .3s ease;
+}
+.side-panel-mask.show{opacity:1;visibility:visible;}
+.side-panel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:480px;max-width:90vw;
+  background:#0d1117;border-left:1px solid var(--border-soft);
+  z-index:9999;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  box-shadow:-8px 0 32px rgba(0,0,0,.4);
+}
+.side-panel.show{transform:translateX(0);}
+.side-panel-header{
+  padding:16px 20px;border-bottom:1px solid var(--border-soft);
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(255,255,255,.02);
+}
+.side-panel-title{font-size:18px;font-weight:700;color:#e6edf3;}
+.side-panel-close{
+  background:none;border:none;color:#8b949e;font-size:18px;
+  cursor:pointer;padding:4px 8px;border-radius:4px;
+  transition:all .2s;
+}
+.side-panel-close:hover{background:rgba(255,255,255,.1);color:#e6edf3;}
+.side-panel-body{
+  flex:1;overflow-y:auto;padding:16px;
+}
+.side-panel-body::-webkit-scrollbar{width:6px;}
+.side-panel-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px;}
+/* 侧边栏内容样式 */
+.sp-price-row{
+  display:flex;align-items:baseline;gap:12px;margin-bottom:16px;
+}
+.sp-price{font-size:32px;font-weight:700;}
+.sp-chg{font-size:16px;font-weight:600;}
+.sp-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--border-soft);
+  border-radius:8px;padding:12px;margin-bottom:12px;
+}
+.sp-card-title{
+  font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.sp-role-opinion{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:12px;
+}
+.sp-role-opinion:last-child{border-bottom:none;}
+.sp-tag{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:11px;font-weight:600;
+}
+.sp-tag-buy{background:rgba(239,68,68,.15);color:#ef4444;}
+.sp-tag-sell{background:rgba(34,197,94,.15);color:#22c55e;}
+.sp-tag-hold{background:rgba(148,163,184,.15);color:#94a3b8;}
+</style>
+
 <script>
 /* ================================================================
  * AI模拟赛局实时监测面板（融合版）
@@ -3509,7 +3588,7 @@ function renderHold(){
       }).join("");
       ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="const d=document.getElementById('${rowId}');d.style.display=d.style.display==='none'?'':'none'">
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
-        <td>${h.name}<span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
+        <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${h.code}')">${h.name}</span><span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
         <td style="color:var(--text-dim)">${h.industry||h.sector}</td>
         <td><span class="wx ${wxClass(h.wx || (st && st.wx) || '—')}">${h.wx || (st && st.wx) || '—'}</span></td>
         <td class="r num qty-cell">${h.qty}</td>
@@ -4259,6 +4338,136 @@ async function renderDetailMinute(code){
 }
 function closeModal(){$("modalMask").classList.remove("show");}
 $("modalMask").addEventListener("click",e=>{if(e.target.id==="modalMask")closeModal();});
+
+/* ==================== 右侧侧边详情面板 ==================== */
+function openSidePanel(code){
+  const pool=simData&&simData.pricePool?simData.pricePool:{};
+  const st=pool[code];
+  if(!st){
+    /* 如果不在候选池，尝试从持仓里找 */
+    const store=loadStore();
+    for(const role of Object.keys(PLAYER_NAMES)){
+      const p=store.players.find(x=>x.id===role);
+      if(p){
+        const h=p.holdings.find(x=>x.code===code);
+        if(h){
+          renderSidePanel(code,h.name,h.buyPrice||0,0,0,st);
+          return;
+        }
+      }
+    }
+    alert("未找到该股票数据");return;
+  }
+  const nm=st.name||code;
+  const price=st.price||0;
+  const chg=st.chg||0;
+  renderSidePanel(code,nm,price,chg,st);
+}
+
+function renderSidePanel(code,name,price,chg,st){
+  $("sidePanelName").textContent=name;
+  $("sidePanelCode").textContent=code;
+  $("sidePanelMask").classList.add("show");
+  $("sidePanel").classList.add("show");
+  
+  const chgColor=chg>=0?"#ef4444":"#22c55e";
+  const chgSign=chg>=0?"+":"";
+  
+  /* 技术指标 */
+  const ma5=st&&st.ma5?st.ma5:price;
+  const ma20=st&&st.ma20?st.ma20:price;
+  const rsi=st&&st.rsi6?st.rsi6:50;
+  const volRatio=st&&st.volRatio?st.volRatio:1;
+  const turnover=st&&st.turnover?st.turnover:0;
+  
+  /* 六角色观点（简化版：根据技术指标判断） */
+  const roles=["D1","D2","D3","D4","D5","D6"];
+  const roleNames={D1:"破锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰"};
+  const roleColors={D1:"#ef4444",D2:"#f0a35e",D3:"#6fa8ff",D4:"#3ecf8e",D5:"#c586c0",D6:"#f472b6"};
+  
+  let roleHtml="";
+  roles.forEach(role=>{
+    let opinion="持有",tagClass="sp-tag-hold",reason="观望";
+    /* 简化判断：均线多头+KDJ金叉=买入，跌破MA20+KDJ死叉=卖出 */
+    const isBull=price>ma20&&ma5>ma20;
+    const isBear=price<ma20&&ma5<ma20;
+    if(isBull&&rsi<70){opinion="买入";tagClass="sp-tag-buy";reason="趋势向上";}
+    else if(isBear){opinion="卖出";tagClass="sp-tag-sell";reason="趋势走弱";}
+    else{opinion="持有";tagClass="sp-tag-hold";reason="震荡整理";}
+    
+    roleHtml+=`<div class="sp-role-opinion">
+      <span style="color:${roleColors[role]};font-weight:600">${role} ${roleNames[role]}</span>
+      <span style="color:#8b949e">${reason}</span>
+      <span class="sp-tag ${tagClass}">${opinion}</span>
+    </div>`;
+  });
+  
+  /* 综合评分 */
+  let score=50;
+  if(price>ma20)score+=10;
+  if(ma5>ma20)score+=10;
+  if(rsi>50&&rsi<70)score+=10;
+  if(volRatio>1)score+=5;
+  if(chg>0)score+=5;
+  if(rsi>70)score-=10;
+  if(price<ma20)score-=10;
+  
+  const scoreColor=score>=70?"#ef4444":score<=40?"#22c55e":"#f0a35e";
+  const suggestion=score>=70?"建议买入":score<=40?"建议卖出":"建议持有";
+  
+  const html=`
+    <div class="sp-price-row">
+      <span class="sp-price" style="color:${chgColor}">${price.toFixed(2)}</span>
+      <span class="sp-chg" style="color:${chgColor}">${chgSign}${chg.toFixed(2)}%</span>
+    </div>
+    
+    <div class="sp-card">
+      <div class="sp-card-title">📊 技术指标</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+        <div><span style="color:#8b949e">MA5：</span><span style="color:#f0a35e">${ma5.toFixed(2)}</span></div>
+        <div><span style="color:#8b949e">MA20：</span><span style="color:#6fa8ff">${ma20.toFixed(2)}</span></div>
+        <div><span style="color:#8b949e">RSI6：</span><span>${rsi.toFixed(1)}</span></div>
+        <div><span style="color:#8b949e">量比：</span><span>${volRatio.toFixed(2)}</span></div>
+        <div><span style="color:#8b949e">换手率：</span><span>${turnover.toFixed(2)}%</span></div>
+        <div><span style="color:#8b949e">趋势：</span><span style="color:${price>ma20?'#ef4444':'#22c55e'}">${price>ma20?'多头':'空头'}</span></div>
+      </div>
+    </div>
+    
+    <div class="sp-card">
+      <div class="sp-card-title">🎯 综合评分</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-size:36px;font-weight:700;color:${scoreColor}">${score}</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:${scoreColor}">${suggestion}</div>
+          <div style="font-size:11px;color:#8b949e;margin-top:4px">满分100分，≥70分偏多，≤40分偏空</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sp-card">
+      <div class="sp-card-title">🤖 六角色观点</div>
+      ${roleHtml}
+    </div>
+    
+    <div class="sp-card" style="text-align:center;padding:20px">
+      <div style="font-size:12px;color:#8b949e;margin-bottom:8px">更多功能开发中...</div>
+      <button onclick="openStockDetailModal('${code}')" style="
+        background:rgba(255,255,255,.05);border:1px solid var(--border-soft);
+        color:#c9d1d9;padding:8px 16px;border-radius:6px;cursor:pointer;
+        font-size:12px;transition:all .2s;
+      " onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.05)'">
+        📈 查看完整K线和技术分析
+      </button>
+    </div>
+  `;
+  
+  $("sidePanelBody").innerHTML=html;
+}
+
+function closeSidePanel(){
+  $("sidePanelMask").classList.remove("show");
+  $("sidePanel").classList.remove("show");
+}
 
 /* 个股研究详情弹窗：六步门禁+多空辩论+主力意图+K线 */
 function openStockResearchModal(code){
