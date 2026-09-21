@@ -1879,6 +1879,11 @@ function alertSellSignal(role, stockName, code, price, profit){
   </div>
 </div>
 
+<!-- 侧边栏K线图实例 -->
+<script>
+let sideKlineChart=null;
+</script>
+
 <style>
 /* 右侧侧边详情面板 */
 .side-panel-mask{
@@ -4421,6 +4426,11 @@ function renderSidePanel(code,name,price,chg,st){
       <span class="sp-chg" style="color:${chgColor}">${chgSign}${chg.toFixed(2)}%</span>
     </div>
     
+    <div class="sp-card" style="padding:0">
+      <div class="sp-card-title" style="padding:12px 12px 0">📈 日K走势</div>
+      <div id="sideKline" style="width:100%;height:280px"></div>
+    </div>
+    
     <div class="sp-card">
       <div class="sp-card-title">📊 技术指标</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
@@ -4462,11 +4472,48 @@ function renderSidePanel(code,name,price,chg,st){
   `;
   
   $("sidePanelBody").innerHTML=html;
+  
+  /* 渲染侧边栏K线图 */
+  setTimeout(()=>{
+    const el=document.getElementById("sideKline");
+    if(!el||!window.echarts)return;
+    if(!sideKlineChart)sideKlineChart=echarts.init(el);
+    const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
+    txDay(tx,60).then(days=>{
+      if(!days||!days.length){sideKlineChart.clear();return;}
+      const closes=days.map(d=>d.close);
+      const ma5=maArr(closes,5),ma20=maArr(closes,20);
+      const cats=days.map(d=>d.date);
+      const ohlc=days.map(d=>[d.open,d.close,d.low,d.high]);
+      const li=closes.length-1;
+      const buyPts=[],sellPts=[];
+      for(let i=1;i<closes.length;i++){
+        if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]<=ma20[i-1]&&ma5[i]>ma20[i])buyPts.push({coord:[cats[i],days[i].low],value:"买",symbol:"triangle",symbolSize:10,itemStyle:{color:"#f2555a"},label:{position:"bottom",color:"#f2555a",fontSize:8}});
+        if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]>=ma20[i-1]&&ma5[i]<ma20[i])sellPts.push({coord:[cats[i],days[i].high],value:"卖",symbol:"pin",symbolSize:11,itemStyle:{color:"#3ecf8e"},label:{position:"top",color:"#3ecf8e",fontSize:8}});
+      }
+      sideKlineChart.setOption({animation:false,backgroundColor:"transparent",
+        legend:{data:["MA5","MA20"],top:0,textStyle:{color:"#8b949e",fontSize:10}},
+        tooltip:{trigger:"axis",axisPointer:{type:"cross"}},
+        grid:[{left:45,right:12,top:24,height:"55%"},{left:45,right:12,top:"78%",height:"16%"}],
+        xAxis:[{type:"category",data:cats,gridIndex:0,axisLabel:{show:false}},{type:"category",data:cats,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9}}],
+        yAxis:[{scale:true,gridIndex:0,axisLabel:{color:"#8b949e",fontSize:9},splitLine:{lineStyle:{color:"rgba(255,255,255,.06)"}}},{scale:true,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:8,formatter:v=>v>=10000?(v/10000).toFixed(0)+"万":v},splitLine:{show:false}}],
+        dataZoom:[{type:"inside",xAxisIndex:[0,1],start:Math.max(0,100-30/days.length*100),end:100}],
+        series:[
+          {name:"日K",type:"candlestick",data:ohlc,xAxisIndex:0,yAxisIndex:0,itemStyle:{color:"#f2555a",color0:"#3ecf8e",borderColor:"#f2555a",borderColor0:"#3ecf8e"},markPoint:{data:buyPts.concat(sellPts),animation:false}},
+          {name:"MA5",type:"line",data:ma5,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1}},
+          {name:"MA20",type:"line",data:ma20,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#6fa8ff",width:1}},
+          {name:"成交量",type:"bar",data:days.map(d=>({value:d.vol||0,itemStyle:{color:d.close>=d.open?"#f2555a":"#3ecf8e"}})),xAxisIndex:1,yAxisIndex:1}
+        ]
+      },true);
+      if(sideKlineChart.resize)sideKlineChart.resize();
+    }).catch(()=>{sideKlineChart.clear();});
+  },100);
 }
 
 function closeSidePanel(){
   $("sidePanelMask").classList.remove("show");
   $("sidePanel").classList.remove("show");
+  if(sideKlineChart){sideKlineChart.clear();}
 }
 
 /* 个股研究详情弹窗：六步门禁+多空辩论+主力意图+K线 */
