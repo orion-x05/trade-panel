@@ -1882,6 +1882,8 @@ function alertSellSignal(role, stockName, code, price, profit){
 <!-- 侧边栏K线图实例 -->
 <script>
 let sideKlineChart=null;
+let spCurrentCode="";
+let spCurrentTab="day";
 </script>
 
 <style>
@@ -4370,6 +4372,8 @@ function openSidePanel(code){
 }
 
 function renderSidePanel(code,name,price,chg,st){
+  spCurrentCode=code;
+  spCurrentTab="day";
   $("sidePanelName").textContent=name;
   $("sidePanelCode").textContent=code;
   $("sidePanelMask").classList.add("show");
@@ -4427,7 +4431,13 @@ function renderSidePanel(code,name,price,chg,st){
     </div>
     
     <div class="sp-card" style="padding:0">
-      <div class="sp-card-title" style="padding:12px 12px 0">📈 日K走势</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 12px 0">
+        <div class="sp-card-title" style="margin:0">📈 走势</div>
+        <div style="display:flex;gap:4px">
+          <button id="spTabDay" onclick="switchSpKline('day')" style="padding:3px 10px;font-size:11px;border-radius:4px;border:1px solid #3ecf8e;background:rgba(62,207,142,.15);color:#3ecf8e;cursor:pointer">日K</button>
+          <button id="spTabMin" onclick="switchSpKline('min')" style="padding:3px 10px;font-size:11px;border-radius:4px;border:1px solid var(--border-soft);background:transparent;color:#8b949e;cursor:pointer">分时</button>
+        </div>
+      </div>
       <div id="sideKline" style="width:100%;height:280px"></div>
     </div>
     
@@ -4473,47 +4483,126 @@ function renderSidePanel(code,name,price,chg,st){
   
   $("sidePanelBody").innerHTML=html;
   
-  /* 渲染侧边栏K线图 */
-  setTimeout(()=>{
-    const el=document.getElementById("sideKline");
-    if(!el||!window.echarts)return;
-    if(!sideKlineChart)sideKlineChart=echarts.init(el);
-    const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
-    txDay(tx,60).then(days=>{
-      if(!days||!days.length){sideKlineChart.clear();return;}
-      const closes=days.map(d=>d.close);
-      const ma5=maArr(closes,5),ma20=maArr(closes,20);
-      const cats=days.map(d=>d.date);
-      const ohlc=days.map(d=>[d.open,d.close,d.low,d.high]);
-      const li=closes.length-1;
-      const buyPts=[],sellPts=[];
-      for(let i=1;i<closes.length;i++){
-        if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]<=ma20[i-1]&&ma5[i]>ma20[i])buyPts.push({coord:[cats[i],days[i].low],value:"买",symbol:"triangle",symbolSize:10,itemStyle:{color:"#f2555a"},label:{position:"bottom",color:"#f2555a",fontSize:8}});
-        if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]>=ma20[i-1]&&ma5[i]<ma20[i])sellPts.push({coord:[cats[i],days[i].high],value:"卖",symbol:"pin",symbolSize:11,itemStyle:{color:"#3ecf8e"},label:{position:"top",color:"#3ecf8e",fontSize:8}});
-      }
-      sideKlineChart.setOption({animation:false,backgroundColor:"transparent",
-        legend:{data:["MA5","MA20"],top:0,textStyle:{color:"#8b949e",fontSize:10}},
-        tooltip:{trigger:"axis",axisPointer:{type:"cross"}},
-        grid:[{left:45,right:12,top:24,height:"55%"},{left:45,right:12,top:"78%",height:"16%"}],
-        xAxis:[{type:"category",data:cats,gridIndex:0,axisLabel:{show:false}},{type:"category",data:cats,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9}}],
-        yAxis:[{scale:true,gridIndex:0,axisLabel:{color:"#8b949e",fontSize:9},splitLine:{lineStyle:{color:"rgba(255,255,255,.06)"}}},{scale:true,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:8,formatter:v=>v>=10000?(v/10000).toFixed(0)+"万":v},splitLine:{show:false}}],
-        dataZoom:[{type:"inside",xAxisIndex:[0,1],start:Math.max(0,100-30/days.length*100),end:100}],
-        series:[
-          {name:"日K",type:"candlestick",data:ohlc,xAxisIndex:0,yAxisIndex:0,itemStyle:{color:"#f2555a",color0:"#3ecf8e",borderColor:"#f2555a",borderColor0:"#3ecf8e"},markPoint:{data:buyPts.concat(sellPts),animation:false}},
-          {name:"MA5",type:"line",data:ma5,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1}},
-          {name:"MA20",type:"line",data:ma20,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#6fa8ff",width:1}},
-          {name:"成交量",type:"bar",data:days.map(d=>({value:d.vol||0,itemStyle:{color:d.close>=d.open?"#f2555a":"#3ecf8e"}})),xAxisIndex:1,yAxisIndex:1}
-        ]
-      },true);
-      if(sideKlineChart.resize)sideKlineChart.resize();
-    }).catch(()=>{sideKlineChart.clear();});
-  },100);
+  /* 渲染侧边栏K线图（默认日K） */
+  setTimeout(()=>{renderSpDayKline();},100);
 }
 
 function closeSidePanel(){
   $("sidePanelMask").classList.remove("show");
   $("sidePanel").classList.remove("show");
   if(sideKlineChart){sideKlineChart.clear();}
+}
+
+/* 侧边栏K线图切换：日K/分时 */
+function switchSpKline(tab){
+  spCurrentTab=tab;
+  const dayBtn=document.getElementById("spTabDay");
+  const minBtn=document.getElementById("spTabMin");
+  if(tab==="day"){
+    dayBtn.style.border="1px solid #3ecf8e";
+    dayBtn.style.background="rgba(62,207,142,.15)";
+    dayBtn.style.color="#3ecf8e";
+    minBtn.style.border="1px solid var(--border-soft)";
+    minBtn.style.background="transparent";
+    minBtn.style.color="#8b949e";
+    renderSpDayKline();
+  }else{
+    minBtn.style.border="1px solid #3ecf8e";
+    minBtn.style.background="rgba(62,207,142,.15)";
+    minBtn.style.color="#3ecf8e";
+    dayBtn.style.border="1px solid var(--border-soft)";
+    dayBtn.style.background="transparent";
+    dayBtn.style.color="#8b949e";
+    renderSpMinKline();
+  }
+}
+
+/* 侧边栏日K渲染 */
+function renderSpDayKline(){
+  const code=spCurrentCode;
+  const el=document.getElementById("sideKline");
+  if(!el||!window.echarts)return;
+  if(!sideKlineChart)sideKlineChart=echarts.init(el);
+  const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
+  txDay(tx,60).then(days=>{
+    if(!days||!days.length){sideKlineChart.clear();return;}
+    const closes=days.map(d=>d.close);
+    const ma5=maArr(closes,5),ma20=maArr(closes,20);
+    const cats=days.map(d=>d.date);
+    const ohlc=days.map(d=>[d.open,d.close,d.low,d.high]);
+    const li=closes.length-1;
+    const buyPts=[],sellPts=[];
+    for(let i=1;i<closes.length;i++){
+      if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]<=ma20[i-1]&&ma5[i]>ma20[i])buyPts.push({coord:[cats[i],days[i].low],value:"买",symbol:"triangle",symbolSize:10,itemStyle:{color:"#f2555a"},label:{position:"bottom",color:"#f2555a",fontSize:8}});
+      if(ma5[i]&&ma20[i]&&ma5[i-1]&&ma20[i-1]&&ma5[i-1]>=ma20[i-1]&&ma5[i]<ma20[i])sellPts.push({coord:[cats[i],days[i].high],value:"卖",symbol:"pin",symbolSize:11,itemStyle:{color:"#3ecf8e"},label:{position:"top",color:"#3ecf8e",fontSize:8}});
+    }
+    sideKlineChart.setOption({animation:false,backgroundColor:"transparent",
+      legend:{data:["MA5","MA20"],top:0,textStyle:{color:"#8b949e",fontSize:10}},
+      tooltip:{trigger:"axis",axisPointer:{type:"cross"}},
+      grid:[{left:45,right:12,top:24,height:"55%"},{left:45,right:12,top:"78%",height:"16%"}],
+      xAxis:[{type:"category",data:cats,gridIndex:0,axisLabel:{show:false}},{type:"category",data:cats,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9}}],
+      yAxis:[{scale:true,gridIndex:0,axisLabel:{color:"#8b949e",fontSize:9},splitLine:{lineStyle:{color:"rgba(255,255,255,.06)"}}},{scale:true,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:8,formatter:v=>v>=10000?(v/10000).toFixed(0)+"万":v},splitLine:{show:false}}],
+      dataZoom:[{type:"inside",xAxisIndex:[0,1],start:Math.max(0,100-30/days.length*100),end:100}],
+      series:[
+        {name:"日K",type:"candlestick",data:ohlc,xAxisIndex:0,yAxisIndex:0,itemStyle:{color:"#f2555a",color0:"#3ecf8e",borderColor:"#f2555a",borderColor0:"#3ecf8e"},markPoint:{data:buyPts.concat(sellPts),animation:false}},
+        {name:"MA5",type:"line",data:ma5,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1}},
+        {name:"MA20",type:"line",data:ma20,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#6fa8ff",width:1}},
+        {name:"成交量",type:"bar",data:days.map(d=>({value:d.vol||0,itemStyle:{color:d.close>=d.open?"#f2555a":"#3ecf8e"}})),xAxisIndex:1,yAxisIndex:1}
+      ]
+    },true);
+    if(sideKlineChart.resize)sideKlineChart.resize();
+  }).catch(()=>{sideKlineChart.clear();});
+}
+
+/* 侧边栏分时图渲染 */
+function renderSpMinKline(){
+  const code=spCurrentCode;
+  const el=document.getElementById("sideKline");
+  if(!el||!window.echarts)return;
+  if(!sideKlineChart)sideKlineChart=echarts.init(el);
+  const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
+  /* 腾讯分时接口 */
+  const url=`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`;
+  fetch(url).then(r=>r.json()).then(j=>{
+    const data=j.data&&j.data[tx]?j.data[tx]:{};
+    const mins=data.data||[];
+    const preClose=data.preClose||0;
+    if(!mins.length){sideKlineChart.clear();return;}
+    const times=[],prices=[],avgPrices=[],vols=[];
+    let totalVol=0,totalAmount=0;
+    mins.forEach((m,i)=>{
+      const parts=m.split(" ");
+      const time=parts[0];
+      const price=parseFloat(parts[1]);
+      const vol=parseFloat(parts[2])||0;
+      times.push(time);
+      prices.push(price);
+      totalVol+=vol;
+      totalAmount+=price*vol;
+      avgPrices.push(totalVol>0?totalAmount/totalVol:price);
+      vols.push(vol);
+    });
+    const li=prices.length-1;
+    const curPrice=prices[li];
+    const chg=preClose?((curPrice-preClose)/preClose*100):0;
+    const priceColor=chg>=0?"#f2555a":"#3ecf8e";
+    sideKlineChart.setOption({animation:false,backgroundColor:"transparent",
+      legend:{data:["价格","均价"],top:0,textStyle:{color:"#8b949e",fontSize:10}},
+      tooltip:{trigger:"axis",axisPointer:{type:"cross"},formatter:p=>{
+        const idx=p[0].dataIndex;
+        return `${times[idx]}<br/>价格：${prices[idx].toFixed(2)}<br/>均价：${avgPrices[idx].toFixed(2)}<br/>成交量：${vols[idx]>=10000?(vols[idx]/10000).toFixed(0)+"万":vols[idx]}手`;
+      }},
+      grid:[{left:45,right:12,top:24,height:"55%"},{left:45,right:12,top:"78%",height:"16%"}],
+      xAxis:[{type:"category",data:times,gridIndex:0,axisLabel:{show:false},boundaryGap:false},{type:"category",data:times,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9,interval:29},boundaryGap:false}],
+      yAxis:[{scale:true,gridIndex:0,axisLabel:{color:"#8b949e",fontSize:9},splitLine:{lineStyle:{color:"rgba(255,255,255,.06)"}}},{scale:true,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:8,formatter:v=>v>=10000?(v/10000).toFixed(0)+"万":v},splitLine:{show:false}}],
+      series:[
+        {name:"价格",type:"line",data:prices,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:priceColor,width:1.5},areaStyle:{color:{type:"linear",x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:priceColor+"33"},{offset:1,color:priceColor+"00"}]}}},
+        {name:"均价",type:"line",data:avgPrices,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1,type:"dashed"}},
+        {name:"成交量",type:"bar",data:vols.map((v,i)=>({value:v,itemStyle:{color:prices[i]>=preClose?"#f2555a":"#3ecf8e"}})),xAxisIndex:1,yAxisIndex:1}
+      ]
+    },true);
+    if(sideKlineChart.resize)sideKlineChart.resize();
+  }).catch(()=>{sideKlineChart.clear();});
 }
 
 /* 个股研究详情弹窗：六步门禁+多空辩论+主力意图+K线 */
