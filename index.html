@@ -4971,7 +4971,15 @@ async function txKline(code,period,count){
   if(out.length)_kc[key]={t:Date.now(),d:out};
   return out;
 }
-async function txDay(code,count){return txKline(code,"day",count);}
+/* K线数据缓存（内存缓存，避免重复请求，提升手机端加载速度） */
+const _klineCache={};
+async function txDay(code,count){
+  const cacheKey=`${code}_${count}`;
+  if(_klineCache[cacheKey])return _klineCache[cacheKey];
+  const data=await txKline(code,"day",count);
+  if(data&&data.length)_klineCache[cacheKey]=data;
+  return data;
+}
 /* 东方财富日K接口（备用） */
 async function eastmoneyKline(code,count){
   try{

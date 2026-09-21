@@ -109,6 +109,23 @@ def get_market_trend():
         print(f"  大盘趋势获取失败: {e}")
         return "neutral"
 
+def get_sector_strength(all_stock_data):
+    """【板块轮动】计算各板块平均涨幅，返回强势板块排序"""
+    sector_chg = {}
+    for code, st in all_stock_data.items():
+        industry = STOCK_INDUSTRY.get(code, "其他")
+        if industry not in sector_chg:
+            sector_chg[industry] = []
+        sector_chg[industry].append(st["chg"])
+    # 计算各板块平均涨幅
+    sector_avg = {}
+    for industry, chgs in sector_chg.items():
+        if len(chgs) >= 2:  # 至少2只股票才算
+            sector_avg[industry] = sum(chgs) / len(chgs)
+    # 按涨幅排序，返回强势板块列表
+    sorted_sectors = sorted(sector_avg.items(), key=lambda x: x[1], reverse=True)
+    return [s[0] for s in sorted_sectors[:5]]  # 返回前5个强势板块
+
 def get_stock_info_tx(code):
     """【数据源1】腾讯行情"""
     try:
@@ -253,7 +270,7 @@ def check_sell_signals(player, stock_data):
         if st["vol_ratio"] > 1.5 and st["chg"] < -2: signals.append((hold, "放量下跌主力出逃", 1.0)); continue
     return signals
 
-def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses):
+def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses, strong_sectors):
     role_id = player["id"]
     # 【连续亏损熔断】连续3笔亏损，冷却
     if consecutive_losses.get(role_id, 0) >= 3:
@@ -276,6 +293,10 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
         
         score = 0
         reason_parts = []
+        # 【板块轮动】强势板块加分（前5名强势板块+10分）
+        if industry in strong_sectors:
+            score += 10
+            reason_parts.append(f"{industry}板块强势")
         if role_id == "D1":
             if st["price"] > st["ma20"] and st["ma5"] > st["ma10"] > st["ma20"]: score += 30; reason_parts.append("均线多头")
             if st["chg"] > 3 and st["vol_ratio"] > 1.2: score += 25; reason_parts.append("放量突破")
@@ -442,6 +463,10 @@ def main():
             print(f"  已获取 {i+1}/{len(all_codes)}")
     print(f"  ✅ 成功获取 {len(all_stock_data)} 只股票行情")
     
+    # 【板块轮动】计算强势板块
+    strong_sectors = get_sector_strength(all_stock_data)
+    print(f"  🔥 强势板块：{'、'.join(strong_sectors)}")
+    
     for player in data["players"]:
         print(f"\n🎯 {player['id']} {player['name']} (现金:{player['cash']:.0f} 持仓:{len(player['holdings'])})")
         sell_signals = check_sell_signals(player, all_stock_data)
@@ -449,7 +474,7 @@ def main():
             if hold["code"] in all_stock_data:
                 do_sell(player, hold, all_stock_data[hold["code"]], reason, data, ratio)
         buy_signal = check_buy_signals(player, all_stock_data, all_stock_data,
-                                        market_trend, data.get("consecutive_losses", {}))
+                                        market_trend, data.get("consecutive_losses", {}), strong_sectors)
         if buy_signal:
             code, st, score, reason = buy_signal
             do_buy(player, code, st, score, reason)
