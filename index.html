@@ -4147,6 +4147,16 @@ async function renderDetailTech(code){
     if(!days||!days.length){if(detailChart)detailChart.clear();const sb=document.getElementById("detailTechSub");if(sb)sb.innerHTML='<div style="color:#e06c75;font-size:12px">日K数据获取失败（腾讯/新浪均不可用），请检查网络</div>';return;}
     const closes=days.map(d=>d.close);
     const ma5=maArr(closes,5),ma20=maArr(closes,20);
+    /* 布林带 BOLL：中轨=MA20，上下轨=MA20±2倍标准差 */
+    const bollMid=ma20.slice(),bollUp=[],bollDn=[];
+    for(let i=0;i<closes.length;i++){
+      if(i<19){bollUp.push(null);bollDn.push(null);continue;}
+      const slice=closes.slice(i-19,i+1);
+      const avg=slice.reduce((a,b)=>a+b,0)/20;
+      const std=Math.sqrt(slice.reduce((a,b)=>a+(b-avg)**2,0)/20);
+      bollUp.push(+(avg+2*std).toFixed(3));
+      bollDn.push(+(avg-2*std).toFixed(3));
+    }
     const m=macdArr(closes),kf=kdjArr(days);
     const cats=days.map(d=>d.date);
     const ohlc=days.map(d=>[d.open,d.close,d.low,d.high]);
@@ -4158,7 +4168,7 @@ async function renderDetailTech(code){
     }
     const ma5v=ma5[li],ma20v=ma20[li];
     detailChart.setOption({animation:false,backgroundColor:"transparent",
-      legend:{data:["MA5","MA20"],top:4,textStyle:{color:"#8b949e",fontSize:11}},
+      legend:{data:["MA5","MA20","BOLL上轨","BOLL下轨"],top:4,textStyle:{color:"#8b949e",fontSize:11}},
       graphic:[
         {type:"text",right:132,top:26,style:{text:`MA5:${ma5v?ma5v.toFixed(2):"—"}`,fill:"#f0a35e",fontSize:11}},
         {type:"text",right:50,top:26,style:{text:`MA20:${ma20v?ma20v.toFixed(2):"—"}`,fill:"#6fa8ff",fontSize:11}}
@@ -4173,6 +4183,8 @@ async function renderDetailTech(code){
         {name:"日K",type:"candlestick",data:ohlc,xAxisIndex:0,yAxisIndex:0,itemStyle:{color:"#f2555a",color0:"#3ecf8e",borderColor:"#f2555a",borderColor0:"#3ecf8e"},markPoint:{data:buyPts.concat(sellPts),animation:false}},
         {name:"MA5",type:"line",data:ma5,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1.2}},
         {name:"MA20",type:"line",data:ma20,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#6fa8ff",width:1.2}},
+        {name:"BOLL上轨",type:"line",data:bollUp,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#c586c0",width:1,type:"dashed"}},
+        {name:"BOLL下轨",type:"line",data:bollDn,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#c586c0",width:1,type:"dashed"}},
         {name:"成交量",type:"bar",data:days.map(d=>({value:d.vol||0,itemStyle:{color:d.close>=d.open?"#f2555a":"#3ecf8e"}})),xAxisIndex:1,yAxisIndex:1},
         {name:"MACD柱",type:"bar",data:m.macd,xAxisIndex:2,yAxisIndex:2,itemStyle:{color:(p)=>p.value>=0?"#f2555a":"#3ecf8e"}},
         {name:"DIF",type:"line",data:m.dif,xAxisIndex:2,yAxisIndex:2,showSymbol:false,lineStyle:{color:"#f0a35e",width:1}},
