@@ -1257,6 +1257,14 @@ function alertSellSignal(role, stockName, code, price, profit){
         <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪监控（VIX/恐贪/估值） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
         <div id="vixBody" style="display:none"></div>
       </div>
+      <div class="ext-block">
+        <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（东方财富） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
+        <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
+      </div>
+      <div class="ext-block">
+        <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（沪股通+深股通） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
+        <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
+      </div>
     </div>
   </div>
   <div class="panel collapsible" id="panel-wx-cal">
@@ -7039,11 +7047,72 @@ function toggleExt(name){
     const b=e("extBody"),ar=e("extArrow");const open=b.style.display!=="none";
     b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";return;
   }
-  const isMom=name==='mom';
-  const b=e(isMom?"momBody":"vixBody"),ar=e(isMom?"momArrow":"vixArrow");
+  const bodyMap={mom:"momBody",vix:"vixBody",lhb:"lhbBody",north:"northBody"};
+  const arrowMap={mom:"momArrow",vix:"vixArrow",lhb:"lhbArrow",north:"northArrow"};
+  const b=e(bodyMap[name]),ar=e(arrowMap[name]);
+  if(!b)return;
   const open=b.style.display!=="none";
   b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";
-  if(!open){if(isMom)renderMom();else renderVix();}
+  if(!open){
+    if(name==='mom')renderMom();
+    else if(name==='vix')renderVix();
+    else if(name==='lhb')renderLhb();
+    else if(name==='north')renderNorth();
+  }
+}
+/* ---------- 龙虎榜 ---------- */
+async function renderLhb(){
+  const el=document.getElementById("lhbBody");
+  if(!el)return;
+  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
+  try{
+    const url="https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=SECURITY_CODE,SECURITY_NAME_ABBR,TRADE_DATE,EXPLAIN,CLOSE_PRICE,CHANGE_RATE,BILLBOARD_NET_AMT&pageSize=20&pageNumber=1&sortColumns=TRADE_DATE&sortTypes=-1";
+    const r=await fetch(url);
+    const j=await r.json();
+    const data=j.result&&j.result.data?j.result.data:[];
+    if(!data.length){el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">暂无龙虎榜数据</div>';return;}
+    let html='<table style="width:100%;font-size:11px;border-collapse:collapse"><tr style="color:#8b949e;border-bottom:1px solid var(--border-soft)"><th style="padding:4px;text-align:left">股票</th><th style="padding:4px;text-align:right">涨跌</th><th style="padding:4px;text-align:right">净买入</th><th style="padding:4px;text-align:left">原因</th></tr>';
+    data.forEach(item=>{
+      const chg=item.CHANGE_RATE||0;
+      const net=(item.BILLBOARD_NET_AMT||0)/10000;
+      html+=`<tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:4px">${item.SECURITY_NAME_ABBR}</td><td style="padding:4px;text-align:right;color:${chg>=0?'#ef4444':'#22c55e'}">${chg>=0?'+':''}${chg.toFixed(2)}%</td><td style="padding:4px;text-align:right;color:${net>=0?'#ef4444':'#22c55e'}">${net>=0?'+':''}${net.toFixed(0)}万</td><td style="padding:4px;color:#8b949e">${item.EXPLAIN||''}</td></tr>`;
+    });
+    html+='</table>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
+}
+/* ---------- 北向资金 ---------- */
+async function renderNorth(){
+  const el=document.getElementById("northBody");
+  if(!el)return;
+  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
+  try{
+    const url="https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56&ut=b2884a393a59ad64002292a3e90d46a5";
+    const r=await fetch(url);
+    const j=await r.json();
+    const data=j.data||{};
+    const sh=(data.hk2sh&&data.hk2sh.dayNetAmtIn||0)/100000000;
+    const sz=(data.hk2sz&&data.hk2sz.dayNetAmtIn||0)/100000000;
+    const total=sh+sz;
+    const color=total>=0?'#ef4444':'#22c55e';
+    const trend=total>30?'大幅流入 📈':total<-30?'大幅流出 📉':'震荡 🔄';
+    el.innerHTML=`
+      <div style="padding:12px">
+        <div style="font-size:24px;font-weight:700;color:${color};margin-bottom:8px">${total>=0?'+':''}${total.toFixed(2)}亿</div>
+        <div style="font-size:13px;color:#c9d1d9;margin-bottom:12px">北向资金今日净流入 · ${trend}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
+            <div style="font-size:11px;color:#8b949e">沪股通</div>
+            <div style="font-size:16px;font-weight:600;color:${sh>=0?'#ef4444':'#22c55e'}">${sh>=0?'+':''}${sh.toFixed(2)}亿</div>
+          </div>
+          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
+            <div style="font-size:11px;color:#8b949e">深股通</div>
+            <div style="font-size:16px;font-weight:600;color:${sz>=0?'#ef4444':'#22c55e'}">${sz>=0?'+':''}${sz.toFixed(2)}亿</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#8b949e">💡 北向资金大幅流入(>30亿)时市场偏多，大幅流出(<-30亿)时偏空</div>
+      </div>`;
+  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
 }
 /* ---------- 宝妈指数 ---------- */
 const MOM_NAMES={nasdaq:"纳斯达克",gold:"黄金",cpo:"CPO通信",semiconductor:"半导体",med:"创新药",ai:"算力租赁",robot:"机器人"};
@@ -7389,11 +7458,72 @@ function toggleExt(name){
     const b=e("extBody"),ar=e("extArrow");const open=b.style.display!=="none";
     b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";return;
   }
-  const isMom=name==='mom';
-  const b=e(isMom?"momBody":"vixBody"),ar=e(isMom?"momArrow":"vixArrow");
+  const bodyMap={mom:"momBody",vix:"vixBody",lhb:"lhbBody",north:"northBody"};
+  const arrowMap={mom:"momArrow",vix:"vixArrow",lhb:"lhbArrow",north:"northArrow"};
+  const b=e(bodyMap[name]),ar=e(arrowMap[name]);
+  if(!b)return;
   const open=b.style.display!=="none";
   b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";
-  if(!open){if(isMom)renderMom();else renderVix();}
+  if(!open){
+    if(name==='mom')renderMom();
+    else if(name==='vix')renderVix();
+    else if(name==='lhb')renderLhb();
+    else if(name==='north')renderNorth();
+  }
+}
+/* ---------- 龙虎榜 ---------- */
+async function renderLhb(){
+  const el=document.getElementById("lhbBody");
+  if(!el)return;
+  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
+  try{
+    const url="https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=SECURITY_CODE,SECURITY_NAME_ABBR,TRADE_DATE,EXPLAIN,CLOSE_PRICE,CHANGE_RATE,BILLBOARD_NET_AMT&pageSize=20&pageNumber=1&sortColumns=TRADE_DATE&sortTypes=-1";
+    const r=await fetch(url);
+    const j=await r.json();
+    const data=j.result&&j.result.data?j.result.data:[];
+    if(!data.length){el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">暂无龙虎榜数据</div>';return;}
+    let html='<table style="width:100%;font-size:11px;border-collapse:collapse"><tr style="color:#8b949e;border-bottom:1px solid var(--border-soft)"><th style="padding:4px;text-align:left">股票</th><th style="padding:4px;text-align:right">涨跌</th><th style="padding:4px;text-align:right">净买入</th><th style="padding:4px;text-align:left">原因</th></tr>';
+    data.forEach(item=>{
+      const chg=item.CHANGE_RATE||0;
+      const net=(item.BILLBOARD_NET_AMT||0)/10000;
+      html+=`<tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:4px">${item.SECURITY_NAME_ABBR}</td><td style="padding:4px;text-align:right;color:${chg>=0?'#ef4444':'#22c55e'}">${chg>=0?'+':''}${chg.toFixed(2)}%</td><td style="padding:4px;text-align:right;color:${net>=0?'#ef4444':'#22c55e'}">${net>=0?'+':''}${net.toFixed(0)}万</td><td style="padding:4px;color:#8b949e">${item.EXPLAIN||''}</td></tr>`;
+    });
+    html+='</table>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
+}
+/* ---------- 北向资金 ---------- */
+async function renderNorth(){
+  const el=document.getElementById("northBody");
+  if(!el)return;
+  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
+  try{
+    const url="https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56&ut=b2884a393a59ad64002292a3e90d46a5";
+    const r=await fetch(url);
+    const j=await r.json();
+    const data=j.data||{};
+    const sh=(data.hk2sh&&data.hk2sh.dayNetAmtIn||0)/100000000;
+    const sz=(data.hk2sz&&data.hk2sz.dayNetAmtIn||0)/100000000;
+    const total=sh+sz;
+    const color=total>=0?'#ef4444':'#22c55e';
+    const trend=total>30?'大幅流入 📈':total<-30?'大幅流出 📉':'震荡 🔄';
+    el.innerHTML=`
+      <div style="padding:12px">
+        <div style="font-size:24px;font-weight:700;color:${color};margin-bottom:8px">${total>=0?'+':''}${total.toFixed(2)}亿</div>
+        <div style="font-size:13px;color:#c9d1d9;margin-bottom:12px">北向资金今日净流入 · ${trend}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
+            <div style="font-size:11px;color:#8b949e">沪股通</div>
+            <div style="font-size:16px;font-weight:600;color:${sh>=0?'#ef4444':'#22c55e'}">${sh>=0?'+':''}${sh.toFixed(2)}亿</div>
+          </div>
+          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
+            <div style="font-size:11px;color:#8b949e">深股通</div>
+            <div style="font-size:16px;font-weight:600;color:${sz>=0?'#ef4444':'#22c55e'}">${sz>=0?'+':''}${sz.toFixed(2)}亿</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#8b949e">💡 北向资金大幅流入(>30亿)时市场偏多，大幅流出(<-30亿)时偏空</div>
+      </div>`;
+  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
 }
 /* ---------- 宝妈指数 ---------- */
 const ROLE_PERSONAS = {
