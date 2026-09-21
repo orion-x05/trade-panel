@@ -117,14 +117,32 @@ def get_sector_strength(all_stock_data):
         if industry not in sector_chg:
             sector_chg[industry] = []
         sector_chg[industry].append(st["chg"])
-    # 计算各板块平均涨幅
     sector_avg = {}
     for industry, chgs in sector_chg.items():
-        if len(chgs) >= 2:  # 至少2只股票才算
+        if len(chgs) >= 2:
             sector_avg[industry] = sum(chgs) / len(chgs)
-    # 按涨幅排序，返回强势板块列表
     sorted_sectors = sorted(sector_avg.items(), key=lambda x: x[1], reverse=True)
-    return [s[0] for s in sorted_sectors[:5]]  # 返回前5个强势板块
+    return [s[0] for s in sorted_sectors[:5]]
+
+def get_northbound_flow():
+    """【北向资金监控】获取北向资金净流入，返回：bull(大幅流入)/bear(大幅流出)/neutral"""
+    try:
+        url = "https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56&ut=b2884a393a59ad64002292a3e90d46a5"
+        resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        data = resp.json().get("data", {})
+        sh_in = data.get("hk2sh", {}).get("dayNetAmtIn", 0) or 0
+        sz_in = data.get("hk2sz", {}).get("dayNetAmtIn", 0) or 0
+        total = (sh_in + sz_in) / 100000000  # 转换为亿
+        print(f"  🌍 北向资金净流入：{total:+.2f}亿")
+        if total > 30:
+            return "bull"  # 大幅流入>30亿，看多
+        elif total < -30:
+            return "bear"  # 大幅流出>30亿，看空
+        else:
+            return "neutral"
+    except Exception as e:
+        print(f"  北向资金获取失败: {e}")
+        return "neutral"
 
 def get_stock_info_tx(code):
     """【数据源1】腾讯行情"""
@@ -423,6 +441,15 @@ def main():
     data["market_trend"] = market_trend
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
     print(f"\n🌐 大盘趋势：{trend_text}")
+    
+    # 【北向资金监控】结合北向资金调整市场判断
+    northbound = get_northbound_flow()
+    if northbound == "bull" and market_trend == "neutral":
+        market_trend = "bull"  # 北向大幅流入，震荡转多
+        print("  🌍 北向资金大幅流入，市场判断调整为多头")
+    elif northbound == "bear" and market_trend == "neutral":
+        market_trend = "bear"  # 北向大幅流出，震荡转空
+        print("  🌍 北向资金大幅流出，市场判断调整为空头")
     
     # 【每日收盘总结】
     if is_close_time():
