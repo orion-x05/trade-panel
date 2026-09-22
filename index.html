@@ -3518,8 +3518,12 @@ function renderRank(){
       D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩"
     };
     const sltpMap={
-      D1:{sl:7, tp:12}, D2:{sl:6, tp:8}, D3:{sl:5, tp:6},
-      D4:{sl:7, tp:10}, D5:{sl:6, tp:9}, D6:{sl:8, tp:15}
+      D1:{sl:3, tp:4, slType:"ATR", tpType:"ATR"},
+      D2:{sl:1.5, tp:2, slType:"ATR", tpType:"ATR"},
+      D3:{sl:1, tp:1.5, slType:"ATR", tpType:"ATR"},
+      D4:{sl:2, tp:3, slType:"ATR", tpType:"ATR"},
+      D5:{sl:2, tp:2.5, slType:"ATR", tpType:"ATR"},
+      D6:{sl:3.5, tp:5, slType:"ATR", tpType:"ATR"}
     };
     const now=new Date();
     simData.players.forEach(p=>{
@@ -3527,7 +3531,7 @@ function renderRank(){
       const isRunning=p.holdings.length>0||p.trades.length>0;
       const statusCls=isRunning?"running":"done";
       const statusText=isRunning?"运行中":"已完成";
-      const sltp=sltpMap[p.id]||{sl:7,tp:10};
+      const sltp=sltpMap[p.id]||{sl:2,tp:3};
       const lastTime=p.trades.length?p.trades[p.trades.length-1].time:now.toISOString();
       const lastDate=new Date(lastTime);
       const timeStr=`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`;
@@ -3537,7 +3541,7 @@ function renderRank(){
             <span class="ec-name">${p.id} ${p.name}</span>
             <span class="ec-status ${statusCls}">${statusText}</span>
           </div>
-          <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${sltp.sl}% · 止盈${sltp.tp}% · ATR吊灯保护</div>
+          <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${sltp.sl}×ATR · 止盈${sltp.tp}×ATR · ATR吊灯保护</div>
           <div class="ec-stats">
             <div class="ec-stat">
               <div class="ec-label">持仓</div>
