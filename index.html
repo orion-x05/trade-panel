@@ -4842,67 +4842,50 @@ window.addEventListener("DOMContentLoaded",()=>{
   const monthSel=document.getElementById("returnMonthSel");
   if(monthSel) monthSel.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
   
-  /* 【后台异步】从data.json加载后台交易引擎的最新持仓数据（不阻塞面板启动） */
-  setTimeout(async()=>{
+  /* 【自动同步】每隔30秒自动检查后台交易引擎更新，面板和微信消息完全同步 */
+  let lastRemoteUpdate="";
+  async function syncFromServer(){
     try{
-      /* 从同一域名加载，避免跨域拦截 */
       const dataUrl="./data.json?t="+Date.now();
       const resp=await fetch(dataUrl);
       if(resp.ok){
         const remoteData=await resp.json();
         if(remoteData&&remoteData.players){
-          /* 检查数据是否有变化，如果没变化就不刷新 */
-          let hasChange=false;
-          try{
-            const localRaw=localStorage.getItem(STORE_KEY);
-            if(localRaw){
-              const local=JSON.parse(localRaw);
-              /* 比较持仓数量和总现金，如果不一样就说明数据变了 */
-              const localHoldings=local.players.reduce((s,p)=>s+(p.holdings?p.holdings.length:0),0);
-              const remoteHoldings=remoteData.players.reduce((s,p)=>s+(p.holdings?p.holdings.length:0),0);
-              const localCash=local.players.reduce((s,p)=>s+(p.cash||0),0);
-              const remoteCash=remoteData.players.reduce((s,p)=>s+(p.cash||0),0);
-              if(localHoldings!==remoteHoldings || Math.abs(localCash-remoteCash)>1){
-                hasChange=true;
-                console.log("🔄 检测到持仓数据变化，自动刷新...");
-              }
-            }else{
-              hasChange=true; /* 本地没数据，肯定要刷新 */
-            }
-          }catch(e){}
-          
-          /* 保存到localStorage */
-          remoteData.version=11;
-          remoteData.pricePool=remoteData.pricePool||{};
-          remoteData.index=remoteData.index||{sh:3000,shPrev:3000,shChg:0,shUpdate:0};
-          /* 确保每个角色都有必要字段 */
-          remoteData.players.forEach(p=>{
-            if(!p.holdings) p.holdings=[];
-            if(p.cash===undefined) p.cash=100000;
-            if(p.asset===undefined) p.asset=p.cash;
-            /* 兼容下划线命名，统一转成驼峰 */
-            if(!p.assetHistory && p.asset_history) p.assetHistory=p.asset_history;
-            if(!p.assetHistory) p.assetHistory=[INIT_CASH];
-          });
-          try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
-          
-          /* 直接更新当前simData，不用刷新页面 */
-          simData.players=remoteData.players;
-          simData.last_update=remoteData.last_update;
-          console.log("✅ 持仓数据已更新，D4有"+simData.players.find(p=>p.id==='D4').holdings.length+"只持仓");
-          
-          /* 重新渲染所有界面 */
-          if(typeof render==='function') render();
-          if(typeof renderStats==='function') renderStats();
-          if(typeof renderRank==='function') renderRank();
-          /* 加载真实行情 */
-          if(typeof fetchRealQuotes==='function') fetchRealQuotes(true);
+          /* 检查最后更新时间是否变化 */
+          const newUpdate=remoteData.last_update||"";
+          if(newUpdate!==lastRemoteUpdate){
+            lastRemoteUpdate=newUpdate;
+            console.log("🔄 检测到后台交易引擎更新，自动同步持仓数据...");
+            /* 确保每个角色都有必要字段 */
+            remoteData.players.forEach(p=>{
+              if(!p.holdings) p.holdings=[];
+              if(p.cash===undefined) p.cash=100000;
+              if(p.asset===undefined) p.asset=p.cash;
+              if(!p.assetHistory && p.asset_history) p.assetHistory=p.asset_history;
+              if(!p.assetHistory) p.assetHistory=[INIT_CASH];
+            });
+            /* 保存到localStorage */
+            try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
+            /* 直接更新当前simData */
+            simData.players=remoteData.players;
+            simData.last_update=newUpdate;
+            /* 重新渲染所有界面 */
+            if(typeof render==='function') render();
+            if(typeof renderStats==='function') renderStats();
+            if(typeof renderRank==='function') renderRank();
+            if(typeof renderHold==='function') renderHold();
+            log("info","✅ 已自动同步后台交易引擎最新持仓（"+newUpdate+"）");
+          }
         }
       }
     }catch(e){
-      console.warn("⚠️ 从data.json加载失败，使用本地缓存数据：",e);
+      console.warn("⚠️ 自动同步失败：",e);
     }
-  },2000);
+  }
+  /* 启动时立即同步一次 */
+  setTimeout(syncFromServer,1000);
+  /* 每隔30秒自动检查一次后台交易引擎更新 */
+  setInterval(syncFromServer,30000);
   
   /* URL参数触发彻底重置：访问 ?reset=1 自动清空所有持仓和交易数据，重新开始 */
   if(new URLSearchParams(window.location.search).get("reset")==="1"){
