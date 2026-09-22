@@ -2133,7 +2133,11 @@ function fetchRealQuotes(force){
         const code=fullCode.slice(2); // 去掉sh/sz前缀
         const price=parseFloat(arr[3]);
         const prevClose=parseFloat(arr[4]);
-        if(!price||price<=0||!simData.pricePool[code])return;
+        if(!price||price<=0)return;
+        /* 如果pricePool里没有这只股票，自动创建 */
+        if(!simData.pricePool[code]){
+          simData.pricePool[code]={code:code,name:arr[1]||code,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1};
+        }
         const p=simData.pricePool[code];
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
         p.price=price;
