@@ -3464,6 +3464,16 @@ function renderStats(){
       return a+(st?st.price*h.qty:h.buyPrice*h.qty); /* 行情没加载时用成本价估算 */
     },0);
     p.asset=p.cash+mv;
+    /* 自动把当前资产加到历史记录里，保持数据同步 */
+    if(!p.asset_history) p.asset_history=[];
+    if(p.asset_history.length===0) p.asset_history.push(INIT_CASH);
+    const lastHist=p.asset_history[p.asset_history.length-1];
+    /* 如果当前资产和历史最后一个值差异大于1元，就更新历史 */
+    if(Math.abs(lastHist-p.asset)>1){
+      p.asset_history.push(p.asset);
+      /* 最多保留365天数据 */
+      if(p.asset_history.length>365) p.asset_history.shift();
+    }
   });
   const avg=simData.players.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0)/simData.players.length;
   const leader=simData.players.slice().sort((a,b)=>b.asset-a.asset)[0];
