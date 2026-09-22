@@ -3517,13 +3517,10 @@ function renderRank(){
       D1:"趋势突破", D2:"多因子量化", D3:"多空辩论",
       D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩"
     };
-    const sltpMap={
-      D1:{sl:3, tp:4, slType:"ATR", tpType:"ATR"},
-      D2:{sl:1.5, tp:2, slType:"ATR", tpType:"ATR"},
-      D3:{sl:1, tp:1.5, slType:"ATR", tpType:"ATR"},
-      D4:{sl:2, tp:3, slType:"ATR", tpType:"ATR"},
-      D5:{sl:2, tp:2.5, slType:"ATR", tpType:"ATR"},
-      D6:{sl:3.5, tp:5, slType:"ATR", tpType:"ATR"}
+    /* 从全局ATR参数读取，和实际交易逻辑完全联动 */
+    const globalAtrParams={
+      D1:{sl:3, tp:4}, D2:{sl:1.5, tp:2}, D3:{sl:1, tp:1.5},
+      D4:{sl:2, tp:3}, D5:{sl:2, tp:2.5}, D6:{sl:3.5, tp:5}
     };
     const now=new Date();
     simData.players.forEach(p=>{
@@ -3531,7 +3528,7 @@ function renderRank(){
       const isRunning=p.holdings.length>0||p.trades.length>0;
       const statusCls=isRunning?"running":"done";
       const statusText=isRunning?"运行中":"已完成";
-      const sltp=sltpMap[p.id]||{sl:2,tp:3};
+      const sltp=globalAtrParams[p.id]||{sl:2,tp:3};
       const lastTime=p.trades.length?p.trades[p.trades.length-1].time:now.toISOString();
       const lastDate=new Date(lastTime);
       const timeStr=`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`;
