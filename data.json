@@ -6,21 +6,34 @@
       "cash": 100000,
       "holdings": [],
       "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "asset_history": [100000, 100000]
     },
     {
       "id": "D2",
       "name": "衡",
-      "cash": 100000,
-      "holdings": [],
-      "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "cash": 80279,
+      "holdings": [
+        {
+          "code": "603439",
+          "name": "三力制药",
+          "qty": 1300,
+          "cost": 15.17,
+          "buyDate": "2026-09-21",
+          "buyReason": "打板买入，突破前高"
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-09-21",
+          "type": "buy",
+          "code": "603439",
+          "name": "三力制药",
+          "price": 15.17,
+          "qty": 1300,
+          "reason": "打板买入，突破前高"
+        }
+      ],
+      "asset_history": [100000, 99991]
     },
     {
       "id": "D3",
@@ -28,21 +41,34 @@
       "cash": 100000,
       "holdings": [],
       "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "asset_history": [100000, 100000]
     },
     {
       "id": "D4",
       "name": "啸",
-      "cash": 100000,
-      "holdings": [],
-      "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "cash": 82588,
+      "holdings": [
+        {
+          "code": "603015",
+          "name": "和泰机电",
+          "qty": 400,
+          "cost": 43.53,
+          "buyDate": "2026-09-20",
+          "buyReason": "量价共振突破，主力资金流入"
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-09-20",
+          "type": "buy",
+          "code": "603015",
+          "name": "和泰机电",
+          "price": 43.53,
+          "qty": 400,
+          "reason": "量价共振突破，主力资金流入"
+        }
+      ],
+      "asset_history": [100000, 100000]
     },
     {
       "id": "D5",
@@ -50,10 +76,7 @@
       "cash": 100000,
       "holdings": [],
       "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "asset_history": [100000, 100000]
     },
     {
       "id": "D6",
@@ -61,12 +84,9 @@
       "cash": 100000,
       "holdings": [],
       "trades": [],
-      "asset_history": [
-        100000,
-        100000
-      ]
+      "asset_history": [100000, 100000]
     }
   ],
-  "last_update": "2026-09-17T11:12:02.299881",
+  "last_update": "2026-09-22 10:35:00",
   "trades": []
 }
