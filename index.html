@@ -4392,6 +4392,10 @@ function showDetail(code){
     <!-- ATR风控矩阵 -->
     <h4 style="margin-top:16px;padding-left:10px;border-left:3px solid var(--orange)">ATR风控矩阵 · 六角色止损止盈计划</h4>
     <div id="riskMatrixBox" style="margin-bottom:16px"><div class="review-note">ATR计算中…</div></div>
+
+    <!-- 位置与结构 -->
+    <h4 style="margin-top:16px;padding-left:10px;border-left:3px solid var(--purple,#c586c0)">位置与结构 · 近60日区间定位</h4>
+    <div id="positionStructBox" style="margin-bottom:16px"><div class="review-note">位置计算中…</div></div>
     
     <h4 style="margin-top:16px">日K线 · 红涨绿跌（${st.code}）</h4>
     <div id="detailTech" style="width:100%;height:430px;border:1px solid var(--border-soft);border-radius:8px;background:rgba(0,0,0,.18)"></div>
@@ -4403,6 +4407,7 @@ function showDetail(code){
   $("modalMask").classList.add("show");
   renderDetailTech(code);
   renderRiskMatrix(code);
+  renderPositionStruct(code);
 }
 let detailChart=null;
 async function renderRiskMatrix(code){
@@ -4463,6 +4468,55 @@ async function renderRiskMatrix(code){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+async function renderPositionStruct(code){
+  const box=document.getElementById("positionStructBox");if(!box)return;
+  const st=simData.pricePool[code];if(!st)return;
+  const txCode=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
+  let days=null;
+  try{ days=await txDay(txCode,120); }catch(e){}
+  if(!days||days.length<10){box.innerHTML='<div class="review-note">K线数据不足，无法定位区间位置。</div>';return;}
+  const win=days.slice(-60);
+  const highs=win.map(d=>d.high),lows=win.map(d=>d.low);
+  const high60=Math.max(...highs),low60=Math.min(...lows);
+  const price=st.price;
+  const range=high60-low60;
+  const posPct=range>0?(price-low60)/range*100:50;
+  const fromHigh=(price-high60)/high60*100;
+  const fromLow=(price-low60)/low60*100;
+  /* 定性 */
+  let zone,zoneCls,zoneTip;
+  if(posPct>=80){zone="高位区";zoneCls="down";zoneTip="股价处于近60日高位，追高风险大，需警惕放量见顶/高位十字星，不宜新开仓。";}
+  else if(posPct<=20){zone="低位区";zoneCls="up";zoneTip="股价处于近60日低位，关注缩量企稳/长下影/底背离信号，结合资金面再考虑低吸。";}
+  else if(posPct>=60){zone="中高位";zoneCls="flat";zoneTip="位置偏上，不追高，等待回踩均线企稳再考虑。";}
+  else{zone="中低位";zoneCls="flat";zoneTip="位置偏低，若趋势走稳、资金回流可关注。";}
+  /* 近5日动能（简单） */
+  const closes=win.map(d=>d.close);
+  const ret5=closes.length>=6?(price/closes[closes.length-6]-1)*100:0;
+  box.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="intent-tag ${zoneCls==="up"?"intent-bull":zoneCls==="down"?"intent-bear":"intent-flat"}" style="font-size:14px;padding:5px 12px">${zone}</span>
+      <span style="font-size:12px;color:var(--text-faint)">近5日 ${ret5>=0?"+":""}${ret5.toFixed(2)}%</span>
+    </div>
+    <!-- 位置标尺 -->
+    <div style="position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--up) 0%,#ffd966 50%,var(--down) 100%);margin:24px 6px 8px">
+      <div style="position:absolute;left:${posPct}%;top:-6px;transform:translateX(-50%)">
+        <div style="width:4px;height:24px;background:#fff;border-radius:2px"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-faint);margin:0 2px 14px">
+      <span>低 ${low60.toFixed(2)}</span><span>位置 ${posPct.toFixed(0)}%</span><span>高 ${high60.toFixed(2)}</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="flex:1;min-width:120px;padding:10px;background:var(--bg-soft);border-radius:8px;font-size:12px">
+        距60日高点<br><b style="color:${fromHigh>=0?"var(--up)":"var(--down)"};font-size:15px">${fromHigh>=0?"+":""}${fromHigh.toFixed(1)}%</b>
+      </div>
+      <div style="flex:1;min-width:120px;padding:10px;background:var(--bg-soft);border-radius:8px;font-size:12px">
+        距60日低点<br><b style="color:var(--up);font-size:15px">+${fromLow.toFixed(1)}%</b>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);line-height:1.7;padding:10px;background:var(--bg-soft);border-radius:8px">${zoneTip}</div>`;
 }
 
 async function renderDetailTech(code){
