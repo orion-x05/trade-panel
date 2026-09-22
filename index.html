@@ -2139,7 +2139,7 @@ function fetchRealQuotes(force){
         if(!price||price<=0)return;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          simData.pricePool[code]={code:code,name:arr[1]||code,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1};
+          simData.pricePool[code]={code:code,name:arr[1]||code,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"其他",industry:"待分类",wx:"—"};
         }
         const p=simData.pricePool[code];
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
@@ -2203,7 +2203,7 @@ function emFallback(){
         const code=it.f12;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          simData.pricePool[code]={code:code,name:it.f14||code,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1};
+          simData.pricePool[code]={code:code,name:it.f14||code,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"其他",industry:"待分类",wx:"—"};
         }
         const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
@@ -3627,9 +3627,9 @@ function renderPool(){
     pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${st.code}')">
       <td class="num">${st.code}</td>
       <td>${st.name}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
-      <td style="color:var(--text-dim)">${st.sector}</td>
-      <td style="color:var(--text-dim)">${st.industry}</td>
-      <td><span class="wx ${wxClass(st.wx)}">${st.wx}</span></td>
+      <td style="color:var(--text-dim)">${st.sector||"—"}</td>
+      <td style="color:var(--text-dim)">${st.industry||"—"}</td>
+      <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
       <td class="r num">${st.price.toFixed(2)}</td>
       <td class="r num ${pctColor(st.chg)}">${pct(st.chg)}</td>
       <td class="r num">${st.vol.toFixed(2)}</td>
