@@ -798,6 +798,23 @@ function alertSellSignal(role, stockName, code, price, profit){
   .modal .rule { font-size:12.5px; color:var(--text-dim); background:rgba(255,255,255,.03); border:1px solid var(--border-soft); border-radius:8px; padding:12px 14px; line-height:1.9; }
   .modal .rule b { color:var(--text); }
   .modal .note { margin-top:16px; font-size:12px; color:var(--text-faint); border-top:1px solid var(--border-soft); padding-top:10px; }
+
+  /* ===== 6大自动化核心模块卡片 ===== */
+  .engine-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; padding:4px; }
+  .engine-card { background:var(--bg-card); border:1px solid var(--border-soft); border-radius:12px; padding:14px 16px; position:relative; transition:all .2s; cursor:pointer; }
+  .engine-card:hover { border-color:var(--cyan); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.2); }
+  .engine-card .ec-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .engine-card .ec-name { font-size:15px; font-weight:700; color:var(--text); }
+  .engine-card .ec-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
+  .engine-card .ec-status.running { background:rgba(34,197,94,.15); color:#22c55e; }
+  .engine-card .ec-status.done { background:rgba(59,130,246,.15); color:#3b82f6; }
+  .engine-card .ec-strategy { font-size:11px; color:var(--text-dim); margin-bottom:12px; }
+  .engine-card .ec-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .engine-card .ec-stat { font-size:11px; }
+  .engine-card .ec-stat .ec-label { color:var(--text-faint); }
+  .engine-card .ec-stat .ec-value { font-size:14px; font-weight:700; font-family:var(--mono); margin-top:2px; }
+  .engine-card .ec-pnl { font-size:13px; font-weight:700; font-family:var(--mono); }
+  .engine-card .ec-time { font-size:10px; color:var(--text-faint); margin-top:8px; padding-top:8px; border-top:1px solid var(--border-soft); }
   .kv { display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; margin-top:8px; font-size:13px; }
   .kv b { color:var(--text); font-family:var(--mono); font-weight:600; }
   .kv2{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:8px;font-size:13px}
@@ -938,6 +955,19 @@ function alertSellSignal(role, stockName, code, price, profit){
 
 <!-- ===== Tab1 收益排名 ===== -->
 <section class="tab-view active" id="view-rank">
+  <!-- ===== 6大自动化核心模块 ===== -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">🤖 6大自动化交易引擎</span>
+      <span class="panel-tip">全自动无人值守 · 每30分钟自动跑一次 · 微信推送买卖</span>
+    </div>
+    <div class="panel-body">
+      <div class="engine-grid" id="engineGrid">
+        <!-- 6张卡片由JS渲染 -->
+      </div>
+    </div>
+  </div>
+
   <div class="panel">
     <div class="panel-head">
       <span class="panel-title">实时收益排名</span>
@@ -3479,6 +3509,47 @@ function renderStats(){
 }
 
 function renderRank(){
+  /* 渲染6大自动化核心模块卡片 */
+  const eg=$("engineGrid");
+  if(eg){
+    eg.innerHTML="";
+    const strategyNames={
+      D1:"趋势突破", D2:"多因子量化", D3:"多空辩论",
+      D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩"
+    };
+    const now=new Date();
+    simData.players.forEach(p=>{
+      const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
+      const isRunning=p.holdings.length>0||p.trades.length>0;
+      const statusCls=isRunning?"running":"done";
+      const statusText=isRunning?"运行中":"已完成";
+      const lastTime=p.trades.length?p.trades[p.trades.length-1].time:now.toISOString();
+      const lastDate=new Date(lastTime);
+      const timeStr=`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`;
+      eg.insertAdjacentHTML("beforeend",`
+        <div class="engine-card" onclick="openModal('${p.id}')">
+          <div class="ec-head">
+            <span class="ec-name">${p.id} ${p.name}</span>
+            <span class="ec-status ${statusCls}">${statusText}</span>
+          </div>
+          <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${p.stopLoss||7}% · 止盈${p.takeProfit||10}%</div>
+          <div class="ec-stats">
+            <div class="ec-stat">
+              <div class="ec-label">持仓</div>
+              <div class="ec-value">${p.holdings.length}只</div>
+            </div>
+            <div class="ec-stat">
+              <div class="ec-label">交易次数</div>
+              <div class="ec-value">${p.trades.length}次</div>
+            </div>
+          </div>
+          <div class="ec-pnl ${pctColor(ret)}">总收益 ${ret>=0?"+":""}${ret.toFixed(2)}%</div>
+          <div class="ec-time">最近操作：${timeStr}</div>
+        </div>
+      `);
+    });
+  }
+
   const tb=$("rankBody");tb.innerHTML="";
   const sorted=simData.players.slice().sort((a,b)=>b.asset-a.asset);
   sorted.forEach((p,idx)=>{
