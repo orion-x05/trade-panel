@@ -3549,7 +3549,7 @@ function renderHold(){
       }
     });
     Object.values(mergedHoldings).forEach(h=>{
-      const st=simData.pricePool[h.code];if(!st)return;
+      const st=simData.pricePool[h.code]||{price:h.buyPrice,chg:0}; /* 行情没加载时用成本价显示 */
       any=true;
       const mv=st.price*h.qty;
       const floatPnl=(st.price-h.buyPrice)*h.qty;
