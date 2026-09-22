@@ -1344,6 +1344,13 @@ function alertSellSignal(role, stockName, code, price, profit){
 <section class="tab-view" id="view-review">
   <div class="panel">
     <div class="panel-head">
+      <span class="panel-title">市场情绪与广度</span>
+      <span class="panel-tip">基于候选池实时行情统计 · 涨跌家数 / 红盘率 / 涨跌停 / 板块强弱</span>
+    </div>
+    <div class="panel-body" id="reviewSentiment"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
       <span class="panel-title">每日收盘小结</span>
       <span class="panel-tip">每个交易日 15:00 收盘后自动生成 · 含持仓个股、板块与四大指数对比</span>
     </div>
@@ -3470,7 +3477,7 @@ function switchTab(name){
   /* 延迟更久，等tab完全显示后再resize和渲染图表 */
   setTimeout(()=>{
     /* 所有已知图表全部resize */
-    [eqChart,monthChart,yearChart,sectorChart,globalChart,externalChart].forEach(c=>{
+    [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
       if(c){try{c.resize();}catch(e){}}
     });
     /* 特定tab需要重新渲染 */
@@ -4073,7 +4080,96 @@ function retRowsHtml(rows){
 function idxChips(arr){
   return arr.map(ix=>`<span class="idx-chip">${ix.name}<b class="${ix.chg>=0?"up":"down"}">${fmtPct(ix.chg)}</b></span>`).join("");
 }
+function renderReviewSentiment(){
+  const box=$("reviewSentiment");if(!box)return;
+  const pool=Object.values(simData.pricePool);
+  if(!pool.length){box.innerHTML='<div class="review-note">行情数据加载中…</div>';return;}
+  /* 统计涨跌 */
+  let up=0,down=0,flat=0,limitUp=0,limitDown=0,sumChg=0;
+  const sectorMap={};
+  pool.forEach(st=>{
+    const chg=st.chg||0;
+    sumChg+=chg;
+    if(chg>0.01)up++;else if(chg<-0.01)down++;else flat++;
+    if(chg>=9.9)limitUp++;
+    if(chg<=-9.9)limitDown++;
+    /* 板块分组 */
+    const sec=st.industry||st.sector||"待分类";
+    if(!sectorMap[sec])sectorMap[sec]={up:0,total:0,sumChg:0};
+    const s=sectorMap[sec];
+    s.total++;s.sumChg+=chg;
+    if(chg>0)s.up++;
+  });
+  const total=pool.length;
+  const redRate=up/total*100;
+  const ratio=down>0?(up/down):up;
+  const avgChg=sumChg/total;
+  /* 市场状态定性 */
+  let stateText,stateCls;
+  if(redRate>=70){stateText="普涨行情";stateCls="up";}
+  else if(redRate<=30){stateText="普跌行情";stateCls="down";}
+  else if(redRate>=55){stateText="偏多震荡";stateCls="up";}
+  else if(redRate<=45){stateText="偏空震荡";stateCls="down";}
+  else{stateText="多空分歧";stateCls="flat";}
+  /* 板块排序 */
+  const secList=Object.entries(sectorMap).map(([name,s])=>({
+    name,avg:s.sumChg/s.total,up:s.up,total:s.total
+  })).sort((a,b)=>b.avg-a.avg);
+  const topSec=secList.slice(0,6);
+  /* 广度条 */
+  const breadthHtml=`
+    <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin:8px 0">
+      <div style="width:${redRate}%;background:var(--up)"></div>
+      <div style="width:${flat/total*100}%;background:#6b7280"></div>
+      <div style="width:${down/total*100}%;background:var(--down)"></div>
+    </div>`;
+  /* 情绪卡片 */
+  const cards=[
+    {label:"上涨",val:up,cls:"up"},
+    {label:"下跌",val:down,cls:"down"},
+    {label:"平盘",val:flat,cls:"flat"},
+    {label:"涨停",val:limitUp,cls:"up"},
+    {label:"跌停",val:limitDown,cls:"down"},
+    {label:"红盘率",val:redRate.toFixed(0)+"%",cls:redRate>=50?"up":"down"},
+    {label:"涨跌比",val:ratio.toFixed(2),cls:ratio>=1?"up":"down"},
+    {label:"平均涨幅",val:(avgChg>=0?"+":"")+avgChg.toFixed(2)+"%",cls:avgChg>=0?"up":"down"}
+  ];
+  const cardsHtml=cards.map(c=>`
+    <div style="flex:1;min-width:70px;text-align:center;padding:10px 6px;background:var(--bg-soft);border-radius:8px">
+      <div style="font-size:20px;font-weight:700;color:var(--${c.cls==="flat"?"text-main":c.cls})">${c.val}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:2px">${c.label}</div>
+    </div>`).join("");
+  /* 板块强弱榜 */
+  const secHtml=topSec.map(s=>{
+    const secRed=s.up/s.total;
+    return `
+    <div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)">
+      <div style="width:90px;font-size:13px">${s.name}</div>
+      <div style="flex:1;margin:0 10px">
+        <div style="height:6px;border-radius:3px;background:var(--bg-soft);overflow:hidden">
+          <div style="width:${Math.max(2,secRed*100)}%;height:100%;background:${s.avg>=0?"var(--up)":"var(--down)"}"></div>
+        </div>
+      </div>
+      <div style="width:70px;text-align:right;font-size:11px;color:var(--text-faint)">${s.up}/${s.total}</div>
+      <div style="width:62px;text-align:right;font-size:13px;font-weight:600;color:${s.avg>=0?"var(--up)":"var(--down)"}">${s.avg>=0?"+":""}${s.avg.toFixed(2)}%</div>
+    </div>`;
+  }).join("");
+  box.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="intent-tag ${stateCls==="up"?"intent-bull":stateCls==="down"?"intent-bear":"intent-flat"}" style="font-size:14px;padding:5px 12px">${stateText}</span>
+      <span style="font-size:12px;color:var(--text-faint)">样本 ${total} 只 · 候选池实时统计</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${cardsHtml}</div>
+    ${breadthHtml}
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-bottom:12px">
+      <span style="color:var(--up)">红 ${up}</span><span>平 ${flat}</span><span style="color:var(--down)">绿 ${down}</span>
+    </div>
+    <h4 style="margin:14px 0 6px;font-size:14px">行业强弱榜（按平均涨幅）</h4>
+    ${secHtml}`;
+}
+
 function renderReview(){
+  renderReviewSentiment();
   const daily=$("reviewDaily");
   if(summaries.daily){
     const s=summaries.daily;
