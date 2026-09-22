@@ -3589,7 +3589,9 @@ function renderRank(){
 }
 
 function renderHold(){
-  const ht=$("holdBody");ht.innerHTML="";
+  const ht=$("holdBody");
+  if(!ht)return;
+  ht.innerHTML="";
   const filter=($("holdFilter")||{}).value||"all";
   let any=false;
   let rowIdx=0;
@@ -3598,65 +3600,73 @@ function renderHold(){
     if(filter!=="all"&&p.id!==filter)return;
     /* 显示层合并：同一角色同一支股票的重复持仓先合并，避免显示重复行 */
     const mergedHoldings={};
-    p.holdings.forEach(h=>{
-      if(!mergedHoldings[h.code]){
-        mergedHoldings[h.code]={...h, lots: h.lots?[...h.lots]:[{price:h.buyPrice,qty:h.qty,time:h.buyTime,reason:h.reason}]};
+    (p.holdings||[]).forEach(h=>{
+      /* 字段保护：统一字段名，给默认值，防止undefined报错 */
+      const buyPrice=h.buyPrice||h.cost||0;
+      const buyTime=h.buyTime||h.buyDate||now.toISOString();
+      const reason=h.reason||h.buyReason||"";
+      const safeH={...h, buyPrice, buyTime, reason, name:h.name||h.code||""};
+      if(!mergedHoldings[safeH.code]){
+        mergedHoldings[safeH.code]={...safeH, lots: safeH.lots?[...safeH.lots]:[{price:buyPrice,qty:safeH.qty,time:buyTime,reason:reason}]};
       }else{
-        const m=mergedHoldings[h.code];
-        const totalQty=m.qty+h.qty;
-        m.buyPrice=(m.buyPrice*m.qty+h.buyPrice*h.qty)/totalQty;
+        const m=mergedHoldings[safeH.code];
+        const totalQty=(m.qty||0)+(safeH.qty||0);
+        m.buyPrice=((m.buyPrice||0)*(m.qty||0)+buyPrice*(safeH.qty||0))/(totalQty||1);
         m.qty=totalQty;
-        if(h.buyTime&&(!m.buyTime||h.buyTime<m.buyTime))m.buyTime=h.buyTime;
-        if(h.lots&&h.lots.length){
-          m.lots=[...(m.lots||[]),...h.lots];
+        if(buyTime&&(!m.buyTime||buyTime<m.buyTime))m.buyTime=buyTime;
+        if(safeH.lots&&safeH.lots.length){
+          m.lots=[...(m.lots||[]),...safeH.lots];
         }else{
-          m.lots=[...(m.lots||[]),{price:h.buyPrice,qty:h.qty,time:h.buyTime,reason:h.reason}];
+          m.lots=[...(m.lots||[]),{price:buyPrice,qty:safeH.qty,time:buyTime,reason:reason}];
         }
       }
     });
     Object.values(mergedHoldings).forEach(h=>{
-      const st=simData.pricePool[h.code]||{price:h.buyPrice,chg:0}; /* 行情没加载时用成本价显示 */
+      const st=simData.pricePool[h.code]||{price:h.buyPrice,chg:0,industry:h.industry};
       any=true;
-      const mv=st.price*h.qty;
-      const floatPnl=(st.price-h.buyPrice)*h.qty;
+      const mv=(st.price||0)*(h.qty||0);
+      const floatPnl=((st.price||0)-(h.buyPrice||0))*(h.qty||0);
       const buyDate=new Date(h.buyTime).toDateString();
       const isToday=buyDate===now.toDateString();
       const hour=now.getHours(),minute=now.getMinutes();
       const isTradingTime=(hour===9&&minute>=30)||(hour>9&&hour<15)||(hour===15&&minute===0);
-      const dayPct=isToday?((st.price-h.buyPrice)/h.buyPrice*100):(isTradingTime?st.chg:0);
-      const totalPct=(st.price-h.buyPrice)/h.buyPrice*100;
+      const dayPct=isToday?(((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100):(isTradingTime?(st.chg||0):0);
+      const totalPct=((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100;
       /* 占总仓位%：用现金+所有持仓市值计算总资金，更准确 */
-      const totalHoldMv=p.holdings.reduce((s,hh)=>{
+      const totalHoldMv=(p.holdings||[]).reduce((s,hh)=>{
         const sst=simData.pricePool[hh.code];
-        return s+hh.qty*(sst?sst.price:hh.buyPrice);
+        const bp=hh.buyPrice||hh.cost||0;
+        return s+(hh.qty||0)*(sst?sst.price:bp);
       },0);
-      const totalAsset=p.cash+totalHoldMv;
+      const totalAsset=(p.cash||0)+totalHoldMv;
       const posPct=totalAsset>0?mv/totalAsset*100:0;
-      const days=Math.floor((now-new Date(h.buyTime))/86400000);
-      const avail=canSell(h,now)?h.qty:0;
+      const days=Math.floor((now-new Date(h.buyTime))/86400000)||0;
+      let avail=0;
+      try{avail=canSell(h,now)?h.qty:0;}catch(e){avail=h.qty;}
       const rowId="hrow_"+(rowIdx++);
       const lots=h.lots||[{price:h.buyPrice,qty:h.qty,time:h.buyTime,reason:h.reason}];
       const lotsHtml=lots.map((l,i)=>{
         const lt=new Date(l.time);
-        const ldate=`${lt.getMonth()+1}/${lt.getDate()} ${String(lt.getHours()).padStart(2,"0")}:${String(lt.getMinutes()).padStart(2,"0")}`;
-        return `<tr style="background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim)">第${i+1}笔买入</td><td class="r num" style="font-size:11.5px">${l.qty}股</td><td class="r num" style="font-size:11.5px">@${l.price.toFixed(2)}</td><td colspan="9" style="font-size:11.5px;color:var(--text-dim)">${ldate} · ${l.reason}</td></tr>`;
+        const ldate=isNaN(lt)?"--":`${lt.getMonth()+1}/${lt.getDate()} ${String(lt.getHours()).padStart(2,"0")}:${String(lt.getMinutes()).padStart(2,"0")}`;
+        const lPrice=l.price||0;
+        return `<tr style="background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim)">第${i+1}笔买入</td><td class="r num" style="font-size:11.5px">${l.qty||0}股</td><td class="r num" style="font-size:11.5px">@${lPrice.toFixed(2)}</td><td colspan="9" style="font-size:11.5px;color:var(--text-dim)">${ldate} · ${l.reason||""}</td></tr>`;
       }).join("");
       ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="const d=document.getElementById('${rowId}');d.style.display=d.style.display==='none'?'':'none'">
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
         <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${h.code}')">${h.name}</span><span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
         <td style="color:var(--text-dim)">${(st && st.industry) || h.industry || h.sector || "—"}</td>
         <td><span class="wx ${wxClass(h.wx || (st && st.wx) || '—')}">${h.wx || (st && st.wx) || '—'}</span></td>
-        <td class="r num qty-cell">${h.qty}</td>
-        <td class="r num qty-cell"><span class="avail">${avail}</span></td>
-        <td class="r num">${h.buyPrice.toFixed(2)}</td>
-        <td class="r num">${st.price.toFixed(2)}</td>
+        <td class="r num qty-cell">${h.qty||0}</td>
+        <td class="r num qty-cell"><span class="avail">${avail||0}</span></td>
+        <td class="r num">${(h.buyPrice||0).toFixed(2)}</td>
+        <td class="r num">${(st.price||0).toFixed(2)}</td>
         <td class="r num">${fmt(mv)}</td>
         <td class="r num ${pctColor(floatPnl)}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
         <td class="r num ${pctColor(dayPct)}">${pct(dayPct)}</td>
         <td class="r num ${pctColor(totalPct)}">${pct(totalPct)}</td>
         <td class="r num">${posPct.toFixed(1)}%</td>
         <td class="r num">${days}</td>
-        <td style="font-size:11.5px;color:var(--text-dim)">${h.reason}</td>
+        <td style="font-size:11.5px;color:var(--text-dim)">${h.reason||""}</td>
       </tr><tr id="${rowId}" style="display:none">${lotsHtml.replace(/<tr/g,'<td colspan="15" style="padding:0"><table style="width:100%;background:transparent"><tr').replace(/<\/tr>/g,'</tr></table></td></tr>')}</tr>`);
     });
   });
