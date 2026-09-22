@@ -2038,11 +2038,18 @@ const AGENT_DETAILS = {
 
 /* ==================== 股票池（数据层：上传版） ==================== */
 function wxOfSector(sec){
-  if(/电|传媒|娱乐|文化/.test(sec))return"火";
-  if(/建筑|钢构|工程|房地产/.test(sec))return"土";
-  if(/银行|金融|证券/.test(sec))return"金";
-  if(/油|航|港|运|物流/.test(sec))return"水";
-  return"木";
+  if(!sec||sec==="其他"||sec==="待分类")return"—";
+  /* 火：能源、电子、电力、传媒、军工、新能源 */
+  if(/电|传媒|娱乐|文化|军|能源|电子|半导体|光|热|火|计算机|软件|通信|5G|芯片/.test(sec))return"火";
+  /* 土：建筑、房地产、建材、煤炭、化工、农业 */
+  if(/建筑|钢构|工程|房地产|建材|水泥|煤|化工|农|牧|渔|土|矿|钢|有色|稀土/.test(sec))return"土";
+  /* 金：金融、银行、证券、保险、汽车、机械 */
+  if(/银行|金融|证券|保险|汽车|机械|装备|制造|金|银|铜|铝|钢|工业/.test(sec))return"金";
+  /* 水：交通、物流、航运、水务、白酒、医药 */
+  if(/油|航|港|运|物流|水|酒|药|医|食品|饮料|消费|贸|商/.test(sec))return"水";
+  /* 木：农业、林业、纺织、造纸、环保 */
+  if(/农|林|牧|渔|纺织|纸|环保|绿|生|植|花|草/.test(sec))return"木";
+  return"—";
 }
 function mk(code,name,sector,industry,wx,price,cap,vol,ma20,hasZt5,ztLow,rsi6,rps50,stop){
   const ma5=+(price*(1+(Math.random()-0.45)*0.01)).toFixed(2);
@@ -2139,7 +2146,8 @@ function fetchRealQuotes(force){
         if(!price||price<=0)return;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          simData.pricePool[code]={code:code,name:arr[1]||code,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"其他",industry:"待分类",wx:"—"};
+          const industryName=arr[1]||code;
+          simData.pricePool[code]={code:code,name:industryName,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"待分类",industry:industryName,wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
@@ -2203,7 +2211,8 @@ function emFallback(){
         const code=it.f12;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          simData.pricePool[code]={code:code,name:it.f14||code,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"其他",industry:"待分类",wx:"—"};
+          const industryName=it.f14||code;
+          simData.pricePool[code]={code:code,name:industryName,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"待分类",industry:industryName,wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
