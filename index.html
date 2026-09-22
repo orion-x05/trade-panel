@@ -2194,7 +2194,12 @@ function emFallback(){
       const diff=(d&&d.data&&d.data.diff)||[];
       let ok=0;
       diff.forEach(it=>{
-        const code=it.f12,p=simData.pricePool[code];if(!p)return;
+        const code=it.f12;
+        /* 如果pricePool里没有这只股票，自动创建 */
+        if(!simData.pricePool[code]){
+          simData.pricePool[code]={code:code,name:it.f14||code,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1};
+        }
+        const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
         if(!price||price<=0)return;
         const prev=parseFloat(it.f18)||(price/(1+(chg||0)/100));
