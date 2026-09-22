@@ -1239,7 +1239,7 @@ function alertSellSignal(role, stockName, code, price, profit){
         <input id="tfReason" style="flex:1;min-width:160px;background:#0f1620;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px" placeholder="下单原因（可选）">
         <button type="submit" style="padding:6px 14px;background:var(--cyan);color:#04121a;font-weight:600">下单</button>
       </form>
-      <div class="trade-hint">严格真实交易：仅工作日 9:30-11:30 / 13:00-15:00 · 每天15:00后不再买卖 · T+1 当日买入不可卖出 · 单笔≤角色资金20% · 100股整手 · 单角色最多持仓5只 · 模拟佣金0.025%（最低5元）+ 卖出印花税0.1%</div>
+      <div class="trade-hint">严格真实交易：仅工作日 9:30-11:30 / 13:00-15:00 · 每天15:00后不再买卖 · T+1 当日买入不可卖出 · 单笔≤角色资金20% · 100股整手 · 单角色最多持仓5只 · 模拟佣金万1.15（最低5元）+ 卖出印花税0.1%</div>
     </div>
   </div>
 </section>
@@ -3000,7 +3000,7 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const qty=Math.floor(budget/target.price/minBuy)*minBuy;
   if(qty<minBuy)return false; /* 每次买入不得低于板块最低股数 */
   const amount=qty*target.price;
-  const fee=Math.max(amount*0.00025,5);
+  const fee=Math.max(amount*0.000115,5);
   p.cash-=amount+fee;
   const costPerShare=(amount+fee)/qty;
   if(exist){
@@ -3038,7 +3038,7 @@ function doSell(p,hold,st,now,reason,ratio){
   const sellQty=ratio>=1?hold.qty:Math.max(200,Math.floor(hold.qty*ratio/100)*100);
   const actualQty=Math.min(sellQty,hold.qty);
   const money=st.price*actualQty;
-  const sellFee=Math.max(money*0.00025,5);
+  const sellFee=Math.max(money*0.000115,5);
   const stampTax=money*0.001;
   const totalFee=sellFee+stampTax;
   const profit=money-hold.buyPrice*actualQty-totalFee;
@@ -7061,7 +7061,7 @@ async function singleStockBacktest(){
           if(!sig) return true;
           /* 卖出，扣除佣金和印花税 */
           const amount=c*h.qty;
-          const commission=Math.max(5,amount*0.00015); /* 万1.5，最低5元 */
+          const commission=Math.max(5,amount*0.000115); /* 万1.15，最低5元 */
           const tax=amount*0.001; /* 千一印花税 */
           const proceeds=amount-commission-tax;
           cash+=proceeds;
