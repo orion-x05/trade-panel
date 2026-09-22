@@ -4821,7 +4821,7 @@ window.addEventListener("DOMContentLoaded",()=>{
   const monthSel=document.getElementById("returnMonthSel");
   if(monthSel) monthSel.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
   
-  /* 【后台异步】从GitHub data.json加载后台交易引擎的最新持仓数据（不阻塞面板启动） */
+  /* 【后台异步】从data.json加载后台交易引擎的最新持仓数据（不阻塞面板启动） */
   setTimeout(async()=>{
     try{
       /* 从同一域名加载，避免跨域拦截 */
@@ -4830,21 +4830,43 @@ window.addEventListener("DOMContentLoaded",()=>{
       if(resp.ok){
         const remoteData=await resp.json();
         if(remoteData&&remoteData.players){
-          console.log("✅ 从data.json加载最新持仓数据，共"+remoteData.players.length+"个角色");
-          /* 用远程数据覆盖本地localStorage */
-          remoteData.version=11;
-          remoteData.pricePool=remoteData.pricePool||{}; /* 确保pricePool字段存在 */
+          /* 检查数据是否有变化，如果没变化就不刷新 */
+          let hasChange=false;
           try{
-            localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));
-            /* 刷新页面显示最新数据 */
-            setTimeout(()=>location.reload(),500);
+            const localRaw=localStorage.getItem(STORE_KEY);
+            if(localRaw){
+              const local=JSON.parse(localRaw);
+              /* 比较持仓数量和总现金，如果不一样就说明数据变了 */
+              const localHoldings=local.players.reduce((s,p)=>s+(p.holdings?p.holdings.length:0),0);
+              const remoteHoldings=remoteData.players.reduce((s,p)=>s+(p.holdings?p.holdings.length:0),0);
+              const localCash=local.players.reduce((s,p)=>s+(p.cash||0),0);
+              const remoteCash=remoteData.players.reduce((s,p)=>s+(p.cash||0),0);
+              if(localHoldings!==remoteHoldings || Math.abs(localCash-remoteCash)>1){
+                hasChange=true;
+                console.log("🔄 检测到持仓数据变化，自动刷新...");
+              }
+            }else{
+              hasChange=true; /* 本地没数据，肯定要刷新 */
+            }
           }catch(e){}
+          
+          /* 保存到localStorage */
+          remoteData.version=11;
+          remoteData.pricePool=remoteData.pricePool||{};
+          try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
+          
+          /* 只有数据真的变了才刷新页面，避免无限循环 */
+          if(hasChange){
+            setTimeout(()=>location.reload(),500);
+          }else{
+            console.log("✅ 数据无变化，无需刷新");
+          }
         }
       }
     }catch(e){
       console.warn("⚠️ 从data.json加载失败，使用本地缓存数据：",e);
     }
-  },1000);
+  },2000);
   
   /* URL参数触发彻底重置：访问 ?reset=1 自动清空所有持仓和交易数据，重新开始 */
   if(new URLSearchParams(window.location.search).get("reset")==="1"){
