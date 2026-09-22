@@ -4200,19 +4200,25 @@ function openModal(role){
 }
 function showDetail(code){
   const st=simData.pricePool[code];if(!st)return;
-  const above=st.price>st.ma20;
-  const rsiOK=st.rsi6>=45&&st.rsi6<=76;
-  const volOK=st.vol>=1.2&&st.vol<=3;
-  const trendOK=st.ma20>st.ma60&&above;
-  const score=trendOK?25:0+(volOK?20:0)+(rsiOK?15:0)+(st.rps50<80?20:0)+20;
+  /* 字段保护：防止undefined调用toFixed报错 */
+  const safeRsi=st.rsi6||50;
+  const safeMa20=st.ma20||st.price;
+  const safeMa60=st.ma60||st.price;
+  const safeVol=st.vol||1;
+  const safeRps=st.rps50||50;
+  const rsiOK=safeRsi<76;
+  const above=st.price>=safeMa20;
+  const volOK=safeVol>=1.2&&safeVol<=3;
+  const trendOK=safeMa20>safeMa60&&above;
+  const score=trendOK?25:0+(volOK?20:0)+(rsiOK?15:0)+(safeRps<80?20:0)+20;
   
   /* 六步门禁逐层拆解（参考截图样式） */
   const gates=[
     ["01 市值数据", "流通市值 30-500亿", "市值合规", true],
-    ["02 流动性", "成交额 ≥ 5000万", `量比 ${st.vol.toFixed(2)}`, st.vol>=0.5],
-    ["03 趋势过滤", "MA20>MA60 且站上MA20", `现价 ${st.price.toFixed(2)} ${above?"≥":"<"} MA20 ${st.ma20.toFixed(2)}`, trendOK],
+    ["02 流动性", "成交额 ≥ 5000万", `量比 ${safeVol.toFixed(2)}`, safeVol>=0.5],
+    ["03 趋势过滤", "MA20>MA60 且站上MA20", `现价 ${st.price.toFixed(2)} ${above?"≥":"<"} MA20 ${safeMa20.toFixed(2)}`, trendOK],
     ["04 量价触发", "突破前高 且 量比合理", volOK?"量比健康":"量比未达标", volOK],
-    ["05 过热控制", "RSI6 < 76", `RSI6 ${st.rsi6.toFixed(1)} ${rsiOK?"健康":"过热"}`, rsiOK],
+    ["05 过热控制", "RSI6 < 76", `RSI6 ${safeRsi.toFixed(1)} ${rsiOK?"健康":"过热"}`, rsiOK],
     ["06 评分风控", "动态多空评分 ≥ 70", `多空评分 ${score} ${score>=70?"":"<70"}`, score>=70]
   ];
   
@@ -5703,6 +5709,7 @@ function calcTradeQuality(role,P,i){
   if(!P||!P.closes[i])return{stars:1,label:"勉强符合",score:50};
   const c=P.closes[i],ma20=P.ma20[i],ma5=P.ma5[i]||ma20,ma60=P.ma60[i];
   const v=P.volR[i]||1,chg=P.chg[i]||0,rsi=P.rsi[i]||50;
+  const ret20=i>=20?(c/P.closes[i-20]-1)*100:0; /* 近20日相对强度 */
   const kdjGolden=P.K[i]!==undefined&&P.D[i]!==undefined&&P.K[i-1]!==undefined&&P.D[i-1]!==undefined&&P.K[i]>P.D[i]&&P.K[i-1]<=P.D[i-1];
   const ma20Up=i>=5&&ma20>P.ma20[i-5];
   let score=0,total=0;
