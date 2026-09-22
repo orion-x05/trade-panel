@@ -1218,30 +1218,6 @@ function alertSellSignal(role, stockName, code, price, profit){
 </section>
 
 <!-- ===== Tab3 个股研究 ===== -->
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">手动下单</span>
-      <span class="panel-tip">模拟盘仅记账，不下实单</span>
-    </div>
-    <div class="panel-body">
-      <form id="tradeForm" style="padding:8px 6px">
-        <select id="tfPid">
-          <option value="D1">D1 统一底座-严格趋势突破</option>
-          <option value="D2">D2 AI Agents-多角色共识</option>
-          <option value="D3">D3 TradingAgents-多空辩论</option>
-          <option value="D4">D4 量价共振-突破确认</option>
-          <option value="D5">D5 趋势回踩-低追高</option>
-          <option value="D6">D6 涨停回调-强势股低吸</option>
-        </select>
-        <select id="tfDir"><option value="buy">买入</option><option value="sell">卖出</option></select>
-        <select id="tfCode"></select>
-        <input id="tfQty" type="number" value="200" min="100" step="100" style="width:90px" placeholder="股数">
-        <input id="tfReason" style="flex:1;min-width:160px;background:#0f1620;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px" placeholder="下单原因（可选）">
-        <button type="submit" style="padding:6px 14px;background:var(--cyan);color:#04121a;font-weight:600">下单</button>
-      </form>
-      <div class="trade-hint">严格真实交易：仅工作日 9:30-11:30 / 13:00-15:00 · 每天15:00后不再买卖 · T+1 当日买入不可卖出 · 单笔≤角色资金20% · 100股整手 · 单角色最多持仓5只 · 模拟佣金万1.15（最低5元）+ 卖出印花税0.1%</div>
-    </div>
-  </div>
 </section>
 
 <!-- ===== Tab3 个股研究（候选行情池+研究评分合并） ===== -->
