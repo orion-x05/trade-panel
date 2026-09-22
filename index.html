@@ -4304,7 +4304,8 @@ async function renderDetailTech(code){
   try{
     let days=await txDay(tx,120);
     if(!days||!days.length){days=await sinaStockKlineP(tx,120);}
-    if(!days||!days.length){if(detailChart)detailChart.clear();const sb=document.getElementById("detailTechSub");if(sb)sb.innerHTML='<div style="color:#e06c75;font-size:12px">日K数据获取失败（腾讯/新浪均不可用），请检查网络</div>';return;}
+    if(!days||!days.length){days=await eastmoneyKline(code,120);} /* 第三备用：东方财富 */
+    if(!days||!days.length){if(detailChart)detailChart.clear();const sb=document.getElementById("detailTechSub");if(sb)sb.innerHTML='<div style="color:#e06c75;font-size:12px">日K数据获取失败（腾讯/新浪/东方财富均不可用），请检查网络</div>';return;}
     const closes=days.map(d=>d.close);
     const ma5=maArr(closes,5),ma20=maArr(closes,20);
     /* 布林带 BOLL：中轨=MA20，上下轨=MA20±2倍标准差 */
@@ -4361,8 +4362,8 @@ async function renderDetailTech(code){
     if(kf.K[li]<kf.D[li]&&kf.K[li-1]>=kf.D[li-1])sellSignals.push("KDJ 死叉");
     document.getElementById("detailTechSub").innerHTML=`
       <div class="tech-card"><h5>技术指标</h5>
-        MACD：DIF ${m.dif[li].toFixed(3)} / DEA ${m.dea[li].toFixed(3)} / 柱 ${m.macd[li].toFixed(3)} · ${m.dif[li]>=m.dea[li]?"金叉多头":"死叉空头"}<br>
-        KDJ：K ${kf.K[li].toFixed(1)} / D ${kf.D[li].toFixed(1)} / J ${kf.J[li].toFixed(1)} · ${kf.K[li]>kf.D[li]?"多头":"死叉/空头"}<br>
+        MACD：DIF ${(m.dif[li]||0).toFixed(3)} / DEA ${(m.dea[li]||0).toFixed(3)} / 柱 ${(m.macd[li]||0).toFixed(3)} · ${m.dif[li]>=m.dea[li]?"金叉多头":"死叉空头"}<br>
+        KDJ：K ${(kf.K[li]||0).toFixed(1)} / D ${(kf.D[li]||0).toFixed(1)} / J ${(kf.J[li]||0).toFixed(1)} · ${kf.K[li]>kf.D[li]?"多头":"死叉/空头"}<br>
         ${sellSignals.length?`<span class="intent-tag intent-bear">卖出信号：${sellSignals.join("、")}</span>`:"<span class='intent-tag intent-flat'>无死叉卖出信号</span>"}
       </div>
       <div class="tech-card"><h5>主力当日意图</h5><span class="intent-tag ${intent.cls}">${intent.tag}</span><br>${intent.text}</div>`;
