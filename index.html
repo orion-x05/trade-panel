@@ -4842,6 +4842,9 @@ window.addEventListener("DOMContentLoaded",()=>{
   const monthSel=document.getElementById("returnMonthSel");
   if(monthSel) monthSel.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
   
+  /* 先从localStorage加载数据 */
+  load();
+  
   /* 【自动同步】每隔30秒自动检查后台交易引擎更新，面板和微信消息完全同步 */
   let lastRemoteUpdate="";
   async function syncFromServer(){
