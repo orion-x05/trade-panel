@@ -4849,7 +4849,7 @@ window.addEventListener("unhandledrejection",(e)=>{
   console.error("Promise错误:",e);
 });
 
-window.addEventListener("DOMContentLoaded",()=>{
+window.addEventListener("DOMContentLoaded",async()=>{
   /* 检测echarts是否加载成功 */
   if(typeof echarts==="undefined"){
     const warnDiv=document.createElement("div");
@@ -4861,6 +4861,26 @@ window.addEventListener("DOMContentLoaded",()=>{
   const now=new Date();
   const monthSel=document.getElementById("returnMonthSel");
   if(monthSel) monthSel.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  
+  /* 【关键】从GitHub data.json加载后台交易引擎的最新持仓数据 */
+  try{
+    const dataUrl="https://raw.githubusercontent.com/orion-x05/trade-panel/main/data.json";
+    const resp=await fetch(dataUrl+"?t="+Date.now());
+    if(resp.ok){
+      const remoteData=await resp.json();
+      if(remoteData&&remoteData.players){
+        console.log("✅ 从GitHub data.json加载最新持仓数据，共"+remoteData.players.length+"个角色");
+        /* 用远程数据覆盖本地localStorage */
+        simData=remoteData;
+        simData.version=11;
+        /* 保存到localStorage */
+        try{localStorage.setItem(STORE_KEY,JSON.stringify(simData));}catch(e){}
+      }
+    }
+  }catch(e){
+    console.warn("⚠️ 从GitHub data.json加载失败，使用本地缓存数据：",e);
+  }
+  
   /* URL参数触发彻底重置：访问 ?reset=1 自动清空所有持仓和交易数据，重新开始 */
   if(new URLSearchParams(window.location.search).get("reset")==="1"){
     try{
