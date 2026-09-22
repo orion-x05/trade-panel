@@ -4446,12 +4446,51 @@ function renderSidePanel(code,name,price,chg,st){
   let roleHtml="";
   roles.forEach(role=>{
     let opinion="持有",tagClass="sp-tag-hold",reason="观望";
-    /* 简化判断：均线多头+KDJ金叉=买入，跌破MA20+KDJ死叉=卖出 */
-    const isBull=price>ma20&&ma5>ma20;
-    const isBear=price<ma20&&ma5<ma20;
-    if(isBull&&rsi<70){opinion="买入";tagClass="sp-tag-buy";reason="趋势向上";}
-    else if(isBear){opinion="卖出";tagClass="sp-tag-sell";reason="趋势走弱";}
-    else{opinion="持有";tagClass="sp-tag-hold";reason="震荡整理";}
+    
+    /* 每个角色按自己的策略和人格来判断 */
+    if(role==="D1"){
+      /* D1破锋：趋势突破，只做多头趋势，突破即真理 */
+      if(price>ma20&&ma5>ma20&&chg>2){opinion="买入";tagClass="sp-tag-buy";reason="趋势突破，让利润奔跑";}
+      else if(price<ma20){opinion="卖出";tagClass="sp-tag-sell";reason="趋势破位，绝不恋战";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="等待突破信号";}
+    }
+    else if(role==="D2"){
+      /* D2衡：多因子量化，数据不会说谎，共振才是机会 */
+      const bullCount=(price>ma20?1:0)+(ma5>ma20?1:0)+(rsi>50&&rsi<70?1:0)+(volRatio>1.2?1:0)+(chg>0?1:0);
+      if(bullCount>=4){opinion="买入";tagClass="sp-tag-buy";reason="五因子共振，胜率优先";}
+      else if(bullCount<=1){opinion="卖出";tagClass="sp-tag-sell";reason="单一信号都是噪音";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="信号不足，继续观察";}
+    }
+    else if(role==="D3"){
+      /* D3镜：多空辩论，最谨慎，先看空方怎么说 */
+      const riskPoints=(rsi>75?1:0)+(volRatio>2?1:0)+(price>ma20*1.15?1:0);
+      const bullPoints=(price>ma20?1:0)+(ma5>ma20?1:0);
+      if(riskPoints>=2){opinion="卖出";tagClass="sp-tag-sell";reason="空方论据占优，安全第一";}
+      else if(bullPoints-riskPoints>=2){opinion="买入";tagClass="sp-tag-buy";reason="多方占优，谨慎做多";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="多空均衡，宁可错过";}
+    }
+    else if(role==="D4"){
+      /* D4啸：量价共振，量在价先，没有量的突破都是假突破 */
+      if(volRatio>1.5&&chg>2&&price>ma20){opinion="买入";tagClass="sp-tag-buy";reason="放量突破，量在价先";}
+      else if(volRatio<0.8&&chg<-2){opinion="卖出";tagClass="sp-tag-sell";reason="放量下跌，资金出逃";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="量能不足，等待确认";}
+    }
+    else if(role==="D5"){
+      /* D5渊：趋势回踩低吸，追高是亏钱的开始，回踩才是机会 */
+      const pullback=(price<ma20*0.98&&price>ma20*0.95);
+      const nearMa20=Math.abs(price-ma20)/ma20*100<2;
+      if(pullback&&volRatio<0.8){opinion="买入";tagClass="sp-tag-buy";reason="缩量回踩，低吸机会";}
+      else if(nearMa20&&volRatio>1.5){opinion="买入";tagClass="sp-tag-buy";reason="回踩MA20，缩量洗盘";}
+      else if(price>ma20*1.1){opinion="卖出";tagClass="sp-tag-sell";reason="涨多了，追高风险大";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="等待回踩到位";}
+    }
+    else if(role==="D6"){
+      /* D6焰：涨停回踩妖股，强者恒强，涨停才是开始 */
+      if(chg>9.5){opinion="买入";tagClass="sp-tag-buy";reason="涨停启动，妖股第二波";}
+      else if(price>ma20&&chg>3){opinion="买入";tagClass="sp-tag-buy";reason="强者恒强，继续持有";}
+      else if(price<ma20*0.9){opinion="卖出";tagClass="sp-tag-sell";reason="跌破MA20，妖股行情结束";}
+      else{opinion="持有";tagClass="sp-tag-hold";reason="等待涨停信号";}
+    }
     
     roleHtml+=`<div class="sp-role-opinion">
       <span style="color:${roleColors[role]};font-weight:600">${role} ${roleNames[role]}</span>
