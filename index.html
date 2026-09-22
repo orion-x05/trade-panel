@@ -2416,51 +2416,6 @@ function load(){
             p.cash=correctCash;
           }
         });
-        /* 删除D4持仓里的金马游乐，确保和泰机电还在 */
-        const d4=simData.players.find(p=>p.id==="D4");
-        if(d4&&d4.holdings){
-          const before=d4.holdings.length;
-          d4.holdings=d4.holdings.filter(h=>h.code!=="300756");
-          if(d4.holdings.length<before){
-            console.log("✅ 已删除D4持仓里的金马游乐");
-          }
-          /* 确保D4有和泰机电持仓（如果没有就自动加上） */
-          if(!d4.holdings.some(h=>h.code==="001225")){
-            const now=new Date();
-            d4.holdings.push({
-              code:"001225",name:"和泰机电",industry:"通用设备",wuxing:"木",
-              qty:400,buyPrice:43.53,buyTime:now.toISOString(),reason:"量价共振突破买入",
-              lots:[{price:43.53,qty:400,time:now.toISOString(),reason:"量价共振突破买入"}]
-            });
-            console.log("✅ 已自动恢复D4的和泰机电持仓");
-          }
-          /* 删除后重新校准现金 */
-          const totalCost=d4.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
-          d4.cash=INIT_CASH-totalCost;
-        }
-        /* 重置D2收益率盈亏：只重置收益率和资产历史，保留持仓 */
-        const d2=simData.players.find(p=>p.id==="D2");
-        if(d2){
-          /* 确保D2有三力制药持仓（如果没有就自动加上，买入时间为昨天） */
-          if(!d2.holdings.some(h=>h.code==="603439")){
-            const now=new Date();
-            const yesterday=new Date(now.getTime()-86400000); /* 昨天 */
-            d2.holdings.push({
-              code:"603439",name:"三力制药",industry:"中药",wuxing:"木",
-              qty:1300,buyPrice:15.17,buyTime:yesterday.toISOString(),reason:"早盘打板买入",
-              lots:[{price:15.17,qty:1300,time:yesterday.toISOString(),reason:"早盘打板买入"}]
-            });
-            console.log("✅ 已自动恢复D2的三力制药持仓（昨天打板买入）");
-          }
-          /* 只重置收益率和资产历史，保留持仓和交易记录 */
-          const totalCost=d2.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
-          d2.cash=INIT_CASH-totalCost;
-          d2.asset=d2.cash+totalCost;
-          /* 资产历史：昨天初始，今天当前，这样当日收益能正确计算 */
-          d2.assetHistory=[INIT_CASH, d2.asset];
-          d2.maxDrawdown=0;
-          console.log("✅ 已重置D2收益率，保留持仓，当日收益从昨天买入开始计算");
-        }
         /* 合并重复持仓并清洗后保存一次，避免下次刷新仍重复 */
         try{save();}catch(e){}
         if(!simData.dayLabels||!simData.dayLabels.length){
@@ -4873,6 +4828,7 @@ window.addEventListener("DOMContentLoaded",async()=>{
         /* 用远程数据覆盖本地localStorage */
         simData=remoteData;
         simData.version=11;
+        simData.pricePool=simData.pricePool||{}; /* 确保pricePool字段存在 */
         /* 保存到localStorage */
         try{localStorage.setItem(STORE_KEY,JSON.stringify(simData));}catch(e){}
       }
