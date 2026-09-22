@@ -3621,7 +3621,6 @@ function renderHold(){
       const floatPnl=(st.price-h.buyPrice)*h.qty;
       const buyDate=new Date(h.buyTime).toDateString();
       const isToday=buyDate===now.toDateString();
-      const now=new Date();
       const hour=now.getHours(),minute=now.getMinutes();
       const isTradingTime=(hour===9&&minute>=30)||(hour>9&&hour<15)||(hour===15&&minute===0);
       const dayPct=isToday?((st.price-h.buyPrice)/h.buyPrice*100):(isTradingTime?st.chg:0);
