@@ -4389,6 +4389,10 @@ function showDetail(code){
       </div>
     </div>
     
+    <!-- ATR风控矩阵 -->
+    <h4 style="margin-top:16px;padding-left:10px;border-left:3px solid var(--orange)">ATR风控矩阵 · 六角色止损止盈计划</h4>
+    <div id="riskMatrixBox" style="margin-bottom:16px"><div class="review-note">ATR计算中…</div></div>
+    
     <h4 style="margin-top:16px">日K线 · 红涨绿跌（${st.code}）</h4>
     <div id="detailTech" style="width:100%;height:430px;border:1px solid var(--border-soft);border-radius:8px;background:rgba(0,0,0,.18)"></div>
     <div id="detailTechSub" class="tech-sub" style="margin-top:10px"></div>
@@ -4398,8 +4402,69 @@ function showDetail(code){
   
   $("modalMask").classList.add("show");
   renderDetailTech(code);
+  renderRiskMatrix(code);
 }
 let detailChart=null;
+async function renderRiskMatrix(code){
+  const box=document.getElementById("riskMatrixBox");if(!box)return;
+  const st=simData.pricePool[code];if(!st)return;
+  /* 转带前缀代码算ATR */
+  const txCode=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
+  let atr=atrCache[code]?atrCache[code].atr:null;
+  if(!atr){
+    try{
+      const klineData=await txDay(txCode,30);
+      if(klineData&&klineData.length>=15){
+        const trList=[];
+        for(let i=1;i<klineData.length;i++){
+          const h=klineData[i].high,l=klineData[i].low,pc=klineData[i-1].close;
+          trList.push(Math.max(h-l,Math.abs(h-pc),Math.abs(l-pc)));
+        }
+        atr=trList.slice(-14).reduce((s,v)=>s+v,0)/14;
+        atrCache[code]={atr,updateTime:Date.now()};
+      }
+    }catch(e){}
+  }
+  if(!atr||atr<=0){box.innerHTML='<div class="review-note">ATR数据不足（需至少15根K线），无法计算止损止盈位。</div>';return;}
+  const price=st.price;
+  /* 六角色参数：[止损乘数,止盈乘数,风格,颜色] */
+  const params=[
+    ["D1 破锋",3,4,"高风险·趋势突破"],
+    ["D2 衡",1.5,2,"中风险·高胜率"],
+    ["D3 镜",1,1.5,"最低风险·最谨慎"],
+    ["D4 啸",2,3,"中高风险·强势股"],
+    ["D5 渊",2,2.5,"中低风险·高盈亏比"],
+    ["D6 焰",3.5,5,"最高风险·妖股"]
+  ];
+  const rows=params.map(([role,sl,tp,style])=>{
+    const slPrice=price-sl*atr;
+    const tpPrice=price+tp*atr;
+    const rr=tp/sl;
+    const slPct=(sl*atr/price*100);
+    const tpPct=(tp*atr/price*100);
+    return `
+    <tr style="border-bottom:1px solid var(--border-soft)">
+      <td style="padding:9px 6px;font-weight:600">${role}</td>
+      <td style="padding:9px 6px;font-size:11px;color:var(--text-faint)">${style}</td>
+      <td style="padding:9px 6px;color:var(--down)">${slPrice.toFixed(2)}<br><span style="font-size:10px">-${slPct.toFixed(1)}%</span></td>
+      <td style="padding:9px 6px;color:var(--up)">${tpPrice.toFixed(2)}<br><span style="font-size:10px">+${tpPct.toFixed(1)}%</span></td>
+      <td style="padding:9px 6px;text-align:center;font-weight:600;color:#ffd966">${rr.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+  box.innerHTML=`
+    <div style="font-size:12px;color:var(--text-faint);margin-bottom:8px">当前价 <b style="color:var(--text-main)">${price.toFixed(2)}</b> · ATR(14) <b style="color:var(--orange)">${atr.toFixed(3)}</b>（占股价 ${(atr/price*100).toFixed(1)}%）· 止损=现价−乘数×ATR，止盈=现价+乘数×ATR</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:2px solid var(--border-soft)">
+        <th style="text-align:left;padding:6px">角色</th>
+        <th style="text-align:left;padding:6px">风格</th>
+        <th style="text-align:left;padding:6px">止损价</th>
+        <th style="text-align:left;padding:6px">止盈价</th>
+        <th style="text-align:center;padding:6px">盈亏比</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 async function renderDetailTech(code){
   const el=document.getElementById("detailTech");if(!el)return;
   if(!detailChart&&window.echarts)detailChart=echarts.init(el);
