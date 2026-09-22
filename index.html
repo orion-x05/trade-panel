@@ -4499,6 +4499,30 @@ function renderSidePanel(code,name,price,chg,st){
     </div>`;
   });
   
+  /* 六角色历史记忆：基于自己的交易记录分析当前股票 */
+  let memoryHtml="<div style='margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)'>";
+  memoryHtml+="<div style='font-size:13px;font-weight:600;margin-bottom:8px;opacity:.9'>🧠 各角色历史记忆</div>";
+  roles.forEach(role=>{
+    const p=simData.players.find(x=>x.id===role);
+    if(!p)return;
+    /* 统计这个角色的交易记录 */
+    const totalTrades=p.trades.length;
+    const winTrades=p.trades.filter(t=>t.profit>0).length;
+    const winRate=totalTrades>0?Math.round(winTrades/totalTrades*100):0;
+    /* 找这个角色之前交易过的相同股票 */
+    const pastTrades=p.trades.filter(t=>t.code===code);
+    let memoryText="第一次交易这只股票";
+    if(pastTrades.length>0){
+      const lastTrade=pastTrades[pastTrades.length-1];
+      const profitSign=lastTrade.profit>=0?"赚":"亏";
+      memoryText={`上次交易${profitSign}${Math.abs(lastTrade.profit).toFixed(0)}元，记住了`};
+    }
+    memoryHtml+=`<div style="font-size:11px;margin:4px 0;opacity:.8">
+      <span style="color:${roleColors[role]}">${role}</span> · 胜率${winRate}% · ${memoryText}
+    </div>`;
+  });
+  memoryHtml+="</div>";
+  
   /* 综合评分 */
   let score=50;
   if(price>ma20)score+=10;
@@ -4555,6 +4579,7 @@ function renderSidePanel(code,name,price,chg,st){
     <div class="sp-card">
       <div class="sp-card-title">🤖 六角色观点</div>
       ${roleHtml}
+      ${memoryHtml}
     </div>
     
     <div class="sp-card" style="text-align:center;padding:20px">
