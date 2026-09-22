@@ -4372,22 +4372,30 @@ async function renderDetailMinute(code){
   try{
     const resp=await fetch(`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`);
     const jd=await resp.json();
-    const data=jd.data&&jd.data[tx]&&jd.data[tx].data?jd.data[tx].data:[];
-    const prevClose=jd.data&&jd.data[tx]&&jd.data[tx].qt?parseFloat(jd.data[tx].qt[4]):0;
-    if(!data.length){if(minuteChart)minuteChart.clear();return;}
+    const dataObj=jd.data&&jd.data[tx]?jd.data[tx]:{};
+    const mins=dataObj.data||[];
+    const prevClose=dataObj.preClose||0;
+    if(!mins.length){if(minuteChart)minuteChart.clear();return;}
     const times=[],prices=[],avgs=[],vols=[];
-    data.forEach(d=>{
-      times.push(d[0]);
-      prices.push(parseFloat(d[1]));
-      avgs.push(parseFloat(d[2]));
-      vols.push(parseFloat(d[3]));
+    let totalVol=0,totalAmount=0;
+    mins.forEach(m=>{
+      const parts=m.split(" ");
+      const time=parts[0];
+      const price=parseFloat(parts[1]);
+      const vol=parseFloat(parts[2])||0;
+      times.push(time);
+      prices.push(price);
+      totalVol+=vol;
+      totalAmount+=price*vol;
+      avgs.push(totalVol>0?totalAmount/totalVol:price);
+      vols.push(vol);
     });
     const minP=Math.min(...prices),maxP=Math.max(...prices);
     const range=Math.max(maxP-minP,prevClose*0.02);
     minuteChart.setOption({animation:false,backgroundColor:"transparent",
       tooltip:{trigger:"axis",axisPointer:{type:"cross"},formatter:p=>{
         const i=p[0].dataIndex;
-        return `${times[i]}<br/>价格：${prices[i].toFixed(2)}<br/>均价：${avgs[i].toFixed(2)}<br/>成交量：${vols[i]}手`;
+        return `${times[i]}<br/>价格：${prices[i].toFixed(2)}<br/>均价：${avgs[i].toFixed(2)}<br/>成交量：${vols[i]>=10000?(vols[i]/10000).toFixed(0)+"万":vols[i]}手`;
       }},
       grid:[{left:56,right:18,top:20,height:"58%"},{left:56,right:18,top:"75%",height:"18%"}],
       xAxis:[{type:"category",data:times,gridIndex:0,axisLabel:{show:false,interval:29}},{type:"category",data:times,gridIndex:1,axisLabel:{color:"#8b949e",fontSize:9,interval:29}}],
