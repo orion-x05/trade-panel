@@ -4884,12 +4884,17 @@ window.addEventListener("DOMContentLoaded",()=>{
           });
           try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
           
-          /* 只有数据真的变了才刷新页面，避免无限循环 */
-          if(hasChange){
-            setTimeout(()=>location.reload(),500);
-          }else{
-            console.log("✅ 数据无变化，无需刷新");
-          }
+          /* 直接更新当前simData，不用刷新页面 */
+          simData.players=remoteData.players;
+          simData.last_update=remoteData.last_update;
+          console.log("✅ 持仓数据已更新，D4有"+simData.players.find(p=>p.id==='D4').holdings.length+"只持仓");
+          
+          /* 重新渲染所有界面 */
+          if(typeof render==='function') render();
+          if(typeof renderStats==='function') renderStats();
+          if(typeof renderRank==='function') renderRank();
+          /* 加载真实行情 */
+          if(typeof fetchRealQuotes==='function') fetchRealQuotes(true);
         }
       }
     }catch(e){
