@@ -4812,49 +4812,6 @@ function openStockResearchModal(code){
 }
 
 /* ==================== 手动下单（数据层） ==================== */
-function fillCodeSelect(){
-  const sel=$("tfCode");
-  sel.innerHTML=Object.values(simData.pricePool).map(s=>`<option value="${s.code}">${s.name}(${s.code})</option>`).join("");
-}
-document.getElementById("tradeForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const pid=$("tfPid").value,dir=$("tfDir").value,code=$("tfCode").value;
-  const qty=Number($("tfQty").value),reason=$("tfReason").value;
-  const p=simData.players.find(x=>x.id===pid);if(!p)return;
-  const st=simData.pricePool[code];if(!st)return;
-  const now=new Date();
-  /* 板块规则检查：最少买入股数 + 资金门槛权限 */
-  const board=getBoard(code);
-  const boardRule=BOARD_RULES[board];
-  if(dir==="buy"){
-    if(!hasBoardPermission(p,board)){
-      log("warn",`手动买入失败：${st.name}属${boardRule.name}，需${(boardRule.minAsset/10000).toFixed(0)}万资金权限，当前资金不足（资金达到后自动解锁）`);
-      save();render();return;
-    }
-    const minBuy=boardRule.minBuy;
-    if(board==="star"){
-      /* 科创板：200股起，超过200可以1股递增 */
-      if(!qty||qty<200){log("warn",`手动买入失败：科创板最少买入200股`);save();render();return;}
-    }else{
-      /* 其他板块：100股的整数倍 */
-      if(!qty||qty%100!==0||qty<minBuy){log("warn",`手动买入失败：${boardRule.name}最少买入${minBuy}股，须为100的整数倍`);save();render();return;}
-    }
-  }
-  if(dir==="buy"){
-    if(!canBuyNow(now)){log("warn",`手动买入失败：已收盘（每天15:00后不再买入）`);save();return;}
-    if(p.cash<qty*st.price){log("warn",`手动买入失败：${pid}资金不足`);return;}
-    const ok=doBuy(p,{...st},now,1,true); /* 手动下单绕过价格接近过滤 */
-    if(ok&&reason){p.holdings[p.holdings.length-1].reason=reason;p.trades[p.trades.length-1].reason=reason;}
-  }else{
-    const h=p.holdings.find(x=>x.code===code);
-    if(!h){log("warn",`手动卖出失败：${pid}无该持仓`);return;}
-    if(!canSellNow(now)){log("warn",`手动卖出失败：已收盘（每天15:00后不再买卖）`);save();return;}
-    if(!canSell(h,now)){log("warn",`手动卖出失败：T+1限制：${h.name}为今日买入，当日不可卖出`);return;}
-    doSell(p,h,st,now,reason||"人工手动卖出");
-  }
-  save();render();
-});
-
 /* ==================== 时钟 & 启动 ==================== */
 function updateClock(){
   const now=new Date();
