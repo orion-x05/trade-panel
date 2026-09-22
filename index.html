@@ -3589,7 +3589,7 @@ function renderHold(){
       ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="const d=document.getElementById('${rowId}');d.style.display=d.style.display==='none'?'':'none'">
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
         <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${h.code}')">${h.name}</span><span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
-        <td style="color:var(--text-dim)">${h.industry||h.sector}</td>
+        <td style="color:var(--text-dim)">${(st && st.industry) || h.industry || h.sector || "—"}</td>
         <td><span class="wx ${wxClass(h.wx || (st && st.wx) || '—')}">${h.wx || (st && st.wx) || '—'}</span></td>
         <td class="r num qty-cell">${h.qty}</td>
         <td class="r num qty-cell"><span class="avail">${avail}</span></td>
