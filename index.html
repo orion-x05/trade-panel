@@ -4824,12 +4824,13 @@ window.addEventListener("DOMContentLoaded",()=>{
   /* 【后台异步】从GitHub data.json加载后台交易引擎的最新持仓数据（不阻塞面板启动） */
   setTimeout(async()=>{
     try{
-      const dataUrl="https://raw.githubusercontent.com/orion-x05/trade-panel/main/data.json";
-      const resp=await fetch(dataUrl+"?t="+Date.now());
+      /* 从同一域名加载，避免跨域拦截 */
+      const dataUrl="./data.json?t="+Date.now();
+      const resp=await fetch(dataUrl);
       if(resp.ok){
         const remoteData=await resp.json();
         if(remoteData&&remoteData.players){
-          console.log("✅ 从GitHub data.json加载最新持仓数据，共"+remoteData.players.length+"个角色");
+          console.log("✅ 从data.json加载最新持仓数据，共"+remoteData.players.length+"个角色");
           /* 用远程数据覆盖本地localStorage */
           remoteData.version=11;
           remoteData.pricePool=remoteData.pricePool||{}; /* 确保pricePool字段存在 */
@@ -4841,7 +4842,7 @@ window.addEventListener("DOMContentLoaded",()=>{
         }
       }
     }catch(e){
-      console.warn("⚠️ 从GitHub data.json加载失败，使用本地缓存数据：",e);
+      console.warn("⚠️ 从data.json加载失败，使用本地缓存数据：",e);
     }
   },1000);
   
