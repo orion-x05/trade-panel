@@ -4507,18 +4507,15 @@ function renderSidePanel(code,name,price,chg,st){
     if(!p)return;
     /* 统计这个角色的交易记录 */
     const totalTrades=p.trades.length;
-    const winTrades=p.trades.filter(t=>t.profit>0).length;
-    const winRate=totalTrades>0?Math.round(winTrades/totalTrades*100):0;
     /* 找这个角色之前交易过的相同股票 */
     const pastTrades=p.trades.filter(t=>t.code===code);
     let memoryText="第一次交易这只股票";
     if(pastTrades.length>0){
       const lastTrade=pastTrades[pastTrades.length-1];
-      const profitSign=lastTrade.profit>=0?"赚":"亏";
-      memoryText={`上次交易${profitSign}${Math.abs(lastTrade.profit).toFixed(0)}元，记住了`};
+      memoryText=`上次${lastTrade.type==="buy"?"买入":"卖出"}过这只股票，记住了`;
     }
     memoryHtml+=`<div style="font-size:11px;margin:4px 0;opacity:.8">
-      <span style="color:${roleColors[role]}">${role}</span> · 胜率${winRate}% · ${memoryText}
+      <span style="color:${roleColors[role]}">${role}</span> · 共交易${totalTrades}次 · ${memoryText}
     </div>`;
   });
   memoryHtml+="</div>";
