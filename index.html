@@ -2115,6 +2115,8 @@ function fetchRealQuotes(force){
   const now=Date.now();
   if(!force&&now-lastFetchReal<30000)return; /* 30秒刷新一次，减轻接口压力 */
   lastFetchReal=now;
+  /* 确保pricePool存在 */
+  if(!simData.pricePool) simData.pricePool={};
   /* 加载所有候选池股票行情：TDX_CODES + EXT_CODES各行业龙头 */
   const allCodes = new Set([...Object.values(TDX_CODES), ...Object.values(EXT_CODES)]);
   const qs=Array.from(allCodes).join(",")+",sh000001";
@@ -2182,6 +2184,8 @@ function fetchRealQuotes(force){
   document.head.appendChild(s);
 }
 function emFallback(){
+  /* 确保pricePool存在 */
+  if(!simData.pricePool) simData.pricePool={};
   /* 腾讯实时行情失败时：切东方财富 push2 实时（JSONP+CORS，无防盗链） */
   const codes=Object.keys(TDX_CODES);
   const secids=codes.map(c=>(TDX_CODES[c].startsWith("sh")?"1":"0")+"."+c).join(",")+",1.000001";
