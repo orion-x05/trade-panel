@@ -3517,12 +3517,17 @@ function renderRank(){
       D1:"趋势突破", D2:"多因子量化", D3:"多空辩论",
       D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩"
     };
+    const sltpMap={
+      D1:{sl:7, tp:12}, D2:{sl:6, tp:8}, D3:{sl:5, tp:6},
+      D4:{sl:7, tp:10}, D5:{sl:6, tp:9}, D6:{sl:8, tp:15}
+    };
     const now=new Date();
     simData.players.forEach(p=>{
       const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
       const isRunning=p.holdings.length>0||p.trades.length>0;
       const statusCls=isRunning?"running":"done";
       const statusText=isRunning?"运行中":"已完成";
+      const sltp=sltpMap[p.id]||{sl:7,tp:10};
       const lastTime=p.trades.length?p.trades[p.trades.length-1].time:now.toISOString();
       const lastDate=new Date(lastTime);
       const timeStr=`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`;
@@ -3532,7 +3537,7 @@ function renderRank(){
             <span class="ec-name">${p.id} ${p.name}</span>
             <span class="ec-status ${statusCls}">${statusText}</span>
           </div>
-          <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${p.stopLoss||7}% · 止盈${p.takeProfit||10}%</div>
+          <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${sltp.sl}% · 止盈${sltp.tp}% · ATR吊灯保护</div>
           <div class="ec-stats">
             <div class="ec-stat">
               <div class="ec-label">持仓</div>
