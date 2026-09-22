@@ -3467,8 +3467,16 @@ function wxClass(wx){return wx==="火"?"wx-huo":wx==="土"?"wx-tu":wx==="金"?"w
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
   document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+name));
-  if(name==="global")setTimeout(()=>{if(document.getElementById("view-global").classList.contains("active"))renderGlobal();},60);
-  setTimeout(()=>{[eqChart,monthChart,yearChart,sectorChart].forEach(c=>c&&c.resize());},50);
+  /* 延迟更久，等tab完全显示后再resize和渲染图表 */
+  setTimeout(()=>{
+    /* 所有已知图表全部resize */
+    [eqChart,monthChart,yearChart,sectorChart,globalChart,externalChart].forEach(c=>{
+      if(c){try{c.resize();}catch(e){}}
+    });
+    /* 特定tab需要重新渲染 */
+    if(name==="global"){try{renderGlobal();}catch(e){}}
+    if(name==="review"){try{renderReview();}catch(e){}}
+  },100);
 }
 document.getElementById("tabNav").addEventListener("click",e=>{
   const btn=e.target.closest(".tab");
@@ -4380,20 +4388,23 @@ async function renderDetailMinute(code){
     const resp=await fetch(`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`);
     const jd=await resp.json();
     const dataObj=jd.data&&jd.data[tx]?jd.data[tx]:{};
-    const mins=dataObj.data||[];
-    const prevClose=dataObj.preClose||0;
+    /* 正确路径：dataObj.data.data 才是数组，每条格式："时间 价格 成交量 成交额" */
+    const innerData=dataObj.data||{};
+    const mins=innerData.data||[];
+    const prevClose=dataObj.qt&&dataObj.qt[4]?parseFloat(dataObj.qt[4]):0;
     if(!mins.length){if(minuteChart)minuteChart.clear();return;}
     const times=[],prices=[],avgs=[],vols=[];
     let totalVol=0,totalAmount=0;
     mins.forEach(m=>{
-      const parts=m.split(" ");
+      const parts=String(m).split(" ");
       const time=parts[0];
       const price=parseFloat(parts[1]);
       const vol=parseFloat(parts[2])||0;
+      const amount=parseFloat(parts[3])||price*vol;
       times.push(time);
       prices.push(price);
       totalVol+=vol;
-      totalAmount+=price*vol;
+      totalAmount+=amount;
       avgs.push(totalVol>0?totalAmount/totalVol:price);
       vols.push(vol);
     });
@@ -4699,20 +4710,23 @@ function renderSpMinKline(){
   const url=`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`;
   fetch(url).then(r=>r.json()).then(j=>{
     const data=j.data&&j.data[tx]?j.data[tx]:{};
-    const mins=data.data||[];
-    const preClose=data.preClose||0;
+    /* 正确路径：data.data.data 才是数组 */
+    const inner=data.data||{};
+    const mins=inner.data||[];
+    const preClose=data.qt&&data.qt[4]?parseFloat(data.qt[4]):0;
     if(!mins.length){sideKlineChart.clear();return;}
     const times=[],prices=[],avgPrices=[],vols=[];
     let totalVol=0,totalAmount=0;
     mins.forEach((m,i)=>{
-      const parts=m.split(" ");
+      const parts=String(m).split(" ");
       const time=parts[0];
       const price=parseFloat(parts[1]);
       const vol=parseFloat(parts[2])||0;
+      const amount=parseFloat(parts[3])||price*vol;
       times.push(time);
       prices.push(price);
       totalVol+=vol;
-      totalAmount+=price*vol;
+      totalAmount+=amount;
       avgPrices.push(totalVol>0?totalAmount/totalVol:price);
       vols.push(vol);
     });
