@@ -4880,7 +4880,9 @@ window.addEventListener("DOMContentLoaded",()=>{
             if(!p.holdings) p.holdings=[];
             if(p.cash===undefined) p.cash=100000;
             if(p.asset===undefined) p.asset=p.cash;
-            if(!p.assetHistory) p.assetHistory=[100000];
+            /* 兼容下划线命名，统一转成驼峰 */
+            if(!p.assetHistory && p.asset_history) p.assetHistory=p.asset_history;
+            if(!p.assetHistory) p.assetHistory=[INIT_CASH];
           });
           try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
           
