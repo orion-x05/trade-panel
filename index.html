@@ -4863,6 +4863,12 @@ window.addEventListener("DOMContentLoaded",()=>{
               if(p.asset===undefined) p.asset=p.cash;
               if(!p.assetHistory && p.asset_history) p.assetHistory=p.asset_history;
               if(!p.assetHistory) p.assetHistory=[INIT_CASH];
+              /* 统一持仓字段名：cost转成buyPrice，buyDate转成buyTime */
+              p.holdings.forEach(h=>{
+                if(!h.buyPrice && h.cost) h.buyPrice=h.cost;
+                if(!h.buyTime && h.buyDate) h.buyTime=h.buyDate;
+                if(!h.reason && h.buyReason) h.reason=h.buyReason;
+              });
             });
             /* 保存到localStorage */
             try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
