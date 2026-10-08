@@ -1331,7 +1331,7 @@ function alertSellSignal(role, stockName, code, price, profit){
     <div class="panel-body" style="padding:16px">
 
     <!-- 6 Agent 卡片 - 一行6个 -->
-    <div class="agent-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">
+    <div class="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:16px">
       <button class="agent-card" onclick="privateChatAgent('D1')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">锋</span>
         <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D1 破锋</span><br><span style="font-size:10px;color:var(--text-faint)">趋势突破</span></span>
