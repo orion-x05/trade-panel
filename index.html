@@ -4649,6 +4649,20 @@ function renderCharts(){
   });
 
   if(!sectorChart)sectorChart=echarts.init($("chartSector"));
+  /* 兜底：如果sectors为空，从pricePool按行业聚合 */
+  if(!simData.sectors||Object.keys(simData.sectors).length===0){
+    const pool=Object.values(simData.pricePool||{}).filter(s=>s&&s.price>0&&s.industry);
+    const ind={};
+    pool.forEach(s=>{
+      const k=s.industry||"其他";
+      if(!ind[k])ind[k]={chg:0,n:0,flow:0};
+      ind[k].chg+=(s.chg||0);ind[k].n++;
+    });
+    simData.sectors={};
+    Object.entries(ind).forEach(([k,v])=>{
+      simData.sectors[k]={strength:Math.max(0.05,Math.min(0.95,0.5+v.chg/(v.n*20))),flow:v.chg>0?0.1:-0.1};
+    });
+  }
   const sKeys=Object.keys(simData.sectors).sort((a,b)=>simData.sectors[b].strength-simData.sectors[a].strength);
   sectorChart.setOption({
     backgroundColor:"transparent",animation:false,
@@ -4828,7 +4842,7 @@ function retRowsHtml(rows){
       <span class="${r.ret>=0?"up":"down"}">${fmtPct(r.ret)}</span>
       <span class="num">${r.pnl>=0?"+":""}${fmt(r.pnl)}</span>
       <span class="flat">交易${r.trades} · 胜率${r.winRate}%</span>
-      <span class="flat">回撤${(r.draw*100).toFixed(1)}%</span>
+      <span class="flat">回撤${((r.draw||0)*100).toFixed(1)}%</span>
     </div>`).join("");
 }
 function idxChips(arr){
@@ -5176,7 +5190,7 @@ function openModal(role){
       <div>账户权益 <b>${fmt(p.asset)}</b></div>
       <div>实时收益率 <b class="${pctColor(ret)}">${fmtPct(ret)}</b></div>
       <div>当前持仓 <b>${p.holdings.length} 只</b></div>
-      <div>累计最大回撤 <b class="${p.maxDrawdown>=0.08?"down":""}">${(p.maxDrawdown*100).toFixed(2)}%</b></div>
+      <div>累计最大回撤 <b class="${(p.maxDrawdown||0)>=0.08?"down":""}">${((p.maxDrawdown||0)*100).toFixed(2)}%</b></div>
     </div>
     <h4>策略简述</h4>
     <p>${a.desc}</p>
