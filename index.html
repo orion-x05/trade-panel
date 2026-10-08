@@ -4304,6 +4304,14 @@ function renderRank(){
     const mv=p.asset-p.cash;
     const floatPnl=p.trades.filter(t=>t.type==="sell").reduce((a,t)=>a+(t.profit||0),0);
     const trades=p.trades.length;
+    /* 实时计算胜率和盈亏比 */
+    const sells=p.trades.filter(t=>t.type==="sell");
+    const wins=sells.filter(t=>(t.profit||0)>0);
+    const losses=sells.filter(t=>(t.profit||0)<0);
+    const winRate=sells.length?wins.length/sells.length:0;
+    const avgWin=wins.length?wins.reduce((a,t)=>a+(t.profit||0),0)/wins.length:0;
+    const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+(t.profit||0),0)/losses.length):0;
+    const plRatio=avgLoss>0?avgWin/avgLoss:(wins.length?99:0);
     const rb=idx===0?"rank-1":idx===1?"rank-2":idx===2?"rank-3":"";
     const maxDrawCls=p.maxDrawdown>=0.08?"down":"";
     tb.insertAdjacentHTML("beforeend",`<tr data-role="${p.id}" onclick="openModal('${p.id}')">
@@ -4319,8 +4327,8 @@ function renderRank(){
       <td class="r num ${pctColor(ret)}">${pct(ret)}</td>
       <td class="r num ${floatPnl>=0?"up":"down"}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
       <td class="r num">${trades}</td>
-      <td class="r num">${((p.winRate||0)*100).toFixed(1)}%</td>
-      <td class="r num">${(p.plRatio||0).toFixed(2)}</td>
+      <td class="r num">${(winRate*100).toFixed(1)}%</td>
+      <td class="r num">${plRatio.toFixed(2)}</td>
       <td class="r num">${(p.sharpe||0).toFixed(2)}</td>
       <td class="r num ${maxDrawCls}">${((p.maxDrawdown||0)*100).toFixed(2)}%</td>
       <td style="color:var(--text-faint);font-size:12px">DeepSeek</td>
