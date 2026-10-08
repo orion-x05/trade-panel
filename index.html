@@ -3880,8 +3880,7 @@ function tick(){
             }
           }
         }
-        /* 技术卖出信号：巨量长上影、放量下跌、KDJ死叉、高位放量十字星/滞涨、顶背离超买前高受阻、跌破MA20；MACD仅作参考不参与决策 */
-        /* 群聊防守纪律开关：checkbox勾选才启用技术防守信号 */
+        /* 技术卖出信号：群聊防守纪律开关 + 各角色风格差异化 */
         const learnOn=!document.getElementById("simRuleLearn")||document.getElementById("simRuleLearn").checked;
         if(!signal&&learnOn){
           const kdjCross=st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK<st.kdjD&&st.kdjKPrev>=st.kdjDPrev;
@@ -3890,34 +3889,32 @@ function tick(){
           const bigVol=st.vol>=1.5;
           const upperShadow=(st.dayHigh||st.price)-Math.max(st.price,st.open);
           const body=Math.abs(st.price-st.open);
-          /* 巨量长上影线：量比≥2+上影线是实体2倍+高位 → 套牢盘重（参考实战） */
-          if(st.vol>=2&&body>0&&upperShadow/body>=2&&high)signal="巨量长上影·套牢盘重·清仓";
-          /* 高位崩盘保护：当日跌幅>7%（跌停级）+高位（高于MA20 5%以上）→ 跌破MA10清仓；
-             跌破MA5且MA5<MA10（均线走弱）也清仓；趋势未走坏（线没破）则继续持有 */
-          else if((st.chg||0)<-7&&st.ma20&&st.price>st.ma20*1.05){
+          const chg=st.chg||0, vol=st.vol||1;
+          /* 角色风格系数：1=严格防守, 0.6=宽松, 1.3=极严格 */
+          const roleStrict={D1:0.6,D2:1.3,D3:0.7,D4:1.0,D5:0.8,D6:0.5}[p.id]||1.0;
+          /* 巨量长上影线：量比≥2×style + 上影线≥实体2倍 + 高位 */
+          if(vol>=2*roleStrict&&body>0&&upperShadow/body>=2&&high)signal=`${p.id}风格·巨量长上影清仓`;
+          /* 高位崩盘保护：暴跌>7%×style系数 + 高位 → 清仓 */
+          else if(chg<-(7*roleStrict)&&st.ma20&&st.price>st.ma20*1.05){
             if(st.price<(st.ma10||0))signal="高位崩盘·跌破MA10·清仓";
             else if(st.price<(st.ma5||0)&&st.ma5<(st.ma10||0))signal="高位崩盘·跌破MA5走弱·清仓";
           }
-          /* 放量下跌：跌幅>3%且量比≥1.5 → 比KDJ更早的离场信号 */
-          else if((st.chg||0)<-3&&st.vol>=1.5)signal="放量下跌·主力出逃·清仓";
-          else if(cross&&high&&bigVol)signal="高位放量十字星，警惕见顶，清仓";
-          else if(high&&bigVol&&(st.chg||0)<2)signal="高位放量滞涨，清仓离场";
-          /* 顶背离超买·前高受阻（实战经验：前高过不去+超买→下午止盈清仓）：
-             日内冲高后大幅回落+RSI超买+远离MA20（近似前高受阻） */
-          else if(st.dayHigh&&st.price<st.dayHigh*0.985&&(st.rsi6||50)>=75&&st.ma20&&st.price>st.ma20*1.08)signal="顶背离超买·前高受阻·止盈";
-          else if(kdjCross&&st.price<st.ma5)signal="KDJ死叉且跌破MA5，清仓";
-          else if(kdjCross){
-            /* KDJ死叉+大资金流入+股价站上MA20 → 暂缓卖出（国家队/机构还在买，可能只是洗盘） */
-            const fsRT=fundSignalRT(st,marketEnv);
-            if(fsRT.score>=1&&st.price>st.ma20){
-              log("info",`【${p.id}】${h.name} KDJ死叉但大资金${fsRT.tag}且站上MA20，暂缓卖出继续观察`);
-            }else{
-              signal="KDJ死叉，清仓";
-            }
+          /* 放量下跌：跌幅>3%×style系数 且 量比≥1.5 */
+          else if(chg<-(3*roleStrict)&&vol>=1.5)signal=`${p.id}风格·放量下跌清仓`;
+          /* 高位放量十字星/滞涨（D2/D4严格触发，D1/D6宽松） */
+          else if(cross&&high&&bigVol&&roleStrict>=1.0)signal="高位放量十字星·清仓";
+          else if(high&&bigVol&&chg<2&&roleStrict>=1.0)signal="高位放量滞涨·清仓";
+          /* 顶背离超买：D2/D4/D5严格，D1/D6宽松 */
+          else if(st.dayHigh&&st.price<st.dayHigh*0.985&&(st.rsi6||50)>=75&&st.ma20&&st.price>st.ma20*1.08&&roleStrict>=0.8)signal="顶背离超买·止盈";
+          /* KDJ死叉：D2严格直接跑；D1/D6宽松需跌破MA5；D3反调不看KDJ */
+          else if(kdjCross&&p.id!=="D3"){
+            if(roleStrict>=1.0||st.price<st.ma5)signal="KDJ死叉·清仓";
           }
+          /* 跌破MA20：D5低吸才管支撑，D2衡严格，D1/D6宽松需超3% */
           else if(st.price<st.ma20){
             const belowPct=(st.ma20-st.price)/st.ma20*100;
-            if(belowPct>2||(st.vol||1)>=1.2)signal=belowPct>2?"跌破MA20超2%，清仓离场":"放量跌破MA20，清仓离场";
+            const threshold=roleStrict>=1.0?1.5:roleStrict<0.7?3.0:2.0;
+            if(belowPct>threshold||vol>=1.2)signal=`跌破MA20防守位(${belowPct.toFixed(1)}%)·清仓`;
           }
         }
         if(signal){
