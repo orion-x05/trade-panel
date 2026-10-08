@@ -74,27 +74,28 @@ ${recentChat}
 }
 
 
-/* 像微信消息一样发提醒（WxPusher） */
+/* 像微信消息一样发提醒（PushPlus 主推 + WxPusher 兜底） */
 async function sendWeChatAlert(title, desp){
-  const token = localStorage.getItem("wxpusherToken") || "AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
+  const pt=localStorage.getItem("pushplusToken")||"";
+  if(pt){
+    try{
+      const r=await fetch("https://www.pushplus.plus/send",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({token:pt,title:title,content:desp,template:"html"})});
+      const j=await r.json();
+      console.log("PushPlus:",title,j.code,j.msg);
+      if(j&&j.code===200)return;
+    }catch(e){console.log("PushPlus 失败:",e);}
+  }
+  /* WxPusher 兜底 */
+  const token=localStorage.getItem("wxpusherToken")||"AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
   try{
-    const uid = await getWxUid();
-    if(!uid){ console.log("微信推送：未关注 WxPusher 应用"); return; }
-    const resp = await fetch("https://wxpusher.zjiecode.com/api/send/message", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        appToken: token,
-        content: desp,
-        summary: title,
-        contentType: 2,
-        uids: [uid]
-      })
-    });
-    const j = await resp.json();
-    console.log("WxPusher:", title, JSON.stringify(j));
+    const uid=localStorage.getItem("wxpusherUid")||"UID_NhjBPrz8l5aA3MCbRLEfE2xrVW3T";
+    const resp=await fetch("https://wxpusher.zjiecode.com/api/send/message",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({appToken:token,content:desp,summary:title,contentType:2,uids:[uid]})});
+    const j=await resp.json();
+    console.log("WxPusher:",title,JSON.stringify(j));
   }catch(e){
-    console.log("WxPusher 失败:", e);
+    console.log("WxPusher 失败:",e);
   }
 }
 
@@ -378,27 +379,28 @@ ${recentChat}
 }
 
 
-/* 像微信消息一样发提醒（WxPusher） */
+/* 像微信消息一样发提醒（PushPlus 主推 + WxPusher 兜底） */
 async function sendWeChatAlert(title, desp){
-  const token = localStorage.getItem("wxpusherToken") || "AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
+  const pt=localStorage.getItem("pushplusToken")||"";
+  if(pt){
+    try{
+      const r=await fetch("https://www.pushplus.plus/send",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({token:pt,title:title,content:desp,template:"html"})});
+      const j=await r.json();
+      console.log("PushPlus:",title,j.code,j.msg);
+      if(j&&j.code===200)return;
+    }catch(e){console.log("PushPlus 失败:",e);}
+  }
+  /* WxPusher 兜底 */
+  const token=localStorage.getItem("wxpusherToken")||"AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
   try{
-    const uid = await getWxUid();
-    if(!uid){ console.log("微信推送：未关注 WxPusher 应用"); return; }
-    const resp = await fetch("https://wxpusher.zjiecode.com/api/send/message", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        appToken: token,
-        content: desp,
-        summary: title,
-        contentType: 2,
-        uids: [uid]
-      })
-    });
-    const j = await resp.json();
-    console.log("WxPusher:", title, JSON.stringify(j));
+    const uid=localStorage.getItem("wxpusherUid")||"UID_NhjBPrz8l5aA3MCbRLEfE2xrVW3T";
+    const resp=await fetch("https://wxpusher.zjiecode.com/api/send/message",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({appToken:token,content:desp,summary:title,contentType:2,uids:[uid]})});
+    const j=await resp.json();
+    console.log("WxPusher:",title,JSON.stringify(j));
   }catch(e){
-    console.log("WxPusher 失败:", e);
+    console.log("WxPusher 失败:",e);
   }
 }
 
@@ -2133,8 +2135,8 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div style="font-size:13px;color:var(--text-dim);margin-bottom:6px">DeepSeek API Key（用于 Agent 群聊 / 私聊 / 报告 / 复盘）</div>
       <input id="setDeepseekKey" type="password" placeholder="sk-..." style="width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:#0f1620;color:var(--text);font-size:14px;margin-bottom:14px;box-sizing:border-box">
 
-      <div style="font-size:13px;color:var(--text-dim);margin-bottom:6px">WxPusher appToken（微信消息推送，可选，默认已内置）</div>
-      <input id="setServerKey" type="text" placeholder="AT_..." style="width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:#0f1620;color:var(--text);font-size:14px;margin-bottom:16px;box-sizing:border-box">
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:6px">PushPlus token（微信推送，免费约200条/天，可选）</div>
+      <input id="setServerKey" type="text" placeholder="在 pushplus.plus 扫码登录后获取" style="width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:#0f1620;color:var(--text);font-size:14px;margin-bottom:16px;box-sizing:border-box">
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <button class="gmk-btn" style="padding:10px 20px;background:#10b981;color:#fff;font-size:14px;font-weight:600" onclick="saveApiConfig()">保存配置</button>
@@ -3193,26 +3195,20 @@ function initKnowledgeFolds(){
   });
 }
 setTimeout(initKnowledgeFolds, 1000);
-/* ==================== 微信推送（WxPusher） ==================== */
+/* ==================== 微信推送（PushPlus 主推 + WxPusher 兜底） ==================== */
 const WECHAT_PUSH_KEY = localStorage.getItem("wxpusherToken") || "AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
-/* 自动获取已关注应用者的 uid（首次关注后自动发现并缓存） */
-async function getWxUid(){
-  let uid=localStorage.getItem("wxpusherUid")||"UID_NhjBPrz8l5aA3MCbRLEfE2xrVW3T";
-  if(uid) return uid;
-  try{
-    const r=await fetch(`https://wxpusher.zjiecode.com/api/fun/wxuser/v2?appToken=${WECHAT_PUSH_KEY}&page=1&pageSize=5`);
-    const j=await r.json();
-    const rec=j&&j.data&&j.data.records&&j.data.records[0];
-    if(rec&&rec.uid){uid=rec.uid;localStorage.setItem("wxpusherUid",uid);return uid;}
-  }catch(e){}
-  return null;
-}
 function sendWechat(title, content){
   (async()=>{
     try{
-      if(!WECHAT_PUSH_KEY)return;
-      const uid=await getWxUid();
-      if(!uid){log('warn','微信推送：请先在微信关注该 WxPusher 应用');return;}
+      const pt=localStorage.getItem("pushplusToken")||"";
+      if(pt){
+        const r=await fetch("https://www.pushplus.plus/send",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({token:pt,title:title,content:content,template:"html"})});
+        const j=await r.json();
+        if(j&&j.code===200){log('info', `微信推送已发送: ${title}`);return;}
+      }
+      /* WxPusher 兜底 */
+      const uid=localStorage.getItem("wxpusherUid")||"UID_NhjBPrz8l5aA3MCbRLEfE2xrVW3T";
       await fetch("https://wxpusher.zjiecode.com/api/send/message",{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({appToken:WECHAT_PUSH_KEY,content:content,summary:title,contentType:2,uids:[uid]})
@@ -4236,7 +4232,7 @@ function fillSettings(){
   const dk=document.getElementById("setDeepseekKey");
   const sk=document.getElementById("setServerKey");
   if(dk) dk.value=localStorage.getItem("deepseekApiKey")||"";
-  if(sk) sk.value=localStorage.getItem("wxpusherToken")||"";
+  if(sk) sk.value=localStorage.getItem("pushplusToken")||"";
   const msg=document.getElementById("setApiMsg"); if(msg) msg.textContent="";
 }
 function saveApiConfig(){
@@ -4244,24 +4240,23 @@ function saveApiConfig(){
   const sk=document.getElementById("setServerKey").value.trim();
   if(dk) localStorage.setItem("deepseekApiKey",dk);
   else localStorage.removeItem("deepseekApiKey");
-  if(sk) localStorage.setItem("wxpusherToken",sk);
-  else localStorage.removeItem("wxpusherToken");
+  if(sk) localStorage.setItem("pushplusToken",sk);
+  else localStorage.removeItem("pushplusToken");
   const msg=document.getElementById("setApiMsg");
   msg.textContent="✅ 已保存"; msg.style.color="var(--green)";
 }
 async function testPush(){
-  const token=localStorage.getItem("wxpusherToken")||"AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
+  const pt=localStorage.getItem("pushplusToken")||"";
   const msg=document.getElementById("setApiMsg");
+  if(!pt){ msg.textContent="⚠️ 请先在设置里填写 PushPlus token"; msg.style.color="var(--yellow)"; return; }
   msg.textContent="发送中…"; msg.style.color="var(--text-dim)";
   try{
-    const uid=await getWxUid();
-    if(!uid){ msg.textContent="⚠️ 微信还没人关注该应用，请先在微信扫码关注后再测试"; msg.style.color="var(--yellow)"; return; }
-    const r=await fetch("https://wxpusher.zjiecode.com/api/send/message",{
+    const r=await fetch("https://www.pushplus.plus/send",{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({appToken:token,content:"这是一条测试消息，说明微信推送配置正常。",summary:"Orion-X 测试推送",contentType:2,uids:[uid]})
+      body:JSON.stringify({token:pt,title:"Orion-X 测试推送",content:"这是一条测试消息，说明微信推送配置正常。",template:"html"})
     });
     const j=await r.json();
-    if(j&&j.code===1000){ msg.textContent="✅ 推送成功，请查收微信"; msg.style.color="var(--green)"; }
+    if(j&&j.code===200){ msg.textContent="✅ 推送成功，请查收微信"; msg.style.color="var(--green)"; }
     else { msg.textContent="❌ 推送失败："+(j&&j.msg||"未知错误"); msg.style.color="var(--red)"; }
   }catch(e){ msg.textContent="❌ 网络错误"; msg.style.color="var(--red)"; }
 }
@@ -10661,27 +10656,28 @@ ${recentChat}
 /* ==================== 微信消息提醒（Server酱） ==================== */
 const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7";
 
-/* 像微信消息一样发提醒（WxPusher） */
+/* 像微信消息一样发提醒（PushPlus 主推 + WxPusher 兜底） */
 async function sendWeChatAlert(title, desp){
-  const token = localStorage.getItem("wxpusherToken") || "AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
+  const pt=localStorage.getItem("pushplusToken")||"";
+  if(pt){
+    try{
+      const r=await fetch("https://www.pushplus.plus/send",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({token:pt,title:title,content:desp,template:"html"})});
+      const j=await r.json();
+      console.log("PushPlus:",title,j.code,j.msg);
+      if(j&&j.code===200)return;
+    }catch(e){console.log("PushPlus 失败:",e);}
+  }
+  /* WxPusher 兜底 */
+  const token=localStorage.getItem("wxpusherToken")||"AT_K0RgcAfzoYtUjKRWDu5R9UMmkNlvMizV";
   try{
-    const uid = await getWxUid();
-    if(!uid){ console.log("微信推送：未关注 WxPusher 应用"); return; }
-    const resp = await fetch("https://wxpusher.zjiecode.com/api/send/message", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        appToken: token,
-        content: desp,
-        summary: title,
-        contentType: 2,
-        uids: [uid]
-      })
-    });
-    const j = await resp.json();
-    console.log("WxPusher:", title, JSON.stringify(j));
+    const uid=localStorage.getItem("wxpusherUid")||"UID_NhjBPrz8l5aA3MCbRLEfE2xrVW3T";
+    const resp=await fetch("https://wxpusher.zjiecode.com/api/send/message",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({appToken:token,content:desp,summary:title,contentType:2,uids:[uid]})});
+    const j=await resp.json();
+    console.log("WxPusher:",title,JSON.stringify(j));
   }catch(e){
-    console.log("WxPusher 失败:", e);
+    console.log("WxPusher 失败:",e);
   }
 }
 
