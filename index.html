@@ -3331,7 +3331,9 @@ async function pickFromFullMarket(manual){
     const passed=[];
     map.forEach(it=>{
       const name=String(it.f14||"");
+      const code=String(it.f12||"");
       if(/ST|退|\*/.test(name))return;
+      if(code.startsWith("688"))return; /* 科创板：需50万资产，当前不满足 */
       const price=it.f2,chg=it.f3,lb=it.f10,turn=it.f8,amt=it.f6,amp=it.f7,fmv=it.f21;
       if(!(price>=c.priceMin))return;
       if(!(chg>=c.chgMin&&chg<=c.chgMax))return;
@@ -3575,6 +3577,12 @@ function overlapCount(code){return simData.players.filter(p=>p.holdings.some(h=>
 const MAX_LOTS=2; /* 每只股票最多2批（首次建仓+1次加仓） */
 function doBuy(p,target,now,ratio,skipPriceCheck){
   if(!canBuyNow(now)){log("warn",`【${p.id}】买入拦截：已收盘（每天15:00后不再买入）`);return false;}
+  /* ① 板块权限校验：科创板688需50万资产，创业板300需10万资产 */
+  const totalAsset=p.asset||(p.cash+p.holdings.reduce((a,h)=>a+(h.price||h.buyPrice||0)*h.qty,0));
+  const isStar=target.code&&target.code.startsWith("688");
+  const isChiNext=target.code&&target.code.startsWith("300");
+  if(isStar&&totalAsset<500000){log("warn",`【${p.id}】拦截：${target.name}（688科创板）需50万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
+  if(isChiNext&&totalAsset<100000){log("warn",`【${p.id}】拦截：${target.name}（300创业板）需10万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
   ratio=ratio||1;
   /* 计算具体买入原因：D3生成多空辩论详情，其他角色用预设原因 */
   const st=simData.pricePool[target.code];
