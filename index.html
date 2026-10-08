@@ -3881,7 +3881,9 @@ function tick(){
           }
         }
         /* 技术卖出信号：巨量长上影、放量下跌、KDJ死叉、高位放量十字星/滞涨、顶背离超买前高受阻、跌破MA20；MACD仅作参考不参与决策 */
-        if(!signal){
+        /* 群聊防守纪律开关：checkbox勾选才启用技术防守信号 */
+        const learnOn=!document.getElementById("simRuleLearn")||document.getElementById("simRuleLearn").checked;
+        if(!signal&&learnOn){
           const kdjCross=st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK<st.kdjD&&st.kdjKPrev>=st.kdjDPrev;
           const cross=(Math.abs(st.open-st.price)/st.price)<0.006;
           const high=st.price>=(st.dayHigh||st.price)*0.99;
