@@ -2922,6 +2922,11 @@ function load(){
         /* 加载成功，备份一份 */
         try{if(tryKey===STORE_KEY)localStorage.setItem(BACKUP_KEY,raw);}catch(e){}
         simData.players.forEach(p=>{p.asset=p.asset||p.cash;if(!p.assetHistory||!p.assetHistory.length)p.assetHistory=[INIT_CASH];
+          /* 补默认统计字段，防止旧数据缺字段导致渲染报错 */
+          if(p.winRate===undefined||p.winRate===null)p.winRate=0;
+          if(p.plRatio===undefined||p.plRatio===null)p.plRatio=0;
+          if(p.sharpe===undefined||p.sharpe===null)p.sharpe=0;
+          if(p.maxDrawdown===undefined||p.maxDrawdown===null)p.maxDrawdown=0;
           if(p.holdings&&p.holdings.length>MAX_POS){
             p.holdings.sort((a,b)=>(b.buyTime||"").localeCompare(a.buyTime||""));
             p.holdings=p.holdings.slice(0,MAX_POS);
@@ -4342,10 +4347,10 @@ function renderRank(){
       <td class="r num ${pctColor(ret)}">${pct(ret)}</td>
       <td class="r num ${floatPnl>=0?"up":"down"}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
       <td class="r num">${trades}</td>
-      <td class="r num">${(p.winRate*100).toFixed(1)}%</td>
-      <td class="r num">${p.plRatio.toFixed(2)}</td>
-      <td class="r num">${p.sharpe.toFixed(2)}</td>
-      <td class="r num ${maxDrawCls}">${(p.maxDrawdown*100).toFixed(2)}%</td>
+      <td class="r num">${((p.winRate||0)*100).toFixed(1)}%</td>
+      <td class="r num">${(p.plRatio||0).toFixed(2)}</td>
+      <td class="r num">${(p.sharpe||0).toFixed(2)}</td>
+      <td class="r num ${maxDrawCls}">${((p.maxDrawdown||0)*100).toFixed(2)}%</td>
       <td style="color:var(--text-faint);font-size:12px">DeepSeek</td>
     </tr>`);
   });
