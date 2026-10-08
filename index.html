@@ -4302,7 +4302,7 @@ function renderRank(){
     const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
     const heldQty=p.holdings.reduce((a,h)=>a+h.qty,0);
     const mv=p.asset-p.cash;
-    const floatPnl=p.trades.filter(t=>t.type==="sell").reduce((a,t)=>a+t.profit,0);
+    const floatPnl=p.trades.filter(t=>t.type==="sell").reduce((a,t)=>a+(t.profit||0),0);
     const trades=p.trades.length;
     const rb=idx===0?"rank-1":idx===1?"rank-2":idx===2?"rank-3":"";
     const maxDrawCls=p.maxDrawdown>=0.08?"down":"";
