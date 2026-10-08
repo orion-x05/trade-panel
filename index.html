@@ -3251,7 +3251,7 @@ function marketStateText(d){
   if(forceTrade)return"模拟交易中（强制开市）";
   const dow=d.getDay();if(dow===0||dow===6)return"周末休市";
   const hm=d.getHours()*60+d.getMinutes();
-  if(hm<570)return"盘前休市";if(hm<690)return"上午交易时段";if(hm<780)return"午间休市";
+  if(hm<555)return"盘前休市";if(hm<565)return"集合竞价(9:15-9:25)·不交易";if(hm<570)return"等待开盘";if(hm<690)return"上午交易时段";if(hm<780)return"午间休市";
   if(hm<900)return"下午交易时段";return"已收盘";
 }
 function todayStr(d){return`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
@@ -3262,8 +3262,26 @@ function afterClose(d){
   const hm=d.getHours()*60+d.getMinutes();
   return hm>=900; /* 15:00 = 900 分钟 */
 }
-function canBuyNow(d){return !afterClose(d);}
+function canBuyNow(d){
+  if(afterClose(d))return false;
+  const hm=d.getHours()*60+d.getMinutes();
+  /* 集合竞价 9:15-9:25：不主动买入（价格不确定，等9:30连续竞价再买） */
+  if(hm>=555&&hm<565)return false;
+  return true;
+}
 function canSellNow(d){return !afterClose(d);}
+/* 群聊防守纪律：统计最近群聊多空情绪，偏空则降仓位 */
+function groupChatDefenseFactor(){
+  try{
+    const hist=JSON.parse(localStorage.getItem("agentChatHistory")||"[]");
+    const recent=hist.slice(-20).map(m=>m.text||m.content||"").join(" ");
+    const bearish=(recent.match(/风险|跌|空|逃|减仓|止损|别买|不要|高位|破位|卖|清仓/i)||[]).length;
+    const bullish=(recent.match(/买|涨|多|突破|加仓|机会|牛|上|强|启动/i)||[]).length;
+    if(bearish>bullish*1.5)return 0.5; /* 群聊偏空，仓位减半 */
+    if(bearish>bullish)return 0.75; /* 略偏空，仓位75折 */
+    return 1.0;
+  }catch(e){return 1.0;}
+}
 
 /* ==================== 全市场自动选股（东方财富 clist · JSONP） ==================== */
 const PICK_CFG={
@@ -3583,6 +3601,9 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const isChiNext=target.code&&target.code.startsWith("300");
   if(isStar&&totalAsset<500000){log("warn",`【${p.id}】拦截：${target.name}（688科创板）需50万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
   if(isChiNext&&totalAsset<100000){log("warn",`【${p.id}】拦截：${target.name}（300创业板）需10万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
+  /* 群聊防守纪律：群聊偏空时仓位折扣 */
+  const defFactor=groupChatDefenseFactor();
+  if(defFactor<1.0){ratio=ratio*defFactor;log("info",`【${p.id}】群聊防守：偏空，仓位${Math.round(defFactor*100)}%`);}
   ratio=ratio||1;
   /* 计算具体买入原因：D3生成多空辩论详情，其他角色用预设原因 */
   const st=simData.pricePool[target.code];
