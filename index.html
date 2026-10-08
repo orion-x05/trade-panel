@@ -74,8 +74,18 @@ ${recentChat}
 }
 
 
+/* 推送防重：24小时内同一标题只推一次 */
+const _pushDedup={};
+function _shouldPush(title){
+  const now=Date.now();
+  const last=_pushDedup[title]||0;
+  if(now-last < 24*3600*1000) return false;
+  _pushDedup[title]=now;
+  return true;
+}
 /* 像微信消息一样发提醒（WxPusher 极简 SPT，无需订阅） */
 async function sendWeChatAlert(title, desp){
+  if(!_shouldPush(title)){ console.log("推送拦截(24h内重复):",title); return; }
   const spt=localStorage.getItem("wxpusherSpt")||"SPT_Qs5NeIGToK1HARaljMMAqWXXnEaa";
   const content=`## ${title}\n\n${desp}`;
   try{
@@ -367,8 +377,10 @@ ${recentChat}
 }
 
 
+/* 推送防重：24小时内同一标题只推一次 */
 /* 像微信消息一样发提醒（WxPusher 极简 SPT，无需订阅） */
 async function sendWeChatAlert(title, desp){
+  if(!_shouldPush(title)){ console.log("推送拦截(24h内重复):",title); return; }
   const spt=localStorage.getItem("wxpusherSpt")||"SPT_Qs5NeIGToK1HARaljMMAqWXXnEaa";
   const content=`## ${title}\n\n${desp}`;
   try{
@@ -2854,59 +2866,21 @@ async function preloadATR(){
 }
 /* ==================== 今日手动持仓初始化（只执行一次） ==================== */
 function addTodayManualHoldings(){
-  const today = new Date().toISOString().slice(0,10);
-  const markKey = `manualHoldings_v4_${today}`;
-  if(localStorage.getItem(markKey)) return; // 今天已经加过了，不重复
-  
+  /* 已废弃：不再自动添加三力制药等假持仓（成交时间/价格/标签均不符合真实交易）。
+     改为清理历史残留脏数据。 */
   if(!simData || !simData.players) return;
-  const now = new Date();
-  const nowStr = now.toISOString();
-  
-  // 佣金：万1.5最低5元
-  const calcFee = amount => Math.max(amount * 0.00015, 5);
-  
-  // 把手动持仓的股票加到行情池，避免渲染时找不到行情数据不显示
-  const manualStocks = {
-    '603439': {code:'603439', name:'三力制药', sector:'医药', industry:'中药', price:14.14, open:15.17, dayHigh:15.17, dayLow:13.58, vol:1.2, chg:2.54, ma5:14.2, ma10:13.8, ma20:13.2, ma60:12.5, wx:'水'},
-    '001225': {code:'001225', name:'和泰机电', sector:'机械设备', industry:'通用设备', price:43.52, open:43.2, dayHigh:44.0, dayLow:42.8, vol:1.5, chg:0.74, ma5:43.0, ma10:42.5, ma20:41.8, ma60:40.2, wx:'金'},
-    '300931': {code:'300931', name:'通用电梯', sector:'机械设备', industry:'通用设备', price:15.80, open:15.5, dayHigh:16.0, dayLow:15.2, vol:2.0, chg:1.94, ma5:15.2, ma10:14.8, ma20:14.2, ma60:13.5, wx:'土'}
-  };
-  if(!simData.pricePool) simData.pricePool = {};
-  Object.values(manualStocks).forEach(st => {
-    if(!simData.pricePool[st.code]) simData.pricePool[st.code] = st;
+  const dirtyCodes=['603439']; // 三力制药脏持仓
+  let cleaned=0;
+  simData.players.forEach(p=>{
+    const before=p.holdings.length;
+    p.holdings=p.holdings.filter(h=>!dirtyCodes.includes(h.code));
+    p.trades=p.trades.filter(t=>!dirtyCodes.includes(t.code));
+    cleaned+=(before-p.holdings.length);
   });
-  
-  // D2：三力制药(603439) 今早打板 15.17元 1300股
-  const d2 = simData.players.find(p => p.id === 'D2');
-  if(d2){
-    const price = 15.17, qty = 1300;
-    const amount = price * qty;
-    const fee = calcFee(amount);
-    const costPer = (amount + fee) / qty;
-    d2.cash -= (amount + fee);
-    d2.holdings.push({
-      code: '603439', name: '三力制药', sector: '医药', industry: '中药',
-      qty, buyPrice: costPer, buyTime: nowStr, reason: '早盘打板买入',
-      lots: [{price, qty, time: nowStr, reason: '早盘打板买入', fee}]
-    });
-    d2.trades.push({type:'buy', code:'603439', name:'三力制药', qty, price, fee, time: nowStr, reason:'早盘打板买入'});
+  if(cleaned>0){
+    save();
+    console.log('已清理脏持仓（三力制药）',cleaned,'条');
   }
-  
-  // D4：和泰机电(001225) 43.52元 400股
-  const d4 = simData.players.find(p => p.id === 'D4');
-  if(d4){
-    // 先把通用电梯删掉
-    const before = d4.holdings.length;
-    d4.holdings = d4.holdings.filter(h => h.code !== '300931');
-    if(d4.holdings.length < before){
-      // 如果删掉了通用电梯，把对应的钱退回来
-      d4.cash += 15.80 * 1000 + 5; // 1000股*15.80 + 5元佣金
-    }
-  }
-  
-  save();
-  localStorage.setItem(markKey, '1');
-  console.log('今日手动持仓已添加：D2三力制药、D4和泰机电+通用电梯');
 }
 function load(){
   const BACKUP_KEY = STORE_KEY + "_backup";
@@ -10621,8 +10595,10 @@ ${recentChat}
 /* ==================== 微信消息提醒（Server酱） ==================== */
 const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7";
 
+/* 推送防重：24小时内同一标题只推一次 */
 /* 像微信消息一样发提醒（WxPusher 极简 SPT，无需订阅） */
 async function sendWeChatAlert(title, desp){
+  if(!_shouldPush(title)){ console.log("推送拦截(24h内重复):",title); return; }
   const spt=localStorage.getItem("wxpusherSpt")||"SPT_Qs5NeIGToK1HARaljMMAqWXXnEaa";
   const content=`## ${title}\n\n${desp}`;
   try{
