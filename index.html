@@ -3847,11 +3847,20 @@ function tick(){
           else if(st.price<=slPrice)signal=`ATR止损·跌${atrParams.slMult}倍ATR（${(chg*100).toFixed(1)}%），${SELL_REASONS[p.id]}`;
         }
         else{
-          /* 无ATR数据：用固定百分比兜底 */
-          const firstTp=rp.tp*0.75;
-          if(chg>rp.tp/100)signal=`达到最终止盈(+${rp.tp}%)，清仓落袋`;
-          else if(!h.partialTaken&&chg>firstTp/100)signal=`第一止盈(+${firstTp.toFixed(1)}%)，减半仓锁定利润`;
-          else if(chg<-rp.sl/100)signal=`止损-${rp.sl}%，${SELL_REASONS[p.id]}`;
+          /* 无ATR数据：用默认ATR(2%波动率)灵活决策，不用固定百分比 */
+          const defAtr=h.buyPrice*0.02;
+          const tpPrice=h.buyPrice+atrParams.tpMult*defAtr;
+          const firstTpPrice=h.buyPrice+atrParams.tpMult*0.75*defAtr;
+          const slPrice=h.buyPrice-atrParams.slMult*defAtr;
+          if(st.price>=tpPrice)signal=`ATR止盈(默认波动率)·涨${atrParams.tpMult}倍ATR（+${(chg*100).toFixed(1)}%），清仓落袋`;
+          else if(!h.partialTaken&&st.price>=firstTpPrice)signal=`第一止盈·涨${(atrParams.tpMult*0.75).toFixed(1)}倍ATR（+${(chg*100).toFixed(1)}%），减半仓锁定利润`;
+          else if(st.price<=slPrice)signal=`ATR止损(默认波动率)·跌${atrParams.slMult}倍ATR（${(chg*100).toFixed(1)}%），${SELL_REASONS[p.id]}`;
+        }
+        /* 硬性止盈：获利25%~30%必须止盈落袋 */
+        if(!signal&&chg>=0.25&&chg<=0.30){
+          signal=`获利${(chg*100).toFixed(1)}%进入25%-30%止盈区间，分批落袋`;
+        }else if(!signal&&chg>0.30){
+          signal=`获利${(chg*100).toFixed(1)}%超30%，强制止盈落袋`;
         }
         /* ATR移动止盈：盈利后从当日高点回撤一定倍数ATR就锁利 */
         if(!signal&&atrVal&&atrVal>0&&chg>0.03&&st.dayHigh&&st.dayHigh>st.price){
