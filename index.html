@@ -4191,7 +4191,9 @@ function switchTab(name){
     if(name==="review"){try{renderReview();}catch(e){}}
     if(name==="rank"){try{renderRank();renderHold();}catch(e){}}
     if(name==="hold"){try{renderHold();}catch(e){}}
+    if(name==="overview"){try{renderMarketView();}catch(e){}}
     if(name==="settings"){try{fillSettings();}catch(e){}}
+    try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
   },100);
 }
 document.getElementById("tabNav").addEventListener("click",e=>{
@@ -5186,6 +5188,7 @@ function render(){
   try{renderReview();}catch(e){console.error('renderReview error',e);}
   try{renderMarketBar();}catch(e){console.error('renderMarketBar error',e);}
   try{renderWx();}catch(e){console.error('renderWx error',e);}
+  try{if(typeof renderMarketView==='function')renderMarketView();}catch(e){}
   try{fillSimSel();}catch(e){console.error('fillSimSel error',e);}
   try{if(typeof filterResearchTable === 'function') filterResearchTable();}catch(e){}
 }
