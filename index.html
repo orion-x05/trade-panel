@@ -3967,7 +3967,15 @@ const INDICES=[
 ];
 const summaries=(()=>{try{
   const _r=localStorage.getItem("stockSimSum");
-  if(_r){const _o=JSON.parse(_r);if(_o&&(_o.daily||_o.week||_o.month))return{daily:_o.daily||null,week:_o.week||null,month:_o.month||null};}
+  if(_r){const _o=JSON.parse(_r);
+    if(_o&&(_o.daily||_o.week||_o.month)){
+      /* 清理：旧日期的daily清掉，holds里去掉三力制药残留 */
+      const today=new Date().toISOString().slice(0,10);
+      if(_o.daily&&_o.daily.date!==today){_o.daily=null;}
+      if(_o.daily&&_o.daily.holds){_o.daily.holds=_o.daily.holds.filter(h=>h.code!=="603439");}
+      return{daily:_o.daily||null,week:_o.week||null,month:_o.month||null};
+    }
+  }
 }catch(e){}
 try{
   const _e=document.getElementById("embeddedSumData");
@@ -4912,7 +4920,7 @@ function renderReview(){
   if(summaries.daily){
     const s=summaries.daily;
     const holdRows=s.holds.length?s.holds.map(h=>`
-      <div class="reason-item"><b>${h.role}</b> ${h.name}（${h.code}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${h.sector}/${h.industry}<br>持仓理由：${h.reason}</div>`).join("")
+      <div class="reason-item"><b>${h.role}</b> ${h.name}（${h.code}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${h.sector||"—"}/${h.industry||"—"}<br>持仓理由：${h.reason||"—"}</div>`).join("")
       :`<div class="review-note">当日无持仓，未产生个股复盘。</div>`;
     daily.innerHTML=`
       <div class="review-meta">${s.date} 收盘 · 持仓 ${s.holds.length} 只 · 策略修正 ${s.revisions} 条</div>
