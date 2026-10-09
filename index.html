@@ -5960,7 +5960,7 @@ function openStockResearchModal(code){
       <div class="modal-sub">主力意图：<b style="color:${fundInfo.score>=1?"#ef4444":fundInfo.score<=-1?"#22c55e":"#8b949e"}">${fundInfo.tag}</b> · ${fundInfo.desc}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body">
-      <div id="researchStockKline" style="width:100%;height:280px;margin-bottom:12px"></div>
+      <div id="researchStockKline" style="width:100%;height:420px;margin-bottom:12px"></div>
       
       <h4 style="font-size:13px;color:var(--cyan);margin:10px 0 8px">📋 六道门禁逐层拆解（${passCount}/6 通过 · ${conclusion}）</h4>
       <div style="display:grid;gap:6px;margin-bottom:12px">
@@ -6065,7 +6065,13 @@ function renderKlineForModal(code,klineData){
             return html;
           }
         },
-        grid:{left:"8%",right:"4%",top:"8%",bottom:"15%"},
+        grid:{left:"8%",right:"4%",top:"8%",bottom:"20%"},
+        dataZoom:[
+          {type:"inside",start:70,end:100},
+          {type:"slider",start:70,end:100,height:20,bottom:8,borderColor:"#333",
+            backgroundColor:"rgba(255,255,255,.03)",fillerColor:"rgba(62,207,142,.15)",
+            handleStyle:{color:"#3ecf8e"},textStyle:{color:"#8b949e",fontSize:10}}
+        ],
         xAxis:{type:"category",data:dates,axisLabel:{color:"#8b949e",fontSize:10}},
         yAxis:{scale:true,axisLabel:{color:"#8b949e",fontSize:10}},
         series:[
