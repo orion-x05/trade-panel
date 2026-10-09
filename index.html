@@ -3981,13 +3981,15 @@ function gateDecision(st){
   const volOK=safeVol>=1.2&&safeVol<=5;
   const trendOK=safeMa20>safeMa60&&above;
   const rsiOK=safeRsi<76;
-  /* 六道门禁：流动性、趋势、量价、过热、评分 */
-  const passCount=[safeVol>=0.5, trendOK, volOK, rsiOK, safeRps50Pass(st)].filter(Boolean).length;
-  if(passCount>=5)return{label:"通过",cls:"tag-ok"};
-  if(passCount>=3)return{label:"观察",cls:"tag-warn"};
-  return{label:"拦截",cls:"tag-bad"};
+  const rpsOK=(st.rps50||50)<80;
+  const liqOK=safeVol>=0.5;
+  const passCount=[liqOK, trendOK, volOK, rsiOK, rpsOK].filter(Boolean).length;
+  const total=5;
+  let label=passCount+"/"+total+"通过", cls="tag-ok";
+  if(passCount<3){label=passCount+"/"+total+"拦截";cls="tag-bad";}
+  else if(passCount<5){label=passCount+"/"+total+"观察";cls="tag-warn";}
+  return{label,cls,passCount,total};
 }
-function safeRps50Pass(st){return (st.rps50||50)<80;}
 
 /* ==================== 复盘总结（界面层） ==================== */
 const INDICES=[
