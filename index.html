@@ -529,8 +529,8 @@ function alertSellSignal(role, stockName, code, price, profit){
   .tab-view { display:none; }
   .tab-view.active { display:block; }
   /* ===== 侧边栏导航（桌面固定 / 手机抽屉） ===== */
-  .app-layout { display:flex; align-items:flex-start; }
-  .app-layout > .main { flex:1 1 auto; min-width:0; padding:0 0 0 18px; }
+  .app-layout { display:flex; gap:18px; align-items:flex-start; }
+  .app-layout > .main { flex:1 1 auto; min-width:0; }
   .sidenav {
     flex:0 0 236px; width:236px;
     background:var(--bg-card); border:1px solid var(--border-soft); border-radius:12px;
