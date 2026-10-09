@@ -1060,13 +1060,13 @@ function alertSellSignal(role, stockName, code, price, profit){
 <!-- ===== 运行总览（独立tab） ===== -->
 <section class="tab-view active" id="view-overview">
   <!-- ===== 状态栏（最上方） ===== -->
-  <div class="market-bar" id="marketBar">
-    <span class="mb-dot"></span><span id="marketBarText">正在检测交易时段…</span>
+  <div class="market-bar" id="marketBar" style="flex-wrap:nowrap;overflow-x:auto">
+    <span class="mb-dot" style="flex-shrink:0"></span><span id="marketBarText" style="flex-shrink:0;white-space:nowrap">正在检测交易时段…</span>
     <span class="spacer"></span>
-    <button onclick="fetchRealQuotes(true)">⚡ 立即拉行情</button>
-    <button onclick="resetSim()">刷新数据</button>
-    <button onclick="exportData()">📤 导出数据</button>
-    <button onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+    <button onclick="fetchRealQuotes(true)" style="flex-shrink:0">⚡ 立即拉行情</button>
+    <button onclick="resetSim()" style="flex-shrink:0">刷新数据</button>
+    <button onclick="exportData()" style="flex-shrink:0">📤 导出数据</button>
+    <button onclick="document.getElementById('importFile').click()" style="flex-shrink:0">📥 导入数据</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
   </div>
   <!-- ===== v0246 市场看板 ===== -->
