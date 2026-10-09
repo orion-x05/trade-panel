@@ -4374,10 +4374,10 @@ function renderRank(){
       <td class="r num ${pctColor(ret)}">${pct(ret)}</td>
       <td class="r num ${floatPnl>=0?"up":"down"}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
       <td class="r num">${trades}</td>
-      <td class="r num">${(winRate*100).toFixed(1)}%</td>
-      <td class="r num">${plRatio.toFixed(2)}</td>
-      <td class="r num">${(p.sharpe||0).toFixed(2)}</td>
-      <td class="r num ${maxDrawCls}">${((p.maxDrawdown||0)*100).toFixed(2)}%</td>
+      <td class="r num">${sells.length?(winRate*100).toFixed(1)+'%':'--'}</td>
+      <td class="r num">${sells.length?plRatio.toFixed(2):'--'}</td>
+      <td class="r num">${trades>=3?(p.sharpe||0).toFixed(2):'--'}</td>
+      <td class="r num ${maxDrawCls}">${trades>=3?((p.maxDrawdown||0)*100).toFixed(2)+'%':'--'}</td>
       <td style="color:var(--text-faint);font-size:12px">DeepSeek</td>
     </tr>`);
   });
@@ -4450,7 +4450,7 @@ function renderHold(){
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
         <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${h.code}')">${h.name}</span><span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
         <td style="color:var(--text-dim)">${(st && st.industry) || h.industry || h.sector || "—"}</td>
-        <td><span class="wx ${wxClass(h.wx || (st && st.wx) || '—')}">${h.wx || (st && st.wx) || '—'}</span></td>
+        <td><span class="wx ${wxClass(h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—'))}">${h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—')}</span></td>
         <td class="r num qty-cell">${h.qty||0}</td>
         <td class="r num qty-cell"><span class="avail">${avail||0}</span></td>
         <td class="r num">${(h.buyPrice||0).toFixed(2)}</td>
