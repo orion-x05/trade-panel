@@ -529,7 +529,8 @@ function alertSellSignal(role, stockName, code, price, profit){
   .tab-view { display:none; }
   .tab-view.active { display:block; }
   /* ===== 侧边栏导航（桌面固定 / 手机抽屉） ===== */
-  .app-layout { display:flex; gap:18px; align-items:flex-start; }
+  .app-layout { display:flex; align-items:flex-start; }
+  .app-layout > .main { flex:1 1 auto; min-width:0; padding:0 0 0 18px; }
   .sidenav {
     flex:0 0 236px; width:236px;
     background:var(--bg-card); border:1px solid var(--border-soft); border-radius:12px;
@@ -578,7 +579,6 @@ function alertSellSignal(role, stockName, code, price, profit){
     background:transparent; color:var(--text); font-size:18px; cursor:pointer;
     align-items:center; justify-content:center; flex:0 0 auto;
   }
-  .app-layout > .main { flex:1 1 auto; min-width:0; }
 
   /* 手机：抽屉式侧边栏 */
   @media (max-width: 768px){
