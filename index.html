@@ -4488,6 +4488,7 @@ function renderPool(){
   Object.values(simData.pricePool).sort((a,b)=>b.chg-a.chg).forEach(st=>{
     const gate=gateDecision(st);
     const it=intentOf(st);
+    const compScore=calcFireScore(st);
     pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${st.code}')">
       <td class="num">${st.code}</td>
       <td>${st.name}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
@@ -4500,9 +4501,7 @@ function renderPool(){
       <td><span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span></td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
       <td class="r num">${(st.rps50||50).toFixed(1)}</td>
-      <td class="r num">${(st.ma5||st.price).toFixed(2)}</td>
-      <td class="r num">${(st.ma20||st.price).toFixed(2)}</td>
-      <td class="r num">${(st.stop||st.ma20*0.95||st.price*0.95).toFixed(2)}</td>
+      <td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>
       <td><span class="tag ${gate.cls}">${gate.label}</span></td>
     </tr>`);
   });
@@ -6494,43 +6493,7 @@ function renderResearch(){
   const body=document.getElementById("researchBody");
   if(!body)return;
   const fb=document.getElementById("firePoolBox");
-  if(fb){
-    /* 动态计算火五行候选池：从真实行情数据中筛选 */
-    const pool = simData && simData.pricePool ? simData.pricePool : {};
-    const fireStocks = Object.values(pool)
-      .filter(st => st.wx === "火" && st.price > 0)
-      .map(st => ({
-        code: st.code,
-        name: st.name,
-        sector: st.sector,
-        industry: st.industry,
-        score: calcFireScore(st),
-        stop: calcStopLoss(st).toFixed(2),
-        chg: st.chg
-      }))
-      .sort((a,b) => b.score - a.score)
-      .slice(0, 9); /* 取前9只 */
-    
-    const avgScore = fireStocks.length 
-      ? (fireStocks.reduce((s,x)=>s+x.score,0)/fireStocks.length).toFixed(1)
-      : "—";
-    
-    fb.innerHTML = `
-      <div class="fire-pool-head">🔥 火五行 · 趋势回踩-低追高 候选（动态评分 · 建议止损价 · 实时行情计算）</div>
-      <div style="font-size:12px;color:var(--text-faint);margin-bottom:12px;padding:0 4px">
-        评分公式：综合评分 = -0.4×透支分 + 0.4×动量分 + 0.5×筹码分 + 25 · 当前池内平均评分 ${avgScore}
-      </div>
-      <div class="fire-pool-grid">
-        ${fireStocks.map(f => `
-          <div class="fire-card" style="cursor:pointer" onclick="openStockResearchModal('${f.code}')">
-            <div class="fc-top"><b>${f.name}</b><span>${f.code}</span></div>
-            <div class="fc-row">${f.sector} · ${f.industry} · <span class="wx-chip wx-火">火</span></div>
-            <div class="fc-row">综合评分 <b class="${f.score>=65?"up":f.score>=55?"":"down"}">${f.score}</b> · 建议止损 <b>${f.stop} 元</b></div>
-            <div class="fc-row dim">趋势回踩-低追高 · ${f.chg>=0?"涨"+f.chg.toFixed(1)+"%":"跌"+Math.abs(f.chg).toFixed(1)+"%"} · 点击查看详情 →</div>
-          </div>
-        `).join("")}
-      </div>`;
-  }
+  if(fb){fb.innerHTML="";} /* 卡片网格已合并到候选池表格 */
   const pool=simData&&simData.pricePool?simData.pricePool:{};
   const codes=Object.keys(pool);
   const rows=[];
