@@ -2640,21 +2640,26 @@ function renderMarketView(){
   if($("vLU"))$("vLU").textContent=lu;
   if($("vLD"))$("vLD").textContent=ld;
   if($("vAvgChg"))$("vAvgChg").textContent=`平均涨跌幅 ${mkPct(avgChg)}`;
-  /* 情绪温度：-30~+30，综合涨跌比与平均涨跌幅 */
+  /* 情绪温度：基于大盘指数（上证指数）涨跌幅，-30~+30 */
   let temp=0;
-  if(n){
-    const ud=(up-down)/n;          /* -1~1 */
+  const shIdx=simData.pricePool["sh000001"]||simData.pricePool["000001"];
+  if(shIdx&&shIdx.chg!==undefined){
+    temp=Math.max(-30,Math.min(30,Math.round(shIdx.chg*10)));
+  } else if(n){
+    const ud=(up-down)/n;
     temp=Math.max(-30,Math.min(30,Math.round(ud*25+avgChg*1.5)));
   }
   if($("vTemp"))$("vTemp").innerHTML=n?temp+'<span class="m-unit">℃</span>':"--";
   if($("vTempSub")){
     let desc;
     if(!n)desc="等待数据…";
-    else if(temp>=15)desc="情绪高涨 · 注意过热";
-    else if(temp>=5)desc="情绪偏暖 · 谨慎做多";
-    else if(temp>-5)desc="情绪中性 · 观望为主";
-    else if(temp>-15)desc="情绪偏冷 · 观望为主";
-    else desc="情绪冰点 · 等待企稳";
+    else if(temp>=20)desc="情绪高涨 · 注意过热";
+    else if(temp>=10)desc="情绪偏暖 · 谨慎做多";
+    else if(temp>=3)desc="情绪温和 · 可逢低布局";
+    else if(temp>-3)desc="情绪中性 · 观望为主";
+    else if(temp>-10)desc="情绪偏冷 · 控制仓位";
+    else if(temp>-20)desc="情绪低迷 · 等待企稳";
+    else desc="情绪冰点 · 恐慌性抛售";
     $("vTempSub").textContent=desc;
   }
   /* --- 图表 --- */
