@@ -1566,7 +1566,7 @@ function alertSellSignal(role, stockName, code, price, profit){
             <th>代码</th><th>名称</th><th>板块/行业</th><th>五行</th>
             <th class="r">最新价</th><th class="r">涨跌幅%</th><th class="r">量比</th><th>主力意图</th>
             <th class="r">RSI6</th><th class="r">透支分</th><th class="r">动量分</th><th class="r">筹码分</th>
-            <th class="r">综合评分</th><th>结论</th><th>门禁</th>
+            <th class="r">综合评分</th><th>结论</th><th>建议</th><th>门禁</th>
           </tr></thead>
           <tbody id="poolBody"></tbody>
         </table>
@@ -4513,6 +4513,7 @@ function renderPool(){
       <td class="r num">${chip}</td>
       <td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>
       <td><span class="${cls}" style="font-weight:600">${conc}</span></td>
+      <td style="color:${compScore>=65?"var(--up)":compScore>=55?"#ffd966":"var(--text-dim)"};font-weight:600;font-size:12px">${compScore>=65?"策略确认":compScore>=55?"可关注":"观察"}</td>
       <td><span class="tag ${gate.cls}">${gate.label}</span></td>
     </tr>`);
   });
