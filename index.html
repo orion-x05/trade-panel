@@ -3817,11 +3817,13 @@ function tick(){
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
         return s.kdjK!==undefined&&s.kdjD!==undefined&&s.kdjKPrev!==undefined&&s.kdjDPrev!==undefined&&s.kdjK>s.kdjD&&s.kdjKPrev<=s.kdjDPrev;
       })||null;
-      /* 大盘环境驱动买入频率：偏多0.55 / 中性0.40 / 偏空0.20 / 极空0（空仓） */
-      const buyChance=env.score>=65?0.55:env.score>=45?0.40:env.score>=30?0.20:0;
+      /* 大盘环境驱动买入频率：偏多0.8 / 中性0.6 / 偏空0.3 / 极空0.1 */
+      const buyChance=env.score>=65?0.8:env.score>=45?0.6:env.score>=30?0.3:0.1;
       /* 资金流入方向优化：大盘偏空时仅买资金流入板块个股 */
       const flowOK=(!t||env.score>=45)?true:((simData.sectors[t.sector]&&simData.sectors[t.sector].flow||0)>0);
-      if(canBuyNow(now)&&t&&flowOK&&Math.random()<buyChance)doBuy(p,t,now,0.6); /* 首次建仓60%预算=15%仓位 */
+      /* KDJ金叉条件放宽：80%需要金叉，20%直接买（趋势已成立不等金叉） */
+      const kdjOK=!t||t.kdjK===undefined||(Math.random()<0.2)||(t.kdjK>t.kdjD&&t.kdjKPrev<=t.kdjDPrev);
+      if(canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance)doBuy(p,t,now,0.6); /* 首次建仓60%预算=15%仓位 */
       p.holdings.slice().forEach(h=>{
         const st=simData.pricePool[h.code];if(!st)return;
         /* 加仓逻辑：已有1批、非今日买入、KDJ再次金叉、股价在MA20上方 */
