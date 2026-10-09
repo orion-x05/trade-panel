@@ -3913,6 +3913,17 @@ function tick(){
             const threshold=roleStrict>=1.0?1.5:roleStrict<0.7?3.0:2.0;
             if(belowPct>threshold||vol>=1.2)signal=`跌破MA20防守位(${belowPct.toFixed(1)}%)·清仓`;
           }
+          /* 十日线战法：连续跌破MA10离场（D5低吸严格执行） */
+          if(!signal&&p.id==="D5"&&st.ma10){
+            const belowMA10=st.price<st.ma10;
+            const belowMA10Prev=(h.closePrev||st.ma10)<st.ma10;
+            if(belowMA10&&belowMA10Prev)signal="十日线战法·连续2天跌破MA10·离场";
+          }
+          /* 十日线战法：高于MA10超8%不追高，有利润先跑 */
+          if(!signal&&p.id==="D5"&&st.ma10&&st.price>st.ma10*1.08){
+            const abovePct=(st.price-st.ma10)/st.ma10*100;
+            if(abovePct>=8&&!h.partialTaken)signal=`十日线战法·高于MA10 ${abovePct.toFixed(1)}%·先止盈`;
+          }
         }
         if(signal){
           if(!canSellNow(now))log("warn",`【${p.id}】卖出拦截：已收盘（每天15:00后不再买卖）`);
@@ -7112,6 +7123,19 @@ function buySignal(role,P,i){
     case"D5":{
       /* 趋势回踩：缩量回踩MA20附近，偏离<2%，MA5>MA20，MA20向上倾斜，近3日收盘价不跌破MA20，相对强势 */
       const ma20_5ago=i>=5?P.ma20[i-5]:ma20;
+      /* 十日线战法②：趋势向上+回踩MA10有效支撑 → 可进场 */
+      const ma10=P.ma10[i];
+      const ma10_5ago=i>=5?P.ma10[i-5]:ma10;
+      const ma10Up=ma10&&ma10_5ago&&ma10>ma10_5ago;
+      const touchMA10=ma10&&Math.abs(c-ma10)/ma10<0.015&&v<1.0;
+      if(ma10Up&&touchMA10&&c>ma20&&ret20>0&&chg>0)return true;
+      /* 十日线战法③：震荡后突破MA10连续3天站稳 → 可进场 */
+      if(i>=3&&ma10){
+        let aboveDays=0;
+        for(let j=i-2;j<=i;j++){if(P.closes[j]>=P.ma10[j])aboveDays++;}
+        const prevBelow=P.closes[i-3]<P.ma10[i-3];
+        if(aboveDays>=3&&prevBelow&&v>1.2&&chg>0&&ma10Up)return true;
+      }
       if(!(ret20>0&&c>ma20&&(c-ma20)/ma20<0.02&&v<0.9&&ma5>ma20&&ma20>ma20_5ago))return false;
       for(let j=Math.max(0,i-2);j<=i;j++){
         if(P.closes[j]<P.ma20[j])return false;
