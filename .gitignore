@@ -1,0 +1,10 @@
+# 本地优化过程中的开发/验证产物，不进仓库
+# （baseline/ 与 reports/ 含页面截图，曾拍到密钥输入框，故整体忽略）
+*.bak
+baseline/
+reports/
+proposals/
+tools/
+.ai-memory/
+OPTIMIZE_PLAN.md
+*.log
