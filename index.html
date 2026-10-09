@@ -7151,6 +7151,16 @@ function buySignal(role,P,i){
         const prevBelow=P.closes[i-3]<P.ma20[i-3];
         if(aboveDays>=3&&prevBelow&&v>1.2&&chg>0)return true;
       }
+      /* 买入④：水上金叉+MA10附近+非涨停非科创非创业非ST */
+      if(i>=1&&P.dif[i]!==undefined&&P.dif[i-1]!==undefined){
+        const macdGolden=P.dif[i]>P.dea[i]&&P.dif[i-1]<=P.dea[i-1];
+        const aboveWater=P.dif[i]>0&&P.dea[i]>0;
+        const nearMA10=ma10&&c>ma10&&c<ma10*1.05;
+        const noLimit=chg<9.8;
+        const code=P.code||"";
+        const boardOK=!code.startsWith("688")&&!code.startsWith("300")&&!code.startsWith("8")&&!code.startsWith("4");
+        if(macdGolden&&aboveWater&&nearMA10&&noLimit&&boardOK&&chg>0)return true;
+      }
       return false;
     }
     case"D6":{
