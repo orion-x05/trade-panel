@@ -4791,8 +4791,8 @@ function openRolePKModal(){
   const players = simData.players;
   const pkData = players.map(p=>{
     const ret = (p.asset-INIT_CASH)/INIT_CASH*100;
-    const sells = p.trades.filter(t=>t.dir==="卖"||t.dir==="部分止盈");
-    const wins = sells.filter(t=>t.pnl>0);
+    const sells = p.trades.filter(t=>t.dir==="卖"||t.dir==="部分止盈"||t.type==="sell");
+    const wins = sells.filter(t=>(t.pnl||t.profit||0)>0);
     const winRate = sells.length>0 ? wins.length/sells.length*100 : 0;
     /* 计算最大回撤 */
     let peak=-1e9, mdd=0;
