@@ -1542,10 +1542,14 @@ function alertSellSignal(role, stockName, code, price, profit){
     </div>
     <div class="panel-body" id="wxBody"></div>
   </div>
+  <!-- 候选行情池 + 研究评分 融合面板 -->
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">候选行情池（点击行查看六道门禁详情）</span>
+      <span class="panel-title">候选行情池 · 研究评分</span>
       <span class="panel-tip" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input type="text" id="researchSearch" placeholder="🔍 输入代码搜索/过滤..." 
+          style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-soft);background:rgba(255,255,255,.05);color:var(--text)"
+          oninput="filterResearchTable()">
         <span id="pickStatus" style="color:var(--text-dim)">待扫描全市场…</span>
         <button onclick="pickFromFullMarket(true)" style="padding:3px 10px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:rgba(16,185,129,.12);color:var(--down);cursor:pointer">🔄 全市场选股</button>
       </span>
@@ -1560,28 +1564,13 @@ function alertSellSignal(role, stockName, code, price, profit){
         <table>
           <thead><tr>
             <th>代码</th><th>名称</th><th>板块</th><th>行业</th><th>五行</th><th class="r">最新价</th><th class="r">涨跌幅%</th>
-            <th class="r">量比</th><th>主力意图</th><th class="r">RSI6</th><th class="r">RPS50</th><th class="r">MA5</th><th class="r">MA20</th>
-            <th class="r">参考止损</th><th>门禁</th>
+            <th class="r">量比</th><th>主力意图</th><th class="r">RSI6</th><th class="r">RPS50</th><th class="r">综合评分</th><th>门禁</th>
           </tr></thead>
           <tbody id="poolBody"></tbody>
         </table>
       </div>
     </div>
   </div>
-  <!-- 研究评分面板（合并到候选行情池tab） -->
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">股票研究评分面板</span>
-      <span class="panel-tip">参考通达信量化研究口径 · 综合评分 = −0.4×透支分 + 0.4×动量分 + 0.5×筹码分 + 25（透支分越低越好，动量/筹码越高越好）</span>
-    </div>
-    <div class="panel-body">
-      <!-- 股票搜索框 -->
-      <div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input type="text" id="researchSearch" placeholder="🔍 输入6位股票代码搜索全市场任意股票（如600519），或输入名称过滤..." 
-          style="flex:1;min-width:200px;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:6px;color:var(--text);font-size:13px"
-          oninput="filterResearchTable()">
-        <span style="color:var(--text-dim);font-size:12px" id="researchSearchCount">共 0 只</span>
-      </div>
       <div class="research-bar">
         <span id="rsPanel">面板启用 --</span>
         <span id="rsAnalyze">收盘可分析 · 盘中可研判 --</span>
