@@ -2411,6 +2411,10 @@ const BOARD_RULES = {
   star: { name:"科创板", minBuy:200, priceLimit:0.20, minAsset:500000, desc:"68开头，200股起（超200可1股递增），±20%涨跌幅，需50万资金+2年经验" },
   bse:  { name:"北交所", minBuy:100, priceLimit:0.30, minAsset:500000, desc:"8/4开头，100股起，±30%涨跌幅，需50万资金+2年经验" }
 };
+/* 板块交易权限开关：账户未开通的板块设为 false，买入将被直接拦截。
+   创业板需10万资金+2年经验、科创板/北交所需50万资金，当前账户未达要求，故关闭。
+   如已开通权限，把对应项改回 true 即可。 */
+const BOARD_ENABLED = { main:true, gem:false, star:false, bse:false };
 /* 根据股票代码判断板块 */
 function getBoard(code){
   if(!code) return "main";
@@ -2420,8 +2424,9 @@ function getBoard(code){
   if(code.startsWith("8")||code.startsWith("4")) return "bse";
   return "main";
 }
-/* 检查角色是否有板块交易权限（资金达到门槛自动解锁） */
+/* 检查角色是否有板块交易权限（未开通的板块一律拦截；已开通的还需资金达到门槛） */
 function hasBoardPermission(p, board){
+  if(BOARD_ENABLED[board]===false) return false; /* 账户未开通该板块，直接禁止买入 */
   const rule=BOARD_RULES[board];
   if(!rule||rule.minAsset<=0) return true;
   /* 计算角色总资产（现金+持仓市值） */
@@ -2431,6 +2436,35 @@ function hasBoardPermission(p, board){
   },0);
   const totalAsset=p.cash+totalMv;
   return totalAsset>=rule.minAsset;
+}
+/* 自愈：清理"账户未开通板块"的存量持仓（按当前价平仓、资金退回现金），
+   解决历史/内置数据里残留的无权限持仓（如创业板通用电梯）一直挂在持仓里的问题 */
+function purgeUnauthorizedHoldings(){
+  if(!simData||!simData.players||!simData.pricePool)return 0;
+  let n=0;
+  simData.players.forEach(p=>{
+    if(!p.holdings||!p.holdings.length)return;
+    p.holdings=p.holdings.filter(h=>{
+      const board=getBoard(h.code);
+      if(BOARD_ENABLED[board]!==false)return true;
+      const st=simData.pricePool[h.code];
+      const price=(st&&st.price>0)?st.price:(h.buyPrice||h.cost||0);
+      const amount=h.qty*price, fee=Math.max(amount*0.000115,5);
+      p.cash+=amount-fee;
+      const cost=(h.cost||h.buyPrice||price);
+      const profit=(price-cost)*h.qty-fee;
+      (p.trades=p.trades||[]).push({type:"sell",code:h.code,name:h.name,qty:h.qty,price:price,fee:fee,
+        time:new Date().toISOString(),reason:"权限自愈·"+BOARD_RULES[board].name+"未开通，按市价平仓",profit:profit});
+      try{log("warn",`【${p.id}】权限自愈：${h.name||h.code}(${h.code})属${BOARD_RULES[board].name}，账户未开通权限，已按${price.toFixed(2)}平仓${h.qty}股，资金退回`);}catch(e){}
+      n++;
+      return false;
+    });
+    /* 重算总资产（现金 + 剩余持仓市值） */
+    const mv=p.holdings.reduce((s,h)=>{const st=simData.pricePool[h.code];return s+h.qty*(st&&st.price>0?st.price:(h.buyPrice||h.cost||0));},0);
+    p.asset=p.cash+mv;
+  });
+  if(n)try{save();}catch(e){}
+  return n;
 }
 const PLAYER_COLORS = { D1:"#ff5d8f", D2:"#00e5a0", D3:"#b388ff", D4:"#ffc300", D5:"#00c2ff", D6:"#ff8a3d" };
 const PLAYER_NAMES = {
@@ -2903,6 +2937,10 @@ function initStockPool(){
     const wx=wxArr[parseInt(code.slice(-1))%5];
     pool[code]=mk(code,name,"行业龙头","蓝筹白马",wx,20.0,500,1.0,19.5,false,0,50,50,18.5);
   });
+  /* 剔除账户未开通板块的股票，避免无权限标的进入候选池被买入 */
+  Object.keys(pool).forEach(code=>{
+    if(BOARD_ENABLED[getBoard(code)]===false) delete pool[code];
+  });
   return pool;
 }
 const SECTORS_INIT={};
@@ -3076,6 +3114,7 @@ function load(){
             simData.poolVersion=2;
           }
         }catch(e){}
+        try{purgeUnauthorizedHoldings();}catch(e){}
         return;
       }
     }catch(e){}
@@ -3085,6 +3124,7 @@ function load(){
     const EMB=document.getElementById('embeddedSimData');
     if(EMB){
       simData=JSON.parse(EMB.textContent);
+      try{purgeUnauthorizedHoldings();}catch(e){}
       save();
       return;
     }
@@ -3642,7 +3682,11 @@ const ROLE_PARAMS={
 };
 function pickTargets(p){
   const pool=simData.pricePool;
-  const vals=Object.values(pool);
+  /* 选股候选先剔除账户未开通板块的标的（创业板/科创板/北交所），
+     避免无权限标的进入候选池反复触发拦截告警 */
+  const vals=Object.entries(pool)
+    .filter(([c])=>BOARD_ENABLED[getBoard(c)]!==false)
+    .map(([,s])=>s);
   let res=[];
   switch(p.id){
     case"D1":res=vals.filter(s=>(s.rps50||50)>=50&&s.ma5&&s.ma5>s.ma20&&s.price>s.ma20&&s.price<=s.ma20*1.03);break;
@@ -3776,6 +3820,10 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   /* 板块规则检查：最少买入股数 + 资金门槛权限 */
   const board=getBoard(target.code);
   const boardRule=BOARD_RULES[board];
+  if(BOARD_ENABLED[board]===false){
+    log("warn",`【${p.id}】跳过买入：${target.name}(${target.code})属${boardRule.name}，账户未开通该板块权限（${boardRule.desc}），已拦截`);
+    return false;
+  }
   if(!hasBoardPermission(p,board)){
     log("warn",`【${p.id}】跳过买入：${target.name}属${boardRule.name}，需${(boardRule.minAsset/10000).toFixed(0)}万资金权限，当前资金不足（资金达到后自动解锁）`);
     return false;
@@ -4126,7 +4174,18 @@ const summaries=(()=>{try{
 }catch(e){}
 try{
   const _e=document.getElementById("embeddedSumData");
-  if(_e){const _o=JSON.parse(_e.textContent);return{daily:_o.daily||null,week:_o.week||null,month:_o.month||null};}
+  if(_e){
+    const _o=JSON.parse(_e.textContent);
+    /* 内置快照只是历史存档：日报必须是当天、周/月报必须是当前周/月，
+       否则一律丢弃，改由页面用实时数据兜底，避免把旧日期的复盘当成今日复盘展示 */
+    const _t=new Date();
+    let _d=_o.daily||null,_w=_o.week||null,_m=_o.month||null;
+    if(_d&&_d.date!==_t.toISOString().slice(0,10))_d=null;
+    if(_w&&_w.key!==weekKey(_t))_w=null;
+    if(_m&&_m.key!==_t.toISOString().slice(0,7))_m=null;
+    if(_d&&_d.holds)_d.holds=_d.holds.filter(h=>h.code!=="603439");
+    return{daily:_d,week:_w,month:_m};
+  }
 }catch(e){}
 return{daily:null,week:null,month:null};})();
 function saveSum(){try{localStorage.setItem("stockSimSum",JSON.stringify(summaries))}catch(e){}}
@@ -4638,9 +4697,9 @@ function renderPool(){
       <td>${st.name}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
       <td style="color:var(--text-dim)">${st.sector||"—"}${st.industry&&st.industry!==st.sector?'/'+st.industry:''}</td>
       <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
-      <td class="r num">${st.price.toFixed(2)}</td>
+      <td class="r num">${(st.price||0).toFixed(2)}</td>
       <td class="r num ${pctColor(st.chg)}">${pct(st.chg)}</td>
-      <td class="r num">${st.vol.toFixed(2)}</td>
+      <td class="r num">${(st.vol||0).toFixed(2)}</td>
       <td><span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span></td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
       <td class="r num">${over}</td>
@@ -5112,7 +5171,7 @@ function renderReview(){
   if(summaries.daily){
     const s=summaries.daily;
     const holdRows=s.holds.length?s.holds.map(h=>`
-      <div class="reason-item"><b>${h.role}</b> ${h.name}（${h.code}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${h.sector||"—"}/${h.industry||"—"}<br>持仓理由：${h.reason||"—"}</div>`).join("")
+      <div class="reason-item"><b>${escHtml(h.role)}</b> ${escHtml(h.name)}（${escHtml(h.code)}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${escHtml(h.sector||"—")}/${escHtml(h.industry||"—")}<br>持仓理由：${escHtml(h.reason||"—")}</div>`).join("")
       :`<div class="review-note">当日无持仓，未产生个股复盘。</div>`;
     daily.innerHTML=`
       <div class="review-meta">${s.date} 收盘 · 持仓 ${s.holds.length} 只 · 策略修正 ${s.revisions} 条</div>
@@ -5132,7 +5191,7 @@ function renderReview(){
       daily.innerHTML=`
         <div class="review-meta">当前持仓快照 · 每日15:00收盘后自动生成正式小结</div>
         <div class="reason-list">${allHolds.map(h=>`
-          <div class="reason-item"><b>${h.role}</b> ${h.name}（${h.code}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${h.sector}/${h.industry}<br>持仓理由：${h.reason}</div>`).join("")}
+          <div class="reason-item"><b>${escHtml(h.role)}</b> ${escHtml(h.name)}（${escHtml(h.code)}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${escHtml(h.sector)}/${escHtml(h.industry)}<br>持仓理由：${escHtml(h.reason)}</div>`).join("")}
         </div>`;
     }else{
       daily.innerHTML=`<div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。当前空仓。</div>`;
@@ -5163,7 +5222,7 @@ function renderReview(){
   const revBox=$("reviewRevisions");
   if(revisions.length){
     revBox.innerHTML=revisions.slice().reverse().map(r=>`
-      <div class="reason-item"><b>${r.date}</b> ${r.role} ${r.strategy}<br>问题：${r.issue}<br>修正：${r.action}</div>`).join("");
+      <div class="reason-item"><b>${escHtml(r.date)}</b> ${escHtml(r.role)} ${escHtml(r.strategy)}<br>问题：${escHtml(r.issue)}<br>修正：${escHtml(r.action)}</div>`).join("");
   }else{
     revBox.innerHTML=`<div class="review-note">尚无修正记录：引擎将持续评估 D1-D6 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>`;
   }
@@ -6500,6 +6559,8 @@ function sentimentScore(t){
   return s>0?1:(s<0?-1:0);
 }
 function escNews(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+/* 通用 HTML 转义：任何外部来源（AI/接口/用户输入）内容写入 innerHTML 前必须先过这里，防 XSS */
+function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function newsMktTags(t){
   const tags=[];
   try{
@@ -10145,7 +10206,7 @@ async function skillFundamentals(){
       })
     });
     const j=await r.json();
-    resultEl.innerHTML="<b>📋 Longbridge Fundamentals - 财报分析</b><br><br>"+j.choices[0].message.content.replace(/\n/g,"<br>");
+    resultEl.innerHTML="<b>📋 Longbridge Fundamentals - 财报分析</b><br><br>"+escHtml(j.choices[0].message.content).replace(/\n/g,"<br>");
   }catch(e){
     resultEl.textContent="❌ 分析失败："+e.message;
   }
@@ -10184,7 +10245,7 @@ async function skillEarningsCall(){
       })
     });
     const j=await r.json();
-    resultEl.innerHTML="<b>🎤 Earnings Analysis - 业绩会解读</b><br><br>"+j.choices[0].message.content.replace(/\n/g,"<br>");
+    resultEl.innerHTML="<b>🎤 Earnings Analysis - 业绩会解读</b><br><br>"+escHtml(j.choices[0].message.content).replace(/\n/g,"<br>");
   }catch(e){
     resultEl.textContent="❌ 解读失败："+e.message;
   }
@@ -10224,7 +10285,7 @@ async function skillDCF(){
       })
     });
     const j=await r.json();
-    resultEl.innerHTML="<b>💰 DCF Valuation - 现金流折现估值</b><br><br>"+j.choices[0].message.content.replace(/\n/g,"<br>");
+    resultEl.innerHTML="<b>💰 DCF Valuation - 现金流折现估值</b><br><br>"+escHtml(j.choices[0].message.content).replace(/\n/g,"<br>");
   }catch(e){
     resultEl.textContent="❌ 估值失败："+e.message;
   }
@@ -10321,7 +10382,7 @@ async function skillARTi(){
     });
     localStorage.setItem(artKey, JSON.stringify(history));
     
-    resultEl.innerHTML="<b>🧠 ARTi - 投资复盘</b><br><br>"+j.choices[0].message.content.replace(/\n/g,"<br>")+"<br><br>📝 已保存到复盘档案，随时可以回来对比验证。";
+    resultEl.innerHTML="<b>🧠 ARTi - 投资复盘</b><br><br>"+escHtml(j.choices[0].message.content).replace(/\n/g,"<br>")+"<br><br>📝 已保存到复盘档案，随时可以回来对比验证。";
   }catch(e){
     resultEl.textContent="❌ 复盘失败："+e.message;
   }
@@ -10512,7 +10573,7 @@ function addChatMsg(role,text){
     <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${name[0]}</div>
     <div style="max-width:75%;${role==="user"?"text-align:right;":""}">
       <div style="font-size:11px;color:${color};font-weight:600;margin-bottom:3px">${name}</div>
-      <div style="background:${role==="user"?"rgba(139,92,246,.15)":"rgba(255,255,255,.05)"};padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text-main)">${text.replace(/\n/g,"<br>")}</div>
+      <div style="background:${role==="user"?"rgba(139,92,246,.15)":"rgba(255,255,255,.05)"};padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text-main)">${escHtml(text).replace(/\n/g,"<br>")}</div>
     </div>
   `;
   msgs.appendChild(div);
