@@ -4836,7 +4836,7 @@ function openRolePKModal(){
         <td style="padding:10px 6px"><span class="cb" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color};vertical-align:middle;margin-right:6px"></span><b>${p.id}</b> ${p.name}</td>
         <td style="text-align:right;padding:10px 6px">${p.asset.toFixed(0)}</td>
         <td style="text-align:right;padding:10px 6px;font-weight:700;font-size:15px;color:${p.ret>=0?"var(--up)":"var(--down)"}">${p.ret>=0?"+":""}${p.ret.toFixed(2)}%</td>
-        <td style="text-align:right;padding:10px 6px">${p.winRate.toFixed(1)}%</td>
+        <td style="text-align:right;padding:10px 6px">${sells.length?p.winRate.toFixed(1)+'%':'--'}</td>
         <td style="text-align:right;padding:10px 6px;color:var(--down)">-${p.mdd.toFixed(1)}%</td>
         <td style="text-align:center;padding:10px 6px">${p.tradeCount}</td>
         <td style="text-align:center;padding:10px 6px">${p.holdCount}</td>
@@ -5565,7 +5565,7 @@ async function renderDetailMinute(code){
     if(minuteChart.resize)minuteChart.resize();
   }catch(e){if(window.console)console.warn("detailMinute",e);}
 }
-function closeModal(){$("modalMask").classList.remove("show");}
+function closeModal(){const m=$("modalMask");m.classList.remove("show");m.style.display="none";}
 $("modalMask").addEventListener("click",e=>{if(e.target.id==="modalMask")closeModal();});
 
 /* ==================== 右侧侧边详情面板 ==================== */
