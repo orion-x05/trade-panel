@@ -42,7 +42,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -170,7 +170,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -236,7 +236,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -302,7 +302,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -2639,7 +2639,7 @@ function fetchRealQuotes(force){
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
           const industryName=arr[1]||code;
-          simData.pricePool[code]={code:code,name:industryName,price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"待分类",industry:industryName,wx:wxOfSector(industryName)};
+          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
@@ -2885,7 +2885,7 @@ function emFallback(){
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
           const industryName=it.f14||code;
-          simData.pricePool[code]={code:code,name:industryName,price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"待分类",industry:industryName,wx:wxOfSector(industryName)};
+          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
@@ -3245,7 +3245,7 @@ function searchAndAddStock(code){
       // 加到行情池
       if(!simData.pricePool) simData.pricePool = {};
       simData.pricePool[code] = {
-        code, name, sector:'全市场', industry:arr[2]||'—',
+        code:safeCode(code), name:sanitizeText(name), sector:'全市场', industry:sanitizeText(arr[2]||'—'),
         price, prevClose, open, dayHigh:high, dayLow:low,
         chg, vol, ma5, ma10, ma20, ma60, rsi6, rps50, wx,
         isCustom:true // 标记是用户搜索添加的
@@ -3523,13 +3523,13 @@ function applyPicks(top,holdCodes){
     const industry=it.f100||"";
     if(!simData.pricePool[code]){
       const wx=wxOfSector(industry)||wxOfSector(it.f14)||"—";
-      simData.pricePool[code]={code:code,name:it.f14,sector:industry||"待分类",industry:industry||it.f14,wx:wx,
+      simData.pricePool[code]={code:safeCode(code),name:sanitizeText(it.f14),sector:sanitizeText(industry)||"待分类",industry:sanitizeText(industry||it.f14),wx:wx,
         price:it.f2,prevClose:it.f18||it.f2,open:it.f17||it.f2,dayHigh:it.f15||it.f2,dayLow:it.f16||it.f2,
         chg:it.f3,volume:it.f5||0,amount:(it.f6||0)/1e4/*元→万元*/,turnover:it.f8||0,vol:it.f10||1,
         ma5:it.f2,ma20:it.f18||it.f2,rsi6:50,rps50:50,stop:it.f2*0.93};
     }else{
       const p=simData.pricePool[code];
-      p.price=it.f2;p.chg=it.f3;p.name=it.f14;p.vol=it.f10||p.vol;p.turnover=it.f8||p.turnover;
+      p.price=it.f2;p.chg=it.f3;p.name=sanitizeText(it.f14);p.vol=it.f10||p.vol;p.turnover=it.f8||p.turnover;
       if(industry&&(!p.sector||p.sector==="待分类"))p.sector=industry;
       if(industry&&(!p.industry))p.industry=industry;
       if(!p.wx||p.wx==="—")p.wx=wxOfSector(industry)||wxOfSector(it.f14)||"—";
@@ -3733,8 +3733,8 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const totalAsset=p.asset||(p.cash+p.holdings.reduce((a,h)=>a+(h.price||h.buyPrice||0)*h.qty,0));
   const isStar=target.code&&target.code.startsWith("688");
   const isChiNext=target.code&&target.code.startsWith("300");
-  if(isStar&&totalAsset<500000){log("warn",`【${p.id}】拦截：${target.name}（688科创板）需50万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
-  if(isChiNext&&totalAsset<100000){log("warn",`【${p.id}】拦截：${target.name}（300创业板）需10万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
+  if(isStar&&totalAsset<500000){log("warn",`【${p.id}】拦截：${escHtml(target.name)}（688科创板）需50万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
+  if(isChiNext&&totalAsset<100000){log("warn",`【${p.id}】拦截：${escHtml(target.name)}（300创业板）需10万资产开通权限，当前${(totalAsset/10000).toFixed(1)}万`);return false;}
   /* 群聊防守纪律：群聊偏空时仓位折扣 */
   const defFactor=groupChatDefenseFactor();
   if(defFactor<1.0){ratio=ratio*defFactor;log("info",`【${p.id}】群聊防守：偏空，仓位${Math.round(defFactor*100)}%`);}
@@ -3753,15 +3753,15 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     else bears.push(`RSI${(st.rsi6||50).toFixed(0)}偏弱`);
     /* 大资金信号（国家队/大资金因子）并入多空辩论：流入=多方论据，流出=空方论据 */
     const fsRT=fundSignalRT(st,marketEnv);
-    if(fsRT.score>=1)bulls.push(`【大资金${fsRT.tag}】${fsRT.desc}`);
-    else if(fsRT.score<=-1)bears.push(`【大资金${fsRT.tag}】${fsRT.desc}`);
-    else bulls.push(`大资金信号${fsRT.tag}（${fsRT.desc}）`);
+    if(fsRT.score>=1)bulls.push(`【大资金${fsRT.tag}】${escHtml(fsRT.desc)}`);
+    else if(fsRT.score<=-1)bears.push(`【大资金${fsRT.tag}】${escHtml(fsRT.desc)}`);
+    else bulls.push(`大资金信号${fsRT.tag}（${escHtml(fsRT.desc)}）`);
     buyReason=`多空辩论：多方(${bulls.length})[${bulls.join("、")}] vs 空方(${bears.length})[${bears.join("、")}] → 多方占优判定偏多`;
   }
   /* ① 持仓重合限制：同一股票全局最多 MAX_OVERLAP 个角色持有 */
   const ov=overlapCount(target.code);
   if(ov>=MAX_OVERLAP){
-    log("warn",`【${p.id}】跳过买入：${target.name}已被 ${ov} 个角色持有（重合超限），不追重合`);
+    log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}已被 ${ov} 个角色持有（重合超限），不追重合`);
     return false;
   }
   const exist=p.holdings.find(h=>h.code===target.code);
@@ -3774,31 +3774,31 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   if(p.id==="D3"&&!exist&&st){
     const fsRT=fundSignalRT(st,marketEnv);
     if(fsRT.score<=-1){
-      log("warn",`【${p.id}】跳过买入：${target.name}${fsRT.desc}（大资金流出，不逆势建仓）`);
+      log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}${escHtml(fsRT.desc)}（大资金流出，不逆势建仓）`);
       return false;
     }
   }
   /* ②b 新建仓高位追涨过滤：偏离MA20超30%或高位放量长上影线，不买（避免追高被套） */
   if(!exist&&st){
     if(st.ma20&&st.price>st.ma20*1.3){
-      log("warn",`【${p.id}】跳过买入：${target.name}偏离MA20超30%（${((st.price/st.ma20-1)*100).toFixed(1)}%），短期涨幅过大不追高`);
+      log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}偏离MA20超30%（${((st.price/st.ma20-1)*100).toFixed(1)}%），短期涨幅过大不追高`);
       return false;
     }
     const upperShadow=(st.dayHigh||st.price)-Math.max(st.price,st.open||st.price);
     const body=Math.abs(st.price-(st.open||st.price));
     if(st.ma20&&st.price>st.ma20*1.15&&(st.vol||1)>=1.5&&body>0&&upperShadow/body>=1.5){
-      log("warn",`【${p.id}】跳过买入：${target.name}高位放量长上影线，见顶信号不追`);
+      log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}高位放量长上影线，见顶信号不追`);
       return false;
     }
     /* 偏离MA5过大不追：收盘价偏离MA5>5%，等回调 */
     if(st.ma5&&st.price>st.ma5*1.05){
-      log("warn",`【${p.id}】跳过买入：${target.name}偏离MA5超5%（${((st.price/st.ma5-1)*100).toFixed(1)}%），等回调不追高`);
+      log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}偏离MA5超5%（${((st.price/st.ma5-1)*100).toFixed(1)}%），等回调不追高`);
       return false;
     }
   }
   /* ③ 加仓限制：每只股票最多 MAX_LOTS 批 */
   if(exist&&exist.lots.length>=MAX_LOTS){
-    log("warn",`【${p.id}】跳过加仓：${target.name}已达${MAX_LOTS}批上限`);
+    log("warn",`【${p.id}】跳过加仓：${escHtml(target.name)}已达${MAX_LOTS}批上限`);
     return false;
   }
   /* ③a 价格接近不重复加仓：已有持仓且当前价与最近买入价差≤0.1元时，不重复加仓（避免差几分钱就买一笔，手动下单可绕过） */
@@ -3806,14 +3806,14 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     const lastBuyPrice=exist.lots[exist.lots.length-1].price;
     const priceDiff=Math.abs(target.price-lastBuyPrice);
     if(priceDiff<=0.1){
-      log("warn",`【${p.id}】跳过加仓：${target.name}当前价${target.price.toFixed(2)}与最近买入价${lastBuyPrice.toFixed(2)}仅差${priceDiff.toFixed(2)}元，价格接近不重复加仓`);
+      log("warn",`【${p.id}】跳过加仓：${escHtml(target.name)}当前价${target.price.toFixed(2)}与最近买入价${lastBuyPrice.toFixed(2)}仅差${priceDiff.toFixed(2)}元，价格接近不重复加仓`);
       return false;
     }
   }
   /* ③ 当日个股相同原因只能买入一笔（全局 6 角色合并去重 · 首次+加仓合并计算） */
   const key=target.code+"|"+BUY_REASONS[p.id];
   if(todayBuyMap[key]===todayStr(now)){
-    log("warn",`【${p.id}】跳过买入：${target.name}今日已按该原因成交过一笔（同原因不重复买）`);
+    log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}今日已按该原因成交过一笔（同原因不重复买）`);
     return false;
   }
   let budget=Math.min(p.cash*BUY_LIMIT*ratio,p.cash);
@@ -3821,11 +3821,11 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const board=getBoard(target.code);
   const boardRule=BOARD_RULES[board];
   if(BOARD_ENABLED[board]===false){
-    log("warn",`【${p.id}】跳过买入：${target.name}(${target.code})属${boardRule.name}，账户未开通该板块权限（${boardRule.desc}），已拦截`);
+    log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}(${target.code})属${escHtml(boardRule.name)}，账户未开通该板块权限（${escHtml(boardRule.desc)}），已拦截`);
     return false;
   }
   if(!hasBoardPermission(p,board)){
-    log("warn",`【${p.id}】跳过买入：${target.name}属${boardRule.name}，需${(boardRule.minAsset/10000).toFixed(0)}万资金权限，当前资金不足（资金达到后自动解锁）`);
+    log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}属${escHtml(boardRule.name)}，需${(boardRule.minAsset/10000).toFixed(0)}万资金权限，当前资金不足（资金达到后自动解锁）`);
     return false;
   }
   const minBuy=boardRule.minBuy;
@@ -3841,31 +3841,31 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     exist.buyPrice=(exist.buyPrice*exist.qty+costPerShare*qty)/totalQty;
     exist.qty=totalQty;
     exist.lots.push({price:target.price,qty,time:now.toISOString(),reason:"加仓·"+buyReason,fee:fee});
-    log("trade",`【${p.id}】加仓${target.name}(${target.code})${qty}股 @${target.price.toFixed(2)}，累计${totalQty}股，新成本${exist.buyPrice.toFixed(2)}，原因：加仓·${buyReason}`);
+    log("trade",`【${p.id}】加仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，累计${totalQty}股，新成本${exist.buyPrice.toFixed(2)}，原因：加仓·${buyReason}`);
   }else{
     p.holdings.push({code:target.code,name:target.name,sector:target.sector,industry:target.industry,wx:target.wx,
       qty,buyPrice:costPerShare,buyTime:now.toISOString(),ztLow:target.ztLow,reason:buyReason,lots:[{price:target.price,qty,time:now.toISOString(),reason:buyReason,fee:fee}]});
-    log("trade",`【${p.id}】建仓${target.name}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，原因：${buyReason}`);
+    log("trade",`【${p.id}】建仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，原因：${buyReason}`);
   }
   p.trades.push({type:"buy",code:target.code,qty,price:target.price,fee:fee,time:now.toISOString(),reason:exist?"加仓·"+buyReason:buyReason});
   todayBuyMap[key]=todayStr(now);
   // 微信推送买入（AI已考虑T+1规则，当日买入次日才可卖）
   const profitHint = exist ? `加仓${qty}股，累计${exist.qty}股，新成本${exist.buyPrice.toFixed(2)}` : `建仓${qty}股，成本${costPerShare.toFixed(2)}`;
-  log("info", `【${p.id}】${target.name}买入已考虑T+1规则，明日可卖出`);
+  log("info", `【${p.id}】${escHtml(target.name)}买入已考虑T+1规则，明日可卖出`);
   
   /* 去重：同一角色+同一股票+买入，当天只推一次 */
   const pushKey = `push_${p.id}_${target.code}_建仓_${now.toISOString().slice(0,10)}`;
   if(!localStorage.getItem(pushKey)){
     localStorage.setItem(pushKey, '1');
-    sendWechat(`📈 ${p.id} ${exist?"加仓":"建仓"} ${target.name}`, 
-      `股票：${target.name}(${target.code})\n操作：${exist?"加仓":"建仓"}\n数量：${qty}股\n价格：${target.price.toFixed(2)}元\n${profitHint}\n⏰ T+1：明日可卖出\n原因：${buyReason}\n时间：${now.toLocaleString('zh-CN')}`);
+    sendWechat(`📈 ${p.id} ${exist?"加仓":"建仓"} ${escHtml(target.name)}`, 
+      `股票：${escHtml(target.name)}(${target.code})\n操作：${exist?"加仓":"建仓"}\n数量：${qty}股\n价格：${target.price.toFixed(2)}元\n${profitHint}\n⏰ T+1：明日可卖出\n原因：${buyReason}\n时间：${now.toLocaleString('zh-CN')}`);
   }
   return true;
 }
 function doSell(p,hold,st,now,reason,ratio){
   if(!canSellNow(now)){log("warn",`【${p.id}】卖出拦截：已收盘（每天15:00后不再买卖）`);return;}
   /* T+1规则：当天买的不能卖 */
-  if(!canSell(hold, now)){log("warn",`【${p.id}】卖出拦截：${hold.name}当日买入T+1，明日才可卖`);return;}
+  if(!canSell(hold, now)){log("warn",`【${p.id}】卖出拦截：${escHtml(hold.name)}当日买入T+1，明日才可卖`);return;}
   ratio=ratio||1;
   const sellQty=ratio>=1?hold.qty:Math.max(200,Math.floor(hold.qty*ratio/100)*100);
   const actualQty=Math.min(sellQty,hold.qty);
@@ -3878,10 +3878,10 @@ function doSell(p,hold,st,now,reason,ratio){
   p.trades.push({type:"sell",code:hold.code,qty:actualQty,price:st.price,fee:totalFee,time:now.toISOString(),reason,profit});
   if(actualQty>=hold.qty){
     p.holdings=p.holdings.filter(h=>h!==hold);
-    log("trade",`【${p.id}】清仓${hold.name}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
+    log("trade",`【${p.id}】清仓${escHtml(hold.name)}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
   }else{
     hold.qty-=actualQty;
-    log("trade",`【${p.id}】部分止盈${hold.name}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，剩余${hold.qty}股，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
+    log("trade",`【${p.id}】部分止盈${escHtml(hold.name)}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，剩余${hold.qty}股，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
   }
   // 微信推送卖出（加去重：同一股票同一天只推一次清仓）
   const isClear = actualQty>=hold.qty || (p.holdings.filter(h=>h.code===hold.code).length===0);
@@ -3892,8 +3892,8 @@ function doSell(p,hold,st,now,reason,ratio){
   const pushKey = `push_${p.id}_${hold.code}_${sellType}_${now.toISOString().slice(0,10)}`;
   if(!localStorage.getItem(pushKey)){
     localStorage.setItem(pushKey, '1');
-    sendWechat(`📉 ${p.id} ${sellType} ${hold.name} ${profitColor}${Math.abs(profit).toFixed(2)}元`,
-      `股票：${hold.name}(${hold.code})\n操作：${sellType}\n数量：${actualQty}股\n价格：${st.price.toFixed(2)}元\n盈亏：${profit>=0?"+":""}${profit.toFixed(2)}元\n收益率：${((profit/(hold.buyPrice*actualQty))*100).toFixed(2)}%\n原因：${reason}\n时间：${now.toLocaleString('zh-CN')}`);
+    sendWechat(`📉 ${p.id} ${sellType} ${escHtml(hold.name)} ${profitColor}${Math.abs(profit).toFixed(2)}元`,
+      `股票：${escHtml(hold.name)}(${hold.code})\n操作：${sellType}\n数量：${actualQty}股\n价格：${st.price.toFixed(2)}元\n盈亏：${profit>=0?"+":""}${profit.toFixed(2)}元\n收益率：${((profit/(hold.buyPrice*actualQty))*100).toFixed(2)}%\n原因：${reason}\n时间：${now.toLocaleString('zh-CN')}`);
   }
 }
 
@@ -4504,7 +4504,7 @@ function renderRank(){
       eg.insertAdjacentHTML("beforeend",`
         <div class="engine-card" onclick="openModal('${p.id}')">
           <div class="ec-head">
-            <span class="ec-name">${p.id} ${p.name}</span>
+            <span class="ec-name">${p.id} ${escHtml(p.name)}</span>
             <span class="ec-status ${statusCls}">${statusText}</span>
           </div>
           <div class="ec-strategy">${strategyNames[p.id]||""} · 止损${sltp.sl}×ATR · 止盈${sltp.tp}×ATR · ATR吊灯保护</div>
@@ -4547,7 +4547,7 @@ function renderRank(){
       <td><span class="rank-badge ${rb}">${idx+1}</span></td>
       <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PLAYER_COLORS[p.id]}"></span></td>
       <td><span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[p.id]}"></span>${p.id}</span></td>
-      <td style="color:var(--text-dim)">${p.name}</td>
+      <td style="color:var(--text-dim)">${escHtml(p.name)}</td>
       <td class="r num">${fmt(p.asset)}</td>
       <td class="r num">${fmt(mv)}</td>
       <td class="r num">${fmt(p.cash)}</td>
@@ -4626,12 +4626,12 @@ function renderHold(){
         const lt=new Date(l.time);
         const ldate=isNaN(lt)?"--":`${lt.getMonth()+1}/${lt.getDate()} ${String(lt.getHours()).padStart(2,"0")}:${String(lt.getMinutes()).padStart(2,"0")}`;
         const lPrice=l.price||0;
-        return `<tr style="background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim)">第${i+1}笔买入</td><td class="r num" style="font-size:11.5px">${l.qty||0}股</td><td class="r num" style="font-size:11.5px">@${lPrice.toFixed(2)}</td><td colspan="9" style="font-size:11.5px;color:var(--text-dim)">${ldate} · ${l.reason||""}</td></tr>`;
+        return `<tr style="background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim)">第${i+1}笔买入</td><td class="r num" style="font-size:11.5px">${l.qty||0}股</td><td class="r num" style="font-size:11.5px">@${lPrice.toFixed(2)}</td><td colspan="9" style="font-size:11.5px;color:var(--text-dim)">${ldate} · ${escHtml(l.reason||"")}</td></tr>`;
       }).join("");
       ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="const d=document.getElementById('${rowId}');d.style.display=d.style.display==='none'?'':'none'">
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
-        <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${h.code}')">${h.name}</span><span style="color:var(--text-faint);font-size:11px"> ${h.code}</span></td>
-        <td style="color:var(--text-dim)">${(st && st.industry) || h.industry || h.sector || "—"}</td>
+        <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${safeCode(h.code)}')">${escHtml(h.name)}</span><span style="color:var(--text-faint);font-size:11px"> ${escHtml(h.code)}</span></td>
+        <td style="color:var(--text-dim)">${escHtml((st && st.industry) || h.industry || h.sector || "—")}</td>
         <td><span class="wx ${wxClass(h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—'))}">${h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—')}</span></td>
         <td class="r num qty-cell">${h.qty||0}</td>
         <td class="r num qty-cell"><span class="avail">${avail||0}</span></td>
@@ -4643,7 +4643,7 @@ function renderHold(){
         <td class="r num ${pctColor(totalPct)}">${pct(totalPct)}</td>
         <td class="r num">${posPct.toFixed(1)}%</td>
         <td class="r num">${days}</td>
-        <td style="font-size:11.5px;color:var(--text-dim)">${holdReason(p,h)||"—"}</td>
+        <td style="font-size:11.5px;color:var(--text-dim)">${escHtml(holdReason(p,h)||"—")}</td>
       </tr><tr id="${rowId}" style="display:none">${lotsHtml.replace(/<tr/g,'<td colspan="15" style="padding:0"><table style="width:100%;background:transparent"><tr').replace(/<\/tr>/g,'</tr></table></td></tr>')}</tr>`);
     });
   });
@@ -4692,10 +4692,10 @@ function renderPool(){
   }).sort((a,b)=>b.compScore-a.compScore);
 
   allStocks.forEach(({st,gate,it,compScore,over,mom,chip,conc,cls})=>{
-    pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${st.code}')">
+    pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${safeCode(st.code)}')">
       <td class="num">${st.code}</td>
-      <td>${st.name}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
-      <td style="color:var(--text-dim)">${st.sector||"—"}${st.industry&&st.industry!==st.sector?'/'+st.industry:''}</td>
+      <td>${escHtml(st.name)}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
+      <td style="color:var(--text-dim)">${escHtml(st.sector||"—")}${st.industry&&st.industry!==st.sector?'/'+escHtml(st.industry):''}</td>
       <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
       <td class="r num">${(st.price||0).toFixed(2)}</td>
       <td class="r num ${pctColor(st.chg)}">${pct(st.chg)}</td>
@@ -4708,7 +4708,7 @@ function renderPool(){
       <td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>
       <td><span class="${cls}" style="font-weight:600">${conc}</span></td>
       <td style="color:${compScore>=65?"var(--up)":compScore>=55?"#ffd966":"var(--text-dim)"};font-weight:600;font-size:12px">${compScore>=65?"策略确认":compScore>=55?"可关注":"观察"}</td>
-      <td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${st.code}')" title="点击查看六道门禁详情">${gate.label}</span></td>
+      <td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>
     </tr>`);
   });
   /* 六步门禁说明表（独立填充，不依赖renderPool） */
@@ -4979,7 +4979,7 @@ function openStockDetailModal(){
     stockList.forEach(s=>{
       html += `
         <tr style="border-bottom:1px solid var(--border-soft)">
-          <td style="padding:8px 6px"><b>${s.name}</b><br><span style="color:var(--text-faint);font-size:11px">${s.code}</span></td>
+          <td style="padding:8px 6px"><b>${escHtml(s.name)}</b><br><span style="color:var(--text-faint);font-size:11px">${s.code}</span></td>
           <td style="text-align:right;padding:8px 6px">${s.buyAmt.toFixed(0)}</td>
           <td style="text-align:right;padding:8px 6px">${s.sellAmt.toFixed(0)}</td>
           <td style="text-align:right;padding:8px 6px;color:${s.pnl>=0?"var(--up)":"var(--down)"}">${s.pnl>=0?"+":""}${s.pnl.toFixed(2)}</td>
@@ -5041,7 +5041,7 @@ function openRolePKModal(){
     html += `
       <tr style="border-bottom:1px solid var(--border-soft);${idx<3?"background:rgba(255,215,0,0.05)":""}">
         <td style="text-align:center;padding:10px 6px;font-size:16px">${medal}</td>
-        <td style="padding:10px 6px"><span class="cb" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color};vertical-align:middle;margin-right:6px"></span><b>${p.id}</b> ${p.name}</td>
+        <td style="padding:10px 6px"><span class="cb" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color};vertical-align:middle;margin-right:6px"></span><b>${p.id}</b> ${escHtml(p.name)}</td>
         <td style="text-align:right;padding:10px 6px">${p.asset.toFixed(0)}</td>
         <td style="text-align:right;padding:10px 6px;font-weight:700;font-size:15px;color:${p.ret>=0?"var(--up)":"var(--down)"}">${p.ret>=0?"+":""}${p.ret.toFixed(2)}%</td>
         <td style="text-align:right;padding:10px 6px">${sells.length?p.winRate.toFixed(1)+'%':'--'}</td>
@@ -5075,7 +5075,7 @@ function retRowsHtml(rows){
     </div>`).join("");
 }
 function idxChips(arr){
-  return arr.map(ix=>`<span class="idx-chip">${ix.name}<b class="${ix.chg>=0?"up":"down"}">${fmtPct(ix.chg)}</b></span>`).join("");
+  return arr.map(ix=>`<span class="idx-chip">${escHtml(ix.name)}<b class="${ix.chg>=0?"up":"down"}">${fmtPct(ix.chg)}</b></span>`).join("");
 }
 function renderReviewSentiment(){
   const box=$("reviewSentiment");if(!box)return;
@@ -5141,7 +5141,7 @@ function renderReviewSentiment(){
     const secRed=s.up/s.total;
     return `
     <div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft)">
-      <div style="width:90px;font-size:13px">${s.name}</div>
+      <div style="width:90px;font-size:13px">${escHtml(s.name)}</div>
       <div style="flex:1;margin:0 10px">
         <div style="height:6px;border-radius:3px;background:var(--bg-soft);overflow:hidden">
           <div style="width:${Math.max(2,secRed*100)}%;height:100%;background:${s.avg>=0?"var(--up)":"var(--down)"}"></div>
@@ -5353,7 +5353,7 @@ function renderRadarList(){
   if(!list.length){el.innerHTML='<div style="color:#55637a;font-size:13px">暂无跟踪记录</div>';return;}
   el.innerHTML=list.map((r,i)=>`
     <div style="background:#0a0f18;border:1px solid #2a3a4d;border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="font-weight:600;margin-bottom:4px">${r.name} <span style="font-size:11px;color:#55637a;font-weight:400">${new Date(r.date).toLocaleDateString()}</span></div>
+      <div style="font-weight:600;margin-bottom:4px">${escHtml(r.name)} <span style="font-size:11px;color:#55637a;font-weight:400">${new Date(r.date).toLocaleDateString()}</span></div>
       <div style="font-size:13px;color:#7d8ca0;margin-bottom:4px">逻辑：${r.logic}</div>
       <div style="font-size:13px;color:#f2555a">失效：${r.invalid||"未设定"}</div>
       <button onclick="delRadar(${i})" style="margin-top:6px;padding:4px 12px;border-radius:6px;background:#374151;color:#fff;border:none;font-size:12px;cursor:pointer">移除</button>
@@ -5388,12 +5388,12 @@ function renderSkills(){
     <div onclick="${s.tool?`openSkillTool(${s.tool})`:""}" style="padding:14px 0;border-bottom:1px solid var(--border-soft);cursor:${s.tool?'pointer':'default'}">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
         <span style="color:var(--text-faint);font-size:13px">#${s.n}</span>
-        <span style="font-size:16px;font-weight:700">${s.name}</span>
+        <span style="font-size:16px;font-weight:700">${escHtml(s.name)}</span>
         <span style="background:${s.color}22;color:${s.color};padding:2px 9px;border-radius:6px;font-size:11px;font-weight:600">${s.cat}</span>
         <span style="background:var(--bg-soft);color:var(--text-faint);padding:2px 9px;border-radius:6px;font-size:11px">${s.tag}</span>
         ${s.tool?'<span style="margin-left:auto;font-size:12px;color:#10b981">点击使用 →</span>':''}
       </div>
-      <div style="font-size:13px;color:var(--text-dim);line-height:1.6">${s.desc}</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.6">${escHtml(s.desc)}</div>
     </div>`).join("");
 }
 
@@ -5423,7 +5423,7 @@ function openModal(role){
   $("modalBody").innerHTML=`
     <div class="modal-head">
       <div>
-        <div class="modal-title"><span class="cb" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${PLAYER_COLORS[role]};vertical-align:middle;margin-right:6px"></span>${role} · ${p.name}</div>
+        <div class="modal-title"><span class="cb" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${PLAYER_COLORS[role]};vertical-align:middle;margin-right:6px"></span>${role} · ${escHtml(p.name)}</div>
         <div class="modal-sub">底层模型：${a.model} · ${a.modelCode}</div>
       </div>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -5437,7 +5437,7 @@ function openModal(role){
       <div>累计最大回撤 <b class="${(p.maxDrawdown||0)>=0.08?"down":""}">${((p.maxDrawdown||0)*100).toFixed(2)}%</b></div>
     </div>
     <h4>策略简述</h4>
-    <p>${a.desc}</p>
+    <p>${escHtml(a.desc)}</p>
     <h4>优势</h4>
     <p>${a.adv}</p>
     <h4>短板</h4>
@@ -5481,8 +5481,8 @@ function showDetail(code){
   $("modalBody").innerHTML=`
     <div class="modal-head">
       <div>
-        <div class="modal-title">${st.name}（${st.code}）· 策略体检</div>
-        <div class="modal-sub">${st.sector} · ${st.industry} · 五行：${st.wx} · 实时价 ${st.price.toFixed(2)}（${pct(st.chg)}）</div>
+        <div class="modal-title">${escHtml(st.name)}（${st.code}）· 策略体检</div>
+        <div class="modal-sub">${escHtml(st.sector)} · ${escHtml(st.industry)} · 五行：${st.wx} · 实时价 ${st.price.toFixed(2)}（${pct(st.chg)}）</div>
       </div>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
@@ -5509,7 +5509,7 @@ function showDetail(code){
     </div>
     
     <!-- 多空辩论 -->
-    <h4 style="margin-top:20px;padding-left:10px;border-left:3px solid var(--cyan)">多空辩论 <span style="float:right;font-size:13px;color:var(--text-faint);font-weight:400">${st.name} ${st.code}</span></h4>
+    <h4 style="margin-top:20px;padding-left:10px;border-left:3px solid var(--cyan)">多空辩论 <span style="float:right;font-size:13px;color:var(--text-faint);font-weight:400">${escHtml(st.name)} ${st.code}</span></h4>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div style="background:rgba(62,207,142,0.08);border:1px solid rgba(62,207,142,0.3);border-top:3px solid var(--up);border-radius:8px;padding:14px">
         <div style="font-size:14px;font-weight:700;color:var(--up);margin-bottom:10px">看多方 · 买入理由</div>
@@ -6168,7 +6168,7 @@ function openStockResearchModal(code){
   body.innerHTML=`<div class="modal-head">
       <div><div class="modal-title">${nm} <span style="color:var(--text-dim);font-size:13px">${code}</span></div>
       <div class="modal-sub">现价 <b class="${chg>=0?"up":"down"}">${price.toFixed(2)}</b> · <span class="${chg>=0?"up":"down"}">${chg>=0?"+":""}${chg.toFixed(2)}%</span> · ${wx}行 · ${st.sector||""}</div>
-      <div class="modal-sub">主力意图：<b style="color:${fundInfo.score>=1?"#ef4444":fundInfo.score<=-1?"#22c55e":"#8b949e"}">${fundInfo.tag}</b> · ${fundInfo.desc}</div></div>
+      <div class="modal-sub">主力意图：<b style="color:${fundInfo.score>=1?"#ef4444":fundInfo.score<=-1?"#22c55e":"#8b949e"}">${fundInfo.tag}</b> · ${escHtml(fundInfo.desc)}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       <div id="researchStockKline" style="width:100%;height:420px;margin-bottom:12px"></div>
@@ -6177,7 +6177,7 @@ function openStockResearchModal(code){
       <div style="display:grid;gap:6px;margin-bottom:12px">
         ${gates.map((g,i)=>`
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:6px;border-left:3px solid ${g.pass?"#22c55e":"#ef4444"}">
-            <div><b style="color:var(--text);font-size:12px">0${i+1} ${g.name}</b><br><span style="color:var(--text-dim);font-size:11px">${g.desc}</span></div>
+            <div><b style="color:var(--text);font-size:12px">0${i+1} ${escHtml(g.name)}</b><br><span style="color:var(--text-dim);font-size:11px">${escHtml(g.desc)}</span></div>
             <span style="color:${g.pass?"#22c55e":"#ef4444"};font-size:12px;font-weight:600">${g.pass?"通过":"拦截"}</span>
           </div>
         `).join("")}
@@ -6561,6 +6561,11 @@ function sentimentScore(t){
 function escNews(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* 通用 HTML 转义：任何外部来源（AI/接口/用户输入）内容写入 innerHTML 前必须先过这里，防 XSS */
 function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+/* 数据入口净化：行情接口/用户搜索返回的文本在进入数据层前剥离标签，
+   一处净化即可让下游所有 innerHTML 渲染点天然安全（比逐个渲染点转义更稳） */
+function sanitizeText(s){return String(s==null?"":s).replace(/<[^>]*>/g,"");}
+/* 股票代码白名单：只保留数字与字母，用于内联 onclick 传参，杜绝引号/括号逃逸 */
+function safeCode(c){return String(c==null?"":c).replace(/[^0-9a-zA-Z]/g,"");}
 function newsMktTags(t){
   const tags=[];
   try{
@@ -6766,10 +6771,10 @@ function renderResearch(){
     /* 因子建议：综合分高就是策略确认，低就是风险观察 */
     const factorAdvice = r.comp>=65 ? "策略确认" : r.comp>=55 ? "可关注" : "风险观察";
     const factorColor = r.comp>=65 ? "#22c55e" : r.comp>=55 ? "#fbbf24" : "#ef4444";
-    return `<tr style="cursor:pointer" onclick="openStockResearchModal('${r.code}')">
+    return `<tr style="cursor:pointer" onclick="openStockResearchModal('${safeCode(r.code)}')">
       <td style="color:var(--text-dim);font-size:11px">${idx+1}</td>
       <td class="rt-code">${r.code}</td>
-      <td class="rt-name">${r.name}</td>
+      <td class="rt-name">${escHtml(r.name)}</td>
       <td style="color:${wxColor};font-weight:600">${r.wx}</td>
       <td class="rt-conc ${r.cls}">${r.conc}</td>
       <td style="font-size:11px;color:var(--text-dim)">${r.volume>=10000?(r.volume/10000).toFixed(1)+"万":r.volume.toFixed(0)}</td>
@@ -7075,9 +7080,9 @@ function genDebateReason(P,i){
   if(c>=P.hi20[i]*0.99)bulls.push("接近20日高点突破在即");
   /* 大资金信号（国家队/大资金因子）并入多空辩论：流入=多方论据，流出=空方论据 */
   const fs=calcFundSignal(P,i);
-  if(fs.score>=1)bulls.push(`【大资金${fs.tag}】${fs.desc}`);
-  else if(fs.score<=-1)bears.push(`【大资金${fs.tag}】${fs.desc}`);
-  else if(fs.score===0)bulls.push(`大资金信号${fs.tag}（${fs.desc}）`);
+  if(fs.score>=1)bulls.push(`【大资金${fs.tag}】${escHtml(fs.desc)}`);
+  else if(fs.score<=-1)bears.push(`【大资金${fs.tag}】${escHtml(fs.desc)}`);
+  else if(fs.score===0)bulls.push(`大资金信号${fs.tag}（${escHtml(fs.desc)}）`);
   const bullCnt=bulls.length,bearCnt=bears.length;
   return `多空辩论：多方(${bullCnt})[${bulls.join("、")}] vs 空方(${bearCnt})[${bears.join("、")}] → 多方占优判定偏多`;
 }
@@ -7746,8 +7751,8 @@ function renderSim(res,have){
       stocks.forEach(s=>{
         const cls=s.ret>=0?"up":"down";
         const wrTxt=s.wins+s.losses>0?`${s.wins}胜${s.losses}负`:"";
-        html+=`<span onclick="openStockKline('${r.role}','${s.code}')" style="cursor:pointer;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.05);font-size:11px;border:1px solid var(--border-soft)">
-          <span style="color:#c9d1d9">${s.name}</span>
+        html+=`<span onclick="openStockKline('${safeCode(r.role)}','${safeCode(s.code)}')" style="cursor:pointer;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.05);font-size:11px;border:1px solid var(--border-soft)">
+          <span style="color:#c9d1d9">${escHtml(s.name)}</span>
           <span class="${cls}" style="margin-left:4px;font-weight:600">${s.ret>=0?"+":""}${s.ret.toFixed(1)}%</span>
           <span style="color:#8b949e;margin-left:2px">(${s.count}笔${wrTxt?"·"+wrTxt:""})</span>
         </span>`;
@@ -7768,7 +7773,7 @@ function renderSim(res,have){
       <td>${t.dir}</td><td>${nm}</td><td>${t.date}</td><td>${t.price.toFixed(2)}</td><td>${t.shares}</td>
       <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${t.pnl===null?"—":(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+"%"}</td>
       <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${amtTxt}</td>
-      <td>${t.reason}</td></tr>`;
+      <td>${escHtml(t.reason)}</td></tr>`;
   }).join("");
 }
 function genAdvice(res,have){
@@ -7814,8 +7819,8 @@ function openStockKline(role,code){
   const wins=sells.filter(t=>t.pnl!==null&&t.pnl>=0).length;
   const losses=sells.filter(t=>t.pnl!==null&&t.pnl<0).length;
   const body=document.getElementById("modalBody"),mask=document.getElementById("modalMask");
-  const buyList=buys.length?buys.map(t=>`<div class="reason-item" style="font-size:12px;border-left:3px solid #2ecc71"><b style="color:#2ecc71">${t.dir}</b> ${t.date} @${t.price.toFixed(2)} × ${t.shares}股<br><span style="color:#8b949e">原因：${t.reason}</span></div>`).join(""):'<div style="color:#8b949e;font-size:12px;padding:4px">无买入记录</div>';
-  const sellList=sells.length?sells.map(t=>`<div class="reason-item" style="font-size:12px;border-left:3px solid #e74c3c"><b style="color:#e74c3c">${t.dir}</b> ${t.date} @${t.price.toFixed(2)} × ${t.shares}股 · <span class="${t.pnl>=0?"up":"down"}">${t.pnl===null?"":(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+"%"}</span><br><span style="color:#8b949e">原因：${t.reason}</span></div>`).join(""):'<div style="color:#8b949e;font-size:12px;padding:4px">无卖出记录</div>';
+  const buyList=buys.length?buys.map(t=>`<div class="reason-item" style="font-size:12px;border-left:3px solid #2ecc71"><b style="color:#2ecc71">${t.dir}</b> ${t.date} @${t.price.toFixed(2)} × ${t.shares}股<br><span style="color:#8b949e">原因：${escHtml(t.reason)}</span></div>`).join(""):'<div style="color:#8b949e;font-size:12px;padding:4px">无买入记录</div>';
+  const sellList=sells.length?sells.map(t=>`<div class="reason-item" style="font-size:12px;border-left:3px solid #e74c3c"><b style="color:#e74c3c">${t.dir}</b> ${t.date} @${t.price.toFixed(2)} × ${t.shares}股 · <span class="${t.pnl>=0?"up":"down"}">${t.pnl===null?"":(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+"%"}</span><br><span style="color:#8b949e">原因：${escHtml(t.reason)}</span></div>`).join(""):'<div style="color:#8b949e;font-size:12px;padding:4px">无卖出记录</div>';
   /* 大资金信号：基于该股回测期间最近K线量价计算（连续2日方向，单日不采信） */
   let fundLine="";
   try{
@@ -7824,7 +7829,7 @@ function openStockKline(role,code){
       const fs=calcFundSignal(P,P.N-1);
       const fc=fs.score>=1?"#ef4444":(fs.score<=-1?"#22c55e":"#8b949e");
       const fsSign=fs.score>0?`+${fs.score}`:fs.score;
-      fundLine=`<div class="modal-sub" style="margin-top:3px">大资金信号：<b style="color:${fc}">${fs.tag}（${fsSign}分）</b> · ${fs.desc}</div>`;
+      fundLine=`<div class="modal-sub" style="margin-top:3px">大资金信号：<b style="color:${fc}">${fs.tag}（${fsSign}分）</b> · ${escHtml(fs.desc)}</div>`;
     }
   }catch(e){}
   body.innerHTML=`<div class="modal-head">
@@ -7885,13 +7890,13 @@ function openTradeDetail(idx){
   const klineData=window._simDayMap&&window._simDayMap[t.code];
   body.innerHTML=`<div class="modal-head">
       <div><div class="modal-title"><span class="cb" style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${PLAYER_COLORS[t.role]};vertical-align:middle;margin-right:6px"></span>${nm}（${t.code}）· 回测期间走势与买卖点</div>
-      <div class="modal-sub">${t.date} · 当前选中：${t.role} ${t.dir} · 触发：${t.reason}</div></div>
+      <div class="modal-sub">${t.date} · 当前选中：${t.role} ${t.dir} · 触发：${escHtml(t.reason)}</div></div>
       <button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       ${klineData?`<div id="simStockKline" style="width:100%;height:320px;margin-bottom:12px"></div>`:`<div style="padding:20px;text-align:center;color:var(--text-dim)">该股票无回测K线数据（可能是重试后仍失败的样本）</div>`}
       <div class="reason-item"><b>当前交易</b> ${t.role} · ${t.dir} · ${t.date} · ${t.price.toFixed(2)}元 · ${t.shares}股</div>
       <div class="reason-item"><b>单笔盈亏</b> <span class="${t.pnl===null?"":t.pnl>=0?"up":"down"}">${t.pnl===null?"—":t.pnl.toFixed(2)+"%"}</span> ${t.pnl===null?"":"（"+(t.pnl>=0?"赚 ":"亏 ")+Math.abs(amt).toFixed(0)+"元）"}</div>
-      <div class="reason-item"><b>触发原因</b> ${t.reason}</div>
+      <div class="reason-item"><b>触发原因</b> ${escHtml(t.reason)}</div>
       <div class="reason-item"><b>该股回测期间共 ${allTrades.length} 笔交易</b>（${allTrades.filter(x=>x.dir==="买"||x.dir==="加仓").length}笔买入 / ${allTrades.filter(x=>x.dir==="卖"||x.dir==="部分止盈").length}笔卖出）</div>
     </div>`;
   mask.classList.add("show");
@@ -8463,7 +8468,7 @@ function loadTech(){
         return;
       }
       const last=days[days.length-1];
-      if(nameEl)nameEl.textContent=`${techStock.name}(${techStock.code}) · 最新 ${last.close.toFixed(2)} · 近${days.length}日 · ${srcName}`;
+      if(nameEl)nameEl.textContent=`${escHtml(techStock.name)}(${techStock.code}) · 最新 ${last.close.toFixed(2)} · 近${days.length}日 · ${srcName}`;
       if(techView==="k")renderTechK(days);
       else if(techView==="chip")renderTechChip(days);
       else renderTechMin(min&&min.length?min:days, days);
@@ -8844,8 +8849,8 @@ function initTech(){
     box.innerHTML=list.map(s=>`
       <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-hover);border:1px solid var(--border-soft);border-radius:6px;padding:4px 10px;margin:3px 6px 3px 0;font-size:13px">
         <span style="color:var(--cyan);font-weight:600">${s.code}</span>
-        ${s.name?`<span style="color:var(--text-dim)">${s.name}</span>`:""}
-        <span style="color:var(--text-faint);cursor:pointer;margin-left:4px" onclick="removeWatchStock('${s.code}')" title="删除">✕</span>
+        ${s.name?`<span style="color:var(--text-dim)">${escHtml(s.name)}</span>`:""}
+        <span style="color:var(--text-faint);cursor:pointer;margin-left:4px" onclick="removeWatchStock('${safeCode(s.code)}')" title="删除">✕</span>
       </span>
     `).join("");
   }
@@ -8889,7 +8894,7 @@ function initTech(){
     Object.values(simData.pricePool).forEach(st=>{
       if(!st||!st.code)return;
       const tx=TDX_CODES[st.code]||(st.code[0]==="6"?"sh":"sz")+st.code;
-      sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${st.name}(${st.code})</option>`);
+      sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${escHtml(st.name)}(${st.code})</option>`);
     });
     /* 再添加自选股（如果不在候选池里） */
     const watchList=getWatchList();
@@ -9029,7 +9034,7 @@ function renderMom(){
       <div class="ext-rank-box"><h4>🔴 今日宝妈卖出排行</h4>`+Object.entries(sec).sort((a,b)=>(b[1].details.mom_sell_index||0)-(a[1].details.mom_sell_index||0)).map(([k,s],i)=>`<div class="ext-rank-item"><span class="ext-num">${i+1}</span><b style="color:${MOM_COLORS[k]}">${MOM_NAMES[k]||k}</b><span style="margin-left:auto;color:#f87171;font-family:var(--mono)">${s.details.mom_sell_index||0}</span></div>`).join("")+`</div>
     </div>
     <div id="momChart"></div>
-    <div style="margin-top:12px"><h4 style="font-size:12px;color:var(--text-dim);margin-bottom:6px">🔥 今日最"小白"的帖子</h4>`+Object.entries(sec).flatMap(([k,s])=>(s.top||[]).map(p=>({...p,sector:MOM_NAMES[k]||k}))).sort((a,b)=>b.score-a.score).slice(0,6).map(p=>`<div class="ext-post"><b>[${p.sector}]</b> ${p.title||""} <span style="color:var(--text-faint)">· ${p.score||0}分</span></div>`).join("")+`</div>
+    <div style="margin-top:12px"><h4 style="font-size:12px;color:var(--text-dim);margin-bottom:6px">🔥 今日最"小白"的帖子</h4>`+Object.entries(sec).flatMap(([k,s])=>(s.top||[]).map(p=>({...p,sector:MOM_NAMES[k]||k}))).sort((a,b)=>b.score-a.score).slice(0,6).map(p=>`<div class="ext-post"><b>[${escHtml(p.sector)}]</b> ${p.title||""} <span style="color:var(--text-faint)">· ${p.score||0}分</span></div>`).join("")+`</div>
     <div class="ext-note">数据来源：东方财富股吧 · 更新 ${d.date} · 记录数 ${d.record_count||0} · 指数越高=散户越活跃=情绪越危险 · 仅供参考</div>
   </div>`;
   body.setAttribute("data-done","1");
@@ -9257,8 +9262,8 @@ function initTech(){
     box.innerHTML=list.map(s=>`
       <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-hover);border:1px solid var(--border-soft);border-radius:6px;padding:4px 10px;margin:3px 6px 3px 0;font-size:13px">
         <span style="color:var(--cyan);font-weight:600">${s.code}</span>
-        ${s.name?`<span style="color:var(--text-dim)">${s.name}</span>`:""}
-        <span style="color:var(--text-faint);cursor:pointer;margin-left:4px" onclick="removeWatchStock('${s.code}')" title="删除">✕</span>
+        ${s.name?`<span style="color:var(--text-dim)">${escHtml(s.name)}</span>`:""}
+        <span style="color:var(--text-faint);cursor:pointer;margin-left:4px" onclick="removeWatchStock('${safeCode(s.code)}')" title="删除">✕</span>
       </span>
     `).join("");
   }
@@ -9302,7 +9307,7 @@ function initTech(){
     Object.values(simData.pricePool).forEach(st=>{
       if(!st||!st.code)return;
       const tx=TDX_CODES[st.code]||(st.code[0]==="6"?"sh":"sz")+st.code;
-      sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${st.name}(${st.code})</option>`);
+      sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${escHtml(st.name)}(${st.code})</option>`);
     });
     /* 再添加自选股（如果不在候选池里） */
     const watchList=getWatchList();
@@ -9687,7 +9692,7 @@ async function startLLMRoleDecision(){
     for(let i = 0; i < roles.length; i++){
       const role = roles[i];
       const persona = ROLE_PERSONAS[role];
-      showAIProgress(`🎭 ${persona.name}（${persona.title}）正在思考...\n\n进度：${i+1}/6`);
+      showAIProgress(`🎭 ${escHtml(persona.name)}（${persona.title}）正在思考...\n\n进度：${i+1}/6`);
       try{
         results[role] = await llmRoleDecision(role, code, P);
       }catch(e){
@@ -9732,10 +9737,10 @@ async function startLLMRoleDecision(){
       card.style.cssText = `background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid ${persona.color}`;
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-weight:600;color:${persona.color}">${role} · ${persona.name}（${persona.title}）</div>
+          <div style="font-weight:600;color:${persona.color}">${role} · ${escHtml(persona.name)}（${persona.title}）</div>
           <div style="font-weight:700;color:${decisionColor};font-size:16px">${decisionIcon} ${r.decision} <span style="font-size:12px;color:#8b949e">（${r.confidence}置信）</span></div>
         </div>
-        <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${r.reason}</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${escHtml(r.reason)}</div>
       `;
       contentEl.appendChild(card);
     });
@@ -9820,7 +9825,7 @@ function formatMemoryForLLM(role, code){
   if(!memories.length) return "";
   let text = "\n\n【你对这只股票的历史决策记忆】\n";
   memories.forEach((m, i) => {
-    text += `${i+1}. ${m.time}：你决策【${m.decision}】，理由：${m.reason}，结果：${m.result}\n`;
+    text += `${i+1}. ${m.time}：你决策【${m.decision}】，理由：${escHtml(m.reason)}，结果：${m.result}\n`;
   });
   text += "请参考你的历史决策经验，避免重复犯错。\n";
   return text;
@@ -9837,7 +9842,7 @@ async function llmRoleWithMemory(role, code, P, otherViews){
     userContent += "\n\n【其他角色的观点】\n";
     otherViews.forEach(v => {
       const p = ROLE_PERSONAS[v.role];
-      userContent += `${v.role} ${p.name}（${p.title}）：决策【${v.decision}】，理由：${v.reason}\n`;
+      userContent += `${v.role} ${escHtml(p.name)}（${p.title}）：决策【${v.decision}】，理由：${escHtml(v.reason)}\n`;
     });
     userContent += "\n请参考其他角色的观点，坚持你自己的交易风格，做出你的最终决策。如果你认为其他角色说得有道理，可以改变主意；如果你坚持自己的观点，也请说明理由。";
   }else{
@@ -9885,7 +9890,7 @@ async function startLLMDebate(){
     for(let i = 0; i < roles.length; i++){
       const role = roles[i];
       const persona = ROLE_PERSONAS[role];
-      showAIProgress(`🗣️ 第一轮：${persona.name}（${persona.title}）正在发言...\n\n进度：${i+1}/6`);
+      showAIProgress(`🗣️ 第一轮：${escHtml(persona.name)}（${persona.title}）正在发言...\n\n进度：${i+1}/6`);
       try{
         firstRound[role] = await llmRoleWithMemory(role, code, P, null);
       }catch(e){
@@ -9900,7 +9905,7 @@ async function startLLMDebate(){
     for(let i = 0; i < roles.length; i++){
       const role = roles[i];
       const persona = ROLE_PERSONAS[role];
-      showAIProgress(`⚔️ 第二轮：${persona.name}（${persona.title}）正在辩论...\n\n进度：${i+1}/6`);
+      showAIProgress(`⚔️ 第二轮：${escHtml(persona.name)}（${persona.title}）正在辩论...\n\n进度：${i+1}/6`);
       try{
         finalRound[role] = await llmRoleWithMemory(role, code, P, otherViews.filter(v => v.role !== role));
       }catch(e){
@@ -9964,7 +9969,7 @@ async function startLLMDebate(){
             const p = ROLE_PERSONAS[r];
             const changed = firstRound[r].decision !== finalRound[r].decision;
             return `
-              <div style="color:${p.color};font-weight:600">${r} ${p.name}</div>
+              <div style="color:${p.color};font-weight:600">${r} ${escHtml(p.name)}</div>
               <div>${firstRound[r].decision}</div>
               <div style="font-weight:600">${finalRound[r].decision}</div>
               <div style="color:${changed?'#fbbf24':'#10b981'}">${changed?'🔄 改变':'✅ 坚持'}</div>
@@ -9987,14 +9992,14 @@ async function startLLMDebate(){
       card.style.cssText = `background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid ${persona.color}`;
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-weight:600;color:${persona.color}">${role} · ${persona.name}（${persona.title}）${changed?' <span style="font-size:11px;color:#fbbf24">🔄 辩论后改变主意</span>':''}</div>
+          <div style="font-weight:600;color:${persona.color}">${role} · ${escHtml(persona.name)}（${persona.title}）${changed?' <span style="font-size:11px;color:#fbbf24">🔄 辩论后改变主意</span>':''}</div>
           <div style="font-weight:700;color:${decisionColor};font-size:16px">${decisionIcon} ${r.decision} <span style="font-size:12px;color:#8b949e">（${r.confidence}置信）</span></div>
         </div>
         ${changed ? `<div style="font-size:12px;color:#8b949e;margin-bottom:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:4px">
-          第一轮观点：【${f.decision}】${f.reason}<br>
+          第一轮观点：【${f.decision}】${escHtml(f.reason)}<br>
           改变原因：听取了其他角色的意见后重新判断
         </div>` : ''}
-        <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${r.reason}</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${escHtml(r.reason)}</div>
       `;
       contentEl.appendChild(card);
     });
@@ -10035,14 +10040,14 @@ async function startLLMCombat(){
       if(!p)continue;
       const persona=ROLE_PERSONAS[roleId];
       
-      showAIProgress(`🤖 第二步：${persona.name}（${persona.title}）选股中...\n\n进度：${ri+1}/6`);
+      showAIProgress(`🤖 第二步：${escHtml(persona.name)}（${persona.title}）选股中...\n\n进度：${ri+1}/6`);
       
       /* 用技术策略选股 */
       const candidates=pickTargets(p);
-      logLines.push(`\n【${roleId} ${persona.name}】技术面选出${candidates.length}只候选股`);
+      logLines.push(`\n【${roleId} ${escHtml(persona.name)}】技术面选出${candidates.length}只候选股`);
       
       /* 持仓先卖出判断 */
-      showAIProgress(`🤖 ${persona.name}正在判断现有持仓是否该卖...`);
+      showAIProgress(`🤖 ${escHtml(persona.name)}正在判断现有持仓是否该卖...`);
       for(const hold of [...p.holdings]){
         const st=simData.pricePool[hold.code];
         if(!st)continue;
@@ -10058,15 +10063,15 @@ async function startLLMCombat(){
           const pnl=(st.price-hold.buyPrice)/hold.buyPrice*100;
           
           if(llmResult.decision==="卖出"){
-            showAIProgress(`🔴 ${persona.name}建议卖出：${hold.name}（${pnl.toFixed(1)}%）\n\n执行卖出中...`);
+            showAIProgress(`🔴 ${escHtml(persona.name)}建议卖出：${escHtml(hold.name)}（${pnl.toFixed(1)}%）\n\n执行卖出中...`);
             doSell(p, hold, st, now, "LLM建议："+llmResult.reason, 1);
             totalSells++;
-            logLines.push(`  🔴 卖出 ${hold.name} ${hold.qty}股（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.reason.slice(0,50)}`);
+            logLines.push(`  🔴 卖出 ${escHtml(hold.name)} ${hold.qty}股（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.reason.slice(0,50)}`);
           }else{
-            logLines.push(`  ⚪ 持有 ${hold.name}（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.decision}`);
+            logLines.push(`  ⚪ 持有 ${escHtml(hold.name)}（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.decision}`);
           }
         }catch(e){
-          logLines.push(`  ⚠️ ${hold.name} LLM分析失败：${e.message}`);
+          logLines.push(`  ⚠️ ${escHtml(hold.name)} LLM分析失败：${e.message}`);
         }
         
         /* 间隔一下，避免太快 */
@@ -10083,21 +10088,21 @@ async function startLLMCombat(){
         if(!klineData||klineData.length<20)continue;
         const P=prepStock(klineData);
         
-        showAIProgress(`🟢 ${persona.name}正在分析：${target.name}...`);
+        showAIProgress(`🟢 ${escHtml(persona.name)}正在分析：${escHtml(target.name)}...`);
         
         try{
           const llmResult=await llmRoleDecision(roleId, target.code, P);
           
           if(llmResult.decision==="买入"){
-            showAIProgress(`🟢 ${persona.name}建议买入：${target.name}\n\n执行买入中...`);
+            showAIProgress(`🟢 ${escHtml(persona.name)}建议买入：${escHtml(target.name)}\n\n执行买入中...`);
             doBuy(p, target, now, 1);
             totalBuys++;
-            logLines.push(`  🟢 买入 ${target.name} - ${llmResult.reason.slice(0,50)}`);
+            logLines.push(`  🟢 买入 ${escHtml(target.name)} - ${llmResult.reason.slice(0,50)}`);
           }else{
-            logLines.push(`  ⚪ 放弃 ${target.name} - ${llmResult.decision}`);
+            logLines.push(`  ⚪ 放弃 ${escHtml(target.name)} - ${llmResult.decision}`);
           }
         }catch(e){
-          logLines.push(`  ⚠️ ${target.name} LLM分析失败：${e.message}`);
+          logLines.push(`  ⚠️ ${escHtml(target.name)} LLM分析失败：${e.message}`);
         }
         
         await new Promise(r=>setTimeout(r,500));
@@ -10611,7 +10616,7 @@ async function sendAgentChat(){
   for(const role of roles){
     const p=personas[role];
     try{
-      const prompt=`你是${p.name}，${p.title}风格的A股交易员。现在是在一个六Agent投资群聊里，用户说："${text}"
+      const prompt=`你是${escHtml(p.name)}，${p.title}风格的A股交易员。现在是在一个六Agent投资群聊里，用户说："${text}"
 
 请用你的风格，简短地表达你的观点（2-3句话）：
 - 你对这个问题怎么看？
@@ -10679,7 +10684,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -10729,7 +10734,7 @@ async function suggestGroupName(){
   for(const role of roles){
     const p=personas[role];
     try{
-      const prompt=`你是${p.name}，${p.title}风格的A股交易员。现在你们六个人在群里讨论，要给这个炒股群取个名字。
+      const prompt=`你是${escHtml(p.name)}，${p.title}风格的A股交易员。现在你们六个人在群里讨论，要给这个炒股群取个名字。
 你觉得这个群应该叫什么名字？要符合你的风格，要酷，要有炒股的感觉。
 就说一个名字，再加一句为什么取这个名字。简短点，一句话就行。`;
       
@@ -10790,7 +10795,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
@@ -10856,7 +10861,7 @@ async function agentFreeDiscussion(topic){
           return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
         }).join("\n");
         
-        const prompt=`你是${p.name}，${p.style}风格的交易员。
+        const prompt=`你是${escHtml(p.name)}，${p.style}风格的交易员。
 现在你们在讨论：「${topic}」
 
 最近的讨论：
