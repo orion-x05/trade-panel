@@ -1059,6 +1059,16 @@ function alertSellSignal(role, stockName, code, price, profit){
 
 <!-- ===== 运行总览（独立tab） ===== -->
 <section class="tab-view active" id="view-overview">
+  <!-- ===== 状态栏（最上方） ===== -->
+  <div class="market-bar" id="marketBar">
+    <span class="mb-dot"></span><span id="marketBarText">正在检测交易时段…</span>
+    <span class="spacer"></span>
+    <button onclick="fetchRealQuotes(true)">⚡ 立即拉行情</button>
+    <button onclick="resetSim()">刷新数据</button>
+    <button onclick="exportData()">📤 导出数据</button>
+    <button onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
   <!-- ===== v0246 市场看板 ===== -->
   <div class="mk-grid mk-g6" id="idxRow"></div>
   <div class="mk-grid mk-g4 mk-mt">
@@ -1092,16 +1102,6 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div class="mk-card-body"><div class="mk-chart" id="cBreadth"></div></div></div>
     <div class="mk-card"><div class="mk-card-head"><div class="ch-title">强弱分层</div></div>
       <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
-  </div>
-
-  <div class="market-bar" id="marketBar">
-    <span class="mb-dot"></span><span id="marketBarText">正在检测交易时段…</span>
-    <span class="spacer"></span>
-    <button onclick="fetchRealQuotes(true)">⚡ 立即拉行情</button>
-    <button onclick="resetSim()">刷新数据</button>
-    <button onclick="exportData()">📤 导出数据</button>
-    <button onclick="document.getElementById('importFile').click()">📥 导入数据</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
   </div>
 
   <section class="stats">
