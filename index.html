@@ -5003,7 +5003,21 @@ function renderReview(){
       <div class="sh-analysis" style="background:rgba(197,134,192,.08);border-color:rgba(197,134,192,.3)">🔮 次日预期：${s.nextDayExpect||'—'}</div>
       <div class="reason-list">${holdRows}</div>`;
   }else{
-    daily.innerHTML=`<div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。非交易时段引擎不产生新成交（A股 T+1 已生效）。</div>`;
+    /* 不到15点也显示当前持仓快照，不空白 */
+    const allHolds=[];
+    simData.players.forEach(p=>p.holdings.forEach(h=>{
+      const s=simData.pricePool[h.code];
+      allHolds.push({role:p.id,name:h.name,code:h.code,qty:h.qty,chg:s?s.chg:0,sector:s?s.sector:"—",industry:s?s.industry:"—",reason:h.reason||"—"});
+    }));
+    if(allHolds.length){
+      daily.innerHTML=`
+        <div class="review-meta">当前持仓快照 · 每日15:00收盘后自动生成正式小结</div>
+        <div class="reason-list">${allHolds.map(h=>`
+          <div class="reason-item"><b>${h.role}</b> ${h.name}（${h.code}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${h.sector}/${h.industry}<br>持仓理由：${h.reason}</div>`).join("")}
+        </div>`;
+    }else{
+      daily.innerHTML=`<div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。当前空仓。</div>`;
+    }
   }
   const wk=weekKey(new Date());
   const weekRows=summaries.week&&summaries.week.key===wk?summaries.week.rows
