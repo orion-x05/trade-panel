@@ -5999,8 +5999,26 @@ function openStockResearchModal(code){
   mask.classList.add("show");
   
   /* 渲染K线图 */
-  const klineData=window._simDayMap&&window._simDayMap[code];
-  if(klineData&&klineData.length>10){
+  let klineData=window._simDayMap&&window._simDayMap[code];
+  if(!klineData||klineData.length<10){
+    /* 异步拉K线 */
+    if(typeof eastmoneyKline==='function'){
+      eastmoneyKline(code,60).then(days=>{
+        if(days&&days.length>10){
+          window._simDayMap=window._simDayMap||{};
+          window._simDayMap[code]=days;
+          /* 重新渲染K线 */
+          setTimeout(()=>{try{renderKlineForModal(code,days);}catch(e){}},200);
+        }
+      }).catch(e=>{});
+    }
+    /* 先显示空状态 */
+    const el0=document.getElementById("researchStockKline");
+    if(el0)el0.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-faint);font-size:13px">📈 K线数据加载中…</div>';
+  }
+  if(klineData&&klineData.length>10){renderKlineForModal(code,klineData);}
+}
+function renderKlineForModal(code,klineData){
     setTimeout(()=>{
       const el=document.getElementById("researchStockKline");
       if(!el||typeof echarts==="undefined")return;
