@@ -8636,12 +8636,14 @@ function initTech(){
     sel.innerHTML="";
     /* 先添加候选池股票 */
     Object.values(simData.pricePool).forEach(st=>{
+      if(!st||!st.code)return;
       const tx=TDX_CODES[st.code]||(st.code[0]==="6"?"sh":"sz")+st.code;
       sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${st.name}(${st.code})</option>`);
     });
     /* 再添加自选股（如果不在候选池里） */
     const watchList=getWatchList();
     watchList.forEach(s=>{
+      if(!s||!s.code)return;
       if(simData.pricePool[s.code])return; /* 候选池里已有就不重复添加 */
       const tx=TDX_CODES[s.code]||(s.code[0]==="6"?"sh":"sz")+s.code;
       const name=s.name||"自选股";
@@ -9047,12 +9049,14 @@ function initTech(){
     sel.innerHTML="";
     /* 先添加候选池股票 */
     Object.values(simData.pricePool).forEach(st=>{
+      if(!st||!st.code)return;
       const tx=TDX_CODES[st.code]||(st.code[0]==="6"?"sh":"sz")+st.code;
       sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${st.name}(${st.code})</option>`);
     });
     /* 再添加自选股（如果不在候选池里） */
     const watchList=getWatchList();
     watchList.forEach(s=>{
+      if(!s||!s.code)return;
       if(simData.pricePool[s.code])return; /* 候选池里已有就不重复添加 */
       const tx=TDX_CODES[s.code]||(s.code[0]==="6"?"sh":"sz")+s.code;
       const name=s.name||"自选股";
