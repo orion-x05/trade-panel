@@ -1563,8 +1563,10 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>代码</th><th>名称</th><th>板块</th><th>行业</th><th>五行</th><th class="r">最新价</th><th class="r">涨跌幅%</th>
-            <th class="r">量比</th><th>主力意图</th><th class="r">RSI6</th><th class="r">RPS50</th><th class="r">综合评分</th><th>门禁</th>
+            <th>代码</th><th>名称</th><th>板块/行业</th><th>五行</th>
+            <th class="r">最新价</th><th class="r">涨跌幅%</th><th class="r">量比</th><th>主力意图</th>
+            <th class="r">RSI6</th><th class="r">透支分</th><th class="r">动量分</th><th class="r">筹码分</th>
+            <th class="r">综合评分</th><th>结论</th><th>门禁</th>
           </tr></thead>
           <tbody id="poolBody"></tbody>
         </table>
@@ -1576,14 +1578,6 @@ function alertSellSignal(role, stockName, code, price, profit){
         <span id="rsAvg">综合评分均值 --</span>
       </div>
       <div id="firePoolBox" class="fire-pool"></div>
-      <div class="table-wrap">
-        <table class="research-table">
-          <thead><tr>
-            <th>排名</th><th>股票代码</th><th>名称</th><th>五行</th><th>结论</th><th>成交量</th><th>换手率</th><th>量比</th><th>透支分</th><th>动量分</th><th>筹码分</th><th>综合评分</th><th>建议</th>
-          </tr></thead>
-          <tbody id="researchBody"></tbody>
-        </table>
-      </div>
     </div>
   </div>
 </section>
@@ -4488,23 +4482,37 @@ function renderPool(){
     `;
   }
   
-  Object.values(simData.pricePool).sort((a,b)=>b.chg-a.chg).forEach(st=>{
+  const allStocks=Object.values(simData.pricePool).map(st=>{
     const gate=gateDecision(st);
     const it=intentOf(st);
     const compScore=calcFireScore(st);
+    /* 研究评分因子 */
+    const rsi=st.rsi6||50;
+    const over=clampN(Math.round(50+(st.chg||0)*3+(rsi-50)*0.6),0,100);
+    const mom=clampN(Math.round(50+(st.chg||0)*3+((st.vol||1)-1)*8),0,100);
+    const chip=clampN(Math.round((st.rps50||50)+(st.chg>0?4:0)+((st.vol||1)>1?3:0)),0,100);
+    let conc="回避",cls="rc-avoid";
+    if(compScore>=65){conc="买入";cls="rc-buy";}
+    else if(compScore>=50){conc="关注";cls="rc-watch";}
+    return {st,gate,it,compScore,over,mom,chip,conc,cls};
+  }).sort((a,b)=>b.compScore-a.compScore);
+
+  allStocks.forEach(({st,gate,it,compScore,over,mom,chip,conc,cls})=>{
     pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${st.code}')">
       <td class="num">${st.code}</td>
       <td>${st.name}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
-      <td style="color:var(--text-dim)">${st.sector||"—"}</td>
-      <td style="color:var(--text-dim)">${st.industry||"—"}</td>
+      <td style="color:var(--text-dim)">${st.sector||"—"}${st.industry&&st.industry!==st.sector?'/'+st.industry:''}</td>
       <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
       <td class="r num">${st.price.toFixed(2)}</td>
       <td class="r num ${pctColor(st.chg)}">${pct(st.chg)}</td>
       <td class="r num">${st.vol.toFixed(2)}</td>
       <td><span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span></td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
-      <td class="r num">${(st.rps50||50).toFixed(1)}</td>
+      <td class="r num">${over}</td>
+      <td class="r num">${mom}</td>
+      <td class="r num">${chip}</td>
       <td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>
+      <td><span class="${cls}" style="font-weight:600">${conc}</span></td>
       <td><span class="tag ${gate.cls}">${gate.label}</span></td>
     </tr>`);
   });
@@ -6494,7 +6502,7 @@ function calcStopLoss(st){
 }
 function renderResearch(){
   const body=document.getElementById("researchBody");
-  if(!body)return;
+  if(!body)return; /* 已融合到候选池表 */
   const fb=document.getElementById("firePoolBox");
   if(fb){fb.innerHTML="";} /* 卡片网格已合并到候选池表格 */
   const pool=simData&&simData.pricePool?simData.pricePool:{};
