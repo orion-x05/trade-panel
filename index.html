@@ -3973,15 +3973,21 @@ function tick(){
 
 /* ==================== 门禁判定（数据层） ==================== */
 function gateDecision(st){
-  const aboveMA20=st.price>st.ma20;
-  const rsiOK=st.rsi6>=30&&st.rsi6<=75;
-  const volOK=st.vol>=0.5;
-  const riskOK=st.price>=st.stop;
-  const score=(aboveMA20?20:0)+(rsiOK?15:0)+(volOK?15:0)+(aboveMA20?25:0)+(riskOK?25:0);
-  if(score>=80)return{label:"通过",cls:"tag-ok"};
-  if(score>=60)return{label:"观察",cls:"tag-warn"};
+  const safeRsi=st.rsi6||50;
+  const safeMa20=st.ma20||st.price;
+  const safeMa60=st.ma60||st.price;
+  const safeVol=st.vol||1;
+  const above=st.price>=safeMa20;
+  const volOK=safeVol>=1.2&&safeVol<=5;
+  const trendOK=safeMa20>safeMa60&&above;
+  const rsiOK=safeRsi<76;
+  /* 六道门禁：流动性、趋势、量价、过热、评分 */
+  const passCount=[safeVol>=0.5, trendOK, volOK, rsiOK, safeRps50Pass(st)].filter(Boolean).length;
+  if(passCount>=5)return{label:"通过",cls:"tag-ok"};
+  if(passCount>=3)return{label:"观察",cls:"tag-warn"};
   return{label:"拦截",cls:"tag-bad"};
 }
+function safeRps50Pass(st){return (st.rps50||50)<80;}
 
 /* ==================== 复盘总结（界面层） ==================== */
 const INDICES=[
