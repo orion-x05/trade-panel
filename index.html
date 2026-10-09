@@ -4340,15 +4340,15 @@ function renderRank(){
     const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
     const heldQty=p.holdings.reduce((a,h)=>a+h.qty,0);
     const mv=p.asset-p.cash;
-    const floatPnl=p.trades.filter(t=>t.type==="sell").reduce((a,t)=>a+(t.profit||0),0);
+    const floatPnl=p.trades.filter(t=>t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈").reduce((a,t)=>a+(t.profit||t.pnl||0),0);
     const trades=p.trades.length;
     /* 实时计算胜率和盈亏比 */
-    const sells=p.trades.filter(t=>t.type==="sell");
-    const wins=sells.filter(t=>(t.profit||0)>0);
-    const losses=sells.filter(t=>(t.profit||0)<0);
+    const sells=p.trades.filter(t=>t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈");
+    const wins=sells.filter(t=>(t.profit||t.pnl||0)>0);
+    const losses=sells.filter(t=>(t.profit||t.pnl||0)<=0);
     const winRate=sells.length?wins.length/sells.length:0;
-    const avgWin=wins.length?wins.reduce((a,t)=>a+(t.profit||0),0)/wins.length:0;
-    const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+(t.profit||0),0)/losses.length):0;
+    const avgWin=wins.length?wins.reduce((a,t)=>a+(t.profit||t.pnl||0),0)/wins.length:0;
+    const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+(t.profit||t.pnl||0),0)/losses.length):0;
     const plRatio=avgLoss>0?avgWin/avgLoss:(wins.length?99:0);
     const rb=idx===0?"rank-1":idx===1?"rank-2":idx===2?"rank-3":"";
     const maxDrawCls=p.maxDrawdown>=0.08?"down":"";
