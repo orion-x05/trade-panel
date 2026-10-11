@@ -330,26 +330,38 @@ def wuxing_block(now):
 
 # ==================== 外部监控汇总 ====================
 def build_external_monitor():
-    """汇总外部监控：北向资金（实时）+ 大盘位置。失败自动降级，不影响推送"""
+    """汇总外部监控：以【大盘情绪·主参考】为首，北向/外围为辅助。失败自动降级"""
     lines = []
-    try:
-        nb = get_northbound_flow()
-        if nb == "bull":
-            lines.append("- 北向资金：净流入，偏多")
-        elif nb == "bear":
-            lines.append("- 北向资金：净流出，偏空")
-        else:
-            lines.append("- 北向资金：平稳")
-    except Exception as e:
-        lines.append(f"- 北向资金：获取失败（{e}）")
+    # —— 大盘情绪（主参考）：以上证指数涨跌幅为核心，与前端情绪温度同算法 ——
     try:
         r = requests.get("https://qt.gtimg.cn/q=sh000001", timeout=10)
         r.encoding = "gbk"
         arr = r.text.split("~")
         if len(arr) > 32:
-            lines.append(f"- 上证指数：{arr[3]}（{arr[31]} {arr[32]}%）")
-    except Exception:
-        pass
+            price = arr[3]
+            chg = float(arr[32])
+            temp = max(-30, min(30, round(chg * 10)))
+            level = ("情绪高涨·注意过热" if temp >= 20 else
+                     "情绪偏暖·谨慎做多" if temp >= 10 else
+                     "情绪温和·可逢低布局" if temp >= 3 else
+                     "情绪中性·观望为主" if temp > -3 else
+                     "情绪偏冷·控制仓位" if temp > -10 else
+                     "情绪低迷·等待企稳" if temp > -20 else
+                     "情绪冰点·恐慌性抛售")
+            lines.append(f"【大盘情绪·主参考】上证 {price}（{chg:+.2f}%） 情绪温度 {temp}℃ · {level}")
+    except Exception as e:
+        lines.append(f"- 上证指数：获取失败（{e}）")
+    # —— 辅助：北向资金 ——
+    try:
+        nb = get_northbound_flow()
+        if nb == "bull":
+            lines.append("- 北向资金（辅助）：净流入，偏多")
+        elif nb == "bear":
+            lines.append("- 北向资金（辅助）：净流出，偏空")
+        else:
+            lines.append("- 北向资金（辅助）：平稳")
+    except Exception as e:
+        lines.append(f"- 北向资金（辅助）：获取失败（{e}）")
     return "\n".join(lines) if lines else "- 外部监控数据暂不可用"
 
 # ==================== 周期判断 ====================

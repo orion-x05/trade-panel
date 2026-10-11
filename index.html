@@ -595,6 +595,20 @@ function alertSellSignal(role, stockName, code, price, profit){
   .vix-card .vc-val{font-size:20px;font-weight:800;font-family:var(--mono);margin:6px 0 4px;}
   .vix-card .vc-interp{font-size:11px;color:var(--text-faint);}
   .vix-card .vc-src{font-size:10px;color:var(--text-faint);margin-top:6px;border-top:1px solid var(--border-soft);padding-top:5px;}
+  /* 大盘情绪主参考块 */
+  .ms-main{background:linear-gradient(135deg,rgba(79,140,255,.10),rgba(120,90,255,.05));border:1px solid rgba(79,140,255,.22);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .ms-loading{color:var(--text-faint);font-size:12px;padding:6px}
+  .ms-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ms-tag{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:3px 10px;border-radius:20px;letter-spacing:.5px}
+  .ms-temp{font-size:30px;font-weight:800;font-family:var(--mono);line-height:1}
+  .ms-deg{font-size:15px;font-weight:600;margin-left:1px}
+  .ms-level{font-size:13px;color:var(--text-dim)}
+  .ms-temp.ms-hot{color:#ff5c62}.ms-temp.ms-warm{color:#ff9f43}.ms-temp.ms-neutral{color:#4f8cff}.ms-temp.ms-cold{color:#5aa9ff}.ms-temp.ms-ice{color:#2fd39a}
+  .ms-comps{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px;margin-top:12px}
+  .ms-comp{background:rgba(255,255,255,.03);border:1px solid var(--border-soft);border-radius:8px;padding:8px 10px}
+  .ms-comp span{display:block;font-size:11px;color:var(--text-faint);margin-bottom:3px}
+  .ms-comp b{font-size:15px;font-weight:700;font-family:var(--mono)}
+  .ext-aux-label{font-size:11.5px;color:var(--text-faint);cursor:pointer;padding:8px 2px;user-select:none;border-top:1px dashed var(--border-soft);margin-top:4px}
   .vx-trig{font-size:9px;padding:1px 6px;border-radius:4px;}
   .vx-trig.good{background:rgba(34,197,94,.18);color:#4ade80;} .vx-trig.warn{background:rgba(250,204,21,.18);color:#facc15;}
   .vx-trig.danger{background:rgba(239,68,68,.18);color:#f87171;} .vx-trig.flat{background:rgba(148,163,184,.18);color:#94a3b8;}
@@ -1034,8 +1048,8 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div class="m-value"><span style="color:var(--up)" id="vLU">--</span><span class="m-sep"> / </span><span style="color:var(--down)" id="vLD">--</span></div>
       <div class="m-sub" id="vAvgChg">平均涨跌幅 --</div>
     </div>
-    <div class="mk-metric">
-      <div class="m-label">市场情绪温度</div>
+      <div class="mk-metric">
+      <div class="m-label">市场情绪温度 · 主参考：大盘</div>
       <div class="m-value" id="vTemp">--<span class="m-unit">℃</span></div>
       <div class="m-sub" id="vTempSub">等待数据…</div>
     </div>
@@ -1459,26 +1473,31 @@ function alertSellSignal(role, stockName, code, price, profit){
 <section class="tab-view" id="view-research">
   <!-- ===== 外部监控（放在五行日历上方） ===== -->
   <div class="panel">
-    <div class="panel-head" style="cursor:pointer" onclick="toggleExt('main')">
-      <span class="panel-title">📊 外部监控（宝妈指数 · 美股/A股估值情绪）</span>
-      <span class="tech-fold-arrow" id="extArrow">▾</span>
+    <div class="panel-head">
+      <span class="panel-title">📊 情绪监控 · 主参考：大盘情绪</span>
+      <span class="panel-tip">宝妈 / 美股估值 / 龙虎 / 北向 为辅助情绪</span>
     </div>
-    <div class="tech-fold-body" id="extBody" style="display:none">
-      <div class="ext-block">
-        <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（东方财富股吧） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
-        <div id="momBody" style="display:none"></div>
-      </div>
-      <div class="ext-block">
-        <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪监控（VIX/恐贪/估值） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
-        <div id="vixBody" style="display:none"></div>
-      </div>
-      <div class="ext-block">
-        <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（东方财富） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
-        <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
-      </div>
-      <div class="ext-block">
-        <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（沪股通+深股通） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
-        <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
+    <div class="panel-body">
+      <!-- 大盘情绪主参考（始终可见，作为一切情绪判断的首要依据） -->
+      <div class="ms-main" id="msMainBody"><div class="ms-loading">等待行情刷新…</div></div>
+      <div class="ext-aux-label" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
+      <div class="tech-fold-body" id="extBody" style="display:none">
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（辅助） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
+          <div id="momBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪（辅助） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
+          <div id="vixBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（辅助） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
+          <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（辅助） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
+          <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2647,6 +2666,23 @@ function renderMarketView(){
     else desc="情绪冰点 · 恐慌性抛售";
     $("vTempSub").textContent=desc;
   }
+  /* --- 大盘情绪主参考（主锚）：置顶展示，供外部监控面板调用 --- */
+  if($("msMainBody")){
+    const shChg=shIdx&&shIdx.chg!==undefined?shIdx.chg:null;
+    const red=n?Math.round(up/n*100):null;
+    const m5=n?Math.round(aboveMA5/n*100):null;
+    const m20=n?Math.round(aboveMA20/n*100):null;
+    const cls=temp>=20?"ms-hot":temp>=10?"ms-warm":temp>=3?"ms-neutral":temp>-3?"ms-neutral":temp>-10?"ms-cold":"ms-ice";
+    const lvl=!n?"等待数据…":temp>=20?"情绪高涨 · 注意过热":temp>=10?"情绪偏暖 · 谨慎做多":temp>=3?"情绪温和 · 可逢低布局":temp>-3?"情绪中性 · 观望为主":temp>-10?"情绪偏冷 · 控制仓位":temp>-20?"情绪低迷 · 等待企稳":"情绪冰点 · 恐慌性抛售";
+    $("msMainBody").innerHTML=`<div class="ms-head"><span class="ms-tag">大盘情绪 · 主参考</span><span class="ms-temp ${cls}">${n?temp:"--"}<span class="ms-deg">℃</span></span><span class="ms-level">${lvl}</span></div>`+
+      `<div class="ms-comps">`+
+      `<div class="ms-comp"><span>上证涨跌</span><b style="color:${shChg===null?'inherit':shChg>=0?'var(--up)':'var(--down)'}">${shChg!==null?mkPct(shChg):'--'}</b></div>`+
+      `<div class="ms-comp"><span>红盘率</span><b>${red!==null?red+'%':'--'}</b></div>`+
+      `<div class="ms-comp"><span>涨停/跌停</span><b>${lu}/${ld}</b></div>`+
+      `<div class="ms-comp"><span>站上MA5</span><b>${m5!==null?m5+'%':'--'}</b></div>`+
+      `<div class="ms-comp"><span>站上MA20</span><b>${m20!==null?m20+'%':'--'}</b></div>`+
+      `</div>`;
+  }
   /* --- 图表 --- */
   mkRenderDist(stocks);
   mkRenderRadar({up,down,flat,lu,ld,n});
@@ -3254,15 +3290,24 @@ function canBuyNow(d){
   return true;
 }
 function canSellNow(d){return !afterClose(d);}
-/* 群聊防守纪律：统计最近群聊多空情绪，偏空则降仓位 */
+/* 群聊防守纪律：以大盘情绪（主参考）为首要依据，群聊多空文本仅作辅助微调 */
 function groupChatDefenseFactor(){
   try{
+    /* 主锚：大盘情绪温度（以上证指数涨跌幅为核心，range -30~30） */
+    let mktTemp=0;
+    const shIdx=simData&&(simData.pricePool["sh000001"]||simData.pricePool["000001"]);
+    if(shIdx&&shIdx.chg!==undefined) mktTemp=Math.max(-30,Math.min(30,Math.round(shIdx.chg*10)));
+    /* 大盘明显弱势：直接降仓，不受群聊文本影响 */
+    if(mktTemp<=-10) return 0.5;   /* 大盘情绪冰点/低迷，仓位减半 */
+    if(mktTemp<=-3)  return 0.75;  /* 大盘偏冷，仓位75折 */
+    if(mktTemp>=3)   return 1.0;   /* 大盘偏暖，群聊不改 */
+    /* 大盘中性：再用群聊多空做微调（辅助） */
     const hist=JSON.parse(localStorage.getItem("agentChatHistory")||"[]");
     const recent=hist.slice(-20).map(m=>m.text||m.content||"").join(" ");
     const bearish=(recent.match(/风险|跌|空|逃|减仓|止损|别买|不要|高位|破位|卖|清仓/i)||[]).length;
     const bullish=(recent.match(/买|涨|多|突破|加仓|机会|牛|上|强|启动/i)||[]).length;
-    if(bearish>bullish*1.5)return 0.5; /* 群聊偏空，仓位减半 */
-    if(bearish>bullish)return 0.75; /* 略偏空，仓位75折 */
+    if(bearish>bullish*1.5) return 0.85; /* 群聊极度偏空，仓位85折 */
+    if(bearish>bullish) return 0.95;     /* 群聊略偏空，仓位95折 */
     return 1.0;
   }catch(e){return 1.0;}
 }
