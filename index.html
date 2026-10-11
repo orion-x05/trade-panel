@@ -797,9 +797,12 @@ function alertSellSignal(role, stockName, code, price, profit){
   .gmk-name{font-size:14px;}
   .gmk-price{font-size:16px;}
 }
-/* 移动端：内联两列布局 → 单列，避免窄屏挤压截断（表格已支持横向滑动） */
+/* 移动端：内联两列布局 → 单列。minmax(0,1fr) 修复「网格被内部宽表格撑爆」的 blowout，
+   否则 1fr 的最小宽度取 auto(内容原宽)，技能矩阵表格 min-width:620 会把列撑到 654px 并溢出，
+   再被 .panel{overflow:hidden} 裁剪 → 右侧内容看不到且无法滑动。 */
 @media (max-width:820px){
-  .rwd-2col{grid-template-columns:1fr !important;}
+  .rwd-2col{grid-template-columns:minmax(0,1fr) !important;}
+  .rwd-2col > *{min-width:0;}
   .modern .table-wrap table{min-width:max-content;}
 }
 /* AI研究所响应式 */

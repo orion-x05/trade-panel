@@ -414,6 +414,7 @@ def send_period_summary(data, kind, market_trend):
     front = load_frontend_simdata()
     if front:
         data = front
+    data = refresh_assets(data)
     now = datetime.now()
     if kind == "week":
         start = now - timedelta(days=6)
@@ -456,6 +457,31 @@ def load_frontend_simdata():
         print(f"  [warn] 读取前端数据失败: {e}")
     return None
 
+def refresh_assets(data):
+    """用实时行情重算各角色总资产（现金 + 持仓市值）——与前端页面算法一致"""
+    codes = set()
+    for p in data.get("players", []):
+        for h in p.get("holdings", []):
+            if h.get("code"):
+                codes.add(h["code"])
+    quotes = {}
+    for c in codes:
+        try:
+            info = get_stock_info(c)
+            if info and info.get("price"):
+                quotes[c] = info["price"]
+        except Exception:
+            pass
+    for p in data.get("players", []):
+        total = p.get("cash", INIT_CASH)
+        for h in p.get("holdings", []):
+            px = quotes.get(h["code"])
+            if px is None:                      # 行情取不到时用成本价兜底
+                px = h.get("cost") or h.get("buyPrice") or 0
+            total += px * h.get("qty", 0)
+        p["asset"] = total
+    return data
+
 def asset_of(p):
     """总资产兼容取值：asset → assetHistory 末值 → 初始资金"""
     a = p.get("asset")
@@ -473,6 +499,7 @@ def send_daily_summary(data, market_trend):
     front = load_frontend_simdata()
     if front:
         data = front
+    data = refresh_assets(data)   # 用实时行情重算，与页面显示一致
     now = datetime.now()
     title = f"📊 每日收盘总结 {now.strftime('%m-%d')} 大盘:{('多头' if market_trend=='bull' else '空头' if market_trend=='bear' else '震荡')}"
     
