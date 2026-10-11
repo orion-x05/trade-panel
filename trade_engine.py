@@ -6,6 +6,7 @@ AI六角色模拟交易 - GitHub Actions后台自动运行版（优化版）
 """
 import json
 import os
+import re
 import math
 import requests
 from datetime import datetime, timedelta
@@ -366,7 +367,7 @@ def is_month_end(now):
 def build_rank_table(data):
     rows = ["| 角色 | 总资产 | 总收益 | 持仓 |", "|------|--------|--------|------|"]
     for i, p in enumerate(sorted(data["players"], key=lambda x: x.get("asset", INIT_CASH), reverse=True)):
-        asset = p.get("asset", INIT_CASH)
+        asset = asset_of(p)
         ret = (asset - INIT_CASH) / INIT_CASH * 100
         medal = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else ""
         rows.append(f"| {medal}{p['id']}{p.get('name','')} | {asset:.0f} | {ret:+.2f}% | {len(p.get('holdings',[]))} |")
@@ -377,7 +378,7 @@ def trades_between(data, d1, d2):
     out = []
     for p in data["players"]:
         for t in p.get("trades", []):
-            ds = t.get("time", "")[:10]
+            ds = trade_date(t)
             if s1 <= ds <= s2:
                 out.append((p["id"], t))
     return out
@@ -410,6 +411,9 @@ def current_params_line():
 
 # ==================== 周 / 月 总结 ====================
 def send_period_summary(data, kind, market_trend):
+    front = load_frontend_simdata()
+    if front:
+        data = front
     now = datetime.now()
     if kind == "week":
         start = now - timedelta(days=6)
@@ -437,8 +441,38 @@ def send_period_summary(data, kind, market_trend):
     push_report(title, content)
     print(f"  ✅ {label}总结已推送")
 
+# ==================== 前端真实数据源 ====================
+def load_frontend_simdata():
+    """读取 index.html 内联的 embeddedSimData —— 页面显示的就是它，报告以此为准"""
+    try:
+        with open("index.html", encoding="utf-8") as f:
+            html = f.read()
+        m = re.search(r'id="embeddedSimData">([\s\S]*?)</script>', html)
+        if m:
+            d = json.loads(m.group(1))
+            if d.get("players"):
+                return d
+    except Exception as e:
+        print(f"  [warn] 读取前端数据失败: {e}")
+    return None
+
+def asset_of(p):
+    """总资产兼容取值：asset → assetHistory 末值 → 初始资金"""
+    a = p.get("asset")
+    if a is None:
+        ah = p.get("assetHistory") or p.get("asset_history") or []
+        a = ah[-1] if ah else INIT_CASH
+    return a
+
+def trade_date(t):
+    """交易日期兼容：time / date"""
+    return (t.get("time") or t.get("date") or "")[:10]
+
 def send_daily_summary(data, market_trend):
-    """【每日收盘总结推送】"""
+    """【每日收盘总结推送】—— 数据以前端页面为准"""
+    front = load_frontend_simdata()
+    if front:
+        data = front
     now = datetime.now()
     title = f"📊 每日收盘总结 {now.strftime('%m-%d')} 大盘:{('多头' if market_trend=='bull' else '空头' if market_trend=='bear' else '震荡')}"
     
@@ -454,7 +488,7 @@ def send_daily_summary(data, market_trend):
     today_trades = []
     for player in data["players"]:
         for t in player.get("trades", []):
-            if t.get("time", "").startswith(today_str):
+            if trade_date(t) == today_str:
                 today_trades.append((player["id"], t))
     
     if today_trades:
