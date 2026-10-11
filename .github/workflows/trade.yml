@@ -32,6 +32,13 @@ jobs:
         run: pip install requests
 
       - name: 运行交易引擎
+        env:
+          # 在仓库 Settings → Secrets and variables → Actions 配置：
+          #   WXPUSHER_APP_TOKEN (AT_xxx)、WXPUSHER_UID (UID_xxx)
+          WXPUSHER_APP_TOKEN: ${{ secrets.WXPUSHER_APP_TOKEN }}
+          WXPUSHER_UID: ${{ secrets.WXPUSHER_UID }}
+          WXPUSHER_TOPIC_ID: ${{ secrets.WXPUSHER_TOPIC_ID }}
+          WECHAT_PUSH_KEY: ${{ secrets.WECHAT_PUSH_KEY }}
         run: python trade_engine.py
 
       - name: 用GitHub API更新data.json

@@ -13,7 +13,18 @@ from datetime import datetime, timedelta
 # ==================== 配置 ====================
 INIT_CASH = 100000
 MAX_POS = 5
-WECHAT_PUSH_KEY = "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7"
+WECHAT_PUSH_KEY = os.environ.get("WECHAT_PUSH_KEY", "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7")
+
+# ===== WxPusher 推送配置（推荐）=====
+# 在仓库 Settings → Secrets and variables → Actions 添加：
+#   WXPUSHER_APP_TOKEN = AT_xxxxx
+#   WXPUSHER_UID      = UID_xxxxx（多个用英文逗号分隔）
+WXPUSHER_APP_TOKEN = os.environ.get("WXPUSHER_APP_TOKEN", "")
+WXPUSHER_UID       = os.environ.get("WXPUSHER_UID", "")
+WXPUSHER_TOPIC_ID  = os.environ.get("WXPUSHER_TOPIC_ID", "")
+
+# 自适应优化边界（小幅度，防止乱调）
+SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
 
 ROLES = {
     "D1": {"name": "破锋", "sl": 7, "tp": 12},
@@ -63,6 +74,12 @@ def load_data():
             "asset_history": [INIT_CASH]
         })
         data["consecutive_losses"][role_id] = 0
+
+    # 应用历史自适应参数（上次调优后的止损/止盈）
+    for r, v in (data.get("tuned_roles") or {}).items():
+        if r in ROLES:
+            ROLES[r]["sl"] = v.get("sl", ROLES[r]["sl"])
+            ROLES[r]["tp"] = v.get("tp", ROLES[r]["tp"])
     return data
 
 def save_data(data):
@@ -230,6 +247,196 @@ def send_wechat(title, content):
     except Exception as e:
         print(f"  推送失败: {e}")
 
+# ==================== 推送通道：WxPusher（主）+ Server酱（兜底）====================
+def send_wxpusher(title, content, content_type=3):
+    """WxPusher 推送。contentType: 1=文本 2=HTML 3=Markdown"""
+    if not WXPUSHER_APP_TOKEN:
+        print("  [warn] 未配置 WXPUSHER_APP_TOKEN，跳过 WxPusher")
+        return False
+    payload = {"appToken": WXPUSHER_APP_TOKEN, "content": content,
+               "summary": title[:100], "contentType": content_type}
+    uids = [u.strip() for u in WXPUSHER_UID.split(",") if u.strip()]
+    if uids:
+        payload["uids"] = uids
+    if WXPUSHER_TOPIC_ID:
+        try:
+            payload["topicIds"] = [int(WXPUSHER_TOPIC_ID)]
+        except ValueError:
+            pass
+    try:
+        r = requests.post("https://wxpusher.zjiecode.com/api/send/message",
+                          json=payload, timeout=15)
+        j = r.json()
+        ok = (j.get("code") == 1000)
+        print(f"  {'[OK]' if ok else '[FAIL]'} WxPusher: {title} -> {'成功' if ok else j}")
+        return ok
+    except Exception as e:
+        print(f"  [FAIL] WxPusher 异常: {e}")
+        return False
+
+def push_report(title, content):
+    """统一推送入口：WxPusher 优先，失败则 Server酱 兜底"""
+    if send_wxpusher(title, content):
+        return True
+    send_wechat(title, content)
+    return True
+
+# ==================== 五行干支（日 / 月 / 年）====================
+TIANGAN = "甲乙丙丁戊己庚辛壬癸"
+DIZHI   = "子丑寅卯辰巳午未申酉戌亥"
+GAN_WX = {"甲":"木","乙":"木","丙":"火","丁":"火","戊":"土",
+          "己":"土","庚":"金","辛":"金","壬":"水","癸":"水"}
+ZHI_WX = {"子":"水","丑":"土","寅":"木","卯":"木","辰":"土","巳":"火",
+          "午":"火","未":"土","申":"金","酉":"金","戌":"土","亥":"水"}
+# 节气月边界（公历近似）：(月,日) -> 月支索引（寅=2 ... 丑=1）
+_JIEQI = [((1,6),0),((2,4),2),((3,6),3),((4,5),4),((5,6),5),((6,6),6),
+          ((7,7),7),((8,7),8),((9,8),9),((10,8),10),((11,7),11),((12,7),1)]
+_ZHI_SEQ = {2:1,3:2,4:3,5:4,6:5,7:6,8:7,9:8,10:9,11:10,0:11,1:12}
+
+def wx_of_gz(gz):
+    """干支 -> 五行（如 己未 -> 土土）"""
+    return GAN_WX.get(gz[0], "?") + ZHI_WX.get(gz[1], "?")
+
+def gz_year(y):
+    return TIANGAN[(y - 4) % 10] + DIZHI[(y - 4) % 12]
+
+def _month_zhi(now):
+    zhi = 0
+    for (m, d), z in _JIEQI:
+        if (now.month, now.day) >= (m, d):
+            zhi = z
+    return zhi
+
+def gz_month(now):
+    """月柱（按节气月，五虎遁年起月）"""
+    zhi = _month_zhi(now)
+    ygi = (now.year - 4) % 10
+    zheng_yue_gan = [2, 4, 6, 8, 0][ygi % 5]   # 五虎遁
+    gan = (zheng_yue_gan + _ZHI_SEQ[zhi] - 1) % 10
+    return TIANGAN[gan] + DIZHI[zhi]
+
+def gz_day(d):
+    """日柱：基准 1900-01-31 = 甲辰（干支序号 40）"""
+    delta = (d - datetime(1900, 1, 31)).days
+    idx = (40 + delta) % 60
+    return TIANGAN[idx % 10] + DIZHI[idx % 12]
+
+def wuxing_block(now):
+    gy, gm, gd = gz_year(now.year), gz_month(now), gz_day(now)
+    return (f"- 年柱：{gy}（{wx_of_gz(gy)}）\n"
+            f"- 月柱：{gm}（{wx_of_gz(gm)}）\n"
+            f"- 日柱：{gd}（{wx_of_gz(gd)}）")
+
+# ==================== 外部监控汇总 ====================
+def build_external_monitor():
+    """汇总外部监控：北向资金（实时）+ 大盘位置。失败自动降级，不影响推送"""
+    lines = []
+    try:
+        nb = get_northbound_flow()
+        if nb == "bull":
+            lines.append("- 北向资金：净流入，偏多")
+        elif nb == "bear":
+            lines.append("- 北向资金：净流出，偏空")
+        else:
+            lines.append("- 北向资金：平稳")
+    except Exception as e:
+        lines.append(f"- 北向资金：获取失败（{e}）")
+    try:
+        r = requests.get("https://qt.gtimg.cn/q=sh000001", timeout=10)
+        r.encoding = "gbk"
+        arr = r.text.split("~")
+        if len(arr) > 32:
+            lines.append(f"- 上证指数：{arr[3]}（{arr[31]} {arr[32]}%）")
+    except Exception:
+        pass
+    return "\n".join(lines) if lines else "- 外部监控数据暂不可用"
+
+# ==================== 周期判断 ====================
+def is_week_end(now):
+    """本周最后交易日（周五收盘）"""
+    return now.weekday() == 4
+
+def is_month_end(now):
+    """本月最后交易日：下一个交易日跨月"""
+    nxt = now + timedelta(days=1)
+    while nxt.weekday() >= 5:
+        nxt += timedelta(days=1)
+    return nxt.month != now.month
+
+def build_rank_table(data):
+    rows = ["| 角色 | 总资产 | 总收益 | 持仓 |", "|------|--------|--------|------|"]
+    for i, p in enumerate(sorted(data["players"], key=lambda x: x.get("asset", INIT_CASH), reverse=True)):
+        asset = p.get("asset", INIT_CASH)
+        ret = (asset - INIT_CASH) / INIT_CASH * 100
+        medal = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else ""
+        rows.append(f"| {medal}{p['id']}{p.get('name','')} | {asset:.0f} | {ret:+.2f}% | {len(p.get('holdings',[]))} |")
+    return "\n".join(rows)
+
+def trades_between(data, d1, d2):
+    s1, s2 = d1.strftime("%Y-%m-%d"), d2.strftime("%Y-%m-%d")
+    out = []
+    for p in data["players"]:
+        for t in p.get("trades", []):
+            ds = t.get("time", "")[:10]
+            if s1 <= ds <= s2:
+                out.append((p["id"], t))
+    return out
+
+# ==================== 自适应优化（小幅度）====================
+def adaptive_tune(data):
+    """根据近期成交表现，小幅微调止损/止盈（每次 ±0.5，受边界约束）"""
+    notes = []
+    for p in data["players"]:
+        rid = p.get("id")
+        if rid not in ROLES:
+            continue
+        sells = [t for t in p.get("trades", []) if t.get("type") == "sell"][-10:]
+        if len(sells) < 4:
+            continue
+        wins = sum(1 for t in sells if t.get("profit", 0) > 0)
+        wr = wins / len(sells)
+        role = ROLES[rid]
+        if wr < 0.4 and role["sl"] > SL_MIN:
+            role["sl"] = round(role["sl"] - 0.5, 1)
+            notes.append(f"{rid}{role['name']} 近{len(sells)}笔胜率{wr:.0%}偏低 → 止损收紧至 {role['sl']}%")
+        elif wr > 0.6 and role["tp"] < TP_MAX:
+            role["tp"] = round(role["tp"] + 0.5, 1)
+            notes.append(f"{rid}{role['name']} 近{len(sells)}笔胜率{wr:.0%}较好 → 止盈放宽至 {role['tp']}%")
+    data["tuned_roles"] = {r: {"sl": ROLES[r]["sl"], "tp": ROLES[r]["tp"]} for r in ROLES}
+    return notes
+
+def current_params_line():
+    return "、".join(f"{r}{ROLES[r]['name']}(止损{ROLES[r]['sl']}%/止盈{ROLES[r]['tp']}%)" for r in ROLES)
+
+# ==================== 周 / 月 总结 ====================
+def send_period_summary(data, kind, market_trend):
+    now = datetime.now()
+    if kind == "week":
+        start = now - timedelta(days=6)
+        title = f"📅 本周交易总结 {now.strftime('%Y-%m-%d')}"
+    else:
+        start = now - timedelta(days=29)
+        title = f"🗓️ 本月交易总结 {now.strftime('%Y-%m')}"
+    label = "本周" if kind == "week" else "本月"
+    trades = trades_between(data, start, now)
+    sells = [t for _, t in trades if t.get("type") == "sell"]
+    wins = [t for t in sells if t.get("profit", 0) > 0]
+    total_pnl = sum(t.get("profit", 0) for t in sells)
+    wr = (len(wins) / len(sells) * 100) if sells else 0.0
+
+    trend_txt = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
+    content = f"## {label}战绩（{start.strftime('%m-%d')} ~ {now.strftime('%m-%d')}）大盘{trend_txt}\n\n"
+    content += build_rank_table(data) + "\n\n"
+    content += (f"## {label}交易统计\n"
+                f"- 区间成交：{len(trades)} 笔（卖出 {len(sells)} 笔）\n"
+                f"- 胜率：{wr:.1f}%\n"
+                f"- 已实现盈亏：{total_pnl:+.2f} 元\n\n")
+    content += f"## 五行参考（年/月/日）\n{wuxing_block(now)}\n\n"
+    content += f"## 外部监控\n{build_external_monitor()}\n\n"
+    content += f"## 当前策略参数\n{current_params_line()}\n"
+    push_report(title, content)
+    print(f"  ✅ {label}总结已推送")
+
 def send_daily_summary(data, market_trend):
     """【每日收盘总结推送】"""
     now = datetime.now()
@@ -266,9 +473,26 @@ def send_daily_summary(data, market_trend):
         content += "✅ 大盘多头趋势，明日可积极操作\n"
     else:
         content += "🔄 大盘震荡，明日建议高抛低吸，控制仓位\n"
-    
-    send_wechat(title, content)
+
+    # 五行参考（年 / 月 / 日）
+    content += f"\n## 五行参考（年/月/日）\n{wuxing_block(now)}\n"
+    # 外部监控（北向资金 + 上证）
+    content += f"\n## 外部监控\n{build_external_monitor()}\n"
+    # 根据实际操作小幅优化策略
+    notes = adaptive_tune(data)
+    if notes:
+        content += "\n## 策略微调（小幅）\n" + "\n".join(f"- {n}" for n in notes) + "\n"
+
+    push_report(title, content)
     print("  ✅ 每日收盘总结已推送")
+
+    # 周总结（周五收盘） / 月总结（月末最后交易日）
+    if is_week_end(now):
+        print("\n📅 周五收盘，追加每周总结...")
+        send_period_summary(data, "week", market_trend)
+    if is_month_end(now):
+        print("\n🗓️ 月末最后交易日，追加每月总结...")
+        send_period_summary(data, "month", market_trend)
 
 # ==================== 交易逻辑 ====================
 def can_sell_t1(hold):
