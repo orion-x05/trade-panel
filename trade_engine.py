@@ -162,6 +162,186 @@ def get_northbound_flow():
         print(f"  北向资金获取失败: {e}")
         return "neutral"
 
+def get_index_kline(index_code="sh000001", count=60):
+    """【大盘K线走势】抓取指数日K（开收高低），用于判断趋势/形态，不只看收盘"""
+    try:
+        url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={index_code},day,,,{count},qfq"
+        kdata = requests.get(url, timeout=10).json()
+        klines = kdata.get("data", {}).get(index_code, {}).get("qfqday") or \
+                 kdata.get("data", {}).get(index_code, {}).get("day") or []
+        rows = []
+        for k in klines[-count:]:
+            rows.append({"date": k[0], "open": float(k[1]), "close": float(k[2]),
+                         "high": float(k[3]), "low": float(k[4]), "vol": float(k[5]) if len(k) > 5 else 0})
+        return rows
+    except Exception as e:
+        print(f"  大盘K线获取失败: {e}")
+        return []
+
+def get_market_volume(count=20):
+    """【大盘总体成交量】两市成交量（上证+深证日K成交量，单位亿手）。数据源：新浪（数据中心友好）"""
+    def sina_vol(symbol):
+        url = f"https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={symbol}&scale=240&ma=5&datalen={count}"
+        j = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://finance.sina.com.cn/"}).json()
+        # 新浪 volume 单位：股 → /1e10 得 亿手
+        return [{"date": k["day"], "vol": float(k["volume"]) / 1e10} for k in (j or [])]
+    try:
+        sh = sina_vol("sh000001")
+        sz = sina_vol("sz399001")
+    except Exception as e:
+        print(f"  大盘成交量获取失败: {e}")
+        return None
+    n = min(len(sh), len(sz))
+    if n == 0:
+        return None
+    dates = [sh[-n + i]["date"] for i in range(n)]
+    total = [sh[-n + i]["vol"] + sz[-n + i]["vol"] for i in range(n)]
+    ma5 = [sum(total[max(0, i - 4):i + 1]) / min(5, i + 1) for i in range(n)]
+    return {"dates": dates, "total": total, "ma5": ma5, "latest": total[-1] if total else 0,
+            "ma5_latest": ma5[-1] if ma5 else 0, "vs_ma5": (total[-1] / ma5[-1] - 1) * 100 if ma5 and ma5[-1] else 0}
+
+def _em_ulist(secids):
+    """东方财富批量实时报价（数字字段）"""
+    url = "https://push2.eastmoney.com/api/qt/ulist.np/get?secids=" + ",".join(secids) + \
+          "&fields=f2,f3,f12,f14,f57,f62&fltt=2&invt=2&_=" + str(int(__import__("time").time() * 1000))
+    try:
+        j = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"}).json()
+        return {it.get("f12"): it for it in (j.get("data", {}) or {}).get("diff", []) if it}
+    except Exception as e:
+        print(f"  ETF实时报价失败: {e}")
+        return {}
+
+def _tx_quotes(codes):
+    """腾讯 qt.gtimg.cn 批量实时报价（codes 带交易所前缀，如 sh510300），东方财富不可用时的兜底"""
+    import urllib.request
+    try:
+        url = "https://qt.gtimg.cn/q=" + ",".join(codes)
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://gu.qq.com/"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = r.read()
+        text = raw.decode("gbk", "ignore")
+        out = {}
+        for line in text.split(";"):
+            m = re.match(r'v_(\w+)="(.+)"', line)
+            if not m:
+                continue
+            arr = m.group(2).split("~")
+            if len(arr) < 33:
+                continue
+            code = m.group(1)[2:]
+            out[code] = {"f12": code, "f2": float(arr[3]),
+                         "f3": float(arr[32]) if arr[32] else 0,
+                         "f14": arr[1], "f57": float(arr[37]) if arr[37] else 0}
+        return out
+    except Exception as e:
+        print(f"  腾讯报价兜底失败: {e}")
+        return {}
+
+def detect_national_team():
+    """【国家队资金动向·最高优先级】探测宽基ETF异动+尾盘异动+沪深300/中证2000强弱，猜测并验证意图"""
+    try:
+        etf = {"510300": "沪深300ETF", "510050": "上证50ETF", "510500": "中证500ETF",
+               "588000": "科创50ETF", "159915": "创业板ETF"}
+        tx_codes = ["sh" + c for c in etf.keys()] + ["sh000300", "sh932000", "sh000001"]
+        # 主源东方财富；不可用时兜底腾讯实时报价
+        q = _em_ulist(["1." + c for c in etf.keys()] + ["1.000300", "1.932000", "1.000001"]) or _tx_quotes(tx_codes)
+        etf_rows, score = [], 0
+        for code, name in etf.items():
+            d = q.get(code)
+            if not d: continue
+            chg = (d.get("f3") or 0) / 100
+            active = chg > 0.25
+            if active: score += 1
+            etf_rows.append({"name": name, "chg": chg, "active": active})
+        # 尾盘异动：腾讯分时
+        tail_desc, gap_desc = "尾盘平稳", ""
+        try:
+            mr = requests.get("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=sh000001", timeout=10).json()
+            m = (mr.get("data", {}).get("sh000001", {}).get("data", {}) or {}).get("data", []) or []
+            if len(m) > 30:
+                arr = [float(str(x).split(" ")[1]) for x in m]
+                last = sum(arr[-30:]) / 30
+                first = sum(arr[:-30]) / max(1, len(arr) - 30)
+                tail_chg = (last - first) / first * 100
+                if tail_chg > 0.25:
+                    tail_desc = f"尾盘拉升 +{tail_chg:.2f}%"; score += 1
+                elif tail_chg < -0.25:
+                    tail_desc = f"尾盘跳水 {tail_chg:.2f}%"
+                else:
+                    tail_desc = f"尾盘平稳 {tail_chg:.2f}%"
+        except Exception:
+            pass
+        h300 = q.get("000300"); z2k = q.get("932000")
+        # 护盘特征更精准的代理：上证50ETF(权重) vs 中证500ETF(中盘) 强弱
+        h50 = next((e["chg"] for e in etf_rows if e["name"] == "上证50ETF"), None)
+        mid = next((e["chg"] for e in etf_rows if e["name"] == "中证500ETF"), None)
+        if h50 is not None and mid is not None:
+            gap = h50 - mid
+            if gap > 0.4:
+                gap_desc = f"上证50(权重)强于中证500(中盘) {gap:.2f}pct（护盘特征）"; score += 1
+            else:
+                gap_desc = f"上证50 vs 中证500 强弱差 {gap:.2f}pct"
+        elif h300 and z2k:
+            gap = (h300.get("f3") or 0) / 100 - (z2k.get("f3") or 0) / 100
+            gap_desc = f"沪深300 vs 中证2000 强弱差 {gap:.2f}pct"
+        if score >= 3:
+            intent = "主动护盘/拉升：国家队明确进场，托底意图强"
+            verify = "验证信号：观察未来1-3日是否放量企稳/反转，若沪深300持续强于中证2000则确认护盘成立"
+        elif score >= 1:
+            intent = "试探性托底：出现国家队异动迹象，力度待确认"
+            verify = "验证信号：紧盯宽基ETF是否持续放量、尾盘是否再出现拉升，确认后再加仓"
+        else:
+            intent = "未见明显动作：宽基ETF平静，国家队暂未出手"
+            verify = "持续观察宽基ETF放量是否延续、沪深300是否持续强于中证2000"
+        return {"etfs": etf_rows, "tail": tail_desc, "gap": gap_desc,
+                "intent": intent, "verify": verify, "score": score}
+    except Exception as e:
+        print(f"  国家队探测失败: {e}")
+        return {"etfs": [], "tail": "--", "gap": "--", "intent": "探测失败", "verify": "--", "score": 0}
+
+def national_team_factor():
+    """【agent 领先指标】国家队异动强度 → 仓位系数（先于普通情绪反应）"""
+    nt = detect_national_team()
+    if nt["score"] >= 3:
+        return 1.15   # 国家队明确进场，可适度领先加仓
+    if nt["score"] >= 1:
+        return 1.0    # 试探，维持中性
+    return 0.9        # 未见动作，略偏防御
+
+def build_national_team_block():
+    """推送：国家队资金动向段"""
+    nt = detect_national_team()
+    etf_lines = " / ".join(f"{e['name']}{e['chg']:+.2f}%" + ("↑异动" if e["active"] else "") for e in nt["etfs"]) or "（无）"
+    return (f"- 【国家队·最高优先级】意图：{nt['intent']}\n"
+            f"  · 宽基ETF：{etf_lines}\n"
+            f"  · {nt['tail']}；{nt['gap']}\n"
+            f"  · 🔎 验证：{nt['verify']}（异动评分 {nt['score']}/5）")
+
+def build_sentiment_block():
+    """推送：大盘走势过程（K线形态 + 成交量），不只看收盘"""
+    lines = []
+    try:
+        k = get_index_kline("sh000001", 20)
+        if k and len(k) >= 2:
+            last, prev = k[-1], k[-2]
+            up = last["close"] >= last["open"]
+            body = (last["close"] - last["open"]) / last["open"] * 100
+            recent = sum(x["close"] for x in k[-5:]) / 5
+            near_high = last["close"] >= recent * 1.005
+            near_low = last["close"] <= recent * 0.995
+            shape = "光头光脚阳线(强势)" if (up and last["close"] >= last["high"] * 0.998) else \
+                    "光头光脚阴线(弱势)" if (not up and last["close"] <= last["low"] * 1.002) else \
+                    "阳线" if up else "阴线"
+            lines.append(f"- 上证日K：收 {last['close']:.2f}（{shape}，实体 {body:+.2f}%），"
+                         f"{'逼近5日高点' if near_high else '逼近5日低点' if near_low else '居中'}（近20日{'震荡' if abs(body)<1.5 else '有趋势'}）")
+            v = get_market_volume(20)
+        if v:
+            rng = "放量" if v["vs_ma5"] > 8 else "缩量" if v["vs_ma5"] < -8 else "持平"
+            lines.append(f"- 大盘总体成交量：两市成交量 {v['latest']:.2f}亿手（{rng}，较MA5 {v['vs_ma5']:+.1f}%）")
+    except Exception as e:
+        lines.append(f"- 走势过程获取失败（{e}）")
+    return "\n".join(lines) if lines else "- 走势过程数据暂不可用"
+
 def get_stock_info_tx(code):
     """【数据源1】腾讯行情"""
     try:
@@ -450,6 +630,8 @@ def send_period_summary(data, kind, market_trend):
                 f"- 已实现盈亏：{total_pnl:+.2f} 元\n\n")
     content += f"## 五行参考（年/月/日）\n{wuxing_block(now)}\n\n"
     content += f"## 外部监控\n{build_external_monitor()}\n\n"
+    content += f"## 大盘走势过程（K线形态/当日分时/总体成交量）\n{build_sentiment_block()}\n\n"
+    content += f"## 国家队资金动向（最高优先级）\n{build_national_team_block()}\n\n"
     content += f"## 当前策略参数\n{current_params_line()}\n"
     push_report(title, content)
     print(f"  ✅ {label}总结已推送")
@@ -551,8 +733,15 @@ def send_daily_summary(data, market_trend):
     content += f"\n## 五行参考（年/月/日）\n{wuxing_block(now)}\n"
     # 外部监控（北向资金 + 上证）
     content += f"\n## 外部监控\n{build_external_monitor()}\n"
-    # 根据实际操作小幅优化策略
+    # 大盘走势过程（不只看收盘：K线形态 + 当日分时 + 总体成交量）
+    content += f"\n## 大盘走势过程（K线形态/当日分时/总体成交量）\n{build_sentiment_block()}\n"
+    # 国家队资金动向（最高优先级：先人一步探测资金异动）
+    content += f"\n## 国家队资金动向（最高优先级）\n{build_national_team_block()}\n"
+    # 根据实际操作小幅优化策略（国家队异动作为领先指标）
     notes = adaptive_tune(data)
+    ntf = national_team_factor()
+    if ntf != 1.0:
+        notes.append(f"国家队异动评分影响仓位系数 → {ntf:.2f}（异动确认则领先加仓，未确认则偏防御）")
     if notes:
         content += "\n## 策略微调（小幅）\n" + "\n".join(f"- {n}" for n in notes) + "\n"
 

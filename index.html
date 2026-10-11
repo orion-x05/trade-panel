@@ -613,6 +613,31 @@ function alertSellSignal(role, stockName, code, price, profit){
   .vx-trig.good{background:rgba(34,197,94,.18);color:#4ade80;} .vx-trig.warn{background:rgba(250,204,21,.18);color:#facc15;}
   .vx-trig.danger{background:rgba(239,68,68,.18);color:#f87171;} .vx-trig.flat{background:rgba(148,163,184,.18);color:#94a3b8;}
   .ext-note { font-size:10.5px; color:var(--text-faint); margin-top:8px; }
+  /* ===== 情绪面板：走势过程 + 国家队探测 ===== */
+  .ms-process{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-soft)}
+  .ms-sect-title{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .ms-sect-title .ms-prio{font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff5c62,#ff9f43);padding:2px 8px;border-radius:20px}
+  .kline-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .kline-cell{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:10px}
+  .kline-cell-wide{grid-column:1 / -1}
+  .kline-cap{font-size:11px;color:var(--text-dim);margin-bottom:6px}
+  .kline-cell .ech{width:100%;height:240px}
+  .kline-cell-wide .ech{height:210px}
+  .nt-body{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .nt-card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px}
+  .nt-card.nt-intent{grid-column:1 / -1;background:linear-gradient(135deg,rgba(255,92,98,.10),rgba(255,159,67,.05));border-color:rgba(255,92,98,.30)}
+  .nt-card h4{font-size:12px;color:var(--text-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .nt-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border-soft)}
+  .nt-row:last-child{border-bottom:none}
+  .nt-row .nt-name{color:var(--text)}
+  .nt-row .nt-val{font-family:var(--mono);font-weight:700}
+  .nt-flag{font-size:10px;padding:1px 7px;border-radius:4px;margin-left:6px}
+  .nt-flag.on{background:rgba(34,197,94,.18);color:#4ade80}
+  .nt-flag.off{background:rgba(148,163,184,.18);color:#94a3b8}
+  .nt-intent .nt-verdict{font-size:15px;font-weight:800;margin:4px 0 6px}
+  .nt-intent .nt-verify{font-size:11.5px;color:var(--text-dim);line-height:1.6}
+  .nt-intent .nt-score{font-size:11px;color:var(--text-faint)}
+  @media (max-width:760px){ .kline-grid{grid-template-columns:1fr} .nt-body{grid-template-columns:1fr} .kline-cell .ech{height:210px} }
   /* ===== 个股技术面（折叠于实时持仓） ===== */
   .tech-fold { border:1px solid var(--border-soft); border-radius:8px; background:var(--bg-card); overflow:hidden; }
   .tech-fold-head { display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:10px 14px; }
@@ -1480,6 +1505,20 @@ function alertSellSignal(role, stockName, code, price, profit){
     <div class="panel-body">
       <!-- 大盘情绪主参考（始终可见，作为一切情绪判断的首要依据） -->
       <div class="ms-main" id="msMainBody"><div class="ms-loading">等待行情刷新…</div></div>
+      <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
+      <div class="ms-process">
+        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
+        <div class="kline-grid">
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
+          <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
+        </div>
+      </div>
+      <!-- 国家队资金动向（最高优先级：先人一步探测资金异动，猜测意图并验证） -->
+      <div class="ms-process" style="border-top:1px dashed var(--border-soft)">
+        <div class="ms-sect-title">🛡️ 国家队资金动向<span class="ms-prio">最高优先级</span><span style="font-size:10px;color:var(--text-faint);font-weight:400">（宽基ETF异动 · 尾盘异动 · 沪深300/中证2000强弱 · 意图猜测+验证）</span></div>
+        <div id="ntBody" class="nt-body"><div class="ms-loading">探测中…</div></div>
+      </div>
       <div class="ext-aux-label" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
       <div class="tech-fold-body" id="extBody" style="display:none">
         <div class="ext-block">
@@ -2688,6 +2727,158 @@ function renderMarketView(){
   mkRenderRadar({up,down,flat,lu,ld,n});
   mkRenderBreadth({aboveMA5,aboveMA20,n});
   mkRenderTier(tiers);
+  renderSentimentProcess();   /* 异步加载 K线/分时/成交量/国家队，不阻塞主面板 */
+}
+
+/* ==================== 情绪面板：走势过程 + 国家队探测 ==================== */
+async function renderSentimentProcess(){
+  /* 大盘日K */
+  try{ const k=await txKline("sh000001","day",50); mkRenderKline(k); }catch(e){ console.warn("K线渲染失败",e); }
+  /* 当日分时（过程） */
+  try{ const m=await txMinute("sh000001"); mkRenderIntraday(m); }catch(e){ console.warn("分时渲染失败",e); }
+  /* 大盘总体成交量（两市成交量：上证+深证日K成交量，腾讯源，CORS友好） */
+  try{
+    const [shK,szK]=await Promise.all([txVolKline("sh000001",20),txVolKline("sz399001",20)]);
+    mkRenderVol(shK,szK);
+  }catch(e){ console.warn("成交量渲染失败",e); }
+  /* 国家队资金动向 */
+  try{ const nt=await detectNationalTeam(); renderNationalTeam(nt); }catch(e){ console.warn("国家队探测失败",e); }
+  /* 通知 agent 群聊：国家队异动作为领先指标 */
+  try{ window.__nationalTeam = await detectNationalTeam(); }catch(e){}
+}
+/* 腾讯：指数日K成交量（用于两市成交量，单位亿手；仅腾讯源，CORS友好） */
+async function txVolKline(code,count){
+  const key="vol_"+code+"_"+count;
+  if(_amtCache[key]&&Date.now()-_amtCache[key].t<60000)return _amtCache[key].d;
+  let out=[];
+  try{
+    const hosts=["https://web.ifzq.gtimg.cn","https://ifzq.gtimg.cn"];
+    for(const h of hosts){
+      try{
+        const j=await (await fetch(`${h}/appstock/app/fqkline/get?param=${code},day,,,${count},qfq`,{signal:(new AbortController()).signal})).json();
+        const k=j.data[code];
+        const arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day))||[];
+        if(arr&&arr.length){ out=arr.map(x=>({date:x[0],vol:(+x[5]||0)/1e8})); break; } // 手→亿手
+      }catch(e){}
+    }
+  }catch(e){}
+  _amtCache[key]={t:Date.now(),d:out};
+  return out;
+}
+const _amtCache={};
+/* 腾讯行情：批量个股/ETF 实时报价（用于国家队宽基ETF） */
+async function txQuoteBatch(codes){
+  const out={};
+  try{
+    const r=await fetch("https://qt.gtimg.cn/q="+codes.join(","));
+    const text=await r.text();
+    text.split(";").forEach(line=>{
+      const m=line.match(/v_(\w+)="(.+)"/);
+      if(m){ const arr=m[2].split("~"); out[m[1]]={code:m[1].slice(2),name:arr[1],price:+arr[3],chg:+arr[32]||0,prevClose:+arr[4],amount:(+arr[37]||+arr[38]||0)}; }
+    });
+  }catch(e){}
+  return out;
+}
+/* 国家队意图探测：宽基ETF异动 + 尾盘异动 + 沪深300/中证2000强弱 → 猜测并验证意图 */
+async function detectNationalTeam(){
+  const etfCodes=["sh510300","sh510050","sh510500","sh588000","sz159915"]; // 沪深300ETF/上证50ETF/中证500ETF/科创50ETF/创业板ETF
+  const q=await txQuoteBatch([...etfCodes,"sh000300","sh932000","sh000001"]);
+  const m=await txMinute("sh000001");
+  const res={etfs:[],tail:{flag:false,desc:"--"},hs300:null,zz2000:null,intent:"未见明显动作",verify:"持续观察宽基ETF放量是否延续、沪深300是否持续强于中证2000",score:0};
+  /* 1) 宽基ETF异动 */
+  const etfName={"510300":"沪深300ETF","510050":"上证50ETF","510500":"中证500ETF","588000":"科创50ETF","159915":"创业板ETF"};
+  etfCodes.forEach(c=>{
+    const d=q[c]; if(!d)return;
+    const active=d.chg>0.25;            // ETF涨幅>0.25%视为异动（国家队通常拉宽基）
+    if(active)res.score+=1;
+    res.etfs.push({code:c.slice(2),name:etfName[c.slice(2)]||d.name,chg:d.chg,active});
+  });
+  /* 2) 尾盘异动：最后30分钟均价 vs 全天前半段 */
+  if(m&&m.length>30){
+    const last=m.slice(-30).reduce((s,x)=>s+x.price,0)/30;
+    const first=m.slice(0,Math.max(1,m.length-30)).reduce((s,x)=>s+x.price,0)/(m.length-30);
+    const tailChg=(last-first)/first*100;
+    if(tailChg>0.25){res.tail={flag:true,desc:`尾盘拉升 +${tailChg.toFixed(2)}%`};res.score+=1;}
+    else if(tailChg<-0.25){res.tail={flag:true,desc:`尾盘跳水 ${tailChg.toFixed(2)}%`};}
+    else res.tail={flag:false,desc:`尾盘平稳 ${tailChg.toFixed(2)}%`};
+  }
+  /* 3) 上证50(权重) vs 中证500(中盘) 强弱（护盘时权重股强于中盘，国家队最爱拉权重） */
+  const h50=res.etfs.find(e=>e.name==="上证50ETF"), mid=res.etfs.find(e=>e.name==="中证500ETF");
+  if(h50&&mid){ const gap=h50.chg-mid.chg;
+    if(gap>0.4){res.score+=1; res.gapDesc=`上证50(权重)强于中证500(中盘) ${gap.toFixed(2)}pct（护盘特征）`;}
+    else res.gapDesc=`上证50 vs 中证500 强弱差 ${gap.toFixed(2)}pct`;
+  }
+  /* 4) 意图猜测 + 验证 */
+  if(res.score>=3)res.intent="主动护盘/拉升：国家队明确进场，托底意图强";
+  else if(res.score>=1)res.intent="试探性托底：出现国家队异动迹象，力度待确认";
+  else res.intent="未见明显动作：宽基ETF平静，国家队暂未出手";
+  if(res.score>=3)res.verify="验证信号：观察未来1-3日是否放量企稳/反转，若沪深300持续强于中证2000则确认护盘成立";
+  else if(res.score>=1)res.verify="验证信号：紧盯宽基ETF是否持续放量、尾盘是否再出现拉升，确认后再加仓";
+  return res;
+}
+function renderNationalTeam(nt){
+  const el=document.getElementById("ntBody"); if(!el||!nt)return;
+  const etfRows=nt.etfs.map(e=>`<div class="nt-row"><span class="nt-name">${e.name}</span><span><span class="nt-val" style="color:${e.chg>=0?'var(--up)':'var(--down)'}">${mkPct(e.chg)}</span><span class="nt-flag ${e.active?'on':'off'}">${e.active?'异动':'平静'}</span></span></div>`).join("");
+  const tailRow=`<div class="nt-row"><span class="nt-name">尾盘异动（14:30-15:00）</span><span><span class="nt-val">${nt.tail.desc}</span><span class="nt-flag ${nt.tail.flag?'on':'off'}">${nt.tail.flag?'异动':'平稳'}</span></span></div>`;
+  const gapRow=`<div class="nt-row"><span class="nt-name">上证50 / 中证500 强弱（权重 vs 中盘）</span><span class="nt-val" style="font-size:11px">${nt.gapDesc||'--'}</span></div>`;
+  const intentColor=nt.score>=3?'var(--up)':nt.score>=1?'var(--amber)':'var(--text-dim)';
+  el.innerHTML=`
+    <div class="nt-card"><h4>📦 宽基ETF异动</h4>${etfRows}</div>
+    <div class="nt-card"><h4>⏱️ 尾盘 / 强弱</h4>${tailRow}${gapRow}</div>
+    <div class="nt-card nt-intent">
+      <h4>🎯 意图猜测（领先指标）</h4>
+      <div class="nt-verdict" style="color:${intentColor}">${nt.intent}</div>
+      <div class="nt-verify">🔎 ${nt.verify}</div>
+      <div class="nt-score">异动评分：${nt.score} / 5（宽基ETF每支异动+1，尾盘拉升+1，沪深300强于中证2000+1）</div>
+    </div>`;
+}
+/* 日K蜡烛图（含MA5/MA20 + 成交量副图） */
+function mkRenderKline(k){
+  const c=mkChart("cKline"); if(!c||!k||!k.length)return;
+  const dates=k.map(x=>x.date), close=k.map(x=>x.close), vol=k.map(x=>x.vol);
+  const ma=(arr,n)=>arr.map((_,i)=>i<n-1?null:+(arr.slice(i-n+1,i+1).reduce((s,v)=>s+v,0)/n).toFixed(2));
+  c.setOption({
+    grid:[{left:46,right:12,top:14,height:"58%"},{left:46,right:12,top:"72%",height:"18%"}],
+    tooltip:{trigger:"axis",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt}},
+    xAxis:[{type:"category",data:dates,axisLabel:{color:MK_C.dim,fontSize:9},axisLine:{lineStyle:{color:MK_C.border}}},
+           {type:"category",gridIndex:1,data:dates,axisLabel:{show:false},axisLine:{lineStyle:{color:MK_C.border}}}],
+    yAxis:[{scale:true,axisLabel:{color:MK_C.dim},splitLine:{lineStyle:{color:MK_C.border,opacity:.35}}},
+           {gridIndex:1,scale:true,axisLabel:{show:false},splitLine:{show:false}}],
+    series:[
+      {type:"candlestick",data:k.map(x=>[x.open,x.close,x.low,x.high]),itemStyle:{color:MK_C.up,color0:MK_C.down,borderColor:MK_C.up,borderColor0:MK_C.down}},
+      {type:"line",data:ma(close,5),smooth:true,showSymbol:false,lineStyle:{color:MK_C.blue,width:1}},
+      {type:"line",data:ma(close,20),smooth:true,showSymbol:false,lineStyle:{color:MK_C.purple,width:1}},
+      {type:"bar",xAxisIndex:1,yAxisIndex:1,data:vol.map((v,i)=>({value:v,itemStyle:{color:close[i]>=k[i].open?MK_C.up:MK_C.down}}))}
+    ]
+  });
+}
+/* 当日分时（过程） */
+function mkRenderIntraday(m){
+  const c=mkChart("cIntraday"); if(!c||!m||!m.length)return;
+  const times=m.map(x=>x.time), price=m.map(x=>x.price);
+  c.setOption({
+    grid:{left:46,right:12,top:14,bottom:24},
+    tooltip:{trigger:"axis",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt}},
+    xAxis:{type:"category",data:times,axisLabel:{color:MK_C.dim,fontSize:9,interval:Math.floor(times.length/4)},axisLine:{lineStyle:{color:MK_C.border}}},
+    yAxis:{scale:true,axisLabel:{color:MK_C.dim},splitLine:{lineStyle:{color:MK_C.border,opacity:.35}}},
+    series:[{type:"line",data:price,smooth:true,showSymbol:false,lineStyle:{color:MK_C.blue,width:1.4},areaStyle:{color:"rgba(59,130,246,.10)"}}]
+  });
+}
+/* 大盘总体成交量（两市成交量·亿手 + MA5） */
+function mkRenderVol(shVol,szVol){
+  const c=mkChart("cVol"); if(!c||!shVol||!shVol.length)return;
+  const n=Math.min(shVol.length,szVol.length);
+  const dates=shVol.slice(-n).map(x=>x.date);
+  const total=shVol.slice(-n).map((x,i)=>(x.vol+(szVol[i]?szVol[i].vol:0))); // 亿手
+  const ma5=total.map((_,i)=>i<4?null:+(total.slice(i-4,i+1).reduce((s,v)=>s+v,0)/5).toFixed(2));
+  c.setOption({
+    grid:{left:48,right:12,top:14,bottom:24},
+    tooltip:{trigger:"axis",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt},valueFormatter:v=>v?(+v).toFixed(2)+"亿手":""},
+    xAxis:{type:"category",data:dates,axisLabel:{color:MK_C.dim,fontSize:9,interval:Math.floor(dates.length/5)},axisLine:{lineStyle:{color:MK_C.border}}},
+    yAxis:{type:"value",axisLabel:{color:MK_C.dim,formatter:v=>v+"亿手"},splitLine:{lineStyle:{color:MK_C.border,opacity:.35}}},
+    series:[{type:"bar",data:total.map((v,i)=>({value:v,itemStyle:{color:v>=(ma5[i]||0)?MK_C.up:MK_C.down}})),barWidth:"60%"},
+            {type:"line",data:ma5,smooth:true,showSymbol:false,lineStyle:{color:MK_C.amber,width:1.4}}]
+  });
 }
 /* 涨跌分布：按涨跌幅分桶 */
 function mkRenderDist(stocks){
@@ -3297,17 +3488,22 @@ function groupChatDefenseFactor(){
     let mktTemp=0;
     const shIdx=simData&&(simData.pricePool["sh000001"]||simData.pricePool["000001"]);
     if(shIdx&&shIdx.chg!==undefined) mktTemp=Math.max(-30,Math.min(30,Math.round(shIdx.chg*10)));
-    /* 大盘明显弱势：直接降仓，不受群聊文本影响 */
-    if(mktTemp<=-10) return 0.5;   /* 大盘情绪冰点/低迷，仓位减半 */
-    if(mktTemp<=-3)  return 0.75;  /* 大盘偏冷，仓位75折 */
-    if(mktTemp>=3)   return 1.0;   /* 大盘偏暖，群聊不改 */
-    /* 大盘中性：再用群聊多空做微调（辅助） */
+    const nt=window.__nationalTeam;            /* 国家队领先指标（优先于群聊文本） */
+    const ntActive=nt&&nt.score>=3;            /* 国家队明确进场 */
+    const ntProbe=nt&&nt.score>=1;             /* 国家队试探性异动 */
+    /* 大盘明显弱势：直接降仓（国家队护盘时略放宽，不盲目恐慌） */
+    if(mktTemp<=-10) return ntActive?0.65:0.5; /* 冰点/低迷：半仓；国家队护盘则65折 */
+    if(mktTemp<=-3)  return ntActive?0.85:0.75;/* 偏冷：75折；国家队护盘则85折 */
+    if(mktTemp>=3)   return 1.0;               /* 偏暖：满仓 */
+    /* 大盘中性：国家队领先指标优先于群聊文本 */
+    if(ntActive) return 1.15;                  /* 国家队明确进场 → 领先加仓 */
     const hist=JSON.parse(localStorage.getItem("agentChatHistory")||"[]");
     const recent=hist.slice(-20).map(m=>m.text||m.content||"").join(" ");
     const bearish=(recent.match(/风险|跌|空|逃|减仓|止损|别买|不要|高位|破位|卖|清仓/i)||[]).length;
     const bullish=(recent.match(/买|涨|多|突破|加仓|机会|牛|上|强|启动/i)||[]).length;
-    if(bearish>bullish*1.5) return 0.85; /* 群聊极度偏空，仓位85折 */
-    if(bearish>bullish) return 0.95;     /* 群聊略偏空，仓位95折 */
+    if(bearish>bullish*1.5) return 0.85;       /* 群聊极度偏空，85折 */
+    if(bearish>bullish) return 0.95;           /* 群聊略偏空，95折 */
+    if(ntProbe) return 1.05;                   /* 国家队试探异动 → 轻微偏多 */
     return 1.0;
   }catch(e){return 1.0;}
 }
@@ -4263,12 +4459,16 @@ function switchTab(name){
     [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
       if(c){try{c.resize();}catch(e){}}
     });
+    /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0） */
+    ["cKline","cIntraday","cVol"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
+    if(name==="overview"||name==="rank"||name==="review"){ try{renderSentimentProcess();}catch(e){} }
     /* 特定tab需要重新渲染 */
     if(name==="global"){try{renderGlobal();}catch(e){}}
     if(name==="review"){try{renderReview();}catch(e){}}
     if(name==="rank"){try{renderRank();renderHold();}catch(e){}}
     if(name==="hold"){try{renderHold();}catch(e){}}
     if(name==="overview"){try{renderMarketView();}catch(e){}}
+    if(name==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该tab内 */
     if(name==="settings"){try{fillSettings();}catch(e){}}
     try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
   },100);
