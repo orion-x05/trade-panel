@@ -397,6 +397,182 @@ def build_sentiment_block():
         lines.append(f"- 走势过程获取失败（{e}）")
     return "\n".join(lines) if lines else "- 走势过程数据暂不可用"
 
+# ==================== 底部探测器：政策底 + 技术底 ====================
+POLICY_DICT = {
+    "降准": 3, "降息": 3, "印花税": 3, "汇金": 3, "中央汇金": 3, "平准基金": 2.5,
+    "国家队": 2, "逆回购": 1, "MLF": 1.5, "LPR": 1.5, "流动性": 1,
+    "政治局": 2, "国常会": 2, "证监会": 1.5, "央行": 1.5, "稳增长": 1.5,
+    "活跃资本市场": 2, "限制减持": 2, "减持新规": 2, "暂停IPO": 2, "再融资": 1,
+    "引导长期资金": 1.5, "中长线资金": 1.5,
+    "回购": 1, "增持潮": 1.2, "破净": 1, "估值底": 1,
+}
+POLICY_STRONG = ["降准", "降息", "印花税", "汇金", "中央汇金", "平准基金",
+                 "国家队", "逆回购", "MLF", "LPR", "流动性"]
+POLICY_MID = ["政治局", "国常会", "证监会", "央行", "稳增长", "活跃资本市场",
+              "限制减持", "减持新规", "暂停IPO", "再融资", "引导长期资金", "中长线资金"]
+_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                     "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
+
+
+def _strip_html(s):
+    return re.sub(r"<[^>]*>", " ", s or "")
+
+
+def fetch_policy_signals():
+    """【专门政策源·多源】抓政策要闻，命中政策词库返回证据。
+    源：①东财7×24快讯 ②央行公开市场操作 ③证监会要闻（不可达则自动降级，不影响运行）。"""
+    texts, sources = [], []
+    try:
+        txt = requests.get("https://newsapi.eastmoney.com/kuaixun/v1/getlist_102_ajaxResult_50_1_.html",
+                           headers=_UA, timeout=12).text
+        items = re.findall(r'"(?:title|digest)":"((?:[^"\\]|\\.)*)"', txt)
+        body = " ".join(_strip_html(i) for i in items)
+        if len(body) > 50:
+            texts.append(body)
+            sources.append("东财7×24快讯")
+    except Exception:
+        pass
+    for name, url in (("央行公开市场操作", "http://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125431/125475/index.html"),
+                      ("证监会要闻", "http://www.csrc.gov.cn/csrc/c100028/common_list.shtml")):
+        try:
+            r = requests.get(url, headers=_UA, timeout=12, allow_redirects=True)
+            if r.status_code != 200:
+                continue
+            r.encoding = r.apparent_encoding or "utf-8"
+            body = re.sub(r"\s+", " ", _strip_html(r.text))
+            if len(body) > 200:
+                texts.append(body)
+                sources.append(name)
+        except Exception:
+            continue
+    if not texts:
+        return {"score": 0, "level": "政策源不可达", "verdict": "政策面数据源暂不可达，请稍后重试",
+                "hits": [], "sources": []}
+    hits, seen = [], set()
+    for t in texts:
+        for w, wt in POLICY_DICT.items():
+            if w in t and w not in seen:
+                seen.add(w)
+                cat = "强" if w in POLICY_STRONG else ("中" if w in POLICY_MID else "弱")
+                hits.append({"word": w, "weight": wt, "cat": cat})
+    total = sum(h["weight"] for h in hits)
+    score = min(100, int(total * 4))
+    if score >= 60:
+        level, verdict = "政策底明确", "强政策信号密集出现，政策底大概率已现，关注市场底传导（常滞后1-3月）。"
+    elif score >= 30:
+        level, verdict = "政策底渐显", "出现政策托底信号，力度待积累，密切跟踪是否加码。"
+    elif score >= 10:
+        level, verdict = "政策暖风", "零星政策信号，尚未形成底部合力。"
+    else:
+        level, verdict = "政策平静", "消息面暂无明确政策托底信号。"
+    return {"score": score, "level": level, "verdict": verdict, "hits": hits, "sources": sources}
+
+
+def calc_tech_bottom(kline):
+    """【技术底】上证日K 7维量价加权 0-100（与前端 calcTechBottom 同口径）"""
+    if not kline or len(kline) < 25:
+        return {"score": None, "level": "数据不足", "verdict": "上证日K数据不足，无法计算技术底", "details": {}}
+    closes = [float(x["close"]) for x in kline]
+    vols = [float(x.get("vol") or 0) for x in kline]
+    last = closes[-1]
+
+    def clamp(v, a, b):
+        return max(a, min(b, v))
+
+    def ma(a, n):
+        return sum(a[-n:]) / n
+
+    def rsi(n):
+        g = l = 0.0
+        st = max(1, len(closes) - n)
+        for i in range(st, len(closes)):
+            d = closes[i] - closes[i - 1]
+            if d > 0:
+                g += d
+            else:
+                l -= d
+        cnt = max(1, len(closes) - st)
+        rs = (g / cnt) / (l / cnt or 1)
+        return 100 - 100 / (1 + rs)
+
+    hh = max(closes)
+    dd = (last - hh) / hh * 100
+    dd_s = clamp(int((dd + 8) / (8 - 38) * 100), 0, 100)
+    ma20, ma60 = ma(closes, 20), ma(closes, 60)
+    d20, d60 = (last - ma20) / ma20 * 100, (last - ma60) / ma60 * 100
+    d20_s = clamp(int((d20 + 8) / (8 - 18) * 100), 0, 100)
+    d60_s = clamp(int((d60 + 5) / (5 - 25) * 100), 0, 100)
+    r6, r14 = rsi(6), rsi(14)
+    rsi_s = clamp(int((25 - (r14 + r6) / 2) / 25 * 100), 0, 100)
+    streak = 0
+    for i in range(len(closes) - 1, 0, -1):
+        if closes[i] < closes[i - 1]:
+            streak += 1
+        else:
+            break
+    streak_s = clamp(int(streak / 7 * 100), 0, 100)
+    v5, v20 = ma(vols[-5:], 5), ma(vols, 20)
+    vr = v5 / (v20 or 1)
+    vol_s = clamp(int((1.1 - vr) / 1.1 * 100), 0, 100)
+    hammer = 0
+    for x in kline[-3:]:
+        o, c, h, l = float(x["open"]), float(x["close"]), float(x["high"]), float(x["low"])
+        body, rng = abs(c - o), (h - l) or 1
+        if body / rng < 0.3 and ((h - max(o, c)) / rng > 0.5 or (max(o, c) - l) / rng > 0.5):
+            hammer += 1
+    hammer_s = clamp(int(hammer / 3 * 100), 0, 100)
+    m = ma(closes, 20)
+    sd = (sum((v - m) ** 2 for v in closes[-20:]) / 20) ** 0.5
+    lo, hi = m - 2 * sd, m + 2 * sd
+    bp = clamp((last - lo) / ((hi - lo) or 1), 0, 1)
+    boll_s = clamp(int((0.15 - bp) / 0.15 * 100), 0, 100)
+    score = int(round(dd_s * 0.22 + d20_s * 0.15 + d60_s * 0.13 + rsi_s * 0.15 +
+                      streak_s * 0.10 + vol_s * 0.12 + hammer_s * 0.05 + boll_s * 0.08))
+    if score >= 70:
+        level, verdict = "技术底确认", "量价超跌特征明显（深回撤+负乖离+超卖+缩量），配合政策底可左侧布局。"
+    elif score >= 50:
+        level, verdict = "接近技术底", "出现多项超跌信号，接近技术底，尚需缩量企稳确认。"
+    elif score >= 30:
+        level, verdict = "偏弱", "部分指标超跌，整体尚未见底，反弹易反复。"
+    else:
+        level, verdict = "未见技术底", "量价尚未进入超跌区，继续等待。"
+    return {"score": score, "level": level, "verdict": verdict,
+            "details": {"回撤": f"{dd:.1f}%", "MA20乖离": f"{d20:.1f}%", "MA60乖离": f"{d60:.1f}%",
+                        "RSI14": f"{r14:.0f}", "连跌": f"{streak}日", "量比": f"{vr:.2f}"}}
+
+
+def build_bottom_block():
+    """推送：底部探测（政策底 + 技术底 + 阶段传导）"""
+    try:
+        tech = calc_tech_bottom(get_index_kline("sh000001", 120))
+    except Exception as e:
+        tech = {"score": None, "level": "数据不足", "verdict": f"技术底获取失败（{e}）", "details": {}}
+    pol = fetch_policy_signals()
+    ts, ps = tech.get("score"), pol.get("score", 0)
+    p_on, t_on = ps >= 30, (ts is not None and ts >= 50)
+    if p_on and t_on:
+        phase = "政策底+技术底共振：底部区域，可左侧布局"
+    elif p_on:
+        phase = "政策底领先技术底：政策已出手，等待市场底（常滞后1-3月），左侧窗口"
+    elif t_on:
+        phase = "技术底先行：量价已超跌但缺政策确认，反弹易反复，等右侧信号"
+    else:
+        phase = "双弱：政策未出手、技术未超跌，未见底部"
+    lines = [f"- 【政策底】{ps}/100 · {pol['level']}（来源：{'、'.join(pol['sources']) or '暂不可达'}）"]
+    if pol.get("hits"):
+        ev = " / ".join(f"{h['word']}({h['cat']}+{h['weight']})" for h in pol["hits"][:8])
+        lines.append(f"  · 命中：{ev}")
+    lines.append(f"- 【技术底】{'--' if ts is None else str(ts)}/100 · {tech['level']}")
+    d = tech.get("details") or {}
+    if d:
+        lines.append(f"  · 距高点回撤{d.get('回撤', '--')} · MA20乖离{d.get('MA20乖离', '--')} · "
+                     f"MA60乖离{d.get('MA60乖离', '--')} · RSI14 {d.get('RSI14', '--')} · "
+                     f"连跌{d.get('连跌', '--')} · 量比(5/20){d.get('量比', '--')}")
+    lines.append(f"- 【阶段】{phase}")
+    lines.append("- 【验证】政策底需连续加码；技术底需地量+长下影企稳+不创新低；二者共振且放量收复MA20方为右侧加仓信号")
+    return "\n".join(lines)
+
+
 def get_stock_info_tx(code):
     """【数据源1】腾讯行情"""
     try:
@@ -724,6 +900,7 @@ def send_period_summary(data, kind, market_trend):
     content += f"## 外部监控\n{build_external_monitor()}\n\n"
     content += f"## 大盘走势过程（K线形态/当日分时/总体成交量）\n{build_sentiment_block()}\n\n"
     content += f"## 国家队资金动向（最高优先级）\n{build_national_team_block()}\n\n"
+    content += f"## 底部探测（政策底/技术底）\n{build_bottom_block()}\n\n"
     content += f"## 当前策略参数\n{current_params_line()}\n"
     push_report(title, content)
     print(f"  ✅ {label}总结已推送")
@@ -867,6 +1044,8 @@ def send_daily_summary(data, market_trend):
     content += f"\n## 大盘走势过程（K线形态/当日分时/总体成交量）\n{build_sentiment_block()}\n"
     # 国家队资金动向（最高优先级：先人一步探测资金异动）
     content += f"\n## 国家队资金动向（最高优先级）\n{build_national_team_block()}\n"
+    # 底部探测：政策底（消息面）+ 技术底（量价）+ 阶段传导
+    content += f"\n## 底部探测（政策底/技术底）\n{build_bottom_block()}\n"
     # 根据实际操作小幅优化策略（国家队异动作为领先指标）
     notes = adaptive_tune(data)
     ntf = national_team_factor()
