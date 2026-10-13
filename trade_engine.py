@@ -9,9 +9,23 @@ import os
 import re
 import math
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # ==================== 配置 ====================
+# ===== 时区修正 =====
+# GitHub Actions runner 的 TZ 是 UTC，cn_now() 会比北京时间慢 8 小时，
+# 导致交易时段(9:30-15:00)与收盘窗口(15:00+)判定全部错位 —— 后台引擎每次运行都秒退。
+# 统一用北京时间取"现在"；返回 naive（不带 tzinfo），与 data.json 里历史时间戳
+# （datetime.fromisoformat 解析出的同样是 naive）做算术时不会触发 TypeError。
+CN_TZ = timezone(timedelta(hours=8))
+
+def cn_now():
+    """当前北京时间（naive datetime）"""
+    return datetime.now(CN_TZ).replace(tzinfo=None)
+
+# 手动强制发送每日收盘总结（workflow_dispatch 勾选 force_summary 时置 1）
+FORCE_SUMMARY = os.environ.get("FORCE_SUMMARY", "").strip().lower() in ("1", "true", "yes", "on")
+
 INIT_CASH = 100000
 MAX_POS = 5
 MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁止六角色持仓大幅重复
@@ -67,7 +81,7 @@ def load_data():
     if os.path.exists("data.json"):
         with open("data.json", "r", encoding="utf-8") as f:
             return json.load(f)
-    data = {"players": [], "last_update": datetime.now().isoformat(),
+    data = {"players": [], "last_update": cn_now().isoformat(),
             "consecutive_losses": {}, "market_trend": "neutral"}
     for role_id, role in ROLES.items():
         data["players"].append({
@@ -85,23 +99,26 @@ def load_data():
     return data
 
 def save_data(data):
-    data["last_update"] = datetime.now().isoformat()
+    data["last_update"] = cn_now().isoformat()
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def is_trade_time():
-    now = datetime.now()
+    now = cn_now()
     if now.weekday() >= 5: return False
     hm = now.hour * 100 + now.minute
     return (930 <= hm <= 1130) or (1300 <= hm <= 1500)
 
 def is_close_time():
-    now = datetime.now()
+    now = cn_now()
     if now.weekday() >= 5: return False
     hm = now.hour * 100 + now.minute
     # 收盘总结窗口放宽到 15:00-15:55：GitHub Actions 定时任务排队延迟常见
     # （原 10 分钟窗口内跑晚就直接改走交易逻辑，每日小结被静默跳过）
-    return 1500 <= hm <= 1555
+    # 窗口 15:00-16:00：GitHub Actions cron 排队延迟常见（实测 14~46 分钟），
+    # 原 10 分钟窗口一旦排晚就改走交易逻辑，每日小结被静默跳过。
+    # 有 data.json 的 last_daily_push 去重标记，放宽不会重复推送。
+    return 1500 <= hm <= 1600
 
 def get_market_trend():
     """【大盘择时】上证指数趋势判断"""
@@ -637,7 +654,7 @@ def current_params_line():
 # ==================== 周 / 月 总结 ====================
 def send_period_summary(data, kind, market_trend):
     orig = data
-    now0 = datetime.now()
+    now0 = cn_now()
     push_key = f"last_{kind}_push"
     period = now0.strftime("%Y-W%V") if kind == "week" else now0.strftime("%Y-%m")
     if orig.get(push_key) == period:
@@ -647,7 +664,7 @@ def send_period_summary(data, kind, market_trend):
     if front:
         data = front
     data = refresh_assets(data)
-    now = datetime.now()
+    now = cn_now()
     if kind == "week":
         start = now - timedelta(days=6)
         title = f"📅 本周交易总结 {now.strftime('%Y-%m-%d')}"
@@ -734,7 +751,7 @@ def send_daily_summary(data, market_trend):
     # 跨运行去重：15:00/15:05/15:30 多个 cron 都落在收盘窗口内，
     # 标记写进 data.json（工作流每次跑完都会上传），同一天只推一次
     orig = data
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = cn_now().strftime("%Y-%m-%d")
     if orig.get("last_daily_push") == today:
         print("  ⏭️  每日收盘总结今日已推送，跳过（防多 cron 重复）")
         return
@@ -742,7 +759,7 @@ def send_daily_summary(data, market_trend):
     if front:
         data = front
     data = refresh_assets(data)   # 用实时行情重算，与页面显示一致
-    now = datetime.now()
+    now = cn_now()
     title = f"📊 每日收盘总结 {now.strftime('%m-%d')} 大盘:{('多头' if market_trend=='bull' else '空头' if market_trend=='bear' else '震荡')}"
     
     content = "## 各角色战绩\n\n| 角色 | 总资产 | 总收益 | 持仓数 |\n|------|--------|--------|--------|\n"
@@ -796,6 +813,8 @@ def send_daily_summary(data, market_trend):
     push_report(title, content)
     print("  ✅ 每日收盘总结已推送")
     orig["last_daily_push"] = today
+    # 落库供前端展示：页面收盘时没打开也能看到最近一次收盘小结
+    orig["last_summary"] = {"date": today, "title": title, "content": content[:6000]}
 
     # 周总结（周五收盘） / 月总结（月末最后交易日）
     if is_week_end(now):
@@ -807,7 +826,7 @@ def send_daily_summary(data, market_trend):
 
 # ==================== 交易逻辑 ====================
 def can_sell_t1(hold):
-    return hold["buyTime"][:10] != datetime.now().strftime("%Y-%m-%d")
+    return hold["buyTime"][:10] != cn_now().strftime("%Y-%m-%d")
 
 def check_sell_signals(player, stock_data):
     signals = []
@@ -1058,20 +1077,20 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
     player["cash"] -= (amount + fee)
     player["holdings"].append({
         "code": code, "name": st["name"], "qty": qty,
-        "buyPrice": cost_per, "buyTime": datetime.now().isoformat(),
+        "buyPrice": cost_per, "buyTime": cn_now().isoformat(),
         "reason": reason, "score": score
     })
     player["trades"].append({
         "type": "buy", "code": code, "name": st["name"],
         "qty": qty, "price": st["price"], "fee": fee,
-        "time": datetime.now().isoformat(), "reason": reason
+        "time": cn_now().isoformat(), "reason": reason
     })
-    push_key = f".push_{player['id']}_{code}_buy_{datetime.now().strftime('%Y%m%d')}"
+    push_key = f".push_{player['id']}_{code}_buy_{cn_now().strftime('%Y%m%d')}"
     if not os.path.exists(push_key):
         open(push_key, "w").close()
         send_wechat(
             f"📈 {player['id']} 建仓 {st['name']}",
-            f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
     print(f"  ✅ {player['id']} 买入 {st['name']} {qty}股 @{st['price']:.2f}")
 
@@ -1088,7 +1107,7 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     player["trades"].append({
         "type": "sell", "code": hold["code"], "name": hold["name"],
         "qty": sell_qty, "price": st["price"], "fee": total_fee,
-        "profit": profit, "time": datetime.now().isoformat(), "reason": reason
+        "profit": profit, "time": cn_now().isoformat(), "reason": reason
     })
     # 【连续亏损熔断】更新计数
     if profit < 0:
@@ -1099,19 +1118,19 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     hold["qty"] -= sell_qty
     if hold["qty"] <= 0:
         player["holdings"] = [h for h in player["holdings"] if h["code"] != hold["code"]]
-    push_key = f".push_{player['id']}_{hold['code']}_sell_{datetime.now().strftime('%Y%m%d')}"
+    push_key = f".push_{player['id']}_{hold['code']}_sell_{cn_now().strftime('%Y%m%d')}"
     if not os.path.exists(push_key):
         open(push_key, "w").close()
         send_wechat(
             f"📉 {player['id']} 清仓 {hold['name']} {'盈利' if profit>=0 else '亏损'}{abs(profit):.2f}元",
-            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{profit/(hold['buyPrice']*sell_qty)*100:.2f}%\n原因：{reason}\n时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{profit/(hold['buyPrice']*sell_qty)*100:.2f}%\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
     print(f"  ✅ {player['id']} 卖出 {hold['name']} {sell_qty}股 @{st['price']:.2f} 盈亏{profit:.2f}")
 
 # ==================== 主函数 ====================
 def main():
     print(f"{'='*50}")
-    print(f"  AI六角色交易引擎启动 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  AI六角色交易引擎启动 {cn_now().strftime('%Y-%m-%d %H:%M:%S')} (北京时间 UTC+8)")
     print(f"{'='*50}")
     
     data = load_data()
@@ -1130,7 +1149,9 @@ def main():
         print("  🌍 北向资金大幅流出，市场判断调整为空头")
     
     # 【每日收盘总结】
-    if is_close_time():
+    if is_close_time() or FORCE_SUMMARY:
+        if FORCE_SUMMARY:
+            print(FORCE_MSG)
         print("\n📊 收盘时间，发送每日总结...")
         all_codes = set()
         for player in data["players"]:

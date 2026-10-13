@@ -6477,7 +6477,11 @@ async function renderDetailMinute(code){
     if(minuteChart.resize)minuteChart.resize();
   }catch(e){if(window.console)console.warn("detailMinute",e);}
 }
-function closeModal(){const m=$("modalMask");m.classList.remove("show");m.style.display="none";}
+/* 关闭弹窗：只摘 .show class，交由样式表控制显隐。
+   注意：这里早期版本写了 m.style.display="none"（内联样式），它会永久压过
+   .modal-mask.show{display:flex}，导致第二次打开时 add("show") 无效 ——
+   表现就是"弹窗只能点开一次"。改为清空内联值，把控制权交回 CSS。 */
+function closeModal(){const m=$("modalMask");m.classList.remove("show");m.style.display="";}
 $("modalMask").addEventListener("click",e=>{if(e.target.id==="modalMask")closeModal();});
 
 /* ==================== 右侧侧边详情面板 ==================== */
