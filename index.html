@@ -975,6 +975,12 @@ function alertSellSignal(role, stockName, code, price, profit){
   .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:4px;padding-bottom:4px;}
   .tab{flex:0 0 auto;padding:8px 11px;font-size:12.5px;white-space:nowrap;}
   .panel{padding:8px;}
+  /* iOS触摸滚动链修复：面板内容超高时（AI研究所单列堆叠后3000+px），overflow:hidden会吞掉
+     落在面板上的触摸滚动导致整页滑不动；移动端放开为visible（!important终结与.modern .panel
+     后置hidden规则的层叠竞争），panel-head补圆角补偿视觉 */
+  .panel,.modern .panel{overflow:visible !important;}
+  .panel-head{border-radius:10px 10px 0 0;}
+  .modern .panel-head{border-radius:var(--radius) var(--radius) 0 0;}
   .panel-head{flex-direction:column;align-items:flex-start;gap:4px;}
   .panel-tip{font-size:11px;}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -1418,7 +1424,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="mk-metric">
       <div class="m-label">两市成交额（沪+深）</div>
       <div class="m-value" id="vAmount">--</div>
-      <div class="m-sub" id="vAmountSub">样本 -- 只A股</div>
+      <div class="m-sub" id="vAmountSub">沪深两市合计</div>
     </div>
     <div class="mk-metric">
       <div class="m-label">涨停 / 跌停家数</div>
@@ -3125,6 +3131,128 @@ function chartHint(id,show,msg){
   }else if(h){h.style.display="none";}
 }
 function mkPct(v){return (v>=0?"+":"")+v.toFixed(2)+"%";}
+/* ==================== 全场市场宽度（沪深北全部A股真实统计，而非候选样本） ==================== */
+/* 数据源（按优先级，全部失败才回退样本口径）：
+   ① 东方财富 push2 clist JSONP：script注入无CORS限制，fs含北交所，pz=6000一把拉全；
+      服务端若钳制pz，按返回的total自动分页补齐，并按代码去重。与"全市场扫描选股"同一通道。
+   ② 新浪 Market_Center getHQNodeData（node=hs_a，约56页并行fetch）：CORS条件性放行，
+      并发突发会触发限流丢CORS头，仅作次选。
+   ③ 两个源都失败：渲染层回退候选样本口径，并明确标注"样本"。
+   统计口径：涨跌家数/涨停跌停/平均涨跌幅/成交额/涨跌分布/强弱分层全部基于全市场。 */
+const _mkBreadth={t:0,d:null,dist:null,tiers:null};
+let _breadthBusy=false,_breadthFailAt=0,_breadthRenderedAt=0;
+const _isMobile=()=>window.innerWidth<760;   /* 移动端拉全市场更贵，缓存放长 */
+function breadthLimitOf(code,name){
+  const c=String(code||"");
+  if(c.startsWith("92")||c.startsWith("83")||c.startsWith("87"))return 29.8;  /* 北交所±30% */
+  if(c.startsWith("30")||c.startsWith("68"))return 19.8;                      /* 创业板/科创板±20% */
+  if(name&&/ST/i.test(name))return 4.8;                                       /* ST±5% */
+  return 9.8;                                                                 /* 主板±10% */
+}
+function loadBreadthSnapshot(){
+  if(_mkBreadth.d)return;
+  try{
+    const snap=JSON.parse(localStorage.getItem("mkBreadthSnap")||"null");
+    if(snap&&snap.d&&Date.now()-snap.t<2*3600*1000){
+      _mkBreadth.d=snap.d;_mkBreadth.dist=snap.dist;_mkBreadth.tiers=snap.tiers;_mkBreadth.t=snap.t;
+    }
+  }catch(e){}
+}
+/* 东财全市场列表（沪深京A股）：一把大请求 + total分页兜底 + 代码去重 */
+async function emClistFullMarket(){
+  const fs="m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048"; /* 沪深京A股（含北交所） */
+  const fields="f12,f14,f3,f6";                                   /* 代码/名称/涨跌幅%/成交额(元) */
+  const ut="bd1d9ddb04089700cf9c27f6f7426281";
+  const mkUrl=(pn,pz)=>`https://push2.eastmoney.com/api/qt/clist/get?cb=__emBreadth&pn=${pn}&pz=${pz}&po=1&np=1&ut=${ut}&fltt=2&invt=2&fid=f12&fs=${fs}&fields=${fields}&_=${Date.now()}`;
+  const first=await emJsonp(mkUrl(1,6000),"__emBreadth",25000);
+  const d0=first&&first.data;
+  if(!d0||!Array.isArray(d0.diff)||!d0.diff.length)return null;
+  const total=d0.total||d0.diff.length;
+  const map=new Map();
+  d0.diff.forEach(it=>{if(it&&it.f12)map.set(String(it.f12),it);});
+  /* pz被服务端钳制（返回数<total）时按页补齐 */
+  if(map.size<total){
+    const PZ=1000,pages=Math.min(12,Math.ceil(total/PZ));
+    for(let pn=2;pn<=pages;pn++){
+      const pg=await emJsonp(mkUrl(pn,PZ),"__emBreadth",20000);
+      const d=pg&&pg.data;
+      if(!d||!Array.isArray(d.diff)||!d.diff.length)break;
+      d.diff.forEach(it=>{if(it&&it.f12)map.set(String(it.f12),it);});
+      if(map.size>=total)break;
+    }
+  }
+  return map.size?[...map.values()]:null;
+}
+/* 全场统计聚合（东财/新浪两个源统一走这里；字段已归一为 code/name/chg/amt(元)） */
+function mkBreadthAggregate(all){
+  let up=0,down=0,flat=0,lu=0,ld=0,sum=0,amt=0;
+  const dist=[0,0,0,0,0,0,0];
+  const tiers={strong:0,up:0,down:0,weak:0};
+  const edges=[-7,-5,-3,-1,1,3,5,7];
+  all.forEach(s=>{
+    const c=parseFloat(s.chg);const v=isFinite(c)?c:0;
+    sum+=v;amt+=parseFloat(s.amt)||0;
+    if(v>0.05)up++;else if(v<-0.05)down++;else flat++;
+    const lim=breadthLimitOf(s.code,s.name);
+    if(v>=lim)lu++;else if(v<=-lim)ld++;
+    for(let i=0;i<edges.length-1;i++){if(v>=edges[i]&&v<edges[i+1]){dist[i]++;break;}}
+    if(v>3)tiers.strong++;else if(v>=0)tiers.up++;else if(v>-3)tiers.down++;else tiers.weak++;
+  });
+  const n=all.length,avgChg=sum/n,redRate=up/n*100;
+  /* 全场温度：全场平均涨跌幅×10 + 红盘率偏离中值×0.25，钳制-30~+30（与旧指数口径同量纲同分档） */
+  const temp=Math.max(-30,Math.min(30,Math.round(avgChg*10+(redRate-50)*0.25)));
+  return {d:{n,up,down,flat,lu,ld,avgChg,amt:amt/1e8,redRate,temp,src:"全场"},dist,tiers};
+}
+async function fetchMarketBreadth(force){
+  const now=Date.now();
+  if(!force&&_mkBreadth.d&&now-_mkBreadth.t<(_isMobile()?180000:60000))return _mkBreadth.d;
+  if(now-_breadthFailAt<60000)return _mkBreadth.d||null;   /* 失败退避60秒 */
+  /* ① 东财 JSONP 一把全市场 */
+  let all=null;
+  try{
+    const list=await emClistFullMarket();
+    if(list&&list.length>=3000)all=list.map(it=>({code:String(it.f12||""),name:String(it.f14||""),chg:parseFloat(it.f3),amt:parseFloat(it.f6)||0}));
+  }catch(e){}
+  /* ② 新浪 fetch 次选（约56页并行） */
+  if(!all){
+    try{
+      const PAGES=58,jobs=[];
+      for(let p=1;p<=PAGES;p++){
+        jobs.push(fetch("https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page="+p+"&num=100&sort=symbol&asc=1&node=hs_a")
+          .then(r=>r.json()).then(a=>Array.isArray(a)?a:[]).catch(()=>[]));
+      }
+      const res=await Promise.all(jobs);
+      const sin=[];res.forEach(a=>{if(a&&a.length)sin.push(...a);});
+      if(sin.length>=3000)all=sin.map(s=>({code:String(s.code||""),name:String(s.name||""),chg:parseFloat(s.changepercent),amt:parseFloat(s.amount)||0}));
+    }catch(e){}
+  }
+  if(!all){_breadthFailAt=Date.now();return _mkBreadth.d||null;}  /* 两个源都失败：保留旧值，渲染层回退样本 */
+  const {d,dist,tiers}=mkBreadthAggregate(all);
+  _mkBreadth.d=d;_mkBreadth.dist=dist;_mkBreadth.tiers=tiers;_mkBreadth.t=Date.now();_breadthFailAt=0;
+  try{localStorage.setItem("mkBreadthSnap",JSON.stringify({t:_mkBreadth.t,d,dist,tiers}));}catch(e){}
+  return d;
+}
+/* 指数合成温度（全场抓取失败时的次选：上证45%+深成指35%+创业板20%，仍是大盘口径而非样本） */
+function indexCompositeTemp(){
+  const iq=window.idxQuotes||{};
+  const parts=[["sh000001",.45],["sz399001",.35],["sz399006",.20]];
+  let w=0,s=0;
+  parts.forEach(([k,wt])=>{const r=iq[k];if(r&&isFinite(r.chg)){s+=r.chg*wt;w+=wt;}});
+  if(!w)return null;
+  return Math.max(-30,Math.min(30,Math.round(s/w*10)));
+}
+async function refreshMarketBreadth(){
+  if(_breadthBusy)return;
+  _breadthBusy=true;
+  try{
+    const d=await fetchMarketBreadth();
+    if(d&&_mkBreadth.t!==_breadthRenderedAt){
+      _breadthRenderedAt=_mkBreadth.t;
+      try{renderMarketView();}catch(e){console.warn("全场宽度重绘失败",e);}
+    }
+  }catch(e){}
+  _breadthBusy=false;
+}
 function renderMarketView(){
   if(typeof simData==='undefined'||!simData)return;
   const pool=simData.pricePool||{};
@@ -3141,54 +3269,55 @@ function renderMarketView(){
         <div class="m-sub" style="color:${c}">${mkPct(r.chg)}</div></div>`;
     }).join("");
   }
-  /* --- 样本统计 --- */
+  /* --- 市场宽度统计：优先全场（沪深北全部A股），抓取失败才回退样本并明确标注 --- */
+  loadBreadthSnapshot();
   const stocks=Object.values(pool).filter(s=>s&&s.price>0);
-  const n=stocks.length;
-  let up=0,down=0,flat=0,lu=0,ld=0,sumChg=0;
+  const nS=stocks.length;
+  let sUp=0,sDown=0,sFlat=0,sLu=0,sLd=0,sSumChg=0;
   let aboveMA5=0,aboveMA20=0;
-  const tiers={strong:0,up:0,down:0,weak:0}; /* >3, 0~3, -3~0, <-3 */
+  const sTiers={strong:0,up:0,down:0,weak:0}; /* >3, 0~3, -3~0, <-3 */
   stocks.forEach(s=>{
     const c=s.chg||0;
-    sumChg+=c;
-    if(c>=0.05){up++;}else if(c<=-0.05){down++;}else{flat++;}
+    sSumChg+=c;
+    if(c>=0.05){sUp++;}else if(c<=-0.05){sDown++;}else{sFlat++;}
     /* 涨停/跌停：创业板/科创板20cm，其余10cm */
     const is20=s.code&&(s.code.startsWith("30")||s.code.startsWith("68"));
     const lim=is20?19.8:9.8;
-    if(c>=lim)lu++;
-    if(c<=-lim)ld++;
+    if(c>=lim)sLu++;
+    if(c<=-lim)sLd++;
     if(s.ma5&&s.price>=s.ma5)aboveMA5++;
     if(s.ma20&&s.price>=s.ma20)aboveMA20++;
-    if(c>3)tiers.strong++;else if(c>=0)tiers.up++;else if(c>-3)tiers.down++;else tiers.weak++;
+    if(c>3)sTiers.strong++;else if(c>=0)sTiers.up++;else if(c>-3)sTiers.down++;else sTiers.weak++;
   });
-  const avgChg=n?sumChg/n:0;
+  const sAvg=nS?sSumChg/nS:0;
+  const B=_mkBreadth.d;
+  const st=B||{up:sUp,down:sDown,flat:sFlat,lu:sLu,ld:sLd,avgChg:sAvg,n:nS,redRate:nS?Math.round(sUp/nS*100):0};
+  const srcTxt=B?`全场 ${B.n} 只`:`样本 ${nS} 只`;
   /* --- 指标卡 --- */
-  if($("vUp"))$("vUp").textContent=up;
-  if($("vDown"))$("vDown").textContent=down;
-  if($("vFlat"))$("vFlat").textContent=`平盘 ${flat} 家 · 平均 ${mkPct(avgChg)}`;
-  /* 两市成交额：沪(sh000001)+深(sz399001)，amount单位万元 */
+  if($("vUp"))$("vUp").textContent=st.up;
+  if($("vDown"))$("vDown").textContent=st.down;
+  if($("vFlat"))$("vFlat").textContent=`平盘 ${st.flat} 家 · 平均 ${mkPct(st.avgChg)}`;
+  /* 两市成交额：沪(sh000001)+深(sz399001)指数成交额，本身就是全场口径（单位万元） */
   const shA=iq["sh000001"]?iq["sh000001"].amount:0;
   const szA=iq["sz399001"]?iq["sz399001"].amount:0;
   const totalAmtWan=shA+szA;
   if($("vAmount"))$("vAmount").textContent=totalAmtWan>0?(totalAmtWan/10000).toFixed(0)+" 亿":"--";
-  if($("vAmountSub"))$("vAmountSub").textContent=`样本 ${n} 只A股`;
-  if($("vLU"))$("vLU").textContent=lu;
-  if($("vLD"))$("vLD").textContent=ld;
-  if($("vAvgChg"))$("vAvgChg").textContent=`平均涨跌幅 ${mkPct(avgChg)}`;
-  /* 情绪温度：基于大盘指数（上证指数）涨跌幅，-30~+30 */
-  let temp=0;
-  /* 上证指数：优先取 idxQuotes（指数专用解析结果），再回退 pricePool 的完整键。
-     注意不能用剥离前缀的 "000001"——那是 sz000001 平安银行的键，会造成串数据 */
-  const shIdx=(window.idxQuotes&&window.idxQuotes["sh000001"])||simData.pricePool["sh000001"]||null;
-  if(shIdx&&shIdx.chg!==undefined){
-    temp=Math.max(-30,Math.min(30,Math.round(shIdx.chg*10)));
-  } else if(n){
-    const ud=(up-down)/n;
-    temp=Math.max(-30,Math.min(30,Math.round(ud*25+avgChg*1.5)));
+  if($("vAmountSub"))$("vAmountSub").textContent=(shA>0&&szA>0)?`沪 ${(shA/10000).toFixed(0)} 亿 · 深 ${(szA/10000).toFixed(0)} 亿`:"沪深两市合计";
+  if($("vLU"))$("vLU").textContent=st.lu;
+  if($("vLD"))$("vLD").textContent=st.ld;
+  if($("vAvgChg"))$("vAvgChg").textContent=`平均涨跌幅 ${mkPct(st.avgChg)} · ${srcTxt}`;
+  /* 情绪温度：①全场统计 ②指数合成（上证/深成指/创业板） ③样本（标注来源） */
+  let temp=B?B.temp:indexCompositeTemp();
+  if(temp===null&&nS){
+    const ud=(sUp-sDown)/nS;
+    temp=Math.max(-30,Math.min(30,Math.round(ud*25+sAvg*1.5)));
   }
-  if($("vTemp"))$("vTemp").innerHTML=n?temp+'<span class="m-unit">℃</span>':"--";
+  if(temp===null)temp=0;
+  const hasData=B||nS>0;
+  if($("vTemp"))$("vTemp").innerHTML=hasData?temp+'<span class="m-unit">℃</span>':"--";
   if($("vTempSub")){
     let desc;
-    if(!n)desc="等待数据…";
+    if(!hasData)desc="等待数据…";
     else if(temp>=20)desc="情绪高涨 · 注意过热";
     else if(temp>=10)desc="情绪偏暖 · 谨慎做多";
     else if(temp>=3)desc="情绪温和 · 可逢低布局";
@@ -3200,29 +3329,41 @@ function renderMarketView(){
   }
   /* --- 大盘情绪主参考（主锚）：置顶展示，供外部监控面板调用 --- */
   if($("msMainBody")){
-    const shChg=shIdx&&shIdx.chg!==undefined?shIdx.chg:null;
-    const red=n?Math.round(up/n*100):null;
-    const m5=n?Math.round(aboveMA5/n*100):null;
-    const m20=n?Math.round(aboveMA20/n*100):null;
+    const shChg=iq["sh000001"]&&isFinite(iq["sh000001"].chg)?iq["sh000001"].chg:null;
+    const red=st.n?Math.round(st.up/st.n*100):null;
+    const m5=nS?Math.round(aboveMA5/nS*100):null;
+    const m20=nS?Math.round(aboveMA20/nS*100):null;
     const cls=temp>=20?"ms-hot":temp>=10?"ms-warm":temp>=3?"ms-neutral":temp>-3?"ms-neutral":temp>-10?"ms-cold":"ms-ice";
-    const lvl=!n?"等待数据…":temp>=20?"情绪高涨 · 注意过热":temp>=10?"情绪偏暖 · 谨慎做多":temp>=3?"情绪温和 · 可逢低布局":temp>-3?"情绪中性 · 观望为主":temp>-10?"情绪偏冷 · 控制仓位":temp>-20?"情绪低迷 · 等待企稳":"情绪冰点 · 恐慌性抛售";
-    $("msMainBody").innerHTML=`<div class="ms-head"><span class="ms-tag">大盘情绪 · 主参考</span><span class="ms-temp ${cls}">${n?temp:"--"}<span class="ms-deg">℃</span></span><span class="ms-level">${lvl}</span></div>`+
+    const lvl=!hasData?"等待数据…":temp>=20?"情绪高涨 · 注意过热":temp>=10?"情绪偏暖 · 谨慎做多":temp>=3?"情绪温和 · 可逢低布局":temp>-3?"情绪中性 · 观望为主":temp>-10?"情绪偏冷 · 控制仓位":temp>-20?"情绪低迷 · 等待企稳":"情绪冰点 · 恐慌性抛售";
+    $("msMainBody").innerHTML=`<div class="ms-head"><span class="ms-tag">大盘情绪 · 主参考</span><span class="ms-temp ${cls}">${hasData?temp:"--"}<span class="ms-deg">℃</span></span><span class="ms-level">${lvl}</span></div>`+
       `<div class="ms-comps">`+
       `<div class="ms-comp"><span>上证涨跌</span><b style="color:${shChg===null?'inherit':shChg>=0?'var(--up)':'var(--down)'}">${shChg!==null?mkPct(shChg):'--'}</b></div>`+
       `<div class="ms-comp"><span>红盘率</span><b>${red!==null?red+'%':'--'}</b></div>`+
-      `<div class="ms-comp"><span>涨停/跌停</span><b>${lu}/${ld}</b></div>`+
+      `<div class="ms-comp"><span>涨停/跌停</span><b>${st.lu}/${st.ld}</b></div>`+
       `<div class="ms-comp"><span>站上MA5</span><b>${m5!==null?m5+'%':'--'}</b></div>`+
       `<div class="ms-comp"><span>站上MA20</span><b>${m20!==null?m20+'%':'--'}</b></div>`+
-      `</div>`;
+      `</div>`+
+      `<div class="ms-comps" style="margin-top:4px"><div class="ms-comp"><span>统计口径</span><b style="font-weight:600">${srcTxt}${B?" · 沪深北":""}</b></div><div class="ms-comp"><span>全场成交</span><b>${B?B.amt.toFixed(0)+" 亿":"--"}</b></div></div>`;
   }
-  /* --- 图表 --- */
-  mkRenderDist(stocks);
-  mkRenderRadar({up,down,flat,lu,ld,n});
-  mkRenderBreadth({aboveMA5,aboveMA20,n});
-  mkRenderTier(tiers);
-  window.__mk={temp,up,down,lu,ld,n,avgChg,aboveMA5,aboveMA20};
+  /* --- 图表：分布/雷达/强弱分层用全场（若有），广度图仅有样本MA数据故标注样本 --- */
+  mkCardTitle("cDist",B?"涨跌分布 · 全场":"涨跌分布 · 样本");
+  mkCardTitle("cRadar",B?"情绪雷达 · 全场":"情绪雷达 · 样本");
+  mkCardTitle("cTier",B?"强弱分层 · 全场":"强弱分层 · 样本");
+  mkCardTitle("cBreadth","市场广度 · 样本MA");
+  mkRenderDist(stocks,B?_mkBreadth.dist:null);
+  mkRenderRadar({up:st.up,down:st.down,flat:st.flat,lu:st.lu,ld:st.ld,n:st.n},!!B);
+  mkRenderBreadth({aboveMA5,aboveMA20,n:nS});
+  mkRenderTier(B?(_mkBreadth.tiers||sTiers):sTiers);
+  window.__mk={temp,up:st.up,down:st.down,lu:st.lu,ld:st.ld,n:st.n,avgChg:st.avgChg,aboveMA5,aboveMA20,src:B?"全场":"样本",redRate:st.redRate};
   try{renderDashStatus();renderDashModules();renderSignalTape();}catch(e){console.warn("总览Dashboard渲染失败",e);}
   renderSentimentProcess();   /* 异步加载 K线/分时/成交量/国家队，不阻塞主面板 */
+  refreshMarketBreadth();     /* 全场宽度异步刷新，到场后自动重绘（TTL 60s/移动180s） */
+}
+/* 图表卡标题标注数据口径 */
+function mkCardTitle(chartId,txt){
+  const el=document.getElementById(chartId);if(!el)return;
+  const card=el.closest(".mk-card");if(!card)return;
+  const tt=card.querySelector(".ch-title");if(tt)tt.textContent=txt;
 }
 
 /* ==================== 情绪面板：走势过程 + 国家队探测 ==================== */
@@ -3534,7 +3675,8 @@ function fearGreedIndex(){
   const s1=_fgClamp(((mk.temp||0)+30)/60*100,0,100);
   const tot=(mk.up||0)+(mk.down||0)||1;
   const s2=_fgClamp((mk.up||0)/tot*100,0,100);
-  const s3=_fgClamp(50+(((mk.lu||0)-(mk.ld||0))/(Math.max(mk.ld||0,1))*20),0,100);
+  /* 涨跌停分量：全场用绝对标尺(涨停-跌停)×0.6；样本沿用原比值标定 */
+  const s3=_fgClamp(mk.src==="全场"?(50+((mk.lu||0)-(mk.ld||0))*0.6):(50+(((mk.lu||0)-(mk.ld||0))/(Math.max(mk.ld||0,1))*20)),0,100);
   const s4=_fgClamp(50+vol*1.5,0,100);
   const s5=_fgClamp(50+nt*10,0,100);
   return Math.round(s1*0.30+s2*0.25+s3*0.20+s4*0.10+s5*0.15);
@@ -3605,17 +3747,22 @@ function mkRenderVol(shVol,szVol){
             {type:"line",data:ma5,smooth:true,showSymbol:false,lineStyle:{color:MK_C.amber,width:1.4}}]
   });
 }
-/* 涨跌分布：按涨跌幅分桶 */
-function mkRenderDist(stocks){
+/* 涨跌分布：按涨跌幅分桶（marketDist 为全场预统计桶，优先使用） */
+function mkRenderDist(stocks,marketDist){
   const c=mkChart("cDist");if(!c)return;
+  let buckets;
+  if(marketDist&&marketDist.length===7){buckets=marketDist.slice();}
+  else{
+    const edges=[-7,-5,-3,-1,1,3,5,7];
+    buckets=[0,0,0,0,0,0,0];
+    (stocks||[]).forEach(s=>{
+      const v=s.chg||0;
+      for(let i=0;i<edges.length-1;i++){
+        if(v>=edges[i]&&v<edges[i+1]){buckets[i]++;break;}
+      }
+    });
+  }
   const edges=[-7,-5,-3,-1,1,3,5,7];
-  const buckets=[0,0,0,0,0,0,0];
-  stocks.forEach(s=>{
-    const v=s.chg||0;
-    for(let i=0;i<edges.length-1;i++){
-      if(v>=edges[i]&&v<edges[i+1]){buckets[i]++;break;}
-    }
-  });
   const labels=[];for(let i=0;i<edges.length-1;i++)labels.push(edges[i]+"~"+edges[i+1]);
   c.setOption({
     grid:{left:38,right:10,top:14,bottom:24},
@@ -3625,11 +3772,13 @@ function mkRenderDist(stocks){
     series:[{type:"bar",data:buckets.map(v=>({value:v,itemStyle:{color:v>=0?MK_C.up:MK_C.down}})),barWidth:"55%"}]
   });
 }
-/* 情绪雷达 */
-function mkRenderRadar(s){
+/* 情绪雷达（isMarket：全场模式下涨停/跌停用绝对标尺，100家=满格，避免被总股本稀释） */
+function mkRenderRadar(s,isMarket){
   const c=mkChart("cRadar");if(!c)return;
   const n=s.n||1;
   const norm=v=>Math.min(1,v/n);
+  const luV=isMarket?Math.min(1,(s.lu||0)/100):norm((s.lu||0)*5);
+  const ldV=isMarket?Math.min(1,(s.ld||0)/100):norm((s.ld||0)*5);
   c.setOption({
     radar:{
       indicator:[{name:"上涨",max:1},{name:"活跃",max:1},{name:"涨停",max:1},{name:"跌停",max:1},{name:"下跌",max:1},{name:"平盘",max:1}],
@@ -3639,7 +3788,7 @@ function mkRenderRadar(s){
       splitArea:{areaStyle:{color:["rgba(255,255,255,.02)","rgba(255,255,255,.04)"]}},
       axisLine:{lineStyle:{color:MK_C.border,opacity:.6}}
     },
-    series:[{type:"radar",data:[{value:[norm(s.up),norm(s.up+s.lu),norm(s.lu*5),norm(s.ld*5),norm(s.down),norm(s.flat)],
+    series:[{type:"radar",data:[{value:[norm(s.up),norm(s.up+s.lu),luV,ldV,norm(s.down),norm(s.flat)],
       areaStyle:{color:"rgba(59,130,246,.25)"},lineStyle:{color:MK_C.blue},itemStyle:{color:MK_C.blue}}]}]
   });
 }
@@ -6230,7 +6379,8 @@ function openStockDetailModal(){
   html += `</tbody></table></div>`;
   
   $("modalBody").innerHTML = html;
-  $("modalMask").style.display = "flex";
+  /* 与showDetail统一走class打开：避免内联display残留导致后续classList.add("show")失效 */
+  const _mm=$("modalMask");_mm.style.display="";_mm.classList.add("show");
 }
 
 /* ===== 角色PK对比弹窗 ===== */
@@ -6283,7 +6433,7 @@ function openRolePKModal(){
         <td style="padding:10px 6px"><span class="cb" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color};vertical-align:middle;margin-right:6px"></span><b>${p.id}</b> ${escHtml(p.name)}</td>
         <td style="text-align:right;padding:10px 6px">${p.asset.toFixed(0)}</td>
         <td style="text-align:right;padding:10px 6px;font-weight:700;font-size:15px;color:${p.ret>=0?"var(--up)":"var(--down)"}">${p.ret>=0?"+":""}${p.ret.toFixed(2)}%</td>
-        <td style="text-align:right;padding:10px 6px">${sells.length?p.winRate.toFixed(1)+'%':'--'}</td>
+        <td style="text-align:right;padding:10px 6px">${p.winRate>0?p.winRate.toFixed(1)+'%':'--'}</td>
         <td style="text-align:right;padding:10px 6px;color:var(--down)">-${p.mdd.toFixed(1)}%</td>
         <td style="text-align:center;padding:10px 6px">${p.tradeCount}</td>
         <td style="text-align:center;padding:10px 6px">${p.holdCount}</td>
@@ -6298,7 +6448,8 @@ function openRolePKModal(){
   </div>`;
   
   $("modalBody").innerHTML = html;
-  $("modalMask").style.display = "flex";
+  /* 与showDetail统一走class打开：避免内联display残留导致后续classList.add("show")失效 */
+  const _mm=$("modalMask");_mm.style.display="";_mm.classList.add("show");
 }
 
 /* ==================== 复盘渲染（界面层） ==================== */
@@ -6501,9 +6652,10 @@ async function genDailyPlan(){
   const redRate=n?Math.round(up/n*100):0;
   const amtEl=document.getElementById("vAmount");const amtTxt=amtEl?amtEl.textContent:"--";
   /* 大盘环境 */
-  const env=temp>=10?`偏强：上证情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家，两市成交 ${amtTxt}。多头占优，可积极参与。`
-        :temp<=-10?`偏弱：上证情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家，两市成交 ${amtTxt}。空头占优，以防守为主。`
-        :`中性：上证情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家，两市成交 ${amtTxt}。多空分歧，轻仓试错。`;
+  const srcTxt=mk.src==="全场"?`全场${mk.n||0}只`:"样本";
+  const env=temp>=10?`偏强：全场情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家（${srcTxt}），两市成交 ${amtTxt}。多头占优，可积极参与。`
+        :temp<=-10?`偏弱：全场情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家（${srcTxt}），两市成交 ${amtTxt}。空头占优，以防守为主。`
+        :`中性：全场情绪温度 ${temp}℃，红盘率 ${redRate}%，涨停 ${lu} 家 / 跌停 ${ld} 家（${srcTxt}），两市成交 ${amtTxt}。多空分歧，轻仓试错。`;
   /* 板块热度 */
   const pool=(typeof simData!=="undefined"&&simData.pricePool)?Object.values(simData.pricePool).filter(s=>s&&s.price>0):[];
   const secMap={};
@@ -6518,7 +6670,7 @@ async function genDailyPlan(){
   const nt=window.__nationalTeam||{score:0,intent:"未探测到国家队异动"};
   const fundTxt=`${northTxt}；国家队：${nt.intent}（异动评分 ${nt.score}/5）。`;
   /* 风险点 */
-  const riskTxt=[ld>0?`跌停 ${ld} 家，警惕恐慌扩散`:"",temp<=-10?"情绪温度偏低，反弹易反复":"",(mk.avgChg||0)<0?`样本平均涨幅 ${mk.avgChg.toFixed(2)}%，赚钱效应差`:"赚钱效应一般"].filter(Boolean).join("；")+"。高位股补跌与量能萎缩是主要风险。";
+  const riskTxt=[ld>0?`跌停 ${ld} 家，警惕恐慌扩散`:"",temp<=-10?"情绪温度偏低，反弹易反复":"",(mk.avgChg||0)<0?`全场平均涨幅 ${mk.avgChg.toFixed(2)}%，赚钱效应差`:"赚钱效应一般"].filter(Boolean).join("；")+"。高位股补跌与量能萎缩是主要风险。";
   /* 明日主线 / 触发 / 放弃 */
   const pol=window.__policyBottom||{score:0,level:"未知"};
   const mainTxt=`优先观察资金净流入靠前且涨幅不极端的板块（当前：${hot}）。${pol.score>=30?"政策底"+pol.level+"，可关注低位权重与政策受益方向的左侧布局机会。":"暂无强政策信号，以顺势跟随资金主线为主。"}`;
@@ -6881,7 +7033,7 @@ function openModal(role){
     <h4>规则参数</h4>
     <div class="rule">${a.rules}</div>
     <p class="note">免责：AI模拟交易策略仅用于模拟竞赛测试，不构成任何实盘投资建议。页面仅做可视化监控，不含任何交易逻辑。</p>`;
-  $("modalMask").classList.add("show");
+  {const _m=$("modalMask");_m.style.display="";_m.classList.add("show");}
 }
 function showDetail(code){
   const st=simData.pricePool[code];
@@ -6986,7 +7138,13 @@ function showDetail(code){
     <div id="detailMinute" style="width:100%;height:280px;border:1px solid var(--border-soft);border-radius:8px;background:rgba(0,0,0,.18)"></div>
     <div style="font-size:11px;color:var(--text-faint);margin-top:14px">成交前共同批次复核 · 模拟盘仅记账，不下实单</div>`;
   
-  $("modalMask").classList.add("show");
+  {const _m=$("modalMask");_m.style.display="";_m.classList.add("show");}
+  /* 模态框slideInRight动画300ms：缓存命中时图表在动画中途init会测到约100px的错误宽度，
+     动画结束后补一次resize修正（否则日K/分时图被压成一条线，表现为"门禁详情加载不出来"） */
+  setTimeout(()=>{try{
+    if(detailChart&&detailChart.resize)detailChart.resize();
+    if(minuteChart&&minuteChart.resize)minuteChart.resize();
+  }catch(e){}},350);
   renderDetailTech(code);
   renderRiskMatrix(code);
   renderPositionStruct(code);
@@ -7103,7 +7261,10 @@ async function renderPositionStruct(code){
 
 async function renderDetailTech(code){
   const el=document.getElementById("detailTech");if(!el)return;
-  if(!detailChart&&window.echarts)detailChart=echarts.init(el);
+  /* 模态框每次showDetail都会用innerHTML重建#detailTech，旧echarts实例绑在已分离的DOM上，
+     必须dispose后按当前元素重新init，否则第二次起日K图空白（门禁详情"加载不出来"） */
+  if(detailChart){try{detailChart.dispose();}catch(e){}}
+  detailChart=window.echarts?echarts.init(el):null;
   const st=simData.pricePool[code];if(!st)return;
   const tx=TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code;
   try{
@@ -7179,7 +7340,9 @@ async function renderDetailTech(code){
 let minuteChart=null;
 async function renderDetailMinute(code){
   const el=document.getElementById("detailMinute");if(!el)return;
-  if(!minuteChart&&window.echarts)minuteChart=echarts.init(el);
+  /* 同renderDetailTech：模态框重建DOM后必须重新init，否则分时图第二次起空白 */
+  if(minuteChart){try{minuteChart.dispose();}catch(e){}}
+  minuteChart=window.echarts?echarts.init(el):null;
   const tx=(code[0]==="6"?"sh":"sz")+code;
   try{
     const resp=await fetch(`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`);
@@ -7220,10 +7383,6 @@ async function renderDetailMinute(code){
         {name:"均价",type:"line",data:avgs,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1,type:"dashed"}},
         {name:"成交量",type:"bar",data:vols,xAxisIndex:1,yAxisIndex:1,itemStyle:{color:(p)=>prices[p.dataIndex]>=avgs[p.dataIndex]?"#f2555a":"#3ecf8e"}}
       ]
-    },true);
-    if(minuteChart.resize)minuteChart.resize();
-  }catch(e){if(window.console)console.warn("detailMinute",e);}
-}
 /* 关闭弹窗：只摘 .show class，交由样式表控制显隐。
    注意：这里早期版本写了 m.style.display="none"（内联样式），它会永久压过
    .modal-mask.show{display:flex}，导致第二次打开时 add("show") 无效 ——
@@ -7468,7 +7627,9 @@ function renderSpDayKline(){
   const code=spCurrentCode;
   const el=document.getElementById("sideKline");
   if(!el||!window.echarts)return;
-  if(!sideKlineChart)sideKlineChart=echarts.init(el);
+  /* 侧边栏每次打开都innerHTML重建#sideKline，旧实例失联；dispose后按当前元素重新init */
+  if(sideKlineChart){try{sideKlineChart.dispose();}catch(e){}}
+  sideKlineChart=echarts.init(el);
   const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
   txDay(tx,60).then(days=>{
     if(!days||!days.length){sideKlineChart.clear();return;}
@@ -7505,7 +7666,9 @@ function renderSpMinKline(){
   const code=spCurrentCode;
   const el=document.getElementById("sideKline");
   if(!el||!window.echarts)return;
-  if(!sideKlineChart)sideKlineChart=echarts.init(el);
+  /* 同renderSpDayKline：重建DOM后重新init */
+  if(sideKlineChart){try{sideKlineChart.dispose();}catch(e){}}
+  sideKlineChart=echarts.init(el);
   const tx=(TDX_CODES[code]||(code[0]==="6"?"sh":"sz")+code);
   /* 腾讯分时接口 */
   const url=`https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=${tx}`;
