@@ -24,6 +24,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: write   # 内置 GITHUB_TOKEN 默认只读，不授权则上传 data.json 报
+                    # "Resource not accessible by integration"，数据永远回写不了仓库
+
 jobs:
   trade:
     runs-on: ubuntu-latest
