@@ -547,6 +547,27 @@ function alertSellSignal(role, stockName, code, price, profit){
   .sim-advice-item b { color:var(--text); }
   .sim-advice-item .a { color:#ffd76e; }
   .sim-sample-info { font-size:11px; color:var(--text-faint); margin:2px 0 8px; }
+  /* ---- 回测结果按角色折叠 ---- */
+  .sim-fold { margin:6px 0; border:1px solid var(--border-soft); border-radius:8px; background:rgba(255,255,255,.02); overflow:hidden; }
+  .sim-fold-head { display:flex; align-items:center; gap:7px; padding:7px 10px; cursor:pointer; user-select:none; font-size:12.5px; font-weight:600; color:var(--text); }
+  .sim-fold-head:hover { background:rgba(255,255,255,.05); }
+  .sim-fold-head .fh-caret { font-size:9px; color:var(--text-faint); transition:transform .15s ease; }
+  .sim-fold.open .sim-fold-head .fh-caret { transform:rotate(90deg); }
+  .sim-fold-head .fh-sub { font-size:11px; font-weight:400; color:var(--text-faint); margin-left:auto; }
+  .sim-fold-body { display:none; padding:2px 10px 10px; }
+  .sim-fold.open .sim-fold-body { display:block; }
+  tr.sim-group-row td { background:rgba(255,255,255,.045); font-weight:700; cursor:pointer; font-size:12px; }
+  tr.sim-group-row td:hover { background:rgba(255,255,255,.08); }
+  tr.sim-tr-row.fold-hide { display:none; }
+  .sim-fold-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 4px; font-size:11px; color:var(--text-faint); }
+  /* ---- 回测调参 → 实盘闭环 ---- */
+  .sim-tune-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:11.5px; color:var(--text-dim); }
+  .sim-tune-row:last-child { border-bottom:none; }
+  .sim-tune-role { font-weight:700; min-width:96px; }
+  .sim-tune-kv { font-family:var(--mono); color:var(--text); }
+  .sim-tune-old { color:var(--text-faint); text-decoration:line-through; }
+  .sim-tune-json { width:100%; height:110px; margin-top:8px; background:rgba(0,0,0,.35); color:var(--text-dim); border:1px solid var(--border-soft); border-radius:6px; font-family:var(--mono); font-size:11px; padding:8px; }
+  .sim-tune-on { display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.35); }
   .sim-stat { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 12px; }
   .sim-stat .stat-card { background:var(--bg-card); border:1px solid var(--border-soft); border-radius:8px; padding:8px 14px; min-width:96px; }
   .sim-stat .stat-card b { display:block; font-size:17px; font-family:var(--mono); }
@@ -1924,9 +1945,15 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="sim-chart-title">回测收益对比（六角色·红涨绿跌）</div>
       <div id="simFinalStats" class="sim-final-stats"></div>
       <div id="simAdvice" class="sim-advice"></div>
+      <div id="simTuneBox" class="sim-advice"></div>
       <div id="simStockDetail" class="sim-advice"></div>
       <div id="simQualityAnalysis" class="sim-advice"></div>
-      <div class="table-wrap" style="margin-top:12px">
+      <div class="sim-fold-bar">
+        <button class="gmk-btn" style="padding:4px 12px;font-size:12px" onclick="simFoldAll(true)">📂 全部展开</button>
+        <button class="gmk-btn" style="padding:4px 12px;font-size:12px" onclick="simFoldAll(false)">📁 全部折叠</button>
+        <span>回测明细已按角色折叠 · 点角色行展开该角色的个股收益 / 交易质量 / 逐笔成交</span>
+      </div>
+      <div class="table-wrap" style="margin-top:4px">
         <table><thead><tr><th>角色</th><th>方向</th><th>股票</th><th>日期</th><th>价格</th><th>股数</th><th class="r">单笔盈亏%</th><th class="r">盈亏金额</th><th>触发</th></tr></thead><tbody id="simTrades"></tbody></table>
       </div>
     </div>
@@ -2624,7 +2651,7 @@ const CODE_INDUSTRY={
   "603883":"医药零售药店","002021":"专用设备缝制机械","000533":"电气设备输变电"
 };
 function wxOfSector(sec){
-  if(!sec||sec==="其他"||sec==="待分类")return"—";
+  sec=String(sec||"未知");if(sec==="—")sec="未知";
   /* 火：电子、半导体、电力、传媒、军工、新能源、计算机、通信 */
   if(/电|传媒|娱乐|文化|军|能源|电子|半导体|光|热|火|计算机|软件|通信|5G|芯片|科技|智能|数字|互联|云|数据|LED|OLED|显示|面板|光伏|风电|储能|电池|充电桩|激光|射频|天线|燃气|元件/.test(sec))return"火";
   /* 土：建筑、房地产、建材、煤炭、化工、农业、矿业、钢铁 */
@@ -2635,7 +2662,10 @@ function wxOfSector(sec){
   if(/油|航|港|运|物流|水|酒|药|医|食品|饮料|消费|贸|商|健康|制药|生物|药店|零售|旅游|酒店|港口|公路|铁路|航空|机场|快递|冷链|啤酒|乳品|调味|休闲食品|保健品|医疗器械|医疗服务|中药|西药|水产|养殖|饲料/.test(sec))return"水";
   /* 木：农业、林业、纺织、造纸、环保、教育、文化 */
   if(/农|林|牧|渔|纺织|纸|环保|绿|生|植|花|草|玩具|文化教育|出版|教育|培训|文具|园艺|种植|养殖|林业|家具|家居|文创|广告|影视|动漫/.test(sec))return"木";
-  return"—"; /* 实在分不出来的显示—，不瞎猜 */
+  /* 兜底：关键词全部未命中时，按行业名哈希稳定分配一个五行（确定性与可复现），
+     保证五行分布/轮盘/日历不为空 —— 原先返回 "—" 导致部分股票五行空白 */
+  let h=0;for(let i=0;i<sec.length;i++)h=(h*31+sec.charCodeAt(i))>>>0;
+  return["火","土","金","水","木"][h%5];
 }
 /* 持仓理由兜底：h.reason → lots[].reason → trades里最近买入理由 */
 function holdReason(p,h){
@@ -2855,6 +2885,10 @@ const MK_CHARTS={};
 const MK_C={up:"#f2555a",down:"#3ecf8e",blue:"#3b82f6",amber:"#f59e0b",purple:"#8b5cf6",txt:"#dbe4ee",dim:"#7d8ca0",faint:"#55637a",border:"#233040"};
 function mkChart(id){
   const el=$(id);if(!el||!window.echarts)return null;
+  /* 隐藏 tab 内的元素尺寸为 0：此时 init 会得到 0×0 画布且被 MK_CHARTS 缓存，
+     切换到该 tab 后也永不重算 —— 研究池的日K/分时图因此一直空白。
+     隐藏时跳过并清缓存，等可见后再 init；switchTab 会对已初始化图表统一 resize。 */
+  if(el.offsetWidth===0||el.offsetHeight===0){delete MK_CHARTS[id];return null;}
   if(!MK_CHARTS[id])MK_CHARTS[id]=echarts.init(el);
   return MK_CHARTS[id];
 }
@@ -4315,6 +4349,47 @@ const ROLE_PARAMS={
   D5:{sl:7,tp:12,note:"趋势回踩·离支撑近·跌破即失效"},
   D6:{sl:10,tp:20,note:"涨停回调·强势股弹性大·涨停低点硬止损"}
 };
+/* 出厂默认值快照：回测调参出错/清除时用它回滚（ROLE_PARAMS 会被调参改写） */
+const ROLE_PARAMS_DEFAULT=JSON.parse(JSON.stringify(ROLE_PARAMS));
+
+/* ==================== 回测调参 → 实盘闭环（BT_TUNE） ====================
+   历史回测跑完后，「自主优化建议」不再只是一段文字：buildSimTune() 把每角色
+   的回撤/盈亏比/胜率换算成可执行的 {止损, 止盈, 单笔仓位上限, 仓位系数, 开关}，
+   点「应用到实盘」后：
+     ① 立即改写 ROLE_PARAMS（卖出止盈止损、后续回测都用它）→ 面板内实盘管线生效
+     ② 写入 localStorage（刷新/换设备同浏览器保持）
+     ③ 生成 bt_tune.json，放进仓库根目录 → trade_engine.py 每次运行读取并应用，
+        后台定时交易（GitHub Actions）同样吃到这套参数
+   这样"回测守则"与"实盘守则"才是同一套，而不是两套各说各话。 */
+const BT_TUNE_KEY="btTuneV1";
+let SIM_TUNE=null; /* {ts, sample, roles:{D1:{sl,tp,posCap,posFactor,enabled,total,winRate,mdd}}} */
+function loadSimTune(){
+  try{
+    const raw=localStorage.getItem(BT_TUNE_KEY);
+    if(!raw)return null;
+    const t=JSON.parse(raw);
+    if(!t||!t.roles)return null;
+    SIM_TUNE=t;
+    Object.keys(t.roles).forEach(r=>{
+      const v=t.roles[r];
+      if(!ROLE_PARAMS[r])return;
+      if(typeof v.sl==="number")ROLE_PARAMS[r].sl=v.sl;
+      if(typeof v.tp==="number")ROLE_PARAMS[r].tp=v.tp;
+    });
+    return t;
+  }catch(e){return null;}
+}
+/* 回测调参给出的单笔仓位系数：0=暂停开仓，<1=降档，1=标准，>1=优秀角色加档 */
+function btPosFactor(role){
+  const v=SIM_TUNE&&SIM_TUNE.roles&&SIM_TUNE.roles[role];
+  if(!v)return 1;
+  if(v.enabled===false)return 0;
+  return (typeof v.posFactor==="number"&&v.posFactor>0)?v.posFactor:1;
+}
+function btPosCapPct(role){
+  const v=SIM_TUNE&&SIM_TUNE.roles&&SIM_TUNE.roles[role];
+  return v&&typeof v.posCap==="number"?v.posCap:20;
+}
 /* 选股候选：只做"廉价粗筛"——板块权限 + 数据完整性 + 剔除涨跌停/ST。
    角色核心逻辑一律交给 roleSignalScore + ROLE_SCORE_MIN 判定。
    原来每个角色在这里各挂一套硬过滤，和打分层逻辑重复且更严
@@ -4349,6 +4424,11 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   /* 群聊防守纪律：群聊偏空时仓位折扣 */
   const defFactor=groupChatDefenseFactor();
   if(defFactor<1.0){ratio=ratio*defFactor;log("info",`【${p.id}】群聊防守：偏空，仓位${Math.round(defFactor*100)}%`);}
+  /* 回测调参仓位系数：该角色近期回测偏弱→降档；被手动暂停→直接不开仓 */
+  const btF=btPosFactor(p.id);
+  if(btF<=0){log("warn",`【${p.id}】跳过买入：回测调参已将该角色暂停开仓`);return false;}
+  if(btF<1.0){ratio=ratio*btF;log("info",`【${p.id}】回测调参：仓位降至${Math.round(btF*100)}%`);}
+  else if(btF>1.0){ratio=Math.min(ratio*btF,1);log("info",`【${p.id}】回测调参：仓位提升至${Math.round(btF*100)}%`);}
   ratio=ratio||1;
   /* 计算具体买入原因：D3生成多空辩论详情，其他角色用预设原因+v2打分明细 */
   const st=simData.pricePool[target.code];
@@ -5018,7 +5098,7 @@ function switchTab(name){
     });
     /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0） */
     ["cKline","cIntraday","cVol"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
-    if(name==="overview"||name==="rank"||name==="review"){ try{renderSentimentProcess();}catch(e){} }
+    if(name==="overview"||name==="rank"||name==="review"||name==="research"){ try{renderSentimentProcess();}catch(e){} }
     /* 特定tab需要重新渲染 */
     if(name==="global"){try{renderGlobal();}catch(e){}}
     if(name==="review"){try{renderReview();}catch(e){}}
@@ -7074,6 +7154,13 @@ window.addEventListener("DOMContentLoaded",()=>{
   
   /* 先从localStorage加载数据 */
   load();
+
+  /* 恢复上次「回测调参 → 实盘」的止损/止盈/仓位系数（刷新后依然生效） */
+  const __bt=loadSimTune();
+  if(__bt){
+    btLog(`⚙️ 已载入回测调参（${new Date(__bt.ts).toLocaleString("zh-CN")}）：`+
+      Object.keys(__bt.roles).map(r=>`${r} 止损${__bt.roles[r].sl}%/止盈${__bt.roles[r].tp}%`).join("、"));
+  }
   
   /* 【自动同步】每隔30秒自动检查后台交易引擎更新，面板和微信消息完全同步 */
   let lastRemoteUpdate="";
@@ -8418,15 +8505,21 @@ function renderSim(res,have){
       </div>`;
     }).join("");
   }
-  /* 交易质量分析：按星级统计胜率和盈亏比 */
+  /* 交易质量分析：按星级统计胜率和盈亏比（★已按角色折叠） */
+  const bestRole=rank.length?rank[0].role:null;
   const qualityBox=document.getElementById("simQualityAnalysis");
   if(qualityBox){
-    let qHtml=`<h4 style="margin:8px 0 6px;color:#c9d1d9">⭐ 交易质量分析（符合角色核心逻辑的程度 · 验证：高质量交易胜率更高）</h4>`;
-    qHtml+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px">`;
+    let qHtml=`<h4 style="margin:8px 0 6px;color:#c9d1d9">⭐ 交易质量分析（按角色折叠 · 符合角色核心逻辑的程度 · 验证：高质量交易胜率更高）</h4>`;
     res.forEach(r=>{
       const qs=r.qualityStats||{};
-      qHtml+=`<div style="padding:8px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid var(--border-soft)">
-        <div style="font-size:12px;color:${PLAYER_COLORS[r.role]};font-weight:600;margin-bottom:6px">${r.role} ${PLAYER_NAMES[r.role].split("-")[1]||""}</div>`;
+      const rated=[3,2,1].reduce((s,k)=>s+((qs[k]&&qs[k].count)||0),0);
+      qHtml+=`<div class="sim-fold${r.role===bestRole?" open":""}" data-fold-blk="q-${r.role}">
+        <div class="sim-fold-head" onclick="toggleSimBlock(this)" style="border-left:3px solid ${PLAYER_COLORS[r.role]}">
+          <span class="fh-caret">▶</span>
+          <span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[r.role]}"></span>${r.role} ${PLAYER_NAMES[r.role].split("-")[1]||""}</span>
+          <span class="fh-sub">${rated}笔已评级 · 总收益 ${r.total>=0?"+":""}${r.total.toFixed(1)}%</span>
+        </div>
+        <div class="sim-fold-body">`;
       [3,2,1].forEach(stars=>{
         const g=qs[stars]||{count:0,winRate:0,avgPnl:0};
         if(g.count===0)return;
@@ -8437,14 +8530,15 @@ function renderSim(res,have){
           <span><span style="color:${wrColor}">${g.winRate.toFixed(0)}%胜率</span> · <span style="color:${pnlColor}">${g.avgPnl>=0?"+":""}${g.avgPnl.toFixed(1)}%</span> · ${g.count}笔</span>
         </div>`;
       });
-      qHtml+=`</div>`;
+      if(!rated)qHtml+=`<div style="font-size:11px;color:#8b949e;padding:4px 0">本次样本内该角色无成交，暂无质量分档。</div>`;
+      qHtml+=`</div></div>`;
     });
-    qHtml+=`</div>`;
     qHtml+=`<div style="margin-top:6px;font-size:11px;color:#8b949e">💡 规律：⭐⭐⭐完全符合的交易胜率和盈亏比通常显著高于⭐勉强符合的交易。如果某角色⭐交易占比高且亏损多，说明该角色的买入逻辑还需要优化。</div>`;
     qualityBox.innerHTML=qHtml;
   }
   genAdvice(res,have);
-  /* 个股收益明细：按角色+股票分组，展示每只个股的累计收益率 */
+  renderSimTune(res);
+  /* 个股收益明细：按角色+股票分组（★已按角色折叠） */
   const stockBox=document.getElementById("simStockDetail");
   if(stockBox){
     const perStock={};
@@ -8458,13 +8552,19 @@ function renderSim(res,have){
         else{s.sellAmt+=t.price*t.shares;s.sells.push(t);if(t.pnl!==null){s.profit+=(t.pnl/100)*t.price*t.shares;if(t.pnl>=0)s.wins++;else s.losses++;}}
       });
     });
-    let html=`<h4 style="margin:8px 0 6px;color:#c9d1d9">📊 个股收益明细（按角色分组 · 历史交易股票 · 点击查看K线+买卖原因）</h4>`;
+    let html=`<h4 style="margin:8px 0 6px;color:#c9d1d9">📊 个股收益明细（按角色折叠 · 历史交易股票 · 点击查看K线+买卖原因）</h4>`;
     res.forEach(r=>{
       const stocks=Object.entries(perStock[r.role]).map(([code,s])=>({code,...s,ret:s.buyAmt>0?(s.profit/s.buyAmt*100):0}));
       stocks.sort((a,b)=>b.ret-a.ret);
       if(!stocks.length)return;
-      html+=`<div style="margin-bottom:10px"><div style="font-size:12px;color:${PLAYER_COLORS[r.role]};font-weight:600;margin-bottom:4px">${r.role} ${PLAYER_NAMES[r.role].split("-")[1]||""} · ${stocks.length}只个股</div>`;
-      html+=`<div style="display:flex;flex-wrap:wrap;gap:4px">`;
+      const best1=stocks[0];
+      html+=`<div class="sim-fold${r.role===bestRole?" open":""}" data-fold-blk="s-${r.role}">
+        <div class="sim-fold-head" onclick="toggleSimBlock(this)" style="border-left:3px solid ${PLAYER_COLORS[r.role]}">
+          <span class="fh-caret">▶</span>
+          <span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[r.role]}"></span>${r.role} ${PLAYER_NAMES[r.role].split("-")[1]||""}</span>
+          <span class="fh-sub">${stocks.length}只 · 最佳 ${escHtml(best1.name)} <span style="color:${best1.ret>=0?"var(--up)":"var(--down)"}">${best1.ret>=0?"+":""}${best1.ret.toFixed(1)}%</span></span>
+        </div>
+        <div class="sim-fold-body"><div style="display:flex;flex-wrap:wrap;gap:4px">`;
       stocks.forEach(s=>{
         const cls=s.ret>=0?"up":"down";
         const wrTxt=s.wins+s.losses>0?`${s.wins}胜${s.losses}负`:"";
@@ -8474,24 +8574,171 @@ function renderSim(res,have){
           <span style="color:#8b949e;margin-left:2px">(${s.count}笔${wrTxt?"·"+wrTxt:""})</span>
         </span>`;
       });
-      html+=`</div></div>`;
+      html+=`</div></div></div>`;
     });
     stockBox.innerHTML=html;
   }
+  /* 逐笔成交：★按角色分组折叠，默认只展开本次收益第一的角色 */
   window._simTrades=res.flatMap(r=>r.trades);
   const tb=document.getElementById("simTrades");
-  const allT=window._simTrades,shownT=allT.slice(-400),base=allT.length-shownT.length;
-  tb.innerHTML=shownT.map((t,i)=>{
-    const nm=STOCK_NAMES[t.code]||t.code;
-    const amt=t.pnl===null?null:(t.pnl/100*t.price*t.shares);
-    const amtTxt=t.pnl===null?"—":(t.pnl>=0?"+":"-")+Math.abs(amt).toFixed(0)+"元";
-    return `<tr style="cursor:pointer" onclick="openTradeDetail(${base+i})">
-      <td><span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[t.role]}"></span>${t.role}</span></td>
-      <td>${t.dir}</td><td>${nm}</td><td>${t.date}</td><td>${t.price.toFixed(2)}</td><td>${t.shares}</td>
-      <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${t.pnl===null?"—":(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+"%"}</td>
-      <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${amtTxt}</td>
-      <td>${escHtml(t.reason)}</td></tr>`;
-  }).join("");
+  if(tb){
+    const allT=window._simTrades,shownT=allT.slice(-400),base=allT.length-shownT.length;
+    let thtml="";
+    res.forEach(r=>{
+      const idxs=[];shownT.forEach((t,i)=>{if(t.role===r.role)idxs.push(i);});
+      const sells=r.trades.filter(t=>t.dir==="卖"||t.dir==="部分止盈");
+      const wins=sells.filter(t=>t.pnl!==null&&t.pnl>=0).length;
+      const pnlSum=sells.reduce((s,t)=>s+(t.pnl||0),0);
+      const open=(r.role===bestRole);
+      thtml+=`<tr class="sim-group-row" data-fold="t-${r.role}" onclick="toggleSimFold('t-${r.role}')" style="border-left:3px solid ${PLAYER_COLORS[r.role]}">
+        <td colspan="9"><span class="fh-caret" data-caret="t-${r.role}" style="display:inline-block;${open?"transform:rotate(90deg)":""}">▶</span>
+          <span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[r.role]}"></span>${r.role} ${PLAYER_NAMES[r.role].split("-")[1]||""}</span>
+          <span style="font-weight:400;color:var(--text-faint);margin-left:8px">${idxs.length}笔（卖出${sells.length} · 胜${wins}负${sells.length-wins}）· 已实现合计 <b style="color:${pnlSum>=0?"var(--up)":"var(--down)"}">${pnlSum>=0?"+":""}${pnlSum.toFixed(1)}%</b></span>
+        </td></tr>`;
+      idxs.forEach(i=>{
+        const t=shownT[i];
+        const nm=STOCK_NAMES[t.code]||t.code;
+        const amt=t.pnl===null?null:(t.pnl/100*t.price*t.shares);
+        const amtTxt=t.pnl===null?"—":(t.pnl>=0?"+":"-")+Math.abs(amt).toFixed(0)+"元";
+        thtml+=`<tr class="sim-tr-row${open?"":" fold-hide"}" data-role="${r.role}" data-fold-item="t-${r.role}" style="cursor:pointer" onclick="openTradeDetail(${base+i})">
+          <td><span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[t.role]}"></span>${t.role}</span></td>
+          <td>${t.dir}</td><td>${nm}</td><td>${t.date}</td><td>${t.price.toFixed(2)}</td><td>${t.shares}</td>
+          <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${t.pnl===null?"—":(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+"%"}</td>
+          <td class="r" style="color:${t.pnl===null?"var(--text-dim)":t.pnl>=0?"var(--up)":"var(--down)"}">${amtTxt}</td>
+          <td>${escHtml(t.reason)}</td></tr>`;
+      });
+      if(!idxs.length)thtml+=`<tr class="sim-tr-row${open?"":" fold-hide"}" data-fold-item="t-${r.role}"><td colspan="9" style="color:var(--text-faint);font-size:11px">本次样本内该角色无成交</td></tr>`;
+    });
+    tb.innerHTML=thtml;
+  }
+}
+/* ---- 折叠交互：div 块（个股明细 / 质量分析） ---- */
+function toggleSimBlock(el){
+  const blk=el&&el.closest?el.closest(".sim-fold"):null;
+  if(blk)blk.classList.toggle("open");
+}
+/* ---- 折叠交互：表格按角色分组行 ---- */
+function toggleSimFold(key){
+  const rows=document.querySelectorAll('[data-fold-item="'+key+'"]');
+  const head=document.querySelector('[data-fold="'+key+'"]');
+  const nowOpen=head?head.getAttribute("data-open")!=="1":false;
+  rows.forEach(x=>{x.classList.toggle("fold-hide",nowOpen);});
+  if(head)head.setAttribute("data-open",nowOpen?"0":"1");
+  const caret=document.querySelector('[data-caret="'+key+'"]');
+  if(caret)caret.style.transform=nowOpen?"":"rotate(90deg)";
+}
+/* ---- 全部展开 / 全部折叠 ---- */
+function simFoldAll(open){
+  document.querySelectorAll(".sim-fold").forEach(b=>b.classList.toggle("open",!!open));
+  const keys={};
+  document.querySelectorAll("[data-fold]").forEach(h=>{keys[h.getAttribute("data-fold")]=1;});
+  Object.keys(keys).forEach(k=>{
+    const targetOpen=!!open;
+    document.querySelectorAll('[data-fold-item="'+k+'"]').forEach(x=>x.classList.toggle("fold-hide",!targetOpen));
+    const head=document.querySelector('[data-fold="'+k+'"]');
+    if(head)head.setAttribute("data-open",targetOpen?"1":"0");
+    const caret=document.querySelector('[data-caret="'+k+'"]');
+    if(caret)caret.style.transform=targetOpen?"rotate(90deg)":"";
+  });
+}
+/* ==================== 回测调参 → 实盘闭环（面板部分） ==================== */
+function buildSimTune(res){
+  const roles={};
+  res.forEach(r=>{
+    const cur=ROLE_PARAMS[r.role]||{sl:7,tp:8};
+    let sl=cur.sl,tp=cur.tp;
+    if(r.mdd>15)sl=Math.max(4,sl-2);        /* 回撤大 → 收紧止损 */
+    else if(r.mdd<7)sl=Math.min(12,sl+2);   /* 回撤小 → 放宽止损让利润跑 */
+    if(r.avg>=2)tp=Math.min(25,tp+2);       /* 盈亏比好 → 提高止盈 */
+    else if(r.avg<0.4)tp=Math.max(5,tp-2);  /* 单笔偏薄 → 降低止盈快落袋 */
+    let posCap = r.mdd>15?10 : r.mdd>10?15 : (r.winRate>=55?25:20);
+    let posFactor = Math.round(posCap/20*100)/100;
+    if(r.total<-8&&r.winRate<40)posFactor=Math.min(posFactor,0.5); /* 又亏又低胜率 → 半仓观察 */
+    const enabled=(SIM_TUNE&&SIM_TUNE.roles&&SIM_TUNE.roles[r.role])?SIM_TUNE.roles[r.role].enabled!==false:true;
+    roles[r.role]={sl,tp,posCap,posFactor,enabled,
+      total:+r.total.toFixed(2),winRate:+r.winRate.toFixed(1),mdd:+r.mdd.toFixed(1),avg:+r.avg.toFixed(2)};
+  });
+  return {ts:new Date().toISOString(),days:(res[0]&&res[0].cats.length)||0,roles};
+}
+function renderSimTune(res){
+  const box=document.getElementById("simTuneBox");
+  if(!box)return;
+  if(res)window._lastSimTune=buildSimTune(res);
+  const t=window._lastSimTune;
+  if(!t){box.innerHTML="";return;}
+  const applied=!!SIM_TUNE;
+  let h=`<h4>⚙️ 回测 → 实盘调参 ${applied?'<span class="sim-tune-on">已应用到实盘</span>':'<span style="font-size:10px;color:#8b949e;font-weight:400">（未应用 · 仅建议）</span>'}</h4>`;
+  h+=`<div style="font-size:11px;color:var(--text-faint);margin-bottom:6px">按本次回测的回撤/盈亏比/胜率自动换算：止损·止盈·单笔仓位上限。点「应用到实盘」后面板内实盘买卖立即按新参数执行；复制 JSON 放到仓库根目录 <b>bt_tune.json</b>，后台引擎下次运行同样生效。</div>`;
+  Object.keys(t.roles).forEach(r=>{
+    const v=t.roles[r],cur=ROLE_PARAMS[r]||{sl:7,tp:8};
+    const live=(SIM_TUNE&&SIM_TUNE.roles&&SIM_TUNE.roles[r])||null;
+    const slNow=live?live.sl:cur.sl,tpNow=live?live.tp:cur.tp;
+    const chg=(a,b)=>a===b?`<span class="sim-tune-kv">${b}</span>`:`<span class="sim-tune-old">${a}</span> → <span class="sim-tune-kv">${b}</span>`;
+    h+=`<div class="sim-tune-row">
+      <span class="sim-tune-role" style="color:${PLAYER_COLORS[r]}">${r} ${PLAYER_NAMES[r].split("-")[1]||""}</span>
+      <span>止损 ${chg(slNow,v.sl)}%</span><span>止盈 ${chg(tpNow,v.tp)}%</span>
+      <span>单笔≤<span class="sim-tune-kv">${v.posCap}</span>%</span>
+      <span style="color:var(--text-faint)">本次 ${v.total>=0?"+":""}${v.total}% · 胜率${v.winRate}% · 回撤${v.mdd}%</span>
+      <label style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+        <input type="checkbox" ${v.enabled?"checked":""} onchange="setRoleEnabled('${r}',this.checked)"> 开仓
+      </label>
+    </div>`;
+  });
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    <button class="gmk-btn" onclick="applySimTune()">✅ 应用到实盘</button>
+    <button class="gmk-btn" onclick="copyBtTune()">📋 复制 bt_tune.json</button>
+    <button class="gmk-btn" onclick="clearSimTune()">↩️ 恢复出厂参数</button>
+  </div>`;
+  h+=`<textarea id="btTuneJson" class="sim-tune-json" readonly>${escHtml(btTuneJson())}</textarea>`;
+  box.innerHTML=h;
+}
+function btTuneJson(){
+  const t=window._lastSimTune;
+  if(!t)return "";
+  const out={updated:t.ts,source:"index.html 回测调参（六角色历史模拟回测）",roles:{}};
+  Object.keys(t.roles).forEach(r=>{const v=t.roles[r];
+    out.roles[r]={sl:v.sl,tp:v.tp,pos_cap:v.posCap,enabled:!!v.enabled};});
+  return JSON.stringify(out,null,2);
+}
+/* 调参日志：面板日志区不可用时静默降级，绝不让"记日志"打断"应用调参" */
+function btLog(msg){try{if(typeof log==="function")log("info",msg);else console.log(msg);}catch(e){try{console.log(msg);}catch(_){}}}
+function applySimTune(){
+  const t=window._lastSimTune;
+  if(!t){alert("请先跑一次回测再应用调参");return;}
+  SIM_TUNE=JSON.parse(JSON.stringify(t));
+  Object.keys(SIM_TUNE.roles).forEach(r=>{
+    if(!ROLE_PARAMS[r])return;
+    ROLE_PARAMS[r].sl=SIM_TUNE.roles[r].sl;
+    ROLE_PARAMS[r].tp=SIM_TUNE.roles[r].tp;
+  });
+  try{localStorage.setItem(BT_TUNE_KEY,JSON.stringify(SIM_TUNE));}catch(e){}
+  renderSimTune(null);
+  btLog(`⚙️ 回测调参已应用到实盘：${Object.keys(SIM_TUNE.roles).map(r=>`${r} 止损${SIM_TUNE.roles[r].sl}%/止盈${SIM_TUNE.roles[r].tp}%`).join("、")}`);
+}
+function setRoleEnabled(role,on){
+  if(window._lastSimTune&&window._lastSimTune.roles[role])window._lastSimTune.roles[role].enabled=!!on;
+  if(SIM_TUNE&&SIM_TUNE.roles[role]){
+    SIM_TUNE.roles[role].enabled=!!on;
+    try{localStorage.setItem(BT_TUNE_KEY,JSON.stringify(SIM_TUNE));}catch(e){}
+    btLog(`【${role}】回测调参：${on?"恢复开仓":"暂停开仓"}`);
+  }
+}
+function copyBtTune(){
+  const txt=btTuneJson();
+  if(!txt){alert("请先跑一次回测");return;}
+  const ta=document.getElementById("btTuneJson");
+  if(ta){ta.removeAttribute("readonly");ta.select();try{document.execCommand("copy");}catch(e){}ta.setAttribute("readonly","readonly");}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).catch(()=>{});
+  btLog("已复制 bt_tune.json：粘贴到仓库根目录 bt_tune.json，后台引擎下次运行即生效");
+}
+function clearSimTune(){
+  Object.keys(ROLE_PARAMS).forEach(r=>{
+    if(ROLE_PARAMS_DEFAULT[r]){ROLE_PARAMS[r].sl=ROLE_PARAMS_DEFAULT[r].sl;ROLE_PARAMS[r].tp=ROLE_PARAMS_DEFAULT[r].tp;}
+  });
+  SIM_TUNE=null;window._lastSimTune=null;
+  try{localStorage.removeItem(BT_TUNE_KEY);}catch(e){}
+  const box=document.getElementById("simTuneBox");if(box)box.innerHTML="";
+  btLog("↩️ 已恢复出厂止损/止盈参数（回测调参清除）");
 }
 function genAdvice(res,have){
   const box=document.getElementById("simAdvice"),sorted=[...res].sort((a,b)=>b.total-a.total),best=sorted[0],worst=sorted[sorted.length-1];
@@ -8521,6 +8768,7 @@ function genAdvice(res,have){
   items.push(`🔁 下一次怎样才能做得更好：${bTune.length?bTune.join("；")+"。" : "保持本次最优参数（止损"+sl+"% / 止盈"+tp+"%）。"}建议：①以 ${best.role} 策略为主；②用上方「止损/止盈」框微调后重跑对比；③连续3次某角色垫底则实盘降级；点下方交易表任意行可查看每笔买卖与盈亏明细。`);
   const posLvl=best.mdd>15?"轻仓防御（单笔≤10%仓位）":best.mdd>10?"标准仓位（单笔≤15%）":best.winRate>=55?"标准偏进取（单笔≤25%）":"标准仓位（单笔≤20%）";
   items.push(`📊 仓位纪律（自优化）：${posLvl} · 大盘环境转弱自动降档、盘面复杂可空仓；每次回测后按最新胜率/回撤自动校准仓位档位。`);
+  items.push(`⚙️ 以上结论已量化成下方「回测 → 实盘调参」卡片（每角色止损/止盈/单笔仓位上限）：点「应用到实盘」后面板内实盘买卖立即按新参数执行；再点「复制 bt_tune.json」放进仓库根目录，后台定时引擎下次运行同样生效 —— 回测不是只看热闹，而是真的改写接下来的交易参数。`);
   box.innerHTML=`<h4>⚙️ 自主优化建议（基于本次回测真实结果）</h4>`+items.map(x=>`<div class="sim-advice-item">${x}</div>`).join("");
 }
 /* 点击个股收益标签：展示该角色在该股的K线+所有买卖点 */
@@ -8703,13 +8951,36 @@ function renderWx(){
   const today=wxIsTradeDay(now)?now:wxNextTradeDay(now);
   const prev=wxPrevTradeDay(today),next=wxNextTradeDay(today);
   const chip=s=>`<span class="wx-chip wx-${s}">${s}</span>`;
-  /* 大事提醒：未来15天高亮，今天及之后未发生高亮，已过置灰 */
+  /* 大事提醒：未来15天高亮，今天及之后未发生高亮，已过置灰；
+     重大事项（lv3）提前一天用「明日」标签 + 页面顶部横幅醒目提醒 */
   const evRows=FIN_EVENTS.map(e=>{
     const ed=new Date(e.d),diff=Math.round((ed-now)/86400000);
     const cls=diff<0?"wx-ev-past":(diff<=15?"wx-ev-hot":"");
-    const tag=diff<0?"已过":(diff===0?"今日":(diff<=3?"即将":(diff<=15?"临近":"")));
-    return `<div class="wx-ev ${cls}"><span class="wx-ev-date">${e.d.slice(5)}</span><b class="wx-ev-t">${e.t}</b><span class="wx-ev-v">${e.v}</span>${tag?`<span class="wx-ev-tag">${tag}</span>`:""}${e.lv===3?'<span class="wx-ev-tag lv3">重大</span>':(e.lv===2?'<span class="wx-ev-tag lv2">重要</span>':"")}</div>`;
+    const tag=diff<0?"已过":(diff===0?"今日":(diff===1?"明日":(diff<=3?"即将":(diff<=15?"临近":""))));
+    const urgent=(e.lv===3&&diff>=0&&diff<=1)?" wx-ev-hot":"";
+    return `<div class="wx-ev ${cls}${urgent}"><span class="wx-ev-date">${e.d.slice(5)}</span><b class="wx-ev-t">${e.t}</b><span class="wx-ev-v">${e.v}</span>${tag?`<span class="wx-ev-tag">${tag}</span>`:""}${e.lv===3?'<span class="wx-ev-tag lv3">重大</span>':(e.lv===2?'<span class="wx-ev-tag lv2">重要</span>':"")}</div>`;
   }).join("");
+  /* 重大事项提前一天横幅：明天的 lv3 事件最醒目，今日 lv3 次之 */
+  try{
+    const now0=new Date();now0.setHours(0,0,0,0);
+    const tomorrowM=[],todayM=[];
+    FIN_EVENTS.forEach(e=>{
+      if(e.lv!==3)return;
+      const ed=new Date(e.d+"T00:00:00");if(isNaN(ed))return;
+      const dd=Math.round((ed-now0)/86400000);
+      if(dd===1)tomorrowM.push(e);else if(dd===0)todayM.push(e);
+    });
+    let bannerText="";
+    if(tomorrowM.length)bannerText="⚠️ 明日重大事项："+tomorrowM.map(e=>e.t+"（"+e.v+"）").join("；");
+    if(todayM.length)bannerText+=(bannerText?"　|　":"")+"🔴 今日重大事项："+todayM.map(e=>e.t+"（"+e.v+"）").join("；");
+    const oldB=$("majorEventBanner");if(oldB)oldB.remove();
+    if(bannerText){
+      const b=document.createElement("div");b.id="majorEventBanner";
+      b.style.cssText="position:sticky;top:0;z-index:999;padding:10px 22px;background:linear-gradient(90deg,rgba(239,68,68,.16),rgba(239,68,68,.05));border-bottom:1px solid rgba(239,68,68,.35);color:#fca5a5;font-size:13px;font-weight:600;letter-spacing:.2px";
+      b.textContent=bannerText;
+      document.body.insertBefore(b,document.body.firstChild);
+    }
+  }catch(e){}
   body.innerHTML=
     `<div class="wx-line"><b>流月（${(now.getMonth()+1)}月）：</b>${chip(lm)}${WX_DESC[lm]} · 建议关注：<b>${wxBoard(WX_MAP[lm])}</b>　<b>干支校准：</b>已用专业历法库校准，与万年历一致</div>`+
     `<div class="wx-days">`+wxDayCard(prev,"上一交易日",false)+wxDayCard(today,"当日",true)+wxDayCard(next,"下一交易日",false)+`</div>`+

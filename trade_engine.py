@@ -41,6 +41,8 @@ WXPUSHER_TOPIC_ID  = os.environ.get("WXPUSHER_TOPIC_ID", "")
 
 # 自适应优化边界（小幅度，防止乱调）
 SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
+# 前端「回测 → 实盘调参」落盘文件（面板点「复制 bt_tune.json」→ 放到仓库根目录）
+BT_TUNE_FILE = "bt_tune.json"
 
 ROLES = {
     "D1": {"name": "破锋", "sl": 7, "tp": 12},
@@ -97,6 +99,39 @@ def load_data():
             ROLES[r]["sl"] = v.get("sl", ROLES[r]["sl"])
             ROLES[r]["tp"] = v.get("tp", ROLES[r]["tp"])
     return data
+
+def load_bt_tune():
+    """读取前端回测调参文件 bt_tune.json（面板「复制 bt_tune.json」→ 放到仓库根目录）。
+    这是"历史回测 → 实盘"的闭环通道：面板跑完六角色回测后，按回撤/盈亏比/胜率
+    自动换算出的止损、止盈、单笔仓位上限、角色开关，会在这里作用到真实交易。
+    文件不存在时静默跳过，行为与之前完全一致。"""
+    if not os.path.exists(BT_TUNE_FILE):
+        return []
+    try:
+        with open(BT_TUNE_FILE, "r", encoding="utf-8") as f:
+            t = json.load(f)
+    except Exception as e:
+        print(f"  ⚠️  {BT_TUNE_FILE} 解析失败，忽略：{e}")
+        return []
+    notes = []
+    for rid, v in (t.get("roles") or {}).items():
+        if rid not in ROLES or not isinstance(v, dict):
+            continue
+        role = ROLES[rid]
+        if isinstance(v.get("sl"), (int, float)):
+            role["sl"] = round(min(max(float(v["sl"]), SL_MIN), SL_MAX), 1)
+        if isinstance(v.get("tp"), (int, float)):
+            role["tp"] = round(min(max(float(v["tp"]), TP_MIN), TP_MAX), 1)
+        if isinstance(v.get("pos_cap"), (int, float)):
+            role["pos_cap"] = round(min(max(float(v["pos_cap"]), 5.0), 30.0), 1) / 100.0
+        if "enabled" in v:
+            role["enabled"] = bool(v["enabled"])
+        notes.append(f"{rid}{role['name']} 止损{role['sl']}% / 止盈{role['tp']}% / 单笔≤{int((role.get('pos_cap') or 0.2)*100)}%"
+                     + ("" if role.get("enabled", True) else "（暂停开仓）"))
+    if notes:
+        print("  ⚙️  回测调参已生效（bt_tune.json）：" + "；".join(notes))
+    return notes
+
 
 def save_data(data):
     data["last_update"] = cn_now().isoformat()
@@ -787,6 +822,36 @@ def send_daily_summary(data, market_trend):
                 content += f"- 📉 {role_id} 卖出 {t['name']} {t['qty']}股 @{t['price']:.2f} 盈亏{pnl:+.2f}\n"
     
     content += "\n## 明日计划\n\n"
+
+    # 【重大事项提前一天提醒】与前端 FIN_EVENTS 同源同步（index.html 财经大事日历）。
+    # 只列 lv>=2 的事件：明天(或下一交易日)的排最前，重大(lv3)加 ⚠️ 标注。
+    MAJOR_EVENTS = [
+        {"d": "2026-10-14", "t": "9月CPI/PPI", "v": "国家统计局发布（预计）", "lv": 2},
+        {"d": "2026-10-15", "t": "9月国民经济数据", "v": "工业/固投/社零（预计）", "lv": 2},
+        {"d": "2026-10-20", "t": "10月LPR报价", "v": "贷款市场报价利率", "lv": 2},
+        {"d": "2026-10-29", "t": "美联储FOMC决议", "v": "10/27-28会议 · 决议公布（北京时间02:00）", "lv": 3},
+        {"d": "2026-10-31", "t": "10月官方PMI", "v": "制造业/非制造业 9:30", "lv": 2},
+        {"d": "2026-11-04", "t": "美国非农就业", "v": "10月非农（北京时间21:30，预计）", "lv": 2},
+        {"d": "2026-11-10", "t": "10月CPI/PPI", "v": "国家统计局发布（预计）", "lv": 2},
+        {"d": "2026-11-15", "t": "10月国民经济数据", "v": "工业/固投/社零（预计）", "lv": 2},
+        {"d": "2026-11-20", "t": "11月LPR报价", "v": "贷款市场报价利率", "lv": 2},
+        {"d": "2026-11-27", "t": "1-10月工业企业利润", "v": "国家统计局 9:30", "lv": 1},
+        {"d": "2026-11-30", "t": "11月官方PMI", "v": "制造业/非制造业 9:30", "lv": 2},
+    ]
+    upcoming = [e for e in MAJOR_EVENTS if e["d"] > today]
+    upcoming.sort(key=lambda e: e["d"])
+    if upcoming:
+        content += "\n## 📅 未来重大事项（提前预警）\n\n"
+        for e in upcoming[:5]:
+            star = "⚠️ **重大**" if e.get("lv") == 3 else "重要" if e.get("lv") == 2 else "参考"
+            gap = ""
+            try:
+                dd = (datetime.strptime(e["d"], "%Y-%m-%d").date() - now.date()).days
+                gap = "（明天）" if dd == 1 else f"（{dd}天后）"
+            except Exception:
+                pass
+            content += f"- {star} {e['d'][5:]} {e['t']} · {e['v']}{gap}\n"
+
     if market_trend == "bear":
         content += "⚠️ 大盘空头趋势，明日建议降低仓位，谨慎操作\n"
     elif market_trend == "bull":
@@ -1058,8 +1123,17 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
     sells = [t for t in trades if t["type"] == "sell"]
     wins = [t for t in sells if t.get("profit", 0) > 0]
     win_rate = len(wins) / len(sells) if sells else 0.5
+    rid = player.get("id")
+    # 【回测调参】该角色在面板回测中被判定偏弱 → 暂停开仓
+    if rid in ROLES and ROLES[rid].get("enabled") is False:
+        print(f"  ⏸️  {rid} 回测调参已暂停开仓，跳过 {st['name']}")
+        return
     # 胜率>60%：仓位提升到25%；胜率<40%：仓位降低到15%；其他：20%
-    if win_rate > 0.6:
+    # 【回测调参】bt_tune.json 给出单笔仓位上限时优先使用（回测结论直接约束实盘仓位）
+    cap = ROLES.get(rid, {}).get("pos_cap")
+    if cap:
+        position_ratio = cap
+    elif win_rate > 0.6:
         position_ratio = 0.25
     elif win_rate < 0.4:
         position_ratio = 0.15
@@ -1134,6 +1208,7 @@ def main():
     print(f"{'='*50}")
     
     data = load_data()
+    bt_notes = load_bt_tune()   # 回测调参（bt_tune.json）优先于出厂值，adaptive_tune 再在其基础上微调
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
