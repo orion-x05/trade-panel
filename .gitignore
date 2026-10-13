@@ -8,3 +8,7 @@ tools/
 .ai-memory/
 OPTIMIZE_PLAN.md
 *.log
+# 验证脚手架与本地运行产物
+.verify/
+__pycache__/
+chat.json.tmp

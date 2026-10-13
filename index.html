@@ -9,8 +9,15 @@
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
 <script>window.APP_VERSION="20260910-r16";
 
+/* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
+   原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
+   纯属无效 token。加 15 秒 TTL：同一轮内数据一致（也更合理），跨轮自动刷新。 */
+let __ctxCache={t:0,s:""};
+const AGENT_CTX_TTL=15000;
 /* 把当前真实盘面（大盘环境 + 六角色持仓盈亏）拼成文本，喂给 AI，避免空话 */
 function buildAgentContext(){
+  const now=Date.now();
+  if(__ctxCache.s&&now-__ctxCache.t<AGENT_CTX_TTL)return __ctxCache.s;
   let s="";
   try{
     if(typeof simData!=="undefined"&&simData){
@@ -35,8 +42,12 @@ function buildAgentContext(){
       }
     }
   }catch(e){}
-  return s||"（暂无实时盘面数据）\n";
+  s=s||"（暂无实时盘面数据）\n";
+  __ctxCache={t:now,s:s};
+  return s;
 }
+/* 主动让盘面缓存失效（持仓/行情大幅变化后调用） */
+function invalidateAgentContext(){__ctxCache={t:0,s:""};}
 
 /* 聊天区：正在输入提示 */
 function showTyping(role){
@@ -1330,27 +1341,27 @@ function alertSellSignal(role, stockName, code, price, profit){
     <div class="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:16px">
       <button class="agent-card" onclick="privateChatAgent('D1')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">锋</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D1 破锋</span><br><span style="font-size:10px;color:var(--text-faint)">趋势突破</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D1 破锋</span><br><span style="font-size:10px;color:var(--text-faint)">趋势突破</span><br><span id="agentLive-D1" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D2')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#10b981;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">衡</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D2 衡</span><br><span style="font-size:10px;color:var(--text-faint)">多因子量化</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D2 衡</span><br><span style="font-size:10px;color:var(--text-faint)">多因子量化</span><br><span id="agentLive-D2" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D3')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">镜</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D3 镜</span><br><span style="font-size:10px;color:var(--text-faint)">多空辩论</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D3 镜</span><br><span style="font-size:10px;color:var(--text-faint)">多空辩论</span><br><span id="agentLive-D3" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D4')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">啸</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D4 啸</span><br><span style="font-size:10px;color:var(--text-faint)">量价共振</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D4 啸</span><br><span style="font-size:10px;color:var(--text-faint)">量价共振</span><br><span id="agentLive-D4" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D5')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#8b5cf6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">渊</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D5 渊</span><br><span style="font-size:10px;color:var(--text-faint)">回踩低吸</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D5 渊</span><br><span style="font-size:10px;color:var(--text-faint)">回踩低吸</span><br><span id="agentLive-D5" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D6')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#ec4899;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">焰</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D6 焰</span><br><span style="font-size:10px;color:var(--text-faint)">涨停敢死</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D6 焰</span><br><span style="font-size:10px;color:var(--text-faint)">涨停敢死</span><br><span id="agentLive-D6" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
     </div>
 
@@ -1475,8 +1486,20 @@ function alertSellSignal(role, stockName, code, price, profit){
       </div>
     </div>
 
+    <!-- 六 Agent 共识看板 -->
+    <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:16px;font-weight:700">六 Agent 共识看板</span>
+        <span style="font-size:12px;color:var(--text-faint)">多角色共同持有 = 强共识 · D2 的开仓依据</span>
+      </div>
+      <div id="agentConsensusBoard" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
     <!-- 六 Agent 群聊研讨 -->
-    <div style="font-size:16px;font-weight:700;margin-bottom:10px">六 Agent 群聊研讨</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:700">六 Agent 群聊研讨</div>
+      <div id="chatSyncBadge" style="font-size:11px;color:var(--text-faint)">📴 仅本地 · 设备1 · 上次同步 --:--:--</div>
+    </div>
     <div id="agentChatMessages" style="height:360px;overflow-y:auto;padding:12px;background:var(--bg-body);border-radius:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input id="agentChatInput" style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:14px" placeholder="输入观点或问题，回车发送" onkeydown="if(event.key==='Enter')sendAgentChat()">
@@ -2551,7 +2574,7 @@ function fetchRealQuotes(force){
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
           const industryName=arr[1]||code;
-          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:price,prevClose:prevClose,chg:0,ma5:price,ma20:price,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
+          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:price,prevClose:prevClose,chg:0,ma5:price,ma10:price,ma20:price,ma60:price,stop:price*0.93,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
@@ -2560,7 +2583,14 @@ function fetchRealQuotes(force){
         p.open=parseFloat(arr[5])||price;
         p.chg=chg;
         p.name = arr[1] || p.name; // 同步更新股票名称
-        p.ma5=price;p.ma20=price;
+        /* 均线/止损位统一由 enrichPoolFromKline 按真实日K计算后写入；
+           这里绝不能用盘中价覆盖，否则 ma5==ma20==price，
+           D1/D2/D4/D5 的均线多头、突破确认因子会全部恒假失效 */
+        if(p.ma5===undefined)p.ma5=price;
+        if(p.ma10===undefined)p.ma10=price;
+        if(p.ma20===undefined)p.ma20=price;
+        if(p.ma60===undefined)p.ma60=price;
+        if(p.stop===undefined)p.stop=price*0.93;
         p.volume = parseFloat(arr[6])||0; // 成交量（手）
         p.turnover = parseFloat(arr[38])||0; // 换手率（%）
         p.vol = parseFloat(arr[49])||1; // 量比（arr[49]是量比，不是arr[38]）
@@ -2598,6 +2628,8 @@ function fetchRealQuotes(force){
         }
       });
       if(okCount>0)quotesReady=true;
+      /* 真实日K增强：补齐均线/前20日高点/涨停信息，喂给六Agent打分（内部3分钟节流） */
+      try{enrichPoolFromKline();}catch(e){}
       /* 市场看板刷新 */
             if(typeof renderMarketView==='function')renderMarketView();
       if(typeof renderHold==='function')renderHold();
@@ -3328,9 +3360,11 @@ function searchAndAddStock(code){
       simData.pricePool[code] = {
         code:safeCode(code), name:sanitizeText(name), sector:'全市场', industry:sanitizeText(arr[2]||'—'),
         price, prevClose, open, dayHigh:high, dayLow:low,
-        chg, vol, ma5, ma10, ma20, ma60, rsi6, rps50, wx,
+        chg, vol, ma5, ma10, ma20, ma60, rsi6, rps50, wx, stop:price*0.93,
         isCustom:true // 标记是用户搜索添加的
       };
+      /* 搜到的股也拉真实日K，让六Agent因子可算 */
+      try{enrichPoolFromKline();}catch(e){}
       // 重新渲染研究面板
       if(typeof renderResearch === 'function') renderResearch();
       // 重新过滤
@@ -3511,7 +3545,7 @@ function groupChatDefenseFactor(){
 /* ==================== 全市场自动选股（东方财富 clist · JSONP） ==================== */
 const PICK_CFG={
   target:80,          /* 最终保留候选数 */
-  chgMin:0.5,chgMax:7,/* 涨幅区间：不追涨停、不抄下跌 */
+  chgMin:0.5,chgMax:9.5,/* 涨幅区间：不追已封板(≥9.8)、不抄下跌；放到9.5是为 D6焰 的"反包/强势涨停"分支留料 */
   lbMin:1.2,lbMax:5,  /* 量比 */
   turnMin:2,turnMax:15,/* 换手率 */
   amountMin:1.5e8,    /* 成交额≥1.5亿（元） */
@@ -3558,6 +3592,38 @@ function scorePick(it){
   if(amt>0)s+=Math.min(25,8+Math.log10(amt/1e8)*7);
   return s;
 }
+/* 第二桶：缩量回调股。主桶 lbMin=1.2 只收放量股，
+   导致 D5渊「缩量回踩低吸」在池子里永远 0 候选——这里补一批，让六类逻辑都有标的。 */
+const QUIET_CFG={target:15,chgMin:-3,chgMax:2,lbMax:1.0,turnMin:1,turnMax:8,amountMin:8e6,priceMin:2,floatMvMin:25e8,ampMax:10};
+function scoreQuietPick(it){
+  let s=0;
+  const lb=it.f10,turn=it.f8,chg=it.f3,amt=it.f6;
+  if(lb>0&&lb<=0.8)s+=30;else if(lb<=1)s+=20;        /* 越缩量越好（抛压衰竭） */
+  if(chg>=-1&&chg<=1.5)s+=25;else if(chg>=-3&&chg<=2)s+=15; /* 涨幅温和=在回调/整理 */
+  if(turn>=2&&turn<=6)s+=20;else if(turn>=1)s+=12;
+  if(amt>0)s+=Math.min(25,8+Math.log10(amt/1e6)*6);
+  return s;
+}
+/* 从全市场 map 里筛出缩量回调标的 */
+function pickQuietFromMap(map){
+  const c=QUIET_CFG,res=[];
+  map.forEach(it=>{
+    const name=String(it.f14||""),code=String(it.f12||"");
+    if(/ST|退|\*/.test(name))return;
+    if(code.startsWith("688"))return;
+    const price=it.f2,chg=it.f3,lb=it.f10,turn=it.f8,amt=it.f6,amp=it.f7,fmv=it.f21;
+    if(!(price>=c.priceMin))return;
+    if(!(chg>=c.chgMin&&chg<=c.chgMax))return;
+    if(!(lb<=c.lbMax))return;
+    if(!(turn>=c.turnMin&&turn<=c.turnMax))return;
+    if(!(amt>=c.amountMin))return;
+    if(amp>c.ampMax)return;
+    if(fmv&&fmv<c.floatMvMin)return;
+    res.push({it,score:scoreQuietPick(it)});
+  });
+  res.sort((a,b)=>b.score-a.score);
+  return res.slice(0,c.target);
+}
 /* 主流程：全市场拉取→筛选→评分→应用 */
 async function pickFromFullMarket(manual){
   const now=Date.now();
@@ -3588,11 +3654,22 @@ async function pickFromFullMarket(manual){
       passed.push({it,score:scorePick(it)});
     });
     passed.sort((a,b)=>b.score-a.score);
-    const top=passed.slice(0,c.target);
+    let top=passed.slice(0,c.target);
     if(top.length<10){setPickStatus(`达标仅${top.length}只，保留当前候选池`,"err");pickBusy=false;return;}
+    /* 合并第二桶：缩量回调股（D5渊 的回踩低吸专用），按代码去重 */
+    const quiet=pickQuietFromMap(map);
+    const seen=new Set(top.map(t=>String(t.it.f12)));
+    let quietAdded=0;
+    quiet.forEach(q=>{
+      const cd=String(q.it.f12);
+      if(seen.has(cd))return;
+      seen.add(cd);top.push(q);quietAdded++;
+    });
     applyPicks(top,holdCodes);
     lastPickTime=Date.now();
-    setPickStatus(`全市场扫描：${map.size}只 → 达标${passed.length} → 入选${top.length}只`,"ok");
+    /* 新候选池就位，立即补一轮真实日K（六Agent打分依赖） */
+    try{_enrichAt=0;enrichPoolFromKline();}catch(e){}
+    setPickStatus(`全市场扫描：${map.size}只 → 放量达标${passed.length} + 缩量回调${quietAdded} → 入选${top.length}只`,"ok");
     /* 先立即渲染一次让新股票显示，再拉技术行情更新 */
     try{renderPool();}catch(e){}
     try{render();}catch(e){}
@@ -3621,7 +3698,7 @@ function applyPicks(top,holdCodes){
       simData.pricePool[code]={code:safeCode(code),name:sanitizeText(it.f14),sector:sanitizeText(industry)||"待分类",industry:sanitizeText(industry||it.f14),wx:wx,
         price:it.f2,prevClose:it.f18||it.f2,open:it.f17||it.f2,dayHigh:it.f15||it.f2,dayLow:it.f16||it.f2,
         chg:it.f3,volume:it.f5||0,amount:(it.f6||0)/1e4/*元→万元*/,turnover:it.f8||0,vol:it.f10||1,
-        ma5:it.f2,ma20:it.f18||it.f2,rsi6:50,rps50:50,stop:it.f2*0.93};
+        ma5:it.f2,ma10:it.f2,ma20:it.f18||it.f2,ma60:it.f18||it.f2,rsi6:50,rps50:50,stop:it.f2*0.93};
     }else{
       const p=simData.pricePool[code];
       p.price=it.f2;p.chg=it.f3;p.name=sanitizeText(it.f14);p.vol=it.f10||p.vol;p.turnover=it.f8||p.turnover;
@@ -3685,6 +3762,66 @@ function washSectors(){
   return Object.keys(simData.sectors).filter(k=>{const s=simData.sectors[k];return s.flow<-0.15&&s.strength>0.35;});
 }
 
+/* ==================== 实时引擎：真实日K增强（六Agent因子的数据地基） ==================== */
+/* 实时池原来只有 EMA 近似均线 + 当日高低价，且 fetchRealQuotes 每 30 秒用盘中价覆盖 ma5/ma20，
+   导致六角色因子大面积恒真/恒假：
+     · ma5==ma20==price            → D1/D2/D4/D5 的均线多头因子恒假
+     · ma60 / stop 从未赋值        → trendUp、D4 突破确认恒假
+     · hi20 从未赋值              → D1「突破前20日高点」恒真（回退成 price）
+     · hasZt5 / ztLow 从未赋值     → D6「涨停回调洗盘」永不触发
+   这里用真实日K（txDay 自带 60 秒缓存）批量补齐，让 D1-D6 的打分真正可计算。 */
+const ENRICH_TTL=180000;  /* 单轮增强间隔 3 分钟 */
+const ENRICH_BATCH=6;     /* 小批并发，避免手机端并发受限导致整批失败 */
+let _enrichAt=0,_enrichBusy=false,_enrichAgain=false;
+function poolFullCode(code){return (String(code).startsWith("6")?"sh":"sz")+String(code);}
+async function enrichOneFromKline(code){
+  const st=simData.pricePool[code];
+  if(!st)return;
+  /* 取 70 天：够算 MA60（D1/D5 的 trendUp 前提），也多留 10 天缓冲 */
+  const ks=await txDay(poolFullCode(code),70);
+  if(!ks||ks.length<10)return;
+  const n=ks.length;
+  const highs=ks.map(k=>k.high),lows=ks.map(k=>k.low),closes=ks.map(k=>k.close);
+  /* 前20日高/低点：突破类因子的真实基准 */
+  st.hi20=Math.max.apply(null,highs.slice(-20));
+  st.lo20=Math.min.apply(null,lows.slice(-20));
+  st.high5=Math.max.apply(null,highs.slice(-5));
+  /* 近5日涨停日及其最低价（与回测引擎同口径：单日涨幅≥9.8%） */
+  let hasZt5=false,zl=Infinity;
+  for(let j=Math.max(1,n-5);j<n;j++){
+    const pc=closes[j-1];
+    if(pc>0&&(closes[j]-pc)/pc*100>=9.8){hasZt5=true;zl=Math.min(zl,lows[j]);}
+  }
+  st.hasZt5=hasZt5;
+  if(hasZt5)st.ztLow=zl;
+  /* 真实收盘价重算均线（≥20根才可靠），替代 EMA 漂移近似 */
+  if(n>=20){
+    const ma=a=>a.reduce((s,x)=>s+x,0)/a.length;
+    st.ma5=+ma(closes.slice(-5)).toFixed(2);
+    st.ma10=+ma(closes.slice(-10)).toFixed(2);
+    st.ma20=+ma(closes.slice(-20)).toFixed(2);
+    if(n>=60)st.ma60=+ma(closes.slice(-60)).toFixed(2);
+  }
+  /* 参考止损位 7%（与 D4 量价突破确认同口径） */
+  st.stop=+((st.price||closes[n-1])*0.93).toFixed(2);
+  st._klineAt=Date.now();
+}
+async function enrichPoolFromKline(){
+  if(_enrichBusy)return;
+  if(Date.now()-_enrichAt<ENRICH_TTL)return;
+  _enrichBusy=true;_enrichAt=Date.now();
+  try{
+    const codes=Object.keys(simData.pricePool||{}).filter(c=>{
+      const st=simData.pricePool[c];
+      return st&&(!st._klineAt||Date.now()-st._klineAt>ENRICH_TTL);
+    });
+    for(let i=0;i<codes.length;i+=ENRICH_BATCH){
+      await Promise.all(codes.slice(i,i+ENRICH_BATCH).map(c=>enrichOneFromKline(c).catch(()=>{})));
+    }
+  }catch(e){console.warn("日K增强失败：",e);}
+  finally{_enrichBusy=false;}
+}
+
 /* ==================== 大盘环境 / 资金流向（数据层） ==================== */
 let marketEnv={score:50,flow:"震荡",bias:"中性",shChg:0,note:"等待行情数据",riskOff:false};
 let marketEnvLogKey="";
@@ -3737,17 +3874,159 @@ function fundSignalRT(st,env){
   if(env&&env.flow==="净流入")return{score:1,tag:"大盘资金流入",desc:"板块资金净流入·护盘特征"};
   return{score:0,tag:"中性",desc:"资金信号中性"};
 }
-/* 量价共振-突破确认（D4 · 参考通达信规则）：MA20>MA60、突破前20日高点、量比1.2-3、RSI6 45-76、参考止损7% */
+/* 量价共振-突破确认（D4 · 参考通达信规则）：MA20>MA60、突破前20日高点、量比1.1-3、RSI6 45-76、参考止损7%之上 */
 function volumePriceBreakout(st){
   if(!(st.ma20>st.ma60))return false;                    /* MA20>MA60 趋势向上 */
   if(!(st.price>=st.ma20))return false;                  /* 站稳 MA20 */
-  if(!(st.price>=st.dayHigh*0.995))return false;         /* 突破/接近前20日高点 */
-  if(!(st.vol>=1.2&&st.vol<=3))return false;             /* 量比 1.2-3，无量/过量皆排除 */
+  /* 突破前20日高点：用真实 hi20（enrichPoolFromKline 写入），缺失则不做突破认定，
+     避免回退成当日价导致每只股票都"恒突破"。
+     容差 2%：与 D1 的"突破/贴近前高"口径一致，原 0.5% 过严，实测全池仅 0-1 只能过 */
+  if(!(st.hi20>0))return false;
+  if(!(st.price>=st.hi20*0.98))return false;             /* 突破/贴近前20日高点 */
+  if(!(st.vol>=1.1&&st.vol<=3))return false;             /* 量比 1.1-3，无量/过量皆排除 */
   if(!(st.rsi6>=45&&st.rsi6<=76))return false;           /* RSI6 45-76，避免过热与过弱 */
-  if(!(st.price>=st.stop))return false;                  /* 参考止损7% 之上 */
+  if(!(st.stop>0&&st.price>=st.stop))return false;       /* 参考止损7% 之上 */
   return true;
 }
 
+
+/* ==================== 六Agent策略核心：多因子打分 + 多Agent共识（v2） ==================== */
+/* 每个角色对单只股票打 0-100 分，分数越高越符合角色核心逻辑；
+   取代原来"按当日涨幅排序"的粗逻辑：选股从"涨得凶"变成"逻辑最顺" */
+const ROLE_SCORE_MIN={D1:70,D2:60,D3:60,D4:70,D5:70,D6:70}; /* 各角色开仓分数线 */
+let __rolePicks=null; /* 每轮 tick 各角色候选快照：D2共识打分 + 共识看板共用 */
+
+/* 各角色核心逻辑打分 → {score, why[]} */
+function roleSignalScore(p,st){
+  if(!st)return{score:0,why:[]};
+  const price=st.price||0;
+  const ma5=st.ma5||0,ma10=st.ma10||0,ma20=st.ma20||0,ma60=st.ma60||0;
+  const vol=st.vol||1,chg=st.chg||0,rsi=st.rsi6||50,rps=st.rps50||50;
+  const hi20=st.hi20||0;   /* 前20日最高价（真实日K写入）；缺失则不认定突破，避免恒真 */
+  const why=[];
+  const trendUp=ma20>0&&ma60>0&&ma20>ma60;   /* 中期趋势向上（MA20>MA60 代理） */
+  const maAlign=ma5>0&&ma5>ma20;             /* 短期均线多头 */
+  let score=0;
+  switch(p.id){
+    case"D1":{
+      /* 趋势突破：大结构 + 放量突破前高 + 贴线不追高（补上原来缺失的突破确认） */
+      if(trendUp){score+=25;why.push("MA20>MA60趋势向上");}
+      if(maAlign){score+=10;why.push("MA5>MA20");}
+      if(price>=ma20&&(price-ma20)/ma20<=0.03){score+=15;why.push("站稳MA20不追高");}
+      if(hi20>0&&price>=hi20*0.97){score+=20;why.push("突破/贴近前20日高点");}
+      if(vol>=1.2&&vol<=3){score+=20;why.push("放量确认·量比"+vol.toFixed(1));}
+      if(rsi>=50&&rsi<=75){score+=5;}
+      if(rps>=50){score+=5;}
+      break;
+    }
+    case"D2":{
+      /* 多因子共识：七因子满足数（≥4条才考虑）+ 其他Agent共识加成 */
+      let n=0;
+      if(vol>=0.8&&vol<=2.5){n++;why.push("量能适中");}
+      if(rsi>=45&&rsi<=70){n++;why.push("RSI健康");}
+      if(ma5>ma10&&ma10>ma20){n++;why.push("均线多头");}
+      if(trendUp){n++;why.push("MA20向上");}
+      if(chg>=0.5&&chg<=5){n++;why.push("涨幅适中");}
+      if(rps>=50){n++;why.push("相对强势");}
+      if(price>ma5){n++;why.push("收在MA5上方");}
+      score=n>=4?55+(n-4)*8:n*10;
+      /* 多Agent共识：除自己外 ≥3 个角色本轮也选了指 → 共识加成 */
+      const cons=agentConsensusCount(st.code,p.id);
+      if(cons>=3){score+=30;why.push("多Agent共识"+cons+"/5");}
+      else if(cons>=2){score+=10;why.push("部分共识"+cons+"/5");}
+      break;
+    }
+    case"D3":{
+      /* 多空辩论：逐条计票，多方须≥空方+2；大资金流出一票否决；追高不辩 */
+      let bull=0,bear=0;
+      if(ma5>ma20)bull++;else bear++;
+      if(price>ma20)bull++;else bear++;
+      if(chg>0)bull++;else bear++;
+      if(vol>=1)bull++;else bear++;
+      if(rsi>=50&&rsi<=65)bull++;else bear++;
+      const fs=fundSignalRT(st,marketEnv);
+      if(fs.score>=1){bull++;why.push("大资金"+fs.tag);}
+      else if(fs.score<=-1){bear++;why.push("大资金"+fs.tag);}
+      if(fs.score<=-1)return{score:0,why:["大资金流出·一票否决"]};
+      if(chg>4||vol>2)return{score:0,why:["追高不辩·等回调"]};
+      const margin=bull-bear;
+      if(margin<2)return{score:0,why:["多空"+bull+":"+bear+"·多方未占优"]};
+      score=Math.round(margin/6*80)+10;
+      why.push("多空"+bull+"比"+bear);
+      if(rps>=50)score+=10;
+      break;
+    }
+    case"D4":{
+      /* 量价共振：先过突破确认门槛（MA20>MA60+前高+量比1.2-3+RSI45-76），再按质量加分 */
+      if(!volumePriceBreakout(st))return{score:0,why:[]};
+      score=70;why.push("量价共振突破确认");
+      if(price>=hi20*0.995){score+=10;why.push("触前20日高点");}
+      if(vol>=1.5&&vol<=2.5){score+=10;why.push("量比健康");}
+      if(rsi>=45&&rsi<=70){score+=5;}
+      if(rps>=50){score+=5;}
+      break;
+    }
+    case"D5":{
+      /* 回踩低吸：趋势向上为前提 + 缩量回踩MA20/MA10企稳 + 收阳。
+         容差按实测放宽：回踩带 ±3%（原2%）、MA10 ±2%（原1.5%）、缩量判据 <1.0（原0.9）——
+         选股池已补"缩量回调桶"，但盘中量比常在 0.9-1.0 徘徊，原阈值会把正常整理全部误杀 */
+      if(!trendUp)return{score:0,why:["MA20未在MA60上方·不接下跌反弹"]};
+      score=20;why.push("MA20>MA60趋势向上");
+      if(maAlign)score+=5;
+      if(price>ma20&&Math.abs(price-ma20)/ma20<0.03){score+=25;why.push("回踩MA20");}
+      else if(ma10>0&&price>ma10&&Math.abs(price-ma10)/ma10<0.02){score+=20;why.push("回踩MA10企稳");}
+      else return{score:0,why:["未回踩到支撑位"]};
+      if(vol<1.0){score+=20;why.push("缩量·量比"+vol.toFixed(1));}
+      if(chg>-1&&chg<2)score+=10;
+      if(rps>=50)score+=5;
+      break;
+    }
+    case"D6":{
+      /* 涨停敢死队：妖股反包/强势涨停 或 涨停回调洗盘 + 板块热度 */
+      if(chg>=9.5&&vol>=1){
+        score=85;why.push("反包/强势涨停");
+        if(rps>=50)score+=5;
+        break;
+      }
+      if(st.hasZt5&&price>(st.ztLow||0)&&vol<1&&chg<5){
+        const nearLow=(price-st.ztLow)/st.ztLow*100;
+        const hh=Math.max(st.high5||price,price);
+        const pb=hh>0?(hh-price)/hh*100:0;
+        if(nearLow>8)return{score:0,why:["离涨停低点太远"]};
+        if(pb<5||pb>25)return{score:0,why:["回调幅度不合"]};
+        if(!maAlign)return{score:0,why:["无趋势承接"]};
+        score=75;why.push("涨停回调洗盘");
+        if(rsi>=40&&rsi<=65)score+=5;
+        const hot=sectorHeatRank(st.sector);
+        if(hot<=2){score+=10;why.push("板块热度前"+(hot+1));}
+        break;
+      }
+      return{score:0,why:[]};
+    }
+  }
+  return{score,why};
+}
+/* 多Agent共识：除自己外，有多少个角色本轮也把这只票选进了候选 */
+function agentConsensusCount(code,exceptId){
+  if(!__rolePicks)return 0;
+  let n=0;
+  for(const rid in __rolePicks){
+    if(rid===exceptId)continue;
+    if(__rolePicks[rid].some(s=>s.code===code))n++;
+  }
+  return n;
+}
+/* 板块热度排名（0=最热）：按板块强度 + 资金流向综合排序 */
+function sectorHeatRank(sector){
+  if(!simData||!simData.sectors||!sector)return 99;
+  const keys=Object.keys(simData.sectors);
+  keys.sort((a,b)=>{
+    const sa=simData.sectors[a]||{},sb=simData.sectors[b]||{};
+    return ((sb.strength||0)+(sb.flow||0)/1e8)-((sa.strength||0)+(sa.flow||0)/1e8);
+  });
+  const i=keys.indexOf(sector);
+  return i<0?99:i;
+}
 
 /* ==================== 策略选股（数据层） ==================== */
 const BUY_REASONS={
@@ -3775,46 +4054,22 @@ const ROLE_PARAMS={
   D5:{sl:7,tp:12,note:"趋势回踩·离支撑近·跌破即失效"},
   D6:{sl:10,tp:20,note:"涨停回调·强势股弹性大·涨停低点硬止损"}
 };
+/* 选股候选：只做"廉价粗筛"——板块权限 + 数据完整性 + 剔除涨跌停/ST。
+   角色核心逻辑一律交给 roleSignalScore + ROLE_SCORE_MIN 判定。
+   原来每个角色在这里各挂一套硬过滤，和打分层逻辑重复且更严
+   （例如 D2 要求 7 因子全中，打分层只要 ≥4；D5 额外要求 ma5>ma20 而打分层没有），
+   候选在打分前就被吃光 → D2/D4/D5/D6 长期 0 候选，命中率极低。 */
 function pickTargets(p){
   const pool=simData.pricePool;
-  /* 选股候选先剔除账户未开通板块的标的（创业板/科创板/北交所），
-     避免无权限标的进入候选池反复触发拦截告警 */
   const vals=Object.entries(pool)
+    /* 账户未开通板块（创业板/科创板/北交所）不进候选，避免反复触发拦截告警 */
     .filter(([c])=>BOARD_ENABLED[getBoard(c)]!==false)
-    .map(([,s])=>s);
-  let res=[];
-  switch(p.id){
-    case"D1":res=vals.filter(s=>(s.rps50||50)>=50&&s.ma5&&s.ma5>s.ma20&&s.price>s.ma20&&s.price<=s.ma20*1.03);break;
-    case"D2":res=vals.filter(s=>s.vol>=0.8&&s.vol<=1.6&&s.ma5&&s.ma5>s.ma20&&s.chg>0&&s.rsi6>=45&&s.rsi6<=70&&(s.rps50||50)>=50);break; /* 多因子共识+RSI45-70+相对强势 */
-    case"D3":res=vals.filter(s=>{let b=0;if(s.ma5&&s.ma5>s.ma20)b++;if(s.price>s.ma20)b++;if(s.chg>0)b++;if(s.vol>=1)b++;
-      /* 不追高：当日涨幅>5%或量比>2.5，等回调不追 */
-      if(s.chg>5||s.vol>2.5)return false;
-      /* 接近20日高点+放量大涨不追 */
-      if(s.hi20&&s.price>=s.hi20*0.97&&(s.chg>3||s.vol>2))return false;
-      return (s.rps50||50)>=50&&b>=2&&s.ma5&&s.ma5>s.ma20&&s.price>s.ma20;});break; /* 多空偏多+相对强势+不追高 */
-    case"D4":res=vals.filter(volumePriceBreakout);break; /* 量价共振-突破确认（图片规则） */
-    case"D5":res=vals.filter(s=>(s.rps50||50)>=50&&s.ma5&&s.ma5>s.ma20&&s.ma20&&s.ma60&&s.ma20>s.ma60&&s.price>s.ma20&&(s.price-s.ma20)/s.ma20<0.02&&s.vol<0.9);break; /* 缩量回踩+MA20>MA60+相对强势 */
-    case"D6":{
-      const wash=washSectors();
-      const order=wash.length?wash:Object.keys(simData.sectors).sort((a,b)=>simData.sectors[b].strength-simData.sectors[a].strength).slice(0,2);
-      order.forEach(k=>vals.filter(s=>s.sector===k).forEach(s=>{
-        /* 妖股通行证·反包/强势涨停：今日涨幅≥9.5%且放量 → 极强势（参考实战） */
-        if((s.chg||0)>=9.5&&s.vol>=1)res.push(s);
-        /* 涨停回调：当天非涨停，缩量，收盘价低于近5日高点，距涨停低点≤8%，从高点回调≥5% */
-        else if(s.hasZt5&&s.price>s.ztLow&&s.vol<1&&(s.chg||0)<5){
-          const nearLow=(s.price-s.ztLow)/s.ztLow*100;
-          if(nearLow>8)return; /* 离低点太远不是真正回踩 */
-          const hh=Math.max(s.high5||s.price,s.price);
-          if(s.price>=hh)return; /* 收盘价不低于近5日高点，不是回调 */
-          const pb=hh>0?(hh-s.price)/hh*100:0;
-          if(pb>=5&&pb<=25)res.push(s);
-        }
-      }));
-      break;
-    }
-  }
-  /* 没有符合策略条件的标的就返回空 → 角色空仓等待，不硬买（去掉了原来的"全池兜底"） */
-  return res;
+    .map(([,s])=>s)
+    /* 数据完整性：没有真实日K增强过的股票不参与（ma20/ma60 缺失时因子全是假的） */
+    .filter(s=>s&&s.price>0&&s.ma20>0&&s.ma60>0&&s.hi20>0)
+    /* 剔除 ST 与当日涨跌停（T+1 无法成交 / 风险极高） */
+    .filter(s=>String(s.name||"").indexOf("ST")<0&&Math.abs(s.chg||0)<9.8);
+  return vals;
 }
 
 /* ==================== 买卖（数据层） ==================== */
@@ -3834,9 +4089,12 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const defFactor=groupChatDefenseFactor();
   if(defFactor<1.0){ratio=ratio*defFactor;log("info",`【${p.id}】群聊防守：偏空，仓位${Math.round(defFactor*100)}%`);}
   ratio=ratio||1;
-  /* 计算具体买入原因：D3生成多空辩论详情，其他角色用预设原因 */
+  /* 计算具体买入原因：D3生成多空辩论详情，其他角色用预设原因+v2打分明细 */
   const st=simData.pricePool[target.code];
   let buyReason=BUY_REASONS[p.id];
+  if(target.__sc&&target.__sc.why&&target.__sc.why.length){
+    buyReason+="｜评分"+target.__sc.score+"："+target.__sc.why.join("、");
+  }
   if(p.id==="D3"&&st){
     const bulls=[],bears=[];
     if(st.ma5&&st.ma5>st.ma20)bulls.push("MA5>MA20短期趋势向上");else bears.push("MA5≤MA20短期趋势未确认");
@@ -3864,6 +4122,15 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   if(!exist&&p.holdings.length>=MAX_POS){
     log("warn",`【${p.id}】跳过买入：持仓已达${MAX_POS}只上限，不新开仓`);
     return false;
+  }
+  /* ②c 同行业集中度：不再硬性限制同行业持仓数量（用户要求放开），
+     仅保留轻量提示——同一行业超过 3 只时记一条日志，不拦截买入。
+     角色间防重复由上面的 MAX_OVERLAP（同一只股票最多 2 个角色持有）负责。 */
+  if(!exist&&target.industry){
+    const sameInd=p.holdings.filter(h=>h.industry===target.industry).length;
+    if(sameInd>=3){
+      log("info",`【${p.id}】${escHtml(target.industry)}板块已持${sameInd}只，注意行业集中度`);
+    }
   }
   /* ②a D3大资金否决：大资金流出时即使技术面满足也不逆势建仓（加仓不受限） */
   if(p.id==="D3"&&!exist&&st){
@@ -4043,8 +4310,27 @@ function tick(){
     log("warn",`【大盘风险规避】上证${env.shChg>=0?"+":""}${env.shChg}% · 环境${env.bias}(${env.score}) · 资金${env.flow} → 盘面复杂/大盘极弱，今日空仓等待，不新开仓`);
   }
   if(trading&&!env.riskOff){
+    /* 第一遍：各角色按自身逻辑打分并过分数线，得到本轮真实候选快照。
+       共识看板与 D2 的多Agent共识都以这份"过线名单"为准——
+       若用粗筛名单算共识，六角色候选都等于全池，共识计数会恒为 5/5 而失去意义。 */
+    __rolePicks={};
     simData.players.forEach(p=>{
-      const rawTargets=pickTargets(p).sort((a,b)=>(b.chg||0)-(a.chg||0));
+      __rolePicks[p.id]=pickTargets(p)
+        .map(s=>{const c=Object.assign({},s);c.__sc=roleSignalScore(p,s);return c;})
+        .filter(s=>s.__sc.score>=ROLE_SCORE_MIN[p.id])
+        .sort((a,b)=>b.__sc.score-a.__sc.score);
+    });
+    /* 第二遍：D2 基于第一遍快照计算多Agent共识后重新打分（共识加成可把标的顶过分数线） */
+    simData.players.forEach(p=>{
+      if(p.id!=="D2")return;
+      __rolePicks.D2=pickTargets(p)
+        .map(s=>{const c=Object.assign({},s);c.__sc=roleSignalScore(p,s);return c;})
+        .filter(s=>s.__sc.score>=ROLE_SCORE_MIN[p.id])
+        .sort((a,b)=>b.__sc.score-a.__sc.score);
+    });
+    simData.players.forEach(p=>{
+      /* v2：候选已按角色核心逻辑打分排序（取代按当日涨幅排序） */
+      const rawTargets=__rolePicks[p.id];
       /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买 */
       const t=rawTargets.find(s=>{
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
@@ -5496,6 +5782,52 @@ function renderSkills(){
     </div>`).join("");
 }
 
+/* ==================== 六Agent卡片实时状态 + 共识看板（界面层） ==================== */
+let __lastAgentUiTs=0;
+function renderAgentUI(){
+  const now=Date.now();
+  if(now-__lastAgentUiTs<5000)return; /* 5秒节流，避免每 tick 重绘 */
+  __lastAgentUiTs=now;
+  try{renderAgentCards();}catch(e){}
+  try{renderConsensusBoard();}catch(e){}
+}
+/* 六张 Agent 卡片：实时收益率 + 持仓数 */
+function renderAgentCards(){
+  if(!simData||!simData.players)return;
+  simData.players.forEach(p=>{
+    const el=document.getElementById("agentLive-"+p.id);
+    if(!el)return;
+    const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
+    const color=ret>=0?"var(--up)":"var(--down)";
+    const state=p.holdings.length?("持仓"+p.holdings.length+"只"):"空仓等待";
+    el.innerHTML='<b style="color:'+color+'">'+(ret>=0?"+":"")+ret.toFixed(1)+'%</b> · '+state;
+  });
+}
+/* 共识看板：被多个角色共同持有的股票，≥3 角色高亮为强共识 */
+function renderConsensusBoard(){
+  const box=document.getElementById("agentConsensusBoard");
+  if(!box||!simData)return;
+  const map={};
+  simData.players.forEach(p=>(p.holdings||[]).forEach(h=>{
+    if(!map[h.code])map[h.code]={code:h.code,name:h.name,roles:[]};
+    if(map[h.code].roles.indexOf(p.id)<0)map[h.code].roles.push(p.id);
+  }));
+  const rows=Object.keys(map).map(k=>map[k]).sort((a,b)=>b.roles.length-a.roles.length);
+  if(!rows.length){
+    box.innerHTML='<div style="font-size:12px;color:var(--text-faint);padding:6px 0">当前六角色均空仓等待 · 出现持仓后这里会实时显示共识度</div>';
+    return;
+  }
+  box.innerHTML=rows.map(r=>{
+    const hot=r.roles.length>=3;
+    const dots=r.roles.map(id=>'<span title="'+id+'" style="width:20px;height:20px;border-radius:50%;background:'+(AGENT_PERSONAS[id]?AGENT_PERSONAS[id].color:"#666")+';color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700">'+id+'</span>').join("");
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:'+(hot?"rgba(16,185,129,.10)":"rgba(255,255,255,.03)")+';border:1px solid '+(hot?"rgba(16,185,129,.35)":"var(--border-soft)")+'">'+
+      '<span style="font-size:13px;color:var(--text);font-weight:600">'+escHtml(r.name)+'</span>'+
+      '<span style="font-size:11px;color:var(--text-faint)">'+r.code+'</span>'+
+      '<span style="margin-left:auto;display:flex;gap:4px">'+dots+'</span>'+
+      '<span style="font-size:11px;color:'+(hot?"#10b981":"var(--text-dim)")+'">'+r.roles.length+'/6 共识</span>'+
+    '</div>';
+  }).join("");
+}
 function render(){
   try{renderSkills();}catch(e){}
   try{renderStats();}catch(e){console.error('renderStats error',e);}
@@ -5510,6 +5842,7 @@ function render(){
   try{if(typeof renderMarketView==='function')renderMarketView();}catch(e){}
   try{fillSimSel();}catch(e){console.error('fillSimSel error',e);}
   try{if(typeof filterResearchTable === 'function') filterResearchTable();}catch(e){}
+  try{renderAgentUI();}catch(e){}
 }
 
 /* ==================== 弹窗（界面层） ==================== */
@@ -6511,6 +6844,9 @@ window.addEventListener("DOMContentLoaded",()=>{
   setTimeout(syncFromServer,1000);
   /* 每隔30秒自动检查一次后台交易引擎更新 */
   setInterval(syncFromServer,30000);
+  /* 群聊多端同步：与持仓同步同周期（读取 ./chat.json，合并后重渲染） */
+  setTimeout(function(){pullChatSync();renderChatSyncBadge();},2500);
+  setInterval(function(){pullChatSync();renderChatSyncBadge();},30000);
   
   /* URL参数触发彻底重置：访问 ?reset=1 自动清空所有持仓和交易数据，重新开始 */
   if(new URLSearchParams(window.location.search).get("reset")==="1"){
@@ -10501,6 +10837,106 @@ function getDeepSeekKey(){
   return key;
 }
 
+/* ==================== 六Agent AI 调用层（v2：统一封装+重试+用量统计） ==================== */
+const AGENT_USAGE_KEY="agentChatUsage";
+/* 记录每次调用的 token 用量（本地统计，掌握 API 成本） */
+function trackAgentUsage(usage){
+  try{
+    const u=JSON.parse(localStorage.getItem(AGENT_USAGE_KEY)||'{"calls":0,"promptTokens":0,"completionTokens":0,"days":{}}');
+    const pt=(usage&&usage.prompt_tokens)||0,ct=(usage&&usage.completion_tokens)||0;
+    u.calls++;u.promptTokens+=pt;u.completionTokens+=ct;
+    const d=new Date().toISOString().slice(0,10);
+    u.days[d]=u.days[d]||{calls:0,promptTokens:0,completionTokens:0};
+    u.days[d].calls++;u.days[d].promptTokens+=pt;u.days[d].completionTokens+=ct;
+    localStorage.setItem(AGENT_USAGE_KEY,JSON.stringify(u));
+  }catch(e){}
+}
+/* 统一 DeepSeek 调用：自动重试 + 45秒超时 + 用量统计 */
+async function callAgentAPI(messages,maxTokens,retry){
+  const apiKey=getDeepSeekKey();
+  if(!apiKey)throw new Error("未配置DeepSeek API密钥，请先到设置页填写");
+  const maxTry=(retry==null?1:retry)+1;
+  let lastErr=null;
+  for(let attempt=0;attempt<maxTry;attempt++){
+    try{
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),45000);
+      const r=await fetch("https://api.deepseek.com/chat/completions",{
+        method:"POST",
+        signal:ctrl.signal,
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
+        body:JSON.stringify({model:"deepseek-chat",messages:messages,max_tokens:maxTokens||300,temperature:0.8})
+      });
+      clearTimeout(timer);
+      if(!r.ok)throw new Error("HTTP "+r.status+(r.status===401?"（密钥无效）":r.status===402?"（余额不足）":""));
+      const j=await r.json();
+      const c=j.choices&&j.choices[0];
+      if(!c||!c.message||!c.message.content)throw new Error("API返回为空");
+      trackAgentUsage(j.usage);
+      return c.message.content.trim();
+    }catch(e){
+      lastErr=e;
+      if(attempt<maxTry-1)await new Promise(res=>setTimeout(res,900*(attempt+1)));
+    }
+  }
+  throw lastErr;
+}
+/* 生成角色 system prompt：人设骨架 + 决策框架 + 输出格式 + 实时盘面 */
+function agentSystemPrompt(p,opts){
+  opts=opts||{};
+  let s="你是「"+p.name+"」，"+p.title+"，A股交易员，六Agent投资群成员之一。\n"+
+    "【性格】"+p.trait+"\n"+
+    "【口头禅】"+p.slang+"\n"+
+    "【风险偏好】"+p.risk+"\n"+
+    "【决策框架】"+p.framework+"\n"+
+    "【你主要看什么】"+p.focus+"\n"+
+    "【你的盲区】"+p.blind+"\n"+
+    "【说话风格】"+p.tone+"\n"+
+    "【输出要求】"+p.output+"\n";
+  if(opts.vs!==false)s+="【你和同伴的差异】"+p.vs+"\n";
+  if(opts.market!==false)s+="\n【当前真实盘面数据】\n"+buildAgentContext();
+  s+="\n纪律：不要说自己是AI或语言模型；用第一人称口语化中文；涉及股票带名称和6位代码；观点必须结合盘面数据，不许空谈。";
+  return s;
+}
+/* 群聊最近 N 条历史（让 Agent 们互相回应，而不是各说各话） */
+function recentGroupChat(n){
+  try{
+    const hist=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]").slice(-(n||8));
+    const nameMap={D1:"D1破锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",user:"用户",system:"系统",consensus:"主持人"};
+    return hist.map(m=>(nameMap[m.role]||m.role)+"："+String(m.text||"").substring(0,120)).join("\n");
+  }catch(e){return "";}
+}
+/* 用户输入清洗：限长 + 压缩空行，降低 prompt 注入风险 */
+function sanitizeUserText(t,maxLen){
+  return String(t||"").trim().slice(0,maxLen||500).replace(/\n{3,}/g,"\n\n");
+}
+/* 回答复用缓存：同一个问题 + 同一份盘面快照 → 直接返回上次的回答，不重复计费。
+   键里带入盘面指纹，行情一变缓存自然失效；TTL 10 分钟，最多存 60 条。 */
+const AGENT_REPLY_CACHE_KEY="agentReplyCache";
+function ctxFingerprint(){
+  const s=buildAgentContext();
+  let h=0;
+  for(let i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}
+  return String(h);
+}
+function replyCacheGet(key){
+  try{
+    const c=JSON.parse(localStorage.getItem(AGENT_REPLY_CACHE_KEY)||"{}");
+    const hit=c[key];
+    if(hit&&Date.now()-hit.t<600000)return hit.text;
+  }catch(e){}
+  return null;
+}
+function replyCacheSet(key,text){
+  try{
+    const c=JSON.parse(localStorage.getItem(AGENT_REPLY_CACHE_KEY)||"{}");
+    c[key]={t:Date.now(),text:text};
+    const ks=Object.keys(c);
+    if(ks.length>60)ks.slice(0,ks.length-60).forEach(k=>delete c[k]);
+    localStorage.setItem(AGENT_REPLY_CACHE_KEY,JSON.stringify(c));
+  }catch(e){}
+}
+
 /* ==================== 六Agent群聊 ==================== */
 const AGENT_CHAT_KEY="agentChatHistory";
 
@@ -10513,43 +10949,63 @@ function quickSearchStock2(){
 }
 
 /* 私聊单个Agent - 弹窗聊天 */
+/* 六Agent人设 v2：新增 framework(决策框架)/output(输出格式)/vs(与其他角色的差异化)，
+   群聊与私聊的 system prompt 均以此为骨架，保证"说的"和"做的"一致 */
 const AGENT_PERSONAS={
   D1:{name:"破锋",title:"趋势突破猎手",color:"#ef4444",style:"激进，抓主升浪，擅长突破信号与动量追踪",
     trait:"激进果断，只做确认过的主升结构，最烦拖泥带水，看准就上",
     slang:"结构一到，我就上。",risk:"高",
     focus:"MA20>MA60 多头排列、突破前20日高点、结构不破就拿着",
     blind:"震荡市假突破多，容易被反复止损打脸",
-    tone:"短句、果断、爱下结论，常用'干''破位''主升'"},
+    tone:"短句、果断、爱下结论，常用'干''破位''主升'",
+    framework:"①看大结构：MA20向上且股价在MA60上方，下跌趋势的反弹一律不碰；②等突破：放量（量比1.2-3）突破或贴近前20日高点才动手，无量假突破不追；③买入后以结构低点/3倍ATR止损，让利润奔跑；④结构破坏（跌破MA20且均线走弱）立刻离场，不扛",
+    output:"2-4句口语化短句，必须包含：明确观点+一句盘面依据+具体动作（买/等/减/卖+仓位）",
+    vs:"你比D5激进（D5等回调低吸，你等放量突破）；你比D6重结构（D6博涨停情绪，你博趋势延续）"},
   D2:{name:"衡",title:"多因子量化",color:"#10b981",style:"保守稳健，多因子打分，注重数据交叉验证",
     trait:"保守严谨，讲概率和数据，不信感觉，要多个因子一起共振才肯动手",
     slang:"没到阈值，我不动。",risk:"低",
-    focus:"技术面/基本面/资金面/风控 四票多数一致",
+    focus:"技术面/基本面/资金面/风控 四票多数一致；并汇总其他五个Agent的信号取共识",
     blind:"单边急拉时难以快速达成共识，容易踏空",
-    tone:"爱列数据、讲胜率和回撤，语气克制"},
+    tone:"爱列数据、讲胜率和回撤，语气克制",
+    framework:"①七因子打分：量能适中/RSI45-70/均线多头/MA20向上/涨幅0.5%-5%/相对强势/收盘在MA5上方，满足≥4条才考虑；②共识校验：把D1/D3/D4/D5/D6的候选摆一起，≥3个角色指向同一只票才加仓级置信；③分歧时空仓观望，宁可错过不做错",
+    output:"2-4句，先给结论（买/观望），再列2-3个数据依据，最后一句风险提示",
+    vs:"你是六人里的'共识汇总器'：别人凭单维度信号下单，你要多因子+多Agent双重确认，所以最稳也最容易踏空"},
   D3:{name:"镜",title:"多空辩论者",color:"#f59e0b",style:"爱唱反调，专挑风险与逻辑漏洞，泼冷水",
     trait:"唱反调专业户，专挑风险和漏洞，先证伪再考虑动手",
     slang:"你说的利好，我都能找出三个坑。",risk:"低",
-    focus:"反驳空方论点，空方被驳倒才看多",
+    focus:"多头论据必须比空头多至少2条才看多；大资金流出直接否决",
     blind:"极端行情容易僵持，迟迟给不出结论",
-    tone:"爱反问挑刺，常说'但是''万一''你确定？'"},
+    tone:"爱反问挑刺，常说'但是''万一''你确定？'",
+    framework:"①摆论据：均线多头/站上MA20/收阳/放量/RSI50-65逐条计多方，反之计空方；②大资金信号并入辩论：连续2日放量上涨=多方铁证，放量下跌=一票否决；③多方必须比空方多≥2条才开仓；④涨幅>4%或量比>2一律不追，等回调",
+    output:"2-4句，先泼一句冷水或追问，再给出'多空X比X'的结论和动作",
+    vs:"你和D2都稳，但D2靠数据共振，你靠'证伪'——你的买入永远带着对风险的层层盘问"},
   D4:{name:"啸",title:"量价共振派",color:"#3b82f6",style:"看资金动向，量价共振，跟踪主力与资金流",
     trait:"盯资金和量能，信奉量在价先，放量突破就跟",
     slang:"量来了，价自然来。",risk:"中高",
-    focus:"放量突破平台、量比1.2-3、资金进场",
+    focus:"MA20>MA60趋势向上+突破前20日高点+量比1.2-3+RSI45-76",
     blind:"震荡市假突破频繁，反复止损消耗资金",
-    tone:"干脆利落，爱说'放量''资金进场''突破'"},
+    tone:"干脆利落，爱说'放量''资金进场''突破'",
+    framework:"①趋势过滤：MA20>MA60且站稳MA20，震荡市无量突破直接当假的；②突破确认：价格触及前20日高点且量比1.2-3，无量/过量（>3）都不碰；③RSI6在45-76，避开过热和过弱；④买入后2倍ATR止损，量价背离（放量下跌）先撤",
+    output:"2-4句，围绕'量'和'价'谁先谁后说，给明确动作",
+    vs:"你和D1都做突破，但你更看重'量'的确认——没量的突破你第一个反对"},
   D5:{name:"渊",title:"回踩低吸派",color:"#8b5cf6",style:"低吸，买在回调，注重安全边际与支撑位",
     trait:"耐心佛系，从不追高，等回踩到支撑再慢慢进",
     slang:"急什么，等它回来。",risk:"中",
-    focus:"中期趋势向上、缩量回踩MA20/箱体支撑企稳",
+    focus:"MA20>MA60中期趋势向上+缩量回踩MA20/MA10企稳",
     blind:"加速暴涨没有回调机会，全程踏空",
-    tone:"慢条斯理，常说'不急''等回调''支撑位'"},
+    tone:"慢条斯理，常说'不急''等回调''支撑位'",
+    framework:"①趋势前提：MA5>MA20>MA60且MA20向上，下跌趋势中的反弹不接；②买点：缩量（量比<1）回踩MA20偏离<2%或回踩MA10企稳，收阳再进；③仓位轻、离支撑近，跌破MA20即失效离场；④高于MA20超10%主动止盈，不追高",
+    output:"2-3句，慢语速，强调'等'和'支撑位'，给明确的等什么价位",
+    vs:"你和D4正好相反：D4放量突破追进去，你缩量回调才伸手；你比D3更耐心"},
   D6:{name:"焰",title:"涨停敢死队",color:"#ec4899",style:"追热点打板，对题材、连板与情绪温度敏感",
     trait:"最激进，追热点打板，专门博涨停后的二波弹性",
     slang:"涨停后的洗盘，才是黄金坑。",risk:"高",
-    focus:"近5日有涨停、缩量回踩不破涨停低点、板块活跃",
+    focus:"近5日有涨停、缩量回踩不破涨停低点、板块活跃、市场情绪温度",
     blind:"板块退潮时连续阴跌，必须硬止损",
-    tone:"热烈短促，爱用'干''上车''黄金坑''二波'"}
+    tone:"热烈短促，爱用'干''上车''黄金坑''二波'",
+    framework:"①先看板块：只做主力资金活跃/洗盘的前排板块，板块退潮全线撤退；②个股门槛：近5日有涨停、回调不破涨停当日最低点；③买点：缩量（量比<1）回踩、从高点回调5%-18%、站稳MA20、RSI40-65；④硬止损：跌破涨停低点或市场情绪冰点，立刻跑不幻想",
+    output:"2-3句，短促带感，必须提'情绪/板块热度'，给明确动作和止损位",
+    vs:"你是全场最激进的：D1要结构、D5要回调、D3要证伪，你只要情绪和资金还在就敢上"}
 };
 const PV_SESSIONS=JSON.parse(localStorage.getItem("pvChatHistory")||"{}");
 
@@ -10617,7 +11073,7 @@ function pvAddMsg(box,kind,p,text){
 async function pvSend(role){
   const p=AGENT_PERSONAS[role];
   const inp=document.getElementById("pvInput");
-  const text=inp.value.trim();if(!text)return;
+  const text=sanitizeUserText(inp.value,300);if(!text)return;
   inp.value="";
   const box=document.getElementById("pvMsgs");
   pvAddMsg(box,"me",p,text);
@@ -10632,24 +11088,19 @@ async function pvSend(role){
   box.scrollTop=box.scrollHeight;
 
   try{
-    const sysPrompt="你是"+role+p.name+"，"+p.style+"，"+p.title+"风格的A股交易员。用简短口语化中文私聊，1-3句，直接给观点，不要标题。";
+    /* v2：私聊也带人设决策框架 + 当前真实盘面，回答有的放矢；自动重试1次 */
+    const sys=agentSystemPrompt(p,{market:true});
     /* 带上对话历史做上下文 */
     const history=PV_SESSIONS[role].slice(-10).map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}));
     history.push({role:"user",content:text});
-    const r=await fetch("https://api.deepseek.com/chat/completions",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+getDeepSeekKey()},
-      body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:sysPrompt},...history],max_tokens:200})
-    });
-    const j=await r.json();
+    const reply=await callAgentAPI([{role:"system",content:sys},...history],250,1);
     loading.remove();
-    const reply=j.choices&&j.choices[0]?j.choices[0].message.content.trim():null;
-    pvAddMsg(box,"agent",p,reply||"（回复失败，请重试）");
-    PV_SESSIONS[role].push({role:"agent",text:reply||"（回复失败）"});
+    pvAddMsg(box,"agent",p,reply);
+    PV_SESSIONS[role].push({role:"agent",text:reply});
     pvSave();
   }catch(e){
     loading.remove();
-    pvAddMsg(box,"agent",p,"网络出错了："+e.message);
+    pvAddMsg(box,"agent",p,"（回复失败："+e.message+"，可重试）");
   }
 }
 
@@ -10671,16 +11122,105 @@ function loadAgentChatHistory(){
   if(!history.length){
     addChatMsg("system","👋 欢迎来到六Agent投资群！六个AI投资专家已经就位，你可以随时和他们聊投资、问股票、讨论策略。");
   }else{
-    history.forEach(m=>addChatMsg(m.role,m.text));
+    history.forEach(m=>addChatMsg(m.role,m.text,m));
   }
 }
-function addChatMsg(role,text){
+
+/* ==================== 群聊多端同步（手机/电脑互见） ==================== */
+/* 每条消息带 id + ts + device，合并时按 id 去重、按 ts 排序：
+   同一台设备先发的消息不会被远端旧快照覆盖，也不会重复插入。
+   读取通道默认 ./chat.json（与 data.json 同一套静态部署，后端生成即可）；
+   写入通道可配 window.CHAT_SYNC_ENDPOINT（POST 一条 JSON），未配置则仅本地。 */
+const CHAT_SYNC_KEY="agentChatSync";
+let _chatSyncBusy=false,_chatPushQueue=[],_chatLastSync=0;
+function chatDeviceId(){
+  try{
+    let d=localStorage.getItem("agentChatDevice");
+    if(!d){
+      d="dev-"+Math.random().toString(36).slice(2,8)+"-"+Date.now().toString(36);
+      localStorage.setItem("agentChatDevice",d);
+    }
+    return d;
+  }catch(e){return "dev-unknown";}
+}
+function chatMsgId(){
+  return chatDeviceId()+"-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
+}
+/* 纯函数：合并两份聊天历史（按 id 去重，重复 id 保留 ts 较新的一条，最后按 ts 升序） */
+function mergeChatHistories(a,b){
+  const byId=new Map();
+  (a||[]).concat(b||[]).forEach(m=>{
+    if(!m||!m.id)return;
+    const prev=byId.get(m.id);
+    if(!prev||(m.ts||0)>=(prev.ts||0))byId.set(m.id,m);
+  });
+  return Array.from(byId.values()).sort((x,y)=>(x.ts||0)-(y.ts||0)).slice(-200);
+}
+/* 读取远端快照并合并（静默失败：静态部署没有 chat.json 时就是纯本地） */
+async function pullChatSync(){
+  if(_chatSyncBusy)return;
+  _chatSyncBusy=true;
+  try{
+    const url=(window.CHAT_SYNC_URL||"./chat.json")+"?t="+Date.now();
+    const r=await fetch(url,{cache:"no-store"});
+    if(!r.ok)return;
+    const j=await r.json();
+    const remote=Array.isArray(j)?j:(j&&j.messages)||[];
+    if(!remote.length)return;
+    const local=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]");
+    const merged=mergeChatHistories(local,remote);
+    if(merged.length!==local.length){
+      localStorage.setItem(AGENT_CHAT_KEY,JSON.stringify(merged));
+      if(typeof loadAgentChatHistory==="function")loadAgentChatHistory();
+      if(typeof renderChatSyncBadge==="function")renderChatSyncBadge(merged);
+    }
+    _chatLastSync=Date.now();
+  }catch(e){/* 无同步端点时静默（纯本地模式） */}
+  finally{_chatSyncBusy=false;}
+}
+/* 写入通道：配置了 endpoint 就把本机新消息 POST 上去 */
+function queueChatSyncPush(msg){
+  if(!window.CHAT_SYNC_ENDPOINT||!msg)return;
+  _chatPushQueue.push(msg);
+  flushChatSyncPush();
+}
+async function flushChatSyncPush(){
+  if(!window.CHAT_SYNC_ENDPOINT||!_chatPushQueue.length)return;
+  const batch=_chatPushQueue.splice(0,_chatPushQueue.length);
+  try{
+    await fetch(window.CHAT_SYNC_ENDPOINT,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:batch})
+    });
+  }catch(e){
+    /* 推送失败：丢回队列尾部，下次再试（避免弱网丢消息） */
+    _chatPushQueue=batch.concat(_chatPushQueue).slice(-50);
+  }
+}
+/* 同步状态角标：让用户一眼看出是否多端同步、上次同步时间 */
+function renderChatSyncBadge(merged){
+  const el=document.getElementById("chatSyncBadge");
+  if(!el)return;
+  const hist=merged||JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]");
+  const devices={};
+  hist.forEach(m=>{if(m.device)devices[m.device]=1;});
+  const n=Object.keys(devices).length;
+  const t=_chatLastSync?new Date(_chatLastSync).toLocaleTimeString("zh-CN",{hour12:false}):"--:--:--";
+  const on=!!window.CHAT_SYNC_ENDPOINT;
+  el.textContent=(on?"☁️ 多端同步已开启":"📴 仅本地")+" · 设备"+n+" · 上次同步 "+t;
+  el.style.color=on?"var(--down)":"var(--text-faint)";
+}
+/* meta 传入时表示"重渲染已有消息"：保留原 id/ts/device，不再写回 localStorage，
+   否则每次 loadAgentChatHistory() 都会把整段历史复制一遍（多端同步下尤其致命） */
+function addChatMsg(role,text,meta){
   const msgs=document.getElementById("agentChatMessages");
   const div=document.createElement("div");
   
   const roleColors={
     user:"#8b5cf6",
     system:"#6b7280",
+    consensus:"#10b981",
     D1:"#ef4444",
     D2:"#10b981",
     D3:"#f59e0b",
@@ -10691,6 +11231,7 @@ function addChatMsg(role,text){
   const roleNames={
     user:"我",
     system:"系统",
+    consensus:"共识结论",
     D1:"D1破锋",
     D2:"D2衡",
     D3:"D3镜",
@@ -10698,86 +11239,84 @@ function addChatMsg(role,text){
     D5:"D5渊",
     D6:"D6焰"
   };
-  
+
   const color=roleColors[role]||"#8b949e";
   const name=roleNames[role]||role;
-  
+  const bubbleBg=role==="user"?"rgba(139,92,246,.15)":role==="consensus"?"rgba(16,185,129,.12)":"rgba(255,255,255,.05)";
+
   div.style.cssText=`display:flex;gap:10px;${role==="user"?"flex-direction:row-reverse;":""}`;
   div.innerHTML=`
     <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${name[0]}</div>
     <div style="max-width:75%;${role==="user"?"text-align:right;":""}">
       <div style="font-size:11px;color:${color};font-weight:600;margin-bottom:3px">${name}</div>
-      <div style="background:${role==="user"?"rgba(139,92,246,.15)":"rgba(255,255,255,.05)"};padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text-main)">${linkCodes(escHtml(text).replace(/\n/g,"<br>"))}</div>
+      <div style="background:${bubbleBg};${role==="consensus"?"border:1px solid rgba(16,185,129,.35);":""}padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text-main)">${linkCodes(escHtml(text).replace(/\n/g,"<br>"))}</div>
     </div>
   `;
-  msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
-  
-  /* 自动保存到localStorage */
+  if(meta&&meta.id){
+    /* 重渲染模式：只画气泡，不落库、不推送 */
+    msgs.appendChild(div);
+    msgs.scrollTop=msgs.scrollHeight;
+    return;
+  }
+  /* 自动保存到localStorage（带消息ID/时间戳/设备标识，供多端合并去重） */
   const history=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]");
-  history.push({role,text});
+  const msg={id:chatMsgId(),ts:Date.now(),device:chatDeviceId(),role:role,text:text};
+  history.push(msg);
   /* 最多保存200条，避免占太多空间 */
   if(history.length>200)history.shift();
   localStorage.setItem(AGENT_CHAT_KEY, JSON.stringify(history));
+  /* 已配置同步端点时，把新消息推送上去（手机/电脑互见）。
+     system 类消息（欢迎语/清空提示）只在本机显示，不推送到其他设备。 */
+  if(role!=="system")queueChatSyncPush(msg);
 }
 async function sendAgentChat(){
   const input=document.getElementById("agentChatInput");
-  const text=input.value.trim();
+  const text=sanitizeUserText(input.value,500);
   if(!text)return;
-  
+
   const apiKey=getDeepSeekKey();
   if(!apiKey){alert("请先配置DeepSeek API密钥");return;}
-  
+
   addChatMsg("user",text);
   input.value="";
-  
-  /* 让六个Agent轮流发言 */
+
+  /* 让六个Agent轮流发言：每人带着人设+盘面+群聊历史（含前面同伴的发言）发言，真正做到"讨论" */
   const roles=["D1","D2","D3","D4","D5","D6"];
   const personas=AGENT_PERSONAS;
-  
+
   for(const role of roles){
     const p=personas[role];
     try{
       showTyping(role);
-      const mk=buildAgentContext();
-      const prompt=`你是「${p.name}」，${p.title}。
-【性格】${p.trait}
-【口头禅】${p.slang}
-【风险偏好】${p.risk}
-【你主要看什么】${p.focus}
-【你的盲区】${p.blind}
-【说话风格】${p.tone}
-
-【当前真实盘面数据】
-${mk}
-现在六Agent投资群里，用户说："${text}"
-
-请用你的风格，简短地表达你的观点（2-3句话）：
-- 你对这个问题怎么看？结合上面的真实盘面数据说。
-- 你会怎么做？
-- 你想向用户提什么问题或要求？
-
-用第一人称，口语化，像在群里聊天。提到股票请带上名称和代码。不要说自己是AI。`;
-      
-      const r=await fetch("https://api.deepseek.com/chat/completions",{
-        method:"POST",
-        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
-        body:JSON.stringify({
-          model:"deepseek-chat",
-          messages:[{role:"user",content:prompt}],
-          max_tokens:300
-        })
-      });
-      const j=await r.json();
+      /* 同一问题+同一盘面快照：复用上次回答，不重复消耗额度 */
+      const cacheKey=role+"|"+text.toLowerCase().replace(/\s+/g,"")+"|"+ctxFingerprint();
+      const cached=replyCacheGet(cacheKey);
+      if(cached){
+        hideTyping();
+        addChatMsg(role,cached+"\n（复用刚才的回答，未消耗新额度）");
+        await new Promise(r=>setTimeout(r,200));
+        continue;
+      }
+      const sys=agentSystemPrompt(p,{market:true});
+      const recent=recentGroupChat(10);
+      const prompt="现在六Agent投资群里，用户说：\""+text+"\"\n\n"+
+        (recent?("群里最近的发言：\n"+recent+"\n\n"):"")+
+        "请用你的风格回应：\n"+
+        "- 你对这个问题怎么看？结合【当前真实盘面数据】说；\n"+
+        "- 你会怎么做（买/等/减/卖 + 大致仓位）？\n"+
+        "- 想追问用户或回应某位同伴，就点名说。\n"+
+        "2-4句话，口语化，像在群里聊天。";
+      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],300,1);
       hideTyping();
-      addChatMsg(role, (j.choices&&j.choices[0])?j.choices[0].message.content:"（无回复）");
+      addChatMsg(role,reply);
+      replyCacheSet(cacheKey,reply);
     }catch(e){
       hideTyping();
-      addChatMsg(role, `（发言失败：${e.message}）`);
+      addChatMsg(role,"（发言失败："+e.message+"）");
     }
-    
+
     /* 间隔一下，像真实聊天 */
-    await new Promise(r=>setTimeout(r,500));
+    await new Promise(r=>setTimeout(r,400));
   }
 }
 
@@ -10789,114 +11328,105 @@ ${mk}
 async function suggestGroupName(){
   const apiKey=getDeepSeekKey();
   if(!apiKey){alert("请先配置DeepSeek API密钥");return;}
-  
+
   addChatMsg("system","📛 六个Agent，现在给咱们这个群取个名字吧！每个人出一个主意，最后选一个最酷的。");
-  
+
   const roles=["D1","D2","D3","D4","D5","D6"];
   const personas=AGENT_PERSONAS;
-  
+
   for(const role of roles){
     const p=personas[role];
     try{
-      const prompt=`你是${escHtml(p.name)}，${p.title}风格的A股交易员。现在你们六个人在群里讨论，要给这个炒股群取个名字。
-你觉得这个群应该叫什么名字？要符合你的风格，要酷，要有炒股的感觉。
-就说一个名字，再加一句为什么取这个名字。简短点，一句话就行。`;
-      
-      const r=await fetch("https://api.deepseek.com/chat/completions",{
-        method:"POST",
-        headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
-        body:JSON.stringify({
-          model:"deepseek-chat",
-          messages:[{role:"user",content:prompt}],
-          max_tokens:150
-        })
-      });
-      const j=await r.json();
-      if(j.choices&&j.choices[0]){
-        addChatMsg(role, j.choices[0].message.content);
-      }
+      const sys=agentSystemPrompt(p,{market:false,vs:false});
+      const prompt="你们六个人在群里讨论，要给这个炒股群取个名字。你觉得这个群应该叫什么名字？要符合你的风格，要酷，要有炒股的感觉。就说一个名字，再加一句为什么取这个名字。简短点，一句话就行。";
+      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],150,1);
+      addChatMsg(role,reply);
     }catch(e){
-      addChatMsg(role, `（发言失败：${e.message}）`);
+      addChatMsg(role,"（发言失败："+e.message+"）");
     }
-    await new Promise(r=>setTimeout(r,500));
+    await new Promise(r=>setTimeout(r,400));
   }
-  
+
   addChatMsg("system","✅ 讨论完毕！大家投票选一个最酷的群名吧！");
 }
 
 
-/* 六个Agent自由讨论 */
-
-
-/* 六个Agent自由讨论 */
+/* 六个Agent自由讨论（v2：3轮交锋 + 主持人共识总结） */
 async function agentFreeDiscussion(topic){
   const apiKey=getDeepSeekKey();
   if(!apiKey){alert("请先配置DeepSeek API密钥");return;}
-  
+
   if(!topic){
     topic = prompt("讨论什么话题？比如：今天大盘怎么看 / 北方稀土能不能买 / 谁的策略最好");
     if(!topic) return;
   }
-  
+  topic=sanitizeUserText(topic,200);
+
   addChatMsg("system", `🎯 开始讨论：「${topic}」`);
-  
+
   const roles=["D1","D2","D3","D4","D5","D6"];
   const personas=AGENT_PERSONAS; /* 统一人设（全局） */
-  
+
   for(let round=1; round<=3; round++){
     addChatMsg("system", `--- 第${round}轮 ---`);
-    
+
     for(const role of roles){
       const p=personas[role];
       try{
         showTyping(role);
-        const recentMsgs = JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]").slice(-8);
-        const recentChat = recentMsgs.map(m=>{
-          const nameMap={D1:"D1破锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",user:"用户",system:"系统"};
-          return `${nameMap[m.role]||m.role}：${m.text.substring(0,100)}`;
-        }).join("\n");
-        
-        const mk=buildAgentContext();
-        const prompt=`你是「${p.name}」，${p.title}。
-【性格】${p.trait}
-【口头禅】${p.slang}
-【风险偏好】${p.risk}
-【你主要看什么】${p.focus}
-【你的盲区】${p.blind}
-【说话风格】${p.tone}
-
-【当前真实盘面数据】
-${mk}
-现在你们在讨论：「${topic}」
+        /* 复用缓存：同话题+同轮次+同盘面快照，不重复消耗额度 */
+        const dKey=role+"|"+topic.toLowerCase().replace(/\s+/g,"")+"|"+round+"|"+ctxFingerprint();
+        const dCached=replyCacheGet(dKey);
+        if(dCached){
+          hideTyping();
+          addChatMsg(role,dCached+"\n（复用刚才的回答，未消耗新额度）");
+          await new Promise(r=>setTimeout(r,300));
+          continue;
+        }
+        const sys=agentSystemPrompt(p,{market:true});
+        const recent=recentGroupChat(12);
+        const prompt=`现在你们六人在讨论：「${topic}」
 
 最近的讨论：
-${recentChat}
+${recent||"（还没有人发言，你是第一个）"}
 
 请以「${p.name}」的身份说 2-3 句话：给出你的观点，可以反驳别人也可以补充，并且要结合上面的真实盘面数据说话（提到具体股票时带上名称和代码）。口语化，像在群里聊天，不要说自己是AI。`;
-        
-        const r=await fetch("https://api.deepseek.com/chat/completions",{
-          method:"POST",
-          headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
-          body:JSON.stringify({
-            model:"deepseek-chat",
-            messages:[{role:"user",content:prompt}],
-            max_tokens:200
-          })
-        });
-        const j=await r.json();
-        if(j.choices&&j.choices[0]){
-          hideTyping();
-          addChatMsg(role, j.choices[0].message.content);
-        }
+        const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],250,1);
+        hideTyping();
+        addChatMsg(role, reply);
+        replyCacheSet(dKey,reply);
       }catch(e){
         hideTyping();
         addChatMsg(role, `（发言失败）`);
       }
-      await new Promise(r=>setTimeout(r,800));
+      await new Promise(r=>setTimeout(r,600));
     }
   }
-  
-  addChatMsg("system", `✅ 讨论结束！大家聊得很热烈～`);
+
+  /* 主持人总结：D2衡基于全场发言输出结构化共识结论（多空比/共识度/建议动作/关键风险） */
+  addChatMsg("system","🧑‍⚖️ 主持人 D2衡 正在汇总全场发言，生成共识结论…");
+  try{
+    showTyping("D2");
+    const allChat=recentGroupChat(40);
+    const sys=agentSystemPrompt(AGENT_PERSONAS.D2,{market:true});
+    const prompt="你是这场六Agent讨论的主持人。请基于以下全场发言记录，输出一份结构化共识结论：\n\n"+allChat+
+      "\n\n严格按以下格式逐行输出（不要多余解释）：\n"+
+      "共识话题：<一句话>\n"+
+      "多空比：<多方人数>比<空方人数>\n"+
+      "共识度：<0-100的整数>%\n"+
+      "主流观点：<2-3句话概括>\n"+
+      "最大分歧：<谁和谁分歧在哪>\n"+
+      "建议动作：<加仓/持有/减仓/观望>，仓位<0-100>%\n"+
+      "关键风险：<一句话>";
+    const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],400,1);
+    hideTyping();
+    addChatMsg("consensus","📋 共识结论（主持人 D2衡）\n"+reply);
+  }catch(e){
+    hideTyping();
+    addChatMsg("system","（主持人总结失败："+e.message+"）");
+  }
+
+  addChatMsg("system", `✅ 讨论结束！共识结论已生成，可作为明日操作参考。`);
 }
 
 

@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 # ==================== 配置 ====================
 INIT_CASH = 100000
 MAX_POS = 5
+MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁止六角色持仓大幅重复
 WECHAT_PUSH_KEY = os.environ.get("WECHAT_PUSH_KEY", "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7")
 
 # ===== WxPusher 推送配置（推荐）=====
@@ -392,6 +393,21 @@ def get_stock_info(code):
         ma5 = sum(closes[-5:]) / 5 if len(closes) >= 5 else price
         ma10 = sum(closes[-10:]) / 10 if len(closes) >= 10 else price
         ma20 = sum(closes[-20:]) / 20 if len(closes) >= 20 else price
+        # ===== v2 策略升级新增字段 =====
+        ma60 = sum(closes[-60:]) / 60 if len(closes) >= 60 else ma20
+        ma20_prev = sum(closes[-25:-5]) / 20 if len(closes) >= 25 else ma20  # 5日前的MA20→趋势方向
+        highs20 = [float(k[3]) for k in klines[-20:]]
+        hi20 = max(highs20) if highs20 else price                          # 前20日高点→突破确认
+        has_zt5, zt_low, high5 = False, 0.0, price                          # 近5日涨停信息（D6用）
+        if len(klines) >= 6:
+            highs5 = [float(k[3]) for k in klines[-5:]]
+            high5 = max(highs5) if highs5 else price
+            for j in range(max(1, len(klines) - 5), len(klines)):
+                day_chg = (float(klines[j][2]) / float(klines[j - 1][2]) - 1) * 100
+                if day_chg >= 9.8:
+                    has_zt5 = True
+                    zt_low = float(klines[j][4])
+                    break
         
         rsi6 = 50
         if len(closes) >= 7:
@@ -414,9 +430,13 @@ def get_stock_info(code):
             j = 3 * k - 2 * d
         
         info.update({"ma5": ma5, "ma10": ma10, "ma20": ma20,
+                     "ma60": ma60, "ma20_prev": ma20_prev, "hi20": hi20,
+                     "has_zt5": has_zt5, "zt_low": zt_low, "high5": high5,
                      "rsi6": rsi6, "kdj_k": k, "kdj_d": d, "kdj_j": j})
     except:
         info.update({"ma5": info["price"], "ma10": info["price"], "ma20": info["price"],
+                     "ma60": info["price"], "ma20_prev": info["price"], "hi20": info["price"],
+                     "has_zt5": False, "zt_low": 0.0, "high5": info["price"],
                      "rsi6": 50, "kdj_k": 50, "kdj_d": 50, "kdj_j": 50})
     return info
 
@@ -774,7 +794,96 @@ def check_sell_signals(player, stock_data):
         if st["vol_ratio"] > 1.5 and st["chg"] < -2: signals.append((hold, "放量下跌主力出逃", 1.0)); continue
     return signals
 
-def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses, strong_sectors):
+def role_pick_score(role_id, st):
+    """【v2策略升级】各角色核心逻辑打分（0-100，与前端实时引擎对齐）→ (score, reasons)"""
+    price = st["price"]
+    chg = st.get("chg", 0)
+    vol = st.get("vol_ratio", 1) or 1
+    ma5 = st.get("ma5") or price
+    ma10 = st.get("ma10") or price
+    ma20 = st.get("ma20") or price
+    ma60 = st.get("ma60") or ma20
+    ma20_prev = st.get("ma20_prev") or ma20
+    rsi = st.get("rsi6", 50)
+    hi20 = st.get("hi20") or price
+    trend_up = ma20 > ma60 and ma20 > ma20_prev      # 中期趋势向上且MA20翘头
+    ma_align = ma5 > ma20
+    score, why = 0, []
+    if role_id == "D1":
+        # 趋势突破：大结构 + 放量突破前高 + 贴线不追高
+        if trend_up: score += 25; why.append("MA20>MA60且向上")
+        if ma_align: score += 10; why.append("MA5>MA20")
+        if price >= ma20 and (price - ma20) / ma20 <= 0.03: score += 15; why.append("站稳MA20不追高")
+        if hi20 > 0 and price >= hi20 * 0.97: score += 20; why.append("突破/贴近前20日高点")
+        if 1.2 <= vol <= 3: score += 20; why.append("放量确认·量比%.1f" % vol)
+        if 50 <= rsi <= 75: score += 5
+    elif role_id == "D2":
+        # 多因子共识：六因子满足数（≥4条才考虑）
+        n = 0
+        if 0.8 <= vol <= 2.5: n += 1; why.append("量能适中")
+        if 45 <= rsi <= 70: n += 1; why.append("RSI健康")
+        if ma5 > ma10 > ma20: n += 1; why.append("均线多头")
+        if trend_up: n += 1; why.append("MA20向上")
+        if 0.5 <= chg <= 5: n += 1; why.append("涨幅适中")
+        if price > ma5: n += 1; why.append("收在MA5上方")
+        score = 55 + (n - 4) * 8 if n >= 4 else n * 10
+    elif role_id == "D3":
+        # 多空辩论：逐条计票，多方须≥空方+2；大资金（放量方向）流出一票否决；追高不辩
+        bull = bear = 0
+        if ma5 > ma20: bull += 1
+        else: bear += 1
+        if price > ma20: bull += 1
+        else: bear += 1
+        if chg > 0: bull += 1
+        else: bear += 1
+        if vol >= 1: bull += 1
+        else: bear += 1
+        if 50 <= rsi <= 65: bull += 1
+        else: bear += 1
+        if chg > 2 and vol >= 1.3: bull += 1; why.append("大资金放量流入")
+        elif chg < -2 and vol >= 1.3: bear += 1; why.append("大资金放量流出")
+        if chg < -2 and vol >= 1.3: return 0, ["大资金流出·一票否决"]
+        if chg > 4 or vol > 2: return 0, ["追高不辩·等回调"]
+        margin = bull - bear
+        if margin < 2: return 0, ["多空%d:%d·多方未占优" % (bull, bear)]
+        score = round(margin / 6 * 80) + 10
+        why.append("多空%d比%d" % (bull, bear))
+    elif role_id == "D4":
+        # 量价共振：MA20>MA60 + 触前20日高点 + 量比1.2-3 + RSI45-76，全过才70起步
+        if not (ma20 > ma60 and price >= ma20 and hi20 > 0 and price >= hi20 * 0.995
+                and 1.2 <= vol <= 3 and 45 <= rsi <= 76):
+            return 0, []
+        score = 70; why.append("量价共振突破确认")
+        if vol <= 2.5: score += 10; why.append("量比健康")
+        if 45 <= rsi <= 70: score += 5
+    elif role_id == "D5":
+        # 回踩低吸：趋势向上为前提 + 缩量回踩MA20/MA10企稳 + 收阳
+        if not trend_up: return 0, ["MA20未向上·不接下跌反弹"]
+        score = 20; why.append("MA20>MA60趋势向上")
+        if ma_align: score += 5
+        if price > ma20 and abs(price - ma20) / ma20 < 0.02: score += 25; why.append("回踩MA20")
+        elif ma10 > 0 and price > ma10 and abs(price - ma10) / ma10 < 0.015: score += 20; why.append("回踩MA10企稳")
+        else: return 0, ["未回踩到支撑位"]
+        if vol < 0.9: score += 20; why.append("缩量·量比%.1f" % vol)
+        if -1 < chg < 2: score += 10
+    elif role_id == "D6":
+        # 涨停敢死队：反包/强势涨停 或 涨停回调洗盘（不追普通上涨）
+        if chg >= 9.5 and vol >= 1:
+            score = 85; why.append("反包/强势涨停")
+        elif st.get("has_zt5") and price > (st.get("zt_low") or 0) and vol < 1 and chg < 5:
+            zt_low = st["zt_low"]
+            near_low = (price - zt_low) / zt_low * 100
+            high5 = st.get("high5") or price
+            pb = (high5 - price) / high5 * 100 if high5 > 0 else 0
+            if near_low > 8 or pb < 5 or pb > 25 or not ma_align:
+                return 0, ["涨停回调条件不符"]
+            score = 75; why.append("涨停回调洗盘")
+            if 40 <= rsi <= 65: score += 5
+        else:
+            return 0, []
+    return score, why
+
+def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses, strong_sectors, all_players=None):
     role_id = player["id"]
     # 【连续亏损熔断】连续3笔亏损，冷却
     if consecutive_losses.get(role_id, 0) >= 3:
@@ -784,65 +893,60 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
     if market_trend == "bear" and role_id != "D6" and len(player["holdings"]) >= 2:
         return None
     if len(player["holdings"]) >= MAX_POS: return None
-    
+
+    # 【多Agent共识预计算】D2的开仓依据：其他五个角色各自的最高分候选，汇总共识度
+    consensus = {}
+    if role_id == "D2":
+        for rid in ["D1", "D3", "D4", "D5", "D6"]:
+            best = None
+            for code, st in all_codes_data.items():
+                if any(h["code"] == code for h in player["holdings"]): continue
+                if "ST" in st.get("name", ""): continue
+                sc, _ = role_pick_score(rid, st)
+                if sc >= 60 and (best is None or sc > best[1]):
+                    best = (code, sc)
+            if best:
+                consensus[best[0]] = consensus.get(best[0], 0) + 1
+
     candidates = []
     for code, st in all_codes_data.items():
         if any(h["code"] == code for h in player["holdings"]): continue
         if st["chg"] >= 9.8 or st["chg"] <= -9.8: continue
         if "ST" in st["name"]: continue
-        # 【同板块持仓限制】同一板块最多2只
+        # 【同板块持仓】放开硬性同行业数量限制（用户要求），仅保留轻量提示；
+        # 角色间防重复由 MAX_OVERLAP（同一只股票最多 2 个角色持有）负责
         industry = STOCK_INDUSTRY.get(code, "其他")
         same_count = sum(1 for h in player["holdings"] if STOCK_INDUSTRY.get(h["code"], "其他") == industry)
-        if same_count >= 2: continue
-        
-        score = 0
-        reason_parts = []
+        if same_count >= 3:
+            print(f"  ℹ️  {role_id} {industry}板块已持{same_count}只，注意行业集中度")
+        # 【跨角色重合限制】同一只股票最多 MAX_OVERLAP 个角色持有，避免六角色持仓大幅重复
+        if all_players:
+            overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
+            if overlap >= MAX_OVERLAP:
+                continue
+
+        score, reason_parts = role_pick_score(role_id, st)
+        reason_parts = list(reason_parts)
         # 【板块轮动】强势板块加分（前5名强势板块+10分）
         if industry in strong_sectors:
             score += 10
             reason_parts.append(f"{industry}板块强势")
-        if role_id == "D1":
-            if st["price"] > st["ma20"] and st["ma5"] > st["ma10"] > st["ma20"]: score += 30; reason_parts.append("均线多头")
-            if st["chg"] > 3 and st["vol_ratio"] > 1.2: score += 25; reason_parts.append("放量突破")
-            if 55 < st["rsi6"] < 75: score += 20; reason_parts.append("RSI健康")
-            if st["kdj_k"] > st["kdj_d"]: score += 15; reason_parts.append("KDJ金叉")
-        elif role_id == "D2":
-            if st["price"] > st["ma20"]: score += 15
-            if st["ma5"] > st["ma10"]: score += 15
-            if 45 < st["rsi6"] < 70: score += 20; reason_parts.append("RSI健康")
-            if st["kdj_k"] > st["kdj_d"] and st["kdj_k"] < 70: score += 20; reason_parts.append("KDJ金叉")
-            if 0.8 < st["vol_ratio"] < 2.5: score += 15; reason_parts.append("量比适中")
-            if st["chg"] > 0: score += 15
-        elif role_id == "D3":
-            if st["price"] > st["ma20"]: score += 15
-            if 50 < st["rsi6"] < 60: score += 30; reason_parts.append("RSI完美")
-            if st["kdj_k"] > st["kdj_d"] and 40 < st["kdj_k"] < 60: score += 30; reason_parts.append("KDJ中位金叉")
-            if 0 < st["chg"] < 3: score += 15
-        elif role_id == "D4":
-            if st["vol_ratio"] > 1.3 and st["chg"] > 1: score += 35; reason_parts.append("量价齐升")
-            if st["price"] > st["ma5"] > st["ma10"]: score += 25; reason_parts.append("短期多头")
-            if st["kdj_k"] > st["kdj_d"]: score += 20
-            if st["rsi6"] > 50: score += 10
-        elif role_id == "D5":
-            if st["ma5"] > st["ma10"] > st["ma20"]: score += 25; reason_parts.append("中期上涨")
-            if abs(st["price"] - st["ma10"]) / st["ma10"] < 0.03: score += 30; reason_parts.append("回踩MA10")
-            if -1 < st["chg"] < 2: score += 15
-            if st["kdj_k"] > st["kdj_d"] and st["kdj_k"] < 65: score += 20
-        elif role_id == "D6":
-            if st["chg"] > 5: score += 30; reason_parts.append("强势上涨")
-            if st["vol_ratio"] > 1.5: score += 25; reason_parts.append("放量")
-            if st["price"] > st["ma5"]: score += 20
-            if st["rsi6"] > 60: score += 15
-        
+        # 【多Agent共识】D2专属：其他角色≥3个指向同一只 → 共识加成
+        if role_id == "D2" and consensus.get(code, 0) >= 3:
+            score += 30
+            reason_parts.append(f"多Agent共识{consensus[code]}/5")
+        elif role_id == "D2" and consensus.get(code, 0) >= 2:
+            score += 10
+            reason_parts.append(f"部分共识{consensus[code]}/5")
         if score >= 60:
             candidates.append((code, st, score, " + ".join(reason_parts) or "综合评分达标"))
-    
+
     if not candidates: return None
     candidates.sort(key=lambda x: x[2], reverse=True)
     return candidates[0]
 
-def do_buy(player, code, st, score, reason):
-    """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓）"""
+def do_buy(player, code, st, score, reason, ntf=1.0):
+    """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
     # 【仓位动态调整】根据历史胜率调整单笔仓位比例
     trades = player.get("trades", [])
     sells = [t for t in trades if t["type"] == "sell"]
@@ -855,7 +959,8 @@ def do_buy(player, code, st, score, reason):
         position_ratio = 0.15
     else:
         position_ratio = 0.20
-    budget = player["cash"] * position_ratio
+    # 【国家队领先指标】明确进场适度领先加仓(×1.15)，未见动作略偏防御(×0.9)
+    budget = player["cash"] * position_ratio * ntf
     qty = int(budget / st["price"] / 100) * 100
     if qty < 100:
         print(f"  {player['id']} 资金不足，跳过 {st['name']}")
@@ -957,11 +1062,15 @@ def main():
         send_daily_summary(data, market_trend)
         save_data(data)
         return
-    
+
     if not is_trade_time():
         print("  ⏸️  非交易时间，退出")
         return
-    
+
+    # 【国家队领先指标】异动强度 → 仓位系数（先于普通情绪反应，应用到实际买入仓位）
+    ntf = national_team_factor()
+    print(f"  🛡️ 国家队仓位系数：{ntf:.2f}")
+
     all_codes = set(STOCK_POOL)
     for player in data["players"]:
         for hold in player["holdings"]:
@@ -987,10 +1096,11 @@ def main():
             if hold["code"] in all_stock_data:
                 do_sell(player, hold, all_stock_data[hold["code"]], reason, data, ratio)
         buy_signal = check_buy_signals(player, all_stock_data, all_stock_data,
-                                        market_trend, data.get("consecutive_losses", {}), strong_sectors)
+                                        market_trend, data.get("consecutive_losses", {}), strong_sectors,
+                                        all_players=data["players"])
         if buy_signal:
             code, st, score, reason = buy_signal
-            do_buy(player, code, st, score, reason)
+            do_buy(player, code, st, score, reason, ntf)
     
     print(f"\n💰 更新资产...")
     for player in data["players"]:
