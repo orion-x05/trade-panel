@@ -1046,6 +1046,128 @@ function alertSellSignal(role, stockName, code, price, profit){
   .chat-dot{animation:none;opacity:.55}
   .chat-avatar-link:hover{transform:none}
 }
+/* ============================================================
+   精英化升级层 v2（Redesign·Preserve，作用域 .modern）
+   目标：机构级质感（Bloomberg 的精确 × Linear 的发丝线与留白）+ 去拥挤。
+   保护契约：不动 DOM/JS/数据/A股红涨绿跌约定/六角色身份色/左侧彩色状态条。
+   说明：JS 模板卡片约25处带内联样式，材质属性用 !important 覆盖；
+        .mk-metric 用三边描边以保留左侧 mk-accent-* 状态条；
+        .gmk-btn（强调按钮）与 .chat-bubble（群聊气泡）不纳入材质组。
+   ============================================================ */
+
+/* ① 背景层次：顶部双环境光，固定不随滚动，增加纵深 */
+html.modern,html.modern body{
+  background:
+    radial-gradient(900px 420px at 50% -10%,rgba(79,140,255,.055),transparent 62%),
+    radial-gradient(680px 340px at 6% 2%,rgba(47,211,154,.035),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+html.modern body{padding:24px 26px 56px;text-wrap:pretty}
+
+/* ② 间距系统：去拥挤（本次核心）——网格/区块/内边距整体放宽 */
+.modern .mk-grid{gap:18px}
+.modern .mk-mt{margin-top:18px}
+.modern .stats{gap:18px;margin-bottom:22px}
+.modern .panel{margin-bottom:22px}
+.modern .market-bar{margin-bottom:18px;padding:11px 18px}
+.modern .app-layout{gap:24px}
+.modern .tabs{margin-bottom:20px}
+.modern .fire-pool-grid{gap:14px}
+.modern .mom-card-grid{gap:16px}
+.modern .vix-cards{gap:16px}
+.modern .sim-role-grid{gap:16px}
+.modern .wx-days{gap:16px}
+.modern .ms-comps{gap:14px}
+.modern .hero-summary{margin-bottom:20px;padding:20px 24px}
+.modern .sidenav{top:24px;max-height:calc(100vh - 48px)}
+.modern .panel-title{letter-spacing:.2px}
+
+/* ③ 卡片材质：发丝边 + 顶部高光 + 双层柔影 + 极淡渐变卡面 */
+.modern .panel,.modern .mk-card,.modern .stat-card,.modern .review-card,
+.modern .sim-role-card,.modern .sim-final-stat,.modern .mom-card,.modern .wx-day,
+.modern .news-stat,.modern .ext-rank-box,.modern .sim-advice,.modern .nt-card,
+.modern .tech-card,.modern .kpattern-card,.modern .engine-card,.modern .vix-card,
+.modern .sp-card,.modern .agent-card,.modern .modal{
+  border:1px solid rgba(255,255,255,.08)!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,#18212e,#141c27)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 1px 2px rgba(0,0,0,.3),0 14px 36px -14px rgba(0,0,0,.55)!important;
+}
+/* .mk-metric 三边描边：保留左侧彩色状态条（mk-accent-up/down/yellow） */
+.modern .mk-metric{
+  border-top:1px solid rgba(255,255,255,.08)!important;
+  border-right:1px solid rgba(255,255,255,.08)!important;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,#18212e,#141c27)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 1px 2px rgba(0,0,0,.3),0 14px 36px -14px rgba(0,0,0,.55)!important;
+}
+/* 内边距升级：卡片呼吸感 */
+.modern .panel-head{padding:16px 22px}
+.modern .panel-body{padding:18px 20px}
+.modern .mk-metric{padding:18px 20px}
+.modern .mk-card-head{padding:15px 18px}
+.modern .mk-card-body{padding:14px 16px}
+.modern .stat-card{padding:18px 20px}
+.modern .review-card{padding:18px 20px}
+.modern .agent-card{padding:16px 12px!important}
+.modern .kpattern-card,.modern .tech-card,.modern .nt-card{padding:14px 16px}
+.modern .engine-card{padding:16px 18px}
+.modern table th{padding:10px 12px}
+.modern table td{padding:10px 12px}
+
+/* ④ 数字精英化：等宽数字 + 800 字重 + 负字距 */
+.modern .stat-value,.modern .mk-metric .m-value,.modern .hero-summary .hs-value,
+.modern .clock-time,.modern .sp-price,.modern .sim-final-stat b{
+  font-variant-numeric:tabular-nums;
+}
+.modern .stat-value,.modern .mk-metric .m-value{font-weight:800;letter-spacing:-.8px}
+.modern .hero-summary .hs-value{font-size:30px;letter-spacing:-1px}
+.modern .topbar-page{letter-spacing:.3px}
+
+/* ⑤ hover 微升：描边提亮 + 阴影加深（.18s ease-out） */
+.modern .panel,.modern .mk-card,.modern .stat-card,.modern .review-card,.modern .mk-metric,
+.modern .agent-card,.modern .tech-card,.modern .kpattern-card,.modern .engine-card,.modern .nt-card,.modern .vix-card{
+  transition:transform .18s ease-out,box-shadow .18s ease-out,border-color .18s ease-out;
+}
+.modern .panel:hover,.modern .mk-card:hover,.modern .stat-card:hover,.modern .review-card:hover,.modern .mk-metric:hover,
+.modern .agent-card:hover,.modern .tech-card:hover,.modern .kpattern-card:hover,.modern .engine-card:hover,.modern .nt-card:hover,.modern .vix-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,255,255,.14)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 4px rgba(0,0,0,.3),0 22px 48px -16px rgba(0,0,0,.62)!important;
+}
+
+/* ⑥ 细滚动条：8px 圆角，hover 提亮 */
+html.modern ::-webkit-scrollbar{width:8px;height:8px}
+html.modern ::-webkit-scrollbar-track{background:transparent}
+html.modern ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px;border:2px solid transparent;background-clip:content-box}
+html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);background-clip:content-box;border:2px solid transparent}
+
+/* ⑦ 移动端同步放宽（≤768px，置于末尾以覆盖桌面规则） */
+@media (max-width:768px){
+  html.modern body{padding:14px 14px 80px}
+  .modern .mk-grid{gap:14px}
+  .modern .stats{gap:12px;margin-bottom:16px}
+  .modern .panel{margin-bottom:16px}
+  .modern .panel-head{padding:13px 16px}
+  .modern .panel-body{padding:14px 15px}
+  .modern .mk-metric{padding:14px 15px}
+  .modern .mk-card-head{padding:12px 14px}
+  .modern .mk-card-body{padding:10px 12px}
+  .modern .stat-card{padding:14px 16px}
+  .modern .app-layout{gap:0}
+  .modern .hero-summary{margin-bottom:16px;padding:14px 16px}
+  .modern .hero-summary .hs-value{font-size:26px}
+}
+
+/* ⑧ 减弱动效偏好：关闭微升与过渡 */
+@media (prefers-reduced-motion:reduce){
+  .modern .panel,.modern .mk-card,.modern .stat-card,.modern .review-card,.modern .mk-metric,
+  .modern .agent-card,.modern .tech-card,.modern .kpattern-card,.modern .engine-card,.modern .nt-card,.modern .vix-card{transition:none}
+  .modern .panel:hover,.modern .mk-card:hover,.modern .stat-card:hover,.modern .review-card:hover,.modern .mk-metric:hover,
+  .modern .agent-card:hover,.modern .tech-card:hover,.modern .kpattern-card:hover,.modern .engine-card:hover,.modern .nt-card:hover,.modern .vix-card:hover{transform:none}
+}
 </style>
 </head>
 <body>
