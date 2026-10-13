@@ -49,17 +49,18 @@ function buildAgentContext(){
 /* 主动让盘面缓存失效（持仓/行情大幅变化后调用） */
 function invalidateAgentContext(){__ctxCache={t:0,s:""};}
 
-/* 聊天区：正在输入提示 */
+/* 聊天区：正在输入提示（微信范式：头像 + 三点跳动气泡） */
 function showTyping(role){
   const msgs=document.getElementById("agentChatMessages");if(!msgs)return;
   hideTyping();
   const P=AGENT_PERSONAS[role]||{name:role,color:"#666"};
   const d=document.createElement("div");
   d.id="__typing";
-  d.style.cssText="display:flex;gap:10px;align-items:center";
-  d.innerHTML='<div style="width:32px;height:32px;border-radius:50%;background:'+P.color+';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">'+(P.name[0])+'</div><div style="font-size:12px;color:var(--text-faint)">'+P.name+' 正在输入…</div>';
+  d.className="chat-typing";
+  d.innerHTML='<div class="chat-avatar" style="background:'+P.color+'">'+(P.name[0])+'</div>'+
+    '<div class="chat-bubble chat-typing-bubble"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>';
   msgs.appendChild(d);
-  msgs.scrollTop=msgs.scrollHeight;
+  if(chatAtBottom())chatScrollToBottom();
 }
 function hideTyping(){
   const d=document.getElementById("__typing");if(d&&d.remove)d.remove();
@@ -995,6 +996,56 @@ function alertSellSignal(role, stockName, code, price, profit){
   .modern .hero-summary .hs-value{font-size:24px}
   .modern .hero-summary .hs-chips{width:100%}
 }
+/* ===== 群聊面板（微信/QQ 范式：时间分隔条/消息分组/气泡尾巴/回到底部） ===== */
+.chat-box{height:360px;overflow-y:auto;padding:12px;background:var(--bg);border-radius:12px;display:flex;flex-direction:column}
+.chat-sep{align-self:center;font-size:11px;color:var(--text-faint);margin:10px 0 2px;font-family:var(--mono);letter-spacing:.5px}
+.chat-sys{align-self:center;max-width:88%;text-align:center;font-size:12px;line-height:1.7;color:var(--text-dim);background:rgba(255,255,255,.04);border-radius:9px;padding:4px 12px;margin:8px 0}
+.chat-row{display:flex;gap:8px;align-items:flex-start;margin-top:12px}
+.chat-row-cont{margin-top:2px;margin-left:40px}
+.chat-row-me{flex-direction:row-reverse}
+.chat-row-me.chat-row-cont{margin-left:0;margin-right:40px}
+.chat-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;user-select:none}
+.chat-avatar-link{cursor:pointer;transition:transform .15s cubic-bezier(.25,1,.5,1),filter .15s}
+.chat-avatar-link:hover{transform:scale(1.1);filter:brightness(1.2)}
+.chat-col{max-width:75%;display:flex;flex-direction:column;min-width:0}
+.chat-row-me .chat-col{align-items:flex-end}
+.chat-name{font-size:11px;font-weight:600;margin-bottom:3px;padding-left:2px}
+.chat-bubble{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text);background:rgba(255,255,255,.05);word-break:break-word;overflow-wrap:anywhere}
+.chat-bubble-me{background:rgba(139,92,246,.15)}
+.chat-bubble-consensus{background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.35)}
+/* 组首条气泡带小尾巴（微信范式） */
+.chat-bubble-head{position:relative}
+.chat-row:not(.chat-row-me) .chat-bubble-head::before{content:"";position:absolute;left:-6px;top:9px;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-right:6px solid rgba(255,255,255,.05)}
+.chat-row:not(.chat-row-me) .chat-bubble-head.chat-bubble-consensus::before{border-right-color:rgba(16,185,129,.10)}
+.chat-row-me .chat-bubble-head::before{left:auto;right:-6px;border-right:none;border-left:6px solid rgba(139,92,246,.15)}
+/* 新消息进入动效（ease-out-quart；尊重系统减弱动效偏好） */
+@keyframes chatIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.chat-enter{animation:chatIn 240ms cubic-bezier(.25,1,.5,1)}
+/* 正在输入：三点跳动 */
+.chat-typing{display:flex;gap:8px;align-items:center;margin-top:12px}
+.chat-typing-bubble{display:flex;gap:4px;align-items:center;padding:11px 12px}
+.chat-dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);animation:chatBounce 1.1s ease-in-out infinite}
+.chat-dot:nth-child(2){animation-delay:.15s}
+.chat-dot:nth-child(3){animation-delay:.3s}
+@keyframes chatBounce{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
+/* 回到底部浮动按钮 + 未读计数 */
+.chat-scroll-btn{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:color .15s,transform .15s;z-index:5;padding:0;font-size:15px;line-height:1}
+.chat-scroll-btn.show{display:flex}
+.chat-scroll-btn:hover{color:var(--text);transform:translateY(-1px)}
+.chat-scroll-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center;padding:0 4px;display:none}
+/* 发送按钮：空输入时禁用 */
+#chatSendBtn{transition:filter .15s}
+#chatSendBtn:not([disabled]):hover{filter:brightness(1.12)}
+#chatSendBtn[disabled]{opacity:.45;cursor:not-allowed}
+@media (max-width:680px){
+  .chat-box{height:320px}
+  .chat-col{max-width:78%}
+}
+@media (prefers-reduced-motion:reduce){
+  .chat-enter{animation-duration:.01ms}
+  .chat-dot{animation:none;opacity:.55}
+  .chat-avatar-link:hover{transform:none}
+}
 </style>
 </head>
 <body>
@@ -1500,11 +1551,17 @@ function alertSellSignal(role, stockName, code, price, profit){
       <div style="font-size:16px;font-weight:700">六 Agent 群聊研讨</div>
       <div id="chatSyncBadge" style="font-size:11px;color:var(--text-faint)">📴 仅本地 · 设备1 · 上次同步 --:--:--</div>
     </div>
-    <div id="agentChatMessages" style="height:360px;overflow-y:auto;padding:12px;background:var(--bg-body);border-radius:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+    <div style="position:relative;margin-bottom:10px">
+      <div id="agentChatMessages" class="chat-box" onscroll="chatUpdateScrollBtn()"></div>
+      <button id="chatScrollBtn" class="chat-scroll-btn" onclick="chatScrollToBottom(true)" title="回到最新消息">↓<span class="chat-scroll-badge"></span></button>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="agentChatInput" style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:14px" placeholder="输入观点或问题，回车发送" onkeydown="if(event.key==='Enter')sendAgentChat()">
-      <button style="padding:11px 16px;border-radius:10px;background:var(--bg-soft);color:var(--text);border:1px solid var(--border);font-size:13px" onclick="agentFreeDiscussion()">自由讨论</button>
-      <button style="padding:11px 20px;border-radius:10px;background:#10b981;color:#fff;border:none;font-weight:600;font-size:14px" onclick="sendAgentChat()">发送</button>
+      <input id="agentChatInput" style="flex:1;min-width:0;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:14px" placeholder="说点什么，六个Agent一起聊…" oninput="chatSendBtnState()" onkeydown="if(event.key==='Enter')sendAgentChat()">
+      <button style="padding:11px 13px;border-radius:10px;background:var(--bg-hover);color:var(--text-dim);border:1px solid var(--border);font-size:12px;white-space:nowrap" onclick="agentFreeDiscussion()" title="六个Agent自由讨论并生成共识">💬 讨论</button>
+      <button style="padding:11px 13px;border-radius:10px;background:var(--bg-hover);color:var(--text-dim);border:1px solid var(--border);font-size:12px;white-space:nowrap" onclick="clearAgentChat()" title="清空群聊记录">清空</button>
+      <button id="chatSendBtn" style="padding:11px 13px;border-radius:10px;background:#10b981;color:#fff;border:none;font-weight:600;display:flex;align-items:center;justify-content:center" onclick="sendAgentChat()" title="发送" disabled>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
     </div>
     </div><!-- 右列结束 -->
     </div><!-- 两列布局结束 -->
@@ -4816,6 +4873,8 @@ function switchTab(name){
   ["panel-six-step","panel-event-log"].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display = showGlobal ? "" : "none";
   });
+  /* 群聊面板从隐藏 tab 切回来时：刷新回到底部按钮态（隐藏期间无布局，状态可能陈旧） */
+  if(name==="airesearch"&&typeof chatUpdateScrollBtn==="function")setTimeout(chatUpdateScrollBtn,50);
   /* 延迟更久，等tab完全显示后再resize和渲染图表 */
   setTimeout(()=>{
     /* 所有已知图表全部resize */
@@ -11193,14 +11252,16 @@ function clearAgentChat(){
   }
 }
 function loadAgentChatHistory(){
+  _chatLastMeta=null;_chatUnread=0; /* 重渲染历史：重置分组/未读状态 */
   const history=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]");
   const msgs=document.getElementById("agentChatMessages");
   msgs.innerHTML="";
   if(!history.length){
-    addChatMsg("system","👋 欢迎来到六Agent投资群！六个AI投资专家已经就位，你可以随时和他们聊投资、问股票、讨论策略。");
+    addChatMsg("system","👋 欢迎来到六Agent投资群！六个AI投资专家已经就位，随时和他们聊投资、问股票、讨论策略。\n💬 点下方「讨论」让六Agent自由辩论并生成共识结论 · 点头像可以和单个Agent私聊");
   }else{
     history.forEach(m=>addChatMsg(m.role,m.text,m));
   }
+  chatUpdateScrollBtn();
 }
 
 /* ==================== 群聊多端同步（手机/电脑互见） ==================== */
@@ -11288,12 +11349,78 @@ function renderChatSyncBadge(merged){
   el.textContent=(on?"☁️ 多端同步已开启":"📴 仅本地")+" · 设备"+n+" · 上次同步 "+t;
   el.style.color=on?"var(--down)":"var(--text-faint)";
 }
+/* ==================== 群聊渲染助手（微信/QQ 范式） ==================== */
+/* 同一角色 5 分钟内的连续消息视为一组：组首条显示头像+昵称，后续只显示气泡 */
+const CHAT_GROUP_WINDOW=5*60*1000;
+/* 纯函数：日期前缀——今天返回空串，昨天返回"昨天"，更早返回"M月D日" */
+function chatDatePrefix(d){
+  const now=new Date(), y=new Date(now.getTime()-86400000);
+  const same=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  if(same(d,now))return "";
+  if(same(d,y))return "昨天";
+  return (d.getMonth()+1)+"月"+d.getDate()+"日";
+}
+/* 纯函数：两条消息之间该不该显示时间分隔条；返回 null 表示不显示 */
+function chatTimeLabel(ts,prevTs){
+  ts=+ts||0; prevTs=+prevTs||0;
+  if(!ts)return null;
+  const d=new Date(ts);
+  const hm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+  const dayKey=x=>x.getFullYear()+"-"+x.getMonth()+"-"+x.getDate();
+  const prefix=chatDatePrefix(d);
+  const full=(prefix?prefix+" ":"")+hm;
+  if(!prevTs)return full;
+  if(dayKey(d)!==dayKey(new Date(prevTs)))return full;
+  if(ts-prevTs>CHAT_GROUP_WINDOW)return hm;
+  return null;
+}
+/* 纯函数：当前消息是否为组首条（无前条 / 角色变化 / 距上条超时） */
+function chatIsGroupHead(cur,prev){
+  if(!prev)return true;
+  if(!cur)return false;
+  if(prev.role!==cur.role)return true; /* 换角色必新起一组 */
+  return ((+cur.ts||0)-(+prev.ts||0))>CHAT_GROUP_WINDOW;
+}
+/* 上一条已渲染消息 {role,ts}：驱动时间分隔与消息分组；重渲染历史前重置 */
+var _chatLastMeta=null;
+var _chatUnread=0;
+function chatAtBottom(){
+  const msgs=document.getElementById("agentChatMessages");
+  if(!msgs)return true;
+  return msgs.scrollHeight-msgs.scrollTop-msgs.clientHeight<40;
+}
+function chatScrollToBottom(smooth){
+  const msgs=document.getElementById("agentChatMessages");
+  if(!msgs)return;
+  if(typeof msgs.scrollTo==="function")msgs.scrollTo({top:msgs.scrollHeight,behavior:smooth?"smooth":"auto"});
+  else msgs.scrollTop=msgs.scrollHeight;
+  _chatUnread=0;
+  chatUpdateScrollBtn();
+}
+/* 回到底部按钮显隐 + 未读计数（上滑查看历史时出现，有新消息时计数） */
+function chatUpdateScrollBtn(){
+  const btn=document.getElementById("chatScrollBtn");
+  if(!btn)return;
+  btn.classList.toggle("show",!chatAtBottom());
+  const badge=btn.querySelector(".chat-scroll-badge");
+  if(badge){
+    badge.textContent=_chatUnread>99?"99+":String(_chatUnread);
+    badge.style.display=_chatUnread>0?"block":"none";
+  }
+}
+/* 发送按钮随输入框空/非空切换禁用态 */
+function chatSendBtnState(){
+  const inp=document.getElementById("agentChatInput");
+  const btn=document.getElementById("chatSendBtn");
+  if(!inp||!btn)return;
+  btn.disabled=inp.value.trim().length===0;
+}
 /* meta 传入时表示"重渲染已有消息"：保留原 id/ts/device，不再写回 localStorage，
    否则每次 loadAgentChatHistory() 都会把整段历史复制一遍（多端同步下尤其致命） */
 function addChatMsg(role,text,meta){
   const msgs=document.getElementById("agentChatMessages");
-  const div=document.createElement("div");
-  
+  if(!msgs)return;
+
   const roleColors={
     user:"#8b5cf6",
     system:"#6b7280",
@@ -11319,25 +11446,72 @@ function addChatMsg(role,text,meta){
 
   const color=roleColors[role]||"#8b949e";
   const name=roleNames[role]||role;
-  const bubbleBg=role==="user"?"rgba(139,92,246,.15)":role==="consensus"?"rgba(16,185,129,.12)":"rgba(255,255,255,.05)";
+  const ts=(meta&&meta.ts)||Date.now();
+  const prev=_chatLastMeta;
+  const isNew=!(meta&&meta.id);
+  const wasBottom=chatAtBottom();
 
-  div.style.cssText=`display:flex;gap:10px;${role==="user"?"flex-direction:row-reverse;":""}`;
-  div.innerHTML=`
-    <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${name[0]}</div>
-    <div style="max-width:75%;${role==="user"?"text-align:right;":""}">
-      <div style="font-size:11px;color:${color};font-weight:600;margin-bottom:3px">${name}</div>
-      <div style="background:${bubbleBg};${role==="consensus"?"border:1px solid rgba(16,185,129,.35);":""}padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text-main)">${linkCodes(escHtml(text).replace(/\n/g,"<br>"))}</div>
-    </div>
-  `;
-  if(meta&&meta.id){
-    /* 重渲染模式：只画气泡，不落库、不推送 */
-    msgs.appendChild(div);
-    msgs.scrollTop=msgs.scrollHeight;
-    return;
+  /* 时间分隔条：首条 / 跨天 / 距上条超 5 分钟 */
+  const tl=chatTimeLabel(ts,prev&&prev.ts);
+  if(tl){
+    const sep=document.createElement("div");
+    sep.className="chat-sep";
+    sep.textContent=tl;
+    if(isNew)sep.classList.add("chat-enter");
+    msgs.appendChild(sep);
   }
+
+  if(role==="system"){
+    /* 系统消息居中（微信范式）：无头像无气泡 */
+    const sys=document.createElement("div");
+    sys.className="chat-sys";
+    if(isNew)sys.classList.add("chat-enter");
+    sys.textContent=text;
+    msgs.appendChild(sys);
+  }else{
+    const isMe=role==="user";
+    const head=chatIsGroupHead({role:role,ts:ts},prev);
+    const row=document.createElement("div");
+    row.className="chat-row"+(isMe?" chat-row-me":"")+(head?"":" chat-row-cont");
+    if(isNew)row.classList.add("chat-enter");
+    if(head){
+      const av=document.createElement("div");
+      av.className="chat-avatar"+(isMe?"":" chat-avatar-link");
+      av.style.background=color;
+      av.textContent=name[0];
+      if(!isMe){
+        /* 点头像进私聊（微信/QQ 范式入口） */
+        av.title="点击私聊 "+name;
+        av.addEventListener("click",function(){privateChatAgent(role);});
+      }
+      row.appendChild(av);
+    }
+    const col=document.createElement("div");
+    col.className="chat-col";
+    if(head){
+      const nm=document.createElement("div");
+      nm.className="chat-name";
+      nm.style.color=color;
+      nm.textContent=name;
+      col.appendChild(nm);
+    }
+    const bub=document.createElement("div");
+    bub.className="chat-bubble"+(head?" chat-bubble-head":"")+(role==="consensus"?" chat-bubble-consensus":"")+(isMe?" chat-bubble-me":"");
+    bub.innerHTML=linkCodes(escHtml(text).replace(/\n/g,"<br>"));
+    col.appendChild(bub);
+    row.appendChild(col);
+    msgs.appendChild(row);
+  }
+
+  _chatLastMeta={role:role,ts:ts};
+  if(wasBottom)chatScrollToBottom();
+  else if(isNew){_chatUnread++;chatUpdateScrollBtn();}
+  else chatUpdateScrollBtn();
+
+  if(meta&&meta.id)return;
   /* 自动保存到localStorage（带消息ID/时间戳/设备标识，供多端合并去重） */
   const history=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]");
-  const msg={id:chatMsgId(),ts:Date.now(),device:chatDeviceId(),role:role,text:text};
+  const msg={id:chatMsgId(),ts:ts,device:chatDeviceId(),role:role,text:text};
   history.push(msg);
   /* 最多保存200条，避免占太多空间 */
   if(history.length>200)history.shift();
@@ -11356,6 +11530,7 @@ async function sendAgentChat(){
 
   addChatMsg("user",text);
   input.value="";
+  chatSendBtnState();
 
   /* 让六个Agent轮流发言：每人带着人设+盘面+群聊历史（含前面同伴的发言）发言，真正做到"讨论" */
   const roles=["D1","D2","D3","D4","D5","D6"];
