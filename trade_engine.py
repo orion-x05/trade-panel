@@ -660,9 +660,9 @@ def send_period_summary(data, kind, market_trend):
     if orig.get(push_key) == period:
         print(f"  ⏭️  {kind} 总结本周期已推送，跳过（防多 cron 重复）")
         return
-    front = load_frontend_simdata()
-    if front:
-        data = front
+    # 【数据源纠正】页面每 30 秒从 ./data.json 同步（syncFromServer），data.json 才是面板真源；
+    # index.html 内联的 embeddedSimData 只是本地无数据时的冷启动种子（当前为 2026-09-23 快照），
+    # 用它计算收益会与面板显示严重不符 —— 不再覆盖。
     data = refresh_assets(data)
     now = cn_now()
     if kind == "week":
@@ -755,9 +755,9 @@ def send_daily_summary(data, market_trend):
     if orig.get("last_daily_push") == today:
         print("  ⏭️  每日收盘总结今日已推送，跳过（防多 cron 重复）")
         return
-    front = load_frontend_simdata()
-    if front:
-        data = front
+    # 【数据源纠正】页面每 30 秒从 ./data.json 同步（syncFromServer），data.json 才是面板真源；
+    # index.html 内联的 embeddedSimData 只是本地无数据时的冷启动种子（当前为 2026-09-23 快照），
+    # 用它计算收益会与面板显示严重不符 —— 不再覆盖。
     data = refresh_assets(data)   # 用实时行情重算，与页面显示一致
     now = cn_now()
     title = f"📊 每日收盘总结 {now.strftime('%m-%d')} 大盘:{('多头' if market_trend=='bull' else '空头' if market_trend=='bear' else '震荡')}"
