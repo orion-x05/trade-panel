@@ -547,6 +547,21 @@ function alertSellSignal(role, stockName, code, price, profit){
   .sim-advice-item b { color:var(--text); }
   .sim-advice-item .a { color:#ffd76e; }
   .sim-sample-info { font-size:11px; color:var(--text-faint); margin:2px 0 8px; }
+  /* ---- AI研究所 · 快捷入口 / Skill总览 ---- */
+  .qc-card { position:relative; background:var(--bg-card); border:1px solid var(--border-soft); border-radius:14px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; overflow:hidden; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .qc-card::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg, var(--qc,#10b981), transparent); }
+  .qc-card:hover { transform:translateY(-2px); border-color:var(--qc,#10b981); box-shadow:0 10px 26px rgba(0,0,0,.35); }
+  .qc-icon { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; background:linear-gradient(135deg, var(--qc,#10b981), var(--qc2,#065f46)); box-shadow:0 4px 12px rgba(0,0,0,.3); flex:none; }
+  .qc-title { font-size:15.5px; font-weight:700; color:var(--text); }
+  .qc-sub { font-size:12px; color:var(--text-faint); margin-top:3px; }
+  .qc-tag { font-size:11px; padding:4px 10px; border-radius:7px; font-weight:600; white-space:nowrap; }
+  .qc-go { color:var(--text-faint); font-size:18px; transition:transform .18s ease, color .18s ease; }
+  .qc-card:hover .qc-go { transform:translateX(4px); color:var(--qc,#10b981); }
+  .chip { padding:7px 16px; border-radius:20px; background:var(--bg-soft); color:var(--text-dim); border:1px solid var(--border); font-size:13px; cursor:pointer; transition:all .15s ease; }
+  .chip:hover { color:var(--text); border-color:var(--text-dim); }
+  .chip.on { background:#10b981; color:#fff; border-color:#10b981; font-weight:600; }
+  .skill-row { padding:14px 10px; border-bottom:1px solid var(--border-soft); border-radius:10px; transition:background .15s ease; }
+  .skill-row:hover { background:rgba(255,255,255,.045); }
   /* ---- 回测结果按角色折叠 ---- */
   .sim-fold { margin:6px 0; border:1px solid var(--border-soft); border-radius:8px; background:rgba(255,255,255,.02); overflow:hidden; }
   .sim-fold-head { display:flex; align-items:center; gap:7px; padding:7px 10px; cursor:pointer; user-select:none; font-size:12.5px; font-weight:600; color:var(--text); }
@@ -1561,7 +1576,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
 
     <!-- 两列布局：左技能矩阵+Skill总览，右雷达+报告+群聊 -->
-    <div class="rwd-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="rwd-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div>
     <!-- Agent 技能矩阵 -->
     <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:14px">
@@ -1649,13 +1664,13 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <!-- Skill 总览 -->
     <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:14px">
       <div style="font-size:16px;font-weight:700;margin-bottom:12px">Skill 总览</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <button style="padding:7px 16px;border-radius:20px;background:#10b981;color:#fff;border:none;font-size:13px;font-weight:600">全部</button>
-        <button style="padding:7px 16px;border-radius:20px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);font-size:13px">数据</button>
-        <button style="padding:7px 16px;border-radius:20px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);font-size:13px">策略</button>
-        <button style="padding:7px 16px;border-radius:20px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);font-size:13px">回测</button>
-        <button style="padding:7px 16px;border-radius:20px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);font-size:13px">交易</button>
-        <button style="padding:7px 16px;border-radius:20px;background:var(--bg-soft);color:var(--text-dim);border:1px solid var(--border);font-size:13px">社区</button>
+      <div id="skillChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="chip on" onclick="filterSkills('全部',this)">全部</button>
+        <button class="chip" onclick="filterSkills('数据',this)">数据</button>
+        <button class="chip" onclick="filterSkills('策略',this)">策略</button>
+        <button class="chip" onclick="filterSkills('回测',this)">回测</button>
+        <button class="chip" onclick="filterSkills('交易',this)">交易</button>
+        <button class="chip" onclick="filterSkills('社区',this)">社区</button>
       </div>
       <div id="skillList" style="display:flex;flex-direction:column;gap:0"></div>
     </div>
@@ -1663,20 +1678,32 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 
     <!-- 右列 -->
     <div>
-    <!-- 快捷入口 -->
-    <div class="quick-cards" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-      <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
-        <div><div style="font-size:15px;font-weight:600">投资机会雷达 · Investment Radar</div></div>
+    <!-- 快捷入口（点卡片即打开对应 Skill 工具） -->
+    <div class="quick-cards" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <div class="qc-card" style="--qc:#10b981;--qc2:#065f46" onclick="openSkillTool(13)" title="录入买入逻辑与失效条件，本地跟踪">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="qc-icon">🎯</div>
+          <div>
+            <div class="qc-title">投资机会雷达 · Investment Radar</div>
+            <div class="qc-sub">录入买入逻辑 + 失效条件 · 逻辑失效即预警</div>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:11px;color:var(--text-faint);background:var(--bg-soft);padding:4px 10px;border-radius:6px">逻辑跟踪 / 失效预警</span>
-          <span style="color:var(--text-faint)">›</span>
+          <span class="qc-tag" style="color:#10b981;background:rgba(16,185,129,.12)">Skill #13 · 点击使用</span>
+          <span class="qc-go">›</span>
         </div>
       </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
-        <div><div style="font-size:15px;font-weight:600">个股深度报告生成器</div></div>
+      <div class="qc-card" style="--qc:#3b82f6;--qc2:#1e40af" onclick="openSkillTool(14)" title="个股每日分析报告 / 四大师价值研究">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="qc-icon">📊</div>
+          <div>
+            <div class="qc-title">个股深度报告生成器</div>
+            <div class="qc-sub">DSA 每日个股分析 · 可切换 ai-berkshire 四大师深度报告</div>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:11px;color:#3b82f6;background:rgba(59,130,246,.12);padding:4px 10px;border-radius:6px">DSA · ai-berkshire</span>
-          <span style="color:var(--text-faint)">›</span>
+          <span class="qc-tag" style="color:#3b82f6;background:rgba(59,130,246,.12)">DSA · ai-berkshire</span>
+          <span class="qc-go">›</span>
         </div>
       </div>
     </div>
@@ -1806,7 +1833,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <span id="rsSource">行情API本机计数：腾讯公开行情</span>
         <span id="rsAvg">综合评分均值 --</span>
       </div>
-      <div id="firePoolBox" class="fire-pool"></div>
     </div>
   </div>
 </section>
@@ -2892,6 +2918,23 @@ function mkChart(id){
   if(!MK_CHARTS[id])MK_CHARTS[id]=echarts.init(el);
   return MK_CHARTS[id];
 }
+/* 图表数据源不可达时的占位提示：避免"一块全白像坏了"。
+   show=true 显示提示；图渲染成功后调用 chartHint(id,false) 隐藏。 */
+function chartHint(id,show,msg){
+  const el=document.getElementById(id);if(!el)return;
+  let h=document.getElementById(id+"_hint");
+  if(show){
+    if(!h){
+      h=document.createElement("div");h.id=id+"_hint";
+      h.style.cssText="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:12px;text-align:center;padding:12px;pointer-events:none;background:repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(255,255,255,.02) 8px,rgba(255,255,255,.02) 16px)";
+      const p=el.parentNode;
+      if(p&&getComputedStyle(p).position==="static")p.style.position="relative";
+      (p||el).appendChild(h);
+    }
+    h.textContent=msg||"⏳ 行情数据源暂不可达（网络/代理波动）· 稍后自动重试";
+    h.style.display="flex";
+  }else if(h){h.style.display="none";}
+}
 function mkPct(v){return (v>=0?"+":"")+v.toFixed(2)+"%";}
 function renderMarketView(){
   if(typeof simData==='undefined'||!simData)return;
@@ -2994,14 +3037,14 @@ function renderMarketView(){
 /* ==================== 情绪面板：走势过程 + 国家队探测 ==================== */
 async function renderSentimentProcess(){
   /* 大盘日K */
-  try{ const k=await txKline("sh000001","day",50); mkRenderKline(k); }catch(e){ console.warn("K线渲染失败",e); }
+  try{ const k=await txKline("sh000001","day",50); mkRenderKline(k); }catch(e){ console.warn("K线渲染失败",e); chartHint("cKline",true); }
   /* 当日分时（过程） */
-  try{ const m=await txMinute("sh000001"); mkRenderIntraday(m); }catch(e){ console.warn("分时渲染失败",e); }
+  try{ const m=await txMinute("sh000001"); mkRenderIntraday(m); }catch(e){ console.warn("分时渲染失败",e); chartHint("cIntraday",true); }
   /* 大盘总体成交量（两市成交量：上证+深证日K成交量，腾讯源，CORS友好） */
   try{
     const [shK,szK]=await Promise.all([txVolKline("sh000001",20),txVolKline("sz399001",20)]);
     mkRenderVol(shK,szK);
-  }catch(e){ console.warn("成交量渲染失败",e); }
+  }catch(e){ console.warn("成交量渲染失败",e); chartHint("cVol",true); }
   /* 国家队资金动向 */
   try{ const nt=await detectNationalTeam(); renderNationalTeam(nt); }catch(e){ console.warn("国家队探测失败",e); }
   /* 通知 agent 群聊：国家队异动作为领先指标 */
@@ -3095,7 +3138,7 @@ function renderNationalTeam(nt){
 }
 /* 日K蜡烛图（含MA5/MA20 + 成交量副图） */
 function mkRenderKline(k){
-  const c=mkChart("cKline"); if(!c||!k||!k.length)return;
+  const c=mkChart("cKline"); if(!c||!k||!k.length){chartHint("cKline",true);return;} chartHint("cKline",false);
   const dates=k.map(x=>x.date), close=k.map(x=>x.close), vol=k.map(x=>x.vol);
   const ma=(arr,n)=>arr.map((_,i)=>i<n-1?null:+(arr.slice(i-n+1,i+1).reduce((s,v)=>s+v,0)/n).toFixed(2));
   c.setOption({
@@ -3115,7 +3158,7 @@ function mkRenderKline(k){
 }
 /* 当日分时（过程） */
 function mkRenderIntraday(m){
-  const c=mkChart("cIntraday"); if(!c||!m||!m.length)return;
+  const c=mkChart("cIntraday"); if(!c||!m||!m.length){chartHint("cIntraday",true);return;} chartHint("cIntraday",false);
   const times=m.map(x=>x.time), price=m.map(x=>x.price);
   c.setOption({
     grid:{left:46,right:12,top:14,bottom:24},
@@ -3127,7 +3170,7 @@ function mkRenderIntraday(m){
 }
 /* 大盘总体成交量（两市成交量·亿手 + MA5） */
 function mkRenderVol(shVol,szVol){
-  const c=mkChart("cVol"); if(!c||!shVol||!shVol.length)return;
+  const c=mkChart("cVol"); if(!c||!shVol||!shVol.length){chartHint("cVol",true);return;} chartHint("cVol",false);
   const n=Math.min(shVol.length,szVol.length);
   const dates=shVol.slice(-n).map(x=>x.date);
   const total=shVol.slice(-n).map((x,i)=>(x.vol+(szVol[i]?szVol[i].vol:0))); // 亿手
@@ -6047,6 +6090,7 @@ function openSkillTool(skillNum){
     body.innerHTML=close+'<h3 style="margin:0 0 4px">daily_stock_analysis · 个股每日分析</h3><p style="color:#7d8ca0;font-size:13px;margin:0 0 14px">AI生成当日分析报告与风险警报</p>'+
       '<input id="dsaCode" placeholder="输入6位股票代码" style="width:100%;padding:11px;border-radius:10px;border:1px solid #2a3a4d;background:#0a0f18;color:#fff;box-sizing:border-box;margin-bottom:10px">'+
       '<button onclick="runDSA()" style="width:100%;padding:12px;border-radius:10px;background:#3b82f6;color:#fff;border:none;font-weight:600;font-size:15px">生成报告</button>'+
+      '<button onclick="openSkillTool(15)" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4);font-weight:600;font-size:13px;cursor:pointer">🧭 切换 ai-berkshire · 四大师深度价值报告 →</button>'+
       '<div id="dsaResult" style="margin-top:14px;font-size:14px;line-height:1.7;white-space:pre-wrap"></div>';
   } else {
     body.innerHTML=close+'<h3 style="margin:0 0 14px">Skill #'+skillNum+'</h3><div style="font-size:14px;color:#dbe4ee;line-height:1.7">此Skill为后端/独立框架组件，作为能力标注展示。<br><br>可直接使用：<br>• #15 ai-berkshire 四大师价值分析<br>• #13 投资机会雷达<br>• #03/#14 个股每日分析<br>• #09 Vibe-Trading（下方群聊）</div>';
@@ -6107,7 +6151,8 @@ function delRadar(i){
   renderRadarList();
 }
 
-function renderSkills(){
+function renderSkills(cat){
+  cat=cat||"全部";
   const box=$("skillList");if(!box)return;
   const skills=[
     {n:"01",name:"TradingAgents",cat:"策略",tag:"共用",color:"#10b981",desc:"多Agent辩论框架，模拟机构投研会议，是群聊研讨的底层引擎"},
@@ -6126,8 +6171,8 @@ function renderSkills(){
     {n:"14",name:"daily_stock_analysis Pro",cat:"数据",tag:"D1/D5/D6",color:"#3b82f6",desc:"个股深度报告引擎，盘后批量生成持仓简报",tool:14},
     {n:"15",name:"ai-berkshire",cat:"策略",tag:"D5",color:"#10b981",desc:"复刻巴菲特、芒格、段永平、李录价值投资框架，输出深度价值研究报告",tool:15}
   ];
-  box.innerHTML=skills.map(s=>`
-    <div onclick="${s.tool?`openSkillTool(${s.tool})`:""}" style="padding:14px 0;border-bottom:1px solid var(--border-soft);cursor:${s.tool?'pointer':'default'}">
+  box.innerHTML=skills.filter(s=>cat==="全部"||s.cat===cat).map(s=>`
+    <div class="skill-row" onclick="${s.tool?`openSkillTool(${s.tool})`:""}" style="cursor:${s.tool?'pointer':'default'}">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
         <span style="color:var(--text-faint);font-size:13px">#${s.n}</span>
         <span style="font-size:16px;font-weight:700">${escHtml(s.name)}</span>
@@ -6136,7 +6181,12 @@ function renderSkills(){
         ${s.tool?'<span style="margin-left:auto;font-size:12px;color:#10b981">点击使用 →</span>':''}
       </div>
       <div style="font-size:13px;color:var(--text-dim);line-height:1.6">${escHtml(s.desc)}</div>
-    </div>`).join("");
+    </div>`).join("")||`<div style="padding:18px 0;font-size:13px;color:var(--text-faint)">该分类暂无 Skill</div>`;
+}
+function filterSkills(cat,btn){
+  document.querySelectorAll("#skillChips .chip").forEach(b=>b.classList.remove("on"));
+  if(btn)btn.classList.add("on");
+  try{renderSkills(cat);}catch(e){console.warn("renderSkills失败",e);}
 }
 
 /* ==================== 六Agent卡片实时状态 + 共识看板（界面层） ==================== */
@@ -7111,32 +7161,37 @@ function updateClock(){
 setInterval(updateClock,1000);
 window.addEventListener("resize",()=>{[eqChart,monthChart,yearChart,sectorChart].forEach(c=>c&&c.resize());});
 
-/* 全局错误捕获：把JS错误显示在页面顶部，方便排查 */
-window.addEventListener("error",(e)=>{
+/* 全局错误捕获：默认只弹一条不打扰的右上角小气泡（不展示原始报错代码/堆栈），
+   完整信息进 console 供排查；外部脚本（行情JSONP被代理/网络掐断）产生的语法噪声只记 console。
+   —— 之前版本把 堆栈/文件/行号 用红条怼在页面顶部，看起来像"页面上跑出一段代码"。 */
+let __errPill=null,__errLast=0;
+function showErrPill(msg){
   try{
-    /* "Script error."且无文件行号 = 跨域脚本错误（行情接口JSONP等），降级为控制台警告，不弹红色条 */
-    if(e.message==="Script error." && (!e.filename || e.filename==="") && (!e.lineno || e.lineno===0)){
-      console.warn("跨域脚本错误（已忽略）:", e.message);
-      return;
-    }
-    const errDiv=document.createElement("div");
-    errDiv.style.cssText="position:fixed;top:0;left:0;right:0;background:#dc2626;color:#fff;padding:12px 16px;z-index:99999;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto";
-    const stack = e.error && e.error.stack ? e.error.stack : '';
-    errDiv.textContent="❌ JS错误："+e.message+"\n文件："+(e.filename||"(跨域脚本，无法显示)")+" 行："+(e.lineno||"")+" 列："+(e.colno||"")+"\necharts状态："+(typeof echarts!=="undefined"?"✅ 已加载":"❌ 未加载")+"\n"+(stack?"堆栈："+stack.slice(0,500):"")+"\n（点击可关闭）";
-    errDiv.onclick=()=>errDiv.remove();
-    document.body.appendChild(errDiv);
+    const now=Date.now();
+    if(now-__errLast<8000)return; /* 8秒内只提示一次，避免刷屏 */
+    __errLast=now;
+    if(__errPill)__errPill.remove();
+    __errPill=document.createElement("div");
+    __errPill.style.cssText="position:fixed;top:12px;right:12px;background:rgba(220,38,38,.92);color:#fff;padding:8px 14px;border-radius:10px;z-index:99999;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer;max-width:70vw";
+    __errPill.textContent=msg;
+    __errPill.onclick=()=>{if(__errPill){__errPill.remove();__errPill=null;}};
+    document.body.appendChild(__errPill);
+    setTimeout(()=>{if(__errPill){__errPill.remove();__errPill=null;}},6000);
   }catch(err){}
+}
+window.addEventListener("error",(e)=>{
+  const external=e.filename&&/^https?:/i.test(e.filename)&&e.filename.indexOf(location.host)<0;
+  if(external||(e.message==="Script error.")){
+    /* 跨域/外部脚本（行情JSONP、统计脚本等）：不弹条，只记控制台 */
+    console.warn("外部脚本异常（已忽略，不影响面板）:", e.message, e.filename||"");
+    return;
+  }
   console.error("全局错误:",e);
+  showErrPill("⚠️ 页面脚本出现一处异常（已记录，行情与面板不受影响）");
 });
 window.addEventListener("unhandledrejection",(e)=>{
-  try{
-    const errDiv=document.createElement("div");
-    errDiv.style.cssText="position:fixed;top:0;left:0;right:0;background:#d97706;color:#fff;padding:12px 16px;z-index:99999;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto";
-    errDiv.textContent="⚠️ Promise错误："+(e.reason&&e.reason.message?e.reason.message:String(e.reason))+"\n（点击可关闭）";
-    errDiv.onclick=()=>errDiv.remove();
-    document.body.appendChild(errDiv);
-  }catch(err){}
   console.error("Promise错误:",e);
+  showErrPill("⚠️ 一个后台请求失败（面板有重试机制兜底）");
 });
 
 window.addEventListener("DOMContentLoaded",()=>{
@@ -7531,8 +7586,6 @@ function calcStopLoss(st){
 function renderResearch(){
   const body=document.getElementById("researchBody");
   if(!body)return; /* 已融合到候选池表 */
-  const fb=document.getElementById("firePoolBox");
-  if(fb){fb.innerHTML="";} /* 卡片网格已合并到候选池表格 */
   const pool=simData&&simData.pricePool?simData.pricePool:{};
   const codes=Object.keys(pool);
   const rows=[];
@@ -9050,7 +9103,7 @@ async function renderGlobal(){
     if(gmkAsset==="sh"){
       if(gmkPath==="min"){
         const m=await txMinute("sh000001");
-        if(!m||!m.length){setGmkStatus(title,null,null,"暂无分时数据");return;}
+        if(!m||!m.length){chartHint("gmkChart",true,"⏳ 分时数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,"暂无分时数据");return;} chartHint("gmkChart",false);
         setGmkStatus(title,m[m.length-1].price,null,"腾讯行情 · 上证分时");
         renderGmkLine(m,"上证指数 · 分时");
       }else{
@@ -9058,17 +9111,20 @@ async function renderGlobal(){
         if(gmkPath==="day"){
           d=await txDay("sh000001",240);frm="腾讯行情 · 上证日K";
           if(!d.length){d=await sinaKlineP(240,240);frm="新浪行情 · 上证日K";}
+          if(!d.length){chartHint("gmkChart",true,"⏳ 日K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
           const last=d[d.length-1],prev=d[d.length-2];
           setGmkStatus(title,last?last.close.toFixed(2):null,prev?((last.close-prev.close)/prev.close*100):null,frm);
           renderGmkK(d,"上证指数 · 日K");
         }else if(gmkPath==="month"){
           d=await txKline("sh000001","month",120);frm="腾讯行情 · 上证月K";
           if(!d.length){d=await sinaKlineP(7200,120);frm="新浪行情 · 上证月K";}
+          if(!d.length){chartHint("gmkChart",true,"⏳ 月K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
           setGmkStatus(title,null,null,frm);
           renderGmkK(d,"上证指数 · 月K");
         }else{
           d=await txKline("sh000001","month",360);frm="腾讯行情 · 上证年K(月K聚合)";
           if(!d.length){d=await sinaKlineP(7200,360);frm="新浪行情 · 上证年K(月K聚合)";}
+          if(!d.length){chartHint("gmkChart",true,"⏳ 年K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
           setGmkStatus(title,null,null,frm);
           renderGmkK(aggK(d,"year"),"上证指数 · 年K");
         }
@@ -9078,7 +9134,7 @@ async function renderGlobal(){
       const src="新浪全球期货 · "+(gmkAsset==="gold"?"伦敦金现货":"国际原油主连");
       if(gmkPath==="min"){
         sinaMin(sym,m=>{
-          if(!m||!m.length){setGmkStatus(title,null,null,src+" · 暂无分时");return;}
+          if(!m||!m.length){chartHint("gmkChart",true,"⏳ 全球分时数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,src+" · 暂无分时");return;} chartHint("gmkChart",false);
           const last=m[m.length-1],first=m[0];
           const chg=last.price&&first.price?((last.price-first.price)/first.price*100):null;
           setGmkStatus(title,last.price.toFixed(2),chg,src+" · 分时");
@@ -9086,7 +9142,7 @@ async function renderGlobal(){
         });
       }else{
         sinaDay(sym,d=>{
-          if(!d||!d.length){setGmkStatus(title,null,null,src+" · 无日K");return;}
+          if(!d||!d.length){chartHint("gmkChart",true,"⏳ 全球日K数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,src+" · 无日K");return;} chartHint("gmkChart",false);
           const last=d[d.length-1],prev=d[d.length-2];
           const chg=prev?((last.close-prev.close)/prev.close*100):null;
           if(gmkPath==="day"){setGmkStatus(title,last.close.toFixed(2),chg,src+" · 日K");renderGmkK(d,(gmkAsset==="gold"?"伦敦金":"国际原油")+" · 日K");}
@@ -9096,6 +9152,7 @@ async function renderGlobal(){
       }
     }
   }catch(err){
+    chartHint("gmkChart",true,"⏳ 行情数据加载失败 · 稍后自动重试");
     setGmkStatus(title,null,null,"数据加载失败:"+err.message);
     if(window.console)console.warn("global market err",err);
   }
