@@ -1068,7 +1068,8 @@ html.modern body{padding:24px 26px 56px;text-wrap:pretty}
 /* ② 间距系统：去拥挤（本次核心）——网格/区块/内边距整体放宽 */
 .modern .mk-grid{gap:18px}
 .modern .mk-mt{margin-top:18px}
-.modern .stats{gap:18px;margin-bottom:22px}
+/* .stats 无 margin-top：它上方的 .mk-grid 也没有下边距，两行会直接贴死 */
+.modern .stats{gap:18px;margin:20px 0 22px}
 .modern .panel{margin-bottom:22px}
 .modern .market-bar{margin-bottom:18px;padding:11px 18px}
 .modern .app-layout{gap:24px}
@@ -1148,7 +1149,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 @media (max-width:768px){
   html.modern body{padding:14px 14px 80px}
   .modern .mk-grid{gap:14px}
-  .modern .stats{gap:12px;margin-bottom:16px}
+  .modern .stats{gap:12px;margin:14px 0 16px}
   .modern .panel{margin-bottom:16px}
   .modern .panel-head{padding:13px 16px}
   .modern .panel-body{padding:14px 15px}
@@ -5294,7 +5295,10 @@ function renderHold(){
 }
 
 function renderPool(){
-  const pt=$("poolBody");pt.innerHTML="";
+  /* 防御：pricePool 未初始化（如冷启动 seeds 未跑）时按空池处理，
+     不让整函数抛错——函数尾部还挂着六步门禁表格的填充逻辑 */
+  if(!simData.pricePool)simData.pricePool={};
+  const pt=$("poolBody");if(pt)pt.innerHTML="";
   const holdSec=new Set();
   simData.players.forEach(p=>p.holdings.forEach(h=>{const s=simData.pricePool[h.code];if(s)holdSec.add(s.sector);}));
   
@@ -5354,21 +5358,24 @@ function renderPool(){
       <td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>
     </tr>`);
   });
-  /* 六步门禁说明表（独立填充，不依赖renderPool） */
-  try{
-    const sb=$("strategyBody");
-    if(sb && !sb.innerHTML.trim()){
-      const STEPS=[
-        ["1 · 市值与数据门禁","流通市值30-500亿；上市>60自然日；沪深京A股、有效证券状态；前复权历史≥260根","ST/退市/次新/缺数据，直接拦截"],
-        ["2 · 流动性门禁","20日日均成交额≥5000万；最新成交量、成交额均为正","成交额不足5000万，仅观察不建仓"],
-        ["3 · 趋势过滤","MA20>MA60；价格≥MA20；均线多头排列","收盘跌破MA20，规则退出"],
-        ["4 · 量价触发","价格突破前20日高点；量比1.2-3；成交量、成交额同步放大","无量突破=假突破，拒绝开仓"],
-        ["5 · 过热控制","RSI6在45-76；过热因子≤70；综合权重：过热40%/动量40%/筹码健康度20%","RSI6≥76 或过热因子>70，回避"],
-        ["6 · 评分与风控","规则分≥70、综合分≥70进入优先研究；AI置信度≥60%；单笔≤25%；每角色最多持仓5只；参考止损7%","置信度<60% / 可用资金不足一手，拦截成交"]
-      ];
-      sb.innerHTML=STEPS.map(s=>'<tr><td style="padding:10px;color:var(--text);font-weight:600;white-space:nowrap">'+s[0]+'</td><td style="padding:10px;color:var(--text-dim);font-size:12px">'+s[1]+'</td><td style="padding:10px;color:var(--text-faint);font-size:12px">'+s[2]+'</td></tr>').join("");
-    }
-  }catch(e){}
+  /* 六步门禁说明表：已抽成独立的 renderSixSteps()（render() 里单独调用），
+     不再依赖 renderPool 的选股管线——管线中途抛错时门禁表也曾跟着空白 */
+  try{renderSixSteps();}catch(e){}
+}
+
+/* 六步门禁说明表（静态规则，独立于任何行情数据，随时可填） */
+function renderSixSteps(){
+  const sb=$("strategyBody");
+  if(!sb||sb.innerHTML.trim())return;
+  const STEPS=[
+    ["1 · 市值与数据门禁","流通市值30-500亿；上市>60自然日；沪深京A股、有效证券状态；前复权历史≥260根","ST/退市/次新/缺数据，直接拦截"],
+    ["2 · 流动性门禁","20日日均成交额≥5000万；最新成交量、成交额均为正","成交额不足5000万，仅观察不建仓"],
+    ["3 · 趋势过滤","MA20>MA60；价格≥MA20；均线多头排列","收盘跌破MA20，规则退出"],
+    ["4 · 量价触发","价格突破前20日高点；量比1.2-3；成交量、成交额同步放大","无量突破=假突破，拒绝开仓"],
+    ["5 · 过热控制","RSI6在45-76；过热因子≤70；综合权重：过热40%/动量40%/筹码健康度20%","RSI6≥76 或过热因子>70，回避"],
+    ["6 · 评分与风控","规则分≥70、综合分≥70进入优先研究；AI置信度≥60%；单笔≤25%；每角色最多持仓5只；参考止损7%","置信度<60% / 可用资金不足一手，拦截成交"]
+  ];
+  sb.innerHTML=STEPS.map(s=>'<tr><td style="padding:10px;color:var(--text);font-weight:600;white-space:nowrap">'+s[0]+'</td><td style="padding:10px;color:var(--text-dim);font-size:12px">'+s[1]+'</td><td style="padding:10px;color:var(--text-faint);font-size:12px">'+s[2]+'</td></tr>').join("");
 }
 
 /* 收益走势分析：全局状态 */
@@ -6092,6 +6099,7 @@ function render(){
   try{renderRank();}catch(e){console.error('renderRank error',e);}
   try{renderHold();}catch(e){console.error('renderHold error',e);}
   try{renderPool();}catch(e){console.error('renderPool error',e);}
+  try{renderSixSteps();}catch(e){console.error('renderSixSteps error',e);}
   try{renderResearch();}catch(e){console.error('renderResearch error',e);}
   try{renderCharts();}catch(e){console.error('renderCharts error',e);}
   try{renderReview();}catch(e){console.error('renderReview error',e);}
