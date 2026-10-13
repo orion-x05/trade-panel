@@ -1151,8 +1151,9 @@ def main():
     # 【每日收盘总结】
     if is_close_time() or FORCE_SUMMARY:
         if FORCE_SUMMARY:
-            print(FORCE_MSG)
-        print("\n📊 收盘时间，发送每日总结...")
+            print("\n🔧 FORCE_SUMMARY=1：忽略时间窗口，强制发送每日总结")
+        else:
+            print("\n📊 收盘时间，发送每日总结...")
         all_codes = set()
         for player in data["players"]:
             for hold in player["holdings"]:
