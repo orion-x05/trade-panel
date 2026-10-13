@@ -2803,6 +2803,16 @@ function fetchRealQuotes(force){
           volume:parseFloat(a[6])||0
         };
         window.idxQuotes[full]=rec;
+        /* 指数也写进 pricePool（用带前缀的完整键 sh000001，避免与个股
+           sz000001 平安银行剥离前缀后的 "000001" 撞键），供情绪温度与
+           「上证涨跌」等展示位直接读取 —— 此前只写 idxQuotes，pricePool
+           里根本没有指数，这些位置恒显示 "--" */
+        if(simData.pricePool){
+          simData.pricePool[full]={
+            code:full,name:rec.name,price:rec.price,prevClose:rec.prevClose,
+            chg:rec.chg,volume:rec.volume,turnover:rec.amount,sector:"指数",industry:"指数",wx:"—"
+          };
+        }
         if(full==="sh000001"){
           simData.index.sh=price;
           simData.index.shPrev=prev>0?prev:(simData.index.shPrev||price);
@@ -2900,7 +2910,9 @@ function renderMarketView(){
   if($("vAvgChg"))$("vAvgChg").textContent=`平均涨跌幅 ${mkPct(avgChg)}`;
   /* 情绪温度：基于大盘指数（上证指数）涨跌幅，-30~+30 */
   let temp=0;
-  const shIdx=simData.pricePool["sh000001"]||simData.pricePool["000001"];
+  /* 上证指数：优先取 idxQuotes（指数专用解析结果），再回退 pricePool 的完整键。
+     注意不能用剥离前缀的 "000001"——那是 sz000001 平安银行的键，会造成串数据 */
+  const shIdx=(window.idxQuotes&&window.idxQuotes["sh000001"])||simData.pricePool["sh000001"]||null;
   if(shIdx&&shIdx.chg!==undefined){
     temp=Math.max(-30,Math.min(30,Math.round(shIdx.chg*10)));
   } else if(n){
