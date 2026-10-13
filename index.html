@@ -2980,7 +2980,9 @@ function fetchRealQuotes(force){
     dynamicQuoteCodes.forEach(c=>allCodes.add(c));
   }else{
     Object.values(TDX_CODES).forEach(c=>{if(typeof c==="string"&&c[0]==="s")allCodes.add(c);});
-    Object.values(EXT_CODES).forEach(c=>allCodes.add((c.startsWith("6")?"sh":"sz")+c));
+    /* EXT_CODES的值本身已带sh/sz前缀（如"600519":"sh600519"），直接加入；
+       曾错误地二次拼接成"szsh600519"→腾讯返回空→67只扩展股永远停留在占位价20.00 */
+    Object.values(EXT_CODES).forEach(c=>{if(typeof c==="string"&&c[0]==="s")allCodes.add(c);});
   }
   /* 6大指数：上证/深证成指/创业板指/科创50/沪深300/中证500 */
   const IDX_FULL=["sh000001","sz399001","sz399006","sh000688","sh000300","sh000905"];
@@ -3008,6 +3010,7 @@ function fetchRealQuotes(force){
           simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:price,prevClose:prevClose,chg:0,ma5:price,ma10:price,ma20:price,ma60:price,stop:price*0.93,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
         }
         const p=simData.pricePool[code];
+        delete p._ph; /* 真实行情已灌入，取消占位标记 */
         const chg=parseFloat(arr[32])||(prevClose?((price-prevClose)/prevClose*100):0);
         p.price=price;
         p.prevClose=prevClose;
@@ -3074,6 +3077,11 @@ function fetchRealQuotes(force){
       if(okCount>0)quotesReady=true;
       /* 真实日K增强：补齐均线/前20日高点/涨停信息，喂给六Agent打分（内部3分钟节流） */
       try{enrichPoolFromKline();}catch(e){}
+      /* 双通道零灌数：明确告知用户当前显示的是初始参考价，而非真实行情 */
+      if(okCount===0){
+        try{log("warn","实时行情获取失败（腾讯无响应，已自动切换东方财富备用源），候选池暂显示初始参考价，请检查网络");}catch(e){}
+        try{if(typeof setPickStatus==="function")setPickStatus("实时行情获取失败，暂显示初始参考价","err");}catch(e){}
+      }
       /* 市场看板刷新 */
             if(typeof renderMarketView==='function')renderMarketView();
       if(typeof renderHold==='function')renderHold();
@@ -3824,14 +3832,21 @@ function emFallback(){
   /* 确保pricePool和index存在 */
   if(!simData.pricePool) simData.pricePool={};
   if(!simData.index) simData.index={sh:3000,shPrev:3000,shChg:0,shUpdate:0};
-  /* 腾讯实时行情失败时：切东方财富 push2 实时（JSONP+CORS，无防盗链） */
-  const codes=Object.keys(TDX_CODES);
-  const secids=codes.map(c=>(TDX_CODES[c].startsWith("sh")?"1":"0")+"."+c).join(",")+",1.000001";
-  const s=document.createElement("script");
-  s.src="https://push2.eastmoney.com/api/qt/ulist.np/get?secids="+secids+"&fields=f2,f3,f12,f14,f18&fltt=2&cb=emqcb&_="+Date.now();
-  s.onload=function(){
-    const d=window.emqcb;try{delete window.emqcb;}catch(e){}
-    if(s.parentNode)s.parentNode.removeChild(s);
+  /* 腾讯实时行情失败时：切东方财富 push2 实时（JSONP+CORS，无防盗链）。
+     注意：必须先定义全局回调再注入script——东财返回的是 emqcb({...}) 可执行脚本，
+     若window.emqcb未定义会直接ReferenceError，兜底通道静默死亡（曾导致候选池永远停留在占位价） */
+  /* 覆盖范围：TDX核心池 + 当前候选池全部 + 选股动态代码（原版只拉TDX，EXT_CODES与动态股会漏）」 */
+  const codes=new Set();
+  Object.keys(TDX_CODES).forEach(c=>codes.add(c));
+  Object.keys(simData.pricePool||{}).forEach(c=>codes.add(c));
+  if(typeof dynamicQuoteCodes!=="undefined")dynamicQuoteCodes.forEach(c=>codes.add(c));
+  const secids=[...codes].map(c=>{
+    if(c.startsWith("sh"))return "1."+c.slice(2);
+    if(c.startsWith("sz"))return "0."+c.slice(2);
+    return (c[0]==="6"?"1":"0")+"."+c;
+  }).join(",")+",1.000001";
+  window.emqcb=function(d){
+    try{delete window.emqcb;}catch(e){}
     try{
       const diff=(d&&d.data&&d.data.diff)||[];
       let ok=0;
@@ -3845,9 +3860,10 @@ function emFallback(){
         const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
         if(!price||price<=0)return;
+        delete p._ph; /* 东财兜底通道灌数成功，取消占位标记 */
         const prev=parseFloat(it.f18)||(price/(1+(chg||0)/100));
         p.price=price; p.chg=chg||0; p.prevClose=prev; p.open=p.open||price;
-        p.ma5=price;p.ma20=price; 
+        p.ma5=price;p.ma20=price;
         p.volume = parseFloat(it.f5)||0; // 成交量（手）
         p.turnover = parseFloat(it.f8)||0; // 换手率
         p.vol = parseFloat(it.f10)||1; // 量比
@@ -3861,7 +3877,16 @@ function emFallback(){
       log("info","行情备用源（东方财富）已接管实时行情");
     }catch(e){}
   };
-  s.onerror=()=>s.remove();
+  const s=document.createElement("script");
+  s.src="https://push2.eastmoney.com/api/qt/ulist.np/get?secids="+secids+"&fields=f2,f3,f12,f14,f18&fltt=2&cb=emqcb&_="+Date.now();
+  s.onload=function(){ if(s.parentNode)s.parentNode.removeChild(s); };
+  /* 兜底也失败：双通道全挂，明确告知用户当前是初始参考价 */
+  s.onerror=()=>{
+    if(s.parentNode)s.parentNode.removeChild(s);
+    try{delete window.emqcb;}catch(e){}
+    try{log("warn","实时行情双通道（腾讯+东方财富）均不可达，候选池暂显示初始参考价，请检查网络或稍后重试");}catch(e){}
+    try{if(typeof setPickStatus==="function")setPickStatus("实时行情获取失败，暂显示初始参考价","err");}catch(e){}
+  };
   document.head.appendChild(s);
 }
 
@@ -3892,6 +3917,7 @@ function initStockPool(){
     const name=STOCK_NAMES[code]||code;
     const wx=wxArr[parseInt(code.slice(-1))%5];
     pool[code]=mk(code,name,"行业龙头","蓝筹白马",wx,20.0,500,1.0,19.5,false,0,50,50,18.5);
+    pool[code]._ph=1; /* 占位标记：真实行情未灌入前，价格/涨跌/量比显示--而非假数据 */
   });
   /* 剔除账户未开通板块的股票，避免无权限标的进入候选池被买入 */
   Object.keys(pool).forEach(code=>{
@@ -4065,6 +4091,7 @@ function load(){
                 const name=STOCK_NAMES[code]||code;
                 const wx=wxArr[parseInt(code.slice(-1))%5];
                 simData.pricePool[code]=mk(code,name,"行业龙头","蓝筹白马",wx,20.0,500,1.0,19.5,false,0,50,50,18.5);
+                simData.pricePool[code]._ph=1; /* 同上：占位标记 */
               }
             });
             simData.poolVersion=2;
@@ -6082,10 +6109,10 @@ function renderPool(){
       <td>${escHtml(st.name)}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
       <td style="color:var(--text-dim)">${escHtml(st.sector||"—")}${st.industry&&st.industry!==st.sector?'/'+escHtml(st.industry):''}</td>
       <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
-      <td class="r num">${(st.price||0).toFixed(2)}</td>
-      <td class="r num ${pctColor(st.chg)}">${pct(st.chg)}</td>
-      <td class="r num">${(st.vol||0).toFixed(2)}</td>
-      <td><span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span></td>
+      <td class="r num">${st._ph?'<span style="color:var(--text-faint)" title="实时行情未获取，显示初始参考价">--</span>':(st.price||0).toFixed(2)}</td>
+      <td class="r num ${pctColor(st.chg)}">${st._ph?'<span style="color:var(--text-faint)">--</span>':pct(st.chg)}</td>
+      <td class="r num">${st._ph?'<span style="color:var(--text-faint)">--</span>':(st.vol||0).toFixed(2)}</td>
+      <td>${st._ph?'<span style="color:var(--text-faint);font-size:11px" title="行情未更新">待更新</span>':`<span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span>`}</td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
       <td class="r num">${over}</td>
       <td class="r num">${mom}</td>
