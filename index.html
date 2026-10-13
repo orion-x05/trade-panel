@@ -2595,6 +2595,9 @@ function fetchRealQuotes(force){
         p.turnover = parseFloat(arr[38])||0; // 换手率（%）
         p.vol = parseFloat(arr[49])||1; // 量比（arr[49]是量比，不是arr[38]）
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
+        /* 日内最低价跟踪（运行最小值）：全局风控闸的"长下影/企稳K线"判断需要；
+           与 dayHigh 同为 30 秒采样近似，缺失时闸函数自动放行不误杀 */
+        if(p.dayLow===undefined||p.dayLow>p.price)p.dayLow=p.price;
         /* 规范化老数据：sectors→sector；补全缺失的五行 */
         if(!p.sector&&p.sectors)p.sector=p.sectors;
         if(!p.industry)p.industry=arr[1]||"";
@@ -3010,6 +3013,7 @@ function emFallback(){
         p.turnover = parseFloat(it.f8)||0; // 换手率
         p.vol = parseFloat(it.f10)||1; // 量比
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
+        if(p.dayLow===undefined||p.dayLow>p.price)p.dayLow=p.price;
         ok++;
       });
       const sh=diff.find(x=>x.f12==="000001");
@@ -3804,6 +3808,13 @@ async function enrichOneFromKline(code){
   }
   /* 参考止损位 7%（与 D4 量价突破确认同口径） */
   st.stop=+((st.price||closes[n-1])*0.93).toFixed(2);
+  /* 全局风控闸用历史基准（与回测引擎同口径）：
+     close5/close10 = 5/10 日前收盘价（追涨拦截），upDays = 截至昨日的连续收阳天数 */
+  st.close5=n>=6?+closes[n-6].toFixed(2):0;
+  st.close10=n>=11?+closes[n-11].toFixed(2):0;
+  let up=0;
+  for(let j=n-1;j>=1;j--){if(closes[j]>closes[j-1])up++;else break;}
+  st.upDays=up;
   st._klineAt=Date.now();
 }
 async function enrichPoolFromKline(){
@@ -3887,6 +3898,64 @@ function volumePriceBreakout(st){
   if(!(st.rsi6>=45&&st.rsi6<=76))return false;           /* RSI6 45-76，避免过热与过弱 */
   if(!(st.stop>0&&st.price>=st.stop))return false;       /* 参考止损7% 之上 */
   return true;
+}
+
+/* ==================== 全局风控闸（实盘 ↔ 回测同口径） ====================
+   回测引擎 buySignal 头部那套全局过滤原先只在回测里生效，实盘管线不过——
+   "回测守则"与"实盘守则"因此不一致。本函数把同一套规则搬到实盘放行前：
+   ① 近5日涨幅>20% 不追   ② 近10日>25% 不追   ③ 较20日低点反弹>30% 不追
+   ④ 连涨≥3天不追         ⑤ 偏离MA5>4% 不追  ⑥ 高位放量长上影不买
+   ⑦ 高位放量十字星/双影线不买  ⑧ 高位放量大阳不追
+   ⑨ 下跌中继拦截（距20日高点回撤>15%或近5日跌幅>12%）：普通反抽阳线拦截，
+      仅"企稳K线"（缩量+长下影/十字星）或低位十字星放行。
+   数据全部来自真实日K增强（close5/close10/upDays/lo20/hi20/ma5）与实时行情
+   （open/chg/vol/dayHigh/dayLow）；任一字段缺失时该项自动跳过——
+   宁可放行也绝不让缺数据变成恒拦截。 */
+function liveGlobalGuard(st){
+  if(!st||!(st.price>0))return{ok:true};
+  const price=st.price,open=(st.open&&st.open>0)?st.open:price,chg=st.chg||0,v=st.vol||1;
+  const ma5=st.ma5||0,hi20=st.hi20||0,lo20=st.lo20||0;
+  const dayHigh=st.dayHigh||0,dayLow=st.dayLow||0;
+  const body=Math.abs(price-open);
+  const isDoji=body>0&&price>0&&(body/price)<0.008;
+  const upperShadow=dayHigh>0?dayHigh-Math.max(price,open):0;
+  const lowerShadow=dayLow>0?Math.min(price,open)-dayLow:0;
+  const isHigh=hi20>0&&price>=hi20*0.95;   /* 高位：贴近20日高点 */
+  const isLow=lo20>0&&price<=lo20*1.05;    /* 低位：贴近20日低点 */
+  /* ① 近5日涨幅>20% 不追 */
+  if(st.close5>0&&(price/st.close5-1)*100>20)
+    return{ok:false,why:"近5日涨幅"+((price/st.close5-1)*100).toFixed(0)+"%·追高风险"};
+  /* ② 近10日涨幅>25% 不追 */
+  if(st.close10>0&&(price/st.close10-1)*100>25)
+    return{ok:false,why:"近10日涨幅"+((price/st.close10-1)*100).toFixed(0)+"%·中期涨幅过大"};
+  /* ③ 距20日低点反弹>30% 不追 */
+  if(lo20>0&&(price/lo20-1)*100>30)
+    return{ok:false,why:"较20日低点反弹"+((price/lo20-1)*100).toFixed(0)+"%·等回调"};
+  /* ④ 连续收阳≥3天不追（含今日，与回测同口径） */
+  const upStreak=(st.upDays||0)+((st.chg||0)>0?1:0);
+  if(upStreak>=3)return{ok:false,why:"连涨"+upStreak+"天·情绪高点等回调"};
+  /* ⑤ 偏离MA5>4% 不追 */
+  if(ma5>0&&(price-ma5)/ma5>0.04)
+    return{ok:false,why:"偏离MA5 "+((price-ma5)/ma5*100).toFixed(1)+"%·等回均线"};
+  /* ⑥ 高位放量长上影线：见顶信号 */
+  if(isHigh&&v>=1.5&&body>0&&upperShadow/body>=1.5)
+    return{ok:false,why:"高位放量长上影·见顶信号"};
+  /* ⑦ 高位放量十字星（实体极小）——典型变盘见顶 */
+  if(isHigh&&v>=1.2&&isDoji)return{ok:false,why:"高位放量十字星·变盘信号"};
+  /* ⑦b 高位放量双长影线（上下影线都远超实体） */
+  if(isHigh&&v>=1.3&&body>0&&upperShadow>body*2&&lowerShadow>body*2)
+    return{ok:false,why:"高位放量双长影·变盘信号"};
+  /* ⑧ 高位放量大阳线不追 */
+  if(isHigh&&v>=1.5&&chg>3)return{ok:false,why:"高位放量大阳·不追高"};
+  /* ⑨ 下跌中继拦截：只有企稳K线或低位十字星放行（无影线数据时不拦，防恒拦截） */
+  let isDeepDrop=false;
+  if(hi20>0&&(hi20-price)/hi20*100>15)isDeepDrop=true;
+  if(st.close5>0&&(price/st.close5-1)*100<-12)isDeepDrop=true;
+  if(isDeepDrop&&!(isLow&&isDoji&&v<1.3)&&dayLow>0){
+    const isStabilize=v<0.8&&(lowerShadow>body*2||isDoji);
+    if(!isStabilize)return{ok:false,why:"下跌中继反抽·需企稳K线（缩量+长下影）才买"};
+  }
+  return{ok:true};
 }
 
 
@@ -4332,10 +4401,18 @@ function tick(){
       /* v2：候选已按角色核心逻辑打分排序（取代按当日涨幅排序） */
       const rawTargets=__rolePicks[p.id];
       /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买 */
-      const t=rawTargets.find(s=>{
+      const kdjPass=s=>{
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
         return s.kdjK!==undefined&&s.kdjD!==undefined&&s.kdjKPrev!==undefined&&s.kdjDPrev!==undefined&&s.kdjK>s.kdjD&&s.kdjKPrev<=s.kdjDPrev;
-      })||null;
+      };
+      /* 全局风控闸（与回测同口径）：追高/下跌中继/高位变盘一律拦截。
+         只在"闸门实际改变了选股结果"时记一条日志，避免每 tick 刷屏。 */
+      const prePick=rawTargets.find(kdjPass)||null;
+      const guarded=rawTargets.filter(s=>{const g=liveGlobalGuard(s);s.__guard=g;return g.ok;});
+      const t=guarded.find(kdjPass)||null;
+      if(prePick&&prePick.__guard&&!prePick.__guard.ok&&(!t||t.code!==prePick.code)){
+        log("warn",`【${p.id}】风控闸改选：${escHtml(prePick.name)}(${prePick.code})被拦（${prePick.__guard.why}）→ ${t?escHtml(t.name)+"("+t.code+")":"本轮回落空"}`);
+      }
       /* 大盘环境驱动买入频率：偏多0.8 / 中性0.6 / 偏空0.3 / 极空0.1 */
       const buyChance=env.score>=65?0.8:env.score>=45?0.6:env.score>=30?0.3:0.1;
       /* 资金流入方向优化：大盘偏空时仅买资金流入板块个股 */

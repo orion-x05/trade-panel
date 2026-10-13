@@ -99,7 +99,9 @@ def is_close_time():
     now = datetime.now()
     if now.weekday() >= 5: return False
     hm = now.hour * 100 + now.minute
-    return 1500 <= hm <= 1510
+    # 收盘总结窗口放宽到 15:00-15:55：GitHub Actions 定时任务排队延迟常见
+    # （原 10 分钟窗口内跑晚就直接改走交易逻辑，每日小结被静默跳过）
+    return 1500 <= hm <= 1555
 
 def get_market_trend():
     """【大盘择时】上证指数趋势判断"""
@@ -398,6 +400,15 @@ def get_stock_info(code):
         ma20_prev = sum(closes[-25:-5]) / 20 if len(closes) >= 25 else ma20  # 5日前的MA20→趋势方向
         highs20 = [float(k[3]) for k in klines[-20:]]
         hi20 = max(highs20) if highs20 else price                          # 前20日高点→突破确认
+        lows20 = [float(k[4]) for k in klines[-20:]]
+        lo20 = min(lows20) if lows20 else price                           # 前20日低点→反弹幅度/低位判断
+        # 全局风控闸历史基准（与前端 liveGlobalGuard 同口径）
+        close5 = closes[-6] if len(closes) >= 6 else 0                    # 5日前收盘→追涨拦截
+        close10 = closes[-11] if len(closes) >= 11 else 0                 # 10日前收盘→追涨拦截
+        up_days = 0                                                       # 截至昨日连续收阳天数
+        for idx in range(len(closes) - 1, 0, -1):
+            if closes[idx] > closes[idx - 1]: up_days += 1
+            else: break
         has_zt5, zt_low, high5 = False, 0.0, price                          # 近5日涨停信息（D6用）
         if len(klines) >= 6:
             highs5 = [float(k[3]) for k in klines[-5:]]
@@ -430,12 +441,14 @@ def get_stock_info(code):
             j = 3 * k - 2 * d
         
         info.update({"ma5": ma5, "ma10": ma10, "ma20": ma20,
-                     "ma60": ma60, "ma20_prev": ma20_prev, "hi20": hi20,
+                     "ma60": ma60, "ma20_prev": ma20_prev, "hi20": hi20, "lo20": lo20,
+                     "close5": close5, "close10": close10, "up_days": up_days,
                      "has_zt5": has_zt5, "zt_low": zt_low, "high5": high5,
                      "rsi6": rsi6, "kdj_k": k, "kdj_d": d, "kdj_j": j})
     except:
         info.update({"ma5": info["price"], "ma10": info["price"], "ma20": info["price"],
                      "ma60": info["price"], "ma20_prev": info["price"], "hi20": info["price"],
+                     "lo20": info["price"], "close5": 0, "close10": 0, "up_days": 0,
                      "has_zt5": False, "zt_low": 0.0, "high5": info["price"],
                      "rsi6": 50, "kdj_k": 50, "kdj_d": 50, "kdj_j": 50})
     return info
@@ -623,6 +636,13 @@ def current_params_line():
 
 # ==================== 周 / 月 总结 ====================
 def send_period_summary(data, kind, market_trend):
+    orig = data
+    now0 = datetime.now()
+    push_key = f"last_{kind}_push"
+    period = now0.strftime("%Y-W%V") if kind == "week" else now0.strftime("%Y-%m")
+    if orig.get(push_key) == period:
+        print(f"  ⏭️  {kind} 总结本周期已推送，跳过（防多 cron 重复）")
+        return
     front = load_frontend_simdata()
     if front:
         data = front
@@ -655,6 +675,7 @@ def send_period_summary(data, kind, market_trend):
     content += f"## 当前策略参数\n{current_params_line()}\n"
     push_report(title, content)
     print(f"  ✅ {label}总结已推送")
+    orig[push_key] = period
 
 # ==================== 前端真实数据源 ====================
 def load_frontend_simdata():
@@ -710,6 +731,13 @@ def trade_date(t):
 
 def send_daily_summary(data, market_trend):
     """【每日收盘总结推送】—— 数据以前端页面为准"""
+    # 跨运行去重：15:00/15:05/15:30 多个 cron 都落在收盘窗口内，
+    # 标记写进 data.json（工作流每次跑完都会上传），同一天只推一次
+    orig = data
+    today = datetime.now().strftime("%Y-%m-%d")
+    if orig.get("last_daily_push") == today:
+        print("  ⏭️  每日收盘总结今日已推送，跳过（防多 cron 重复）")
+        return
     front = load_frontend_simdata()
     if front:
         data = front
@@ -767,6 +795,7 @@ def send_daily_summary(data, market_trend):
 
     push_report(title, content)
     print("  ✅ 每日收盘总结已推送")
+    orig["last_daily_push"] = today
 
     # 周总结（周五收盘） / 月总结（月末最后交易日）
     if is_week_end(now):
@@ -883,6 +912,59 @@ def role_pick_score(role_id, st):
             return 0, []
     return score, why
 
+def global_guard(st):
+    """全局风控闸（与前端 liveGlobalGuard / 回测 buySignal 同口径）：
+    ① 近5日涨幅>20% ② 近10日>25% ③ 较20日低点反弹>30% ④ 连涨≥3天
+    ⑤ 偏离MA5>4% ⑥ 高位放量长上影 ⑦ 高位放量十字星/双长影 ⑧ 高位放量大阳
+    ⑨ 下跌中继拦截（距20日高点回撤>15%或近5日跌幅>12%）：仅企稳K线/低位十字星放行。
+    任一字段缺失时该项自动跳过——宁可放行，绝不让缺数据变成恒拦截。
+    返回 (是否放行, 拦截原因)。"""
+    if not st or not st.get("price"):
+        return True, ""
+    price = st["price"]
+    op = st.get("open") or price
+    chg = st.get("chg") or 0
+    v = st.get("vol_ratio") or 1
+    ma5 = st.get("ma5") or 0
+    hi20 = st.get("hi20") or 0
+    lo20 = st.get("lo20") or 0
+    day_high = st.get("high") or 0
+    day_low = st.get("low") or 0
+    body = abs(price - op)
+    is_doji = body > 0 and price > 0 and (body / price) < 0.008
+    upper = (day_high - max(price, op)) if day_high > 0 else 0
+    lower = (min(price, op) - day_low) if day_low > 0 else 0
+    is_high = hi20 > 0 and price >= hi20 * 0.95
+    is_low = lo20 > 0 and price <= lo20 * 1.05
+    c5 = st.get("close5") or 0
+    c10 = st.get("close10") or 0
+    if c5 > 0 and (price / c5 - 1) * 100 > 20:
+        return False, f"近5日涨幅{(price/c5-1)*100:.0f}%·追高风险"
+    if c10 > 0 and (price / c10 - 1) * 100 > 25:
+        return False, f"近10日涨幅{(price/c10-1)*100:.0f}%·中期涨幅过大"
+    if lo20 > 0 and (price / lo20 - 1) * 100 > 30:
+        return False, f"较20日低点反弹{(price/lo20-1)*100:.0f}%·等回调"
+    up_streak = (st.get("up_days") or 0) + (1 if chg > 0 else 0)
+    if up_streak >= 3:
+        return False, f"连涨{up_streak}天·情绪高点等回调"
+    if ma5 > 0 and (price - ma5) / ma5 > 0.04:
+        return False, f"偏离MA5 {(price-ma5)/ma5*100:.1f}%·等回均线"
+    if is_high and v >= 1.5 and body > 0 and upper / body >= 1.5:
+        return False, "高位放量长上影·见顶信号"
+    if is_high and v >= 1.2 and is_doji:
+        return False, "高位放量十字星·变盘信号"
+    if is_high and v >= 1.3 and body > 0 and upper > body * 2 and lower > body * 2:
+        return False, "高位放量双长影·变盘信号"
+    if is_high and v >= 1.5 and chg > 3:
+        return False, "高位放量大阳·不追高"
+    is_deep_drop = (hi20 > 0 and (hi20 - price) / hi20 * 100 > 15) or \
+                   (c5 > 0 and (price / c5 - 1) * 100 < -12)
+    if is_deep_drop and not (is_low and is_doji and v < 1.3) and day_low > 0:
+        is_stabilize = v < 0.8 and (lower > body * 2 or is_doji)
+        if not is_stabilize:
+            return False, "下跌中继反抽·需企稳K线（缩量+长下影）才买"
+    return True, ""
+
 def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses, strong_sectors, all_players=None):
     role_id = player["id"]
     # 【连续亏损熔断】连续3笔亏损，冷却
@@ -927,6 +1009,11 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
 
         score, reason_parts = role_pick_score(role_id, st)
         reason_parts = list(reason_parts)
+        # 【全局风控闸】与回测/前端同口径：追高/连涨/高位变盘/下跌中继一律拦截
+        guard_ok, guard_why = global_guard(st)
+        if not guard_ok:
+            print(f"  🛡️  {role_id} 风控闸拦截 {st['name']}({code})：{guard_why}")
+            continue
         # 【板块轮动】强势板块加分（前5名强势板块+10分）
         if industry in strong_sectors:
             score += 10
