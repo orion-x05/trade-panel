@@ -1173,7 +1173,12 @@ def main():
         return
 
     if not is_trade_time():
-        print("  ⏸️  非交易时间，退出")
+        # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
+        # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
+        # 持仓市值被忽略，导致面板与推送口径不一致。
+        data = refresh_assets(data)
+        save_data(data)
+        print("  ⏸️  非交易时间（已刷新并保存资产快照），退出")
         return
 
     # 【国家队领先指标】异动强度 → 仓位系数（先于普通情绪反应，应用到实际买入仓位）
