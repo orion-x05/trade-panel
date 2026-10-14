@@ -1070,7 +1070,8 @@ def send_daily_summary(data, market_trend):
 
 # ==================== 交易逻辑 ====================
 def can_sell_t1(hold):
-    return hold["buyTime"][:10] != cn_now().strftime("%Y-%m-%d")
+    bt = hold.get("buyTime") or hold.get("buy_time") or hold.get("buyDate") or hold.get("time") or ""
+    return bt[:10] != cn_now().strftime("%Y-%m-%d")
 
 def check_sell_signals(player, stock_data):
     signals = []
@@ -1078,7 +1079,8 @@ def check_sell_signals(player, stock_data):
     for hold in player["holdings"]:
         if hold["code"] not in stock_data or not can_sell_t1(hold): continue
         st = stock_data[hold["code"]]
-        chg = (st["price"] - hold["buyPrice"]) / hold["buyPrice"] * 100
+        bp = hold.get("buyPrice") or hold.get("cost") or 0
+        chg = (st["price"] - bp) / bp * 100
         if chg <= -role["sl"]: signals.append((hold, f"止损-{abs(chg):.1f}%", 1.0)); continue
         if chg >= role["tp"]: signals.append((hold, f"止盈+{chg:.1f}%", 1.0)); continue
         if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]: signals.append((hold, "跌破MA20+均线走弱", 1.0)); continue
@@ -1356,7 +1358,8 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     stamp = money * 0.001
     total_fee = fee + stamp
     player["cash"] += money - total_fee
-    profit = money - hold["buyPrice"] * sell_qty - total_fee
+    bp = hold.get("buyPrice") or hold.get("cost") or 0
+    profit = money - bp * sell_qty - total_fee
     player["trades"].append({
         "type": "sell", "code": hold["code"], "name": hold["name"],
         "qty": sell_qty, "price": st["price"], "fee": total_fee,
@@ -1376,7 +1379,7 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
         open(push_key, "w").close()
         send_wechat(
             f"📉 {player['id']} 清仓 {hold['name']} {'盈利' if profit>=0 else '亏损'}{abs(profit):.2f}元",
-            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{profit/(hold['buyPrice']*sell_qty)*100:.2f}%\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{profit/(bp*sell_qty)*100:.2f}%\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
     print(f"  ✅ {player['id']} 卖出 {hold['name']} {sell_qty}股 @{st['price']:.2f} 盈亏{profit:.2f}")
 
