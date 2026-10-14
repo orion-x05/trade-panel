@@ -194,49 +194,10 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
 
 /* 推送防重：24小时内同一标题只推一次 */
 /* 像微信消息一样发提醒（WxPusher 极简 SPT，无需订阅） */
-async function sendWeChatAlert(title, desp){
-  if(!_shouldPush(title)){ console.log("推送拦截(24h内重复):",title); return; }
-  const spt=localStorage.getItem("wxpusherSpt")||"";
-  if(!spt){ console.log("WxPusher 未配置(wxpusherSpt 为空)，已跳过推送:",title); return; }
-  const content=`## ${title}\n\n${desp}`;
-  try{
-    const resp=await fetch(`https://wxpusher.zjiecode.com/api/send/message/${spt}/${encodeURIComponent(content)}`);
-    const j=await resp.json();
-    console.log("WxPusher SPT:",title,JSON.stringify(j));
-  }catch(e){
-    console.log("WxPusher SPT 失败:",e);
-  }
-}
 
 /* 买入提醒 */
-function alertBuySignal(role, stockName, code, price, reason){
-  const title = `📈 ${role}买入提醒：${stockName}`;
-  const desp = `### 🟢 买入信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**角色：** ${role}
-**理由：** ${reason}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
 
 /* 卖出提醒 */
-function alertSellSignal(role, stockName, code, price, profit){
-  const title = `📉 ${role}卖出提醒：${stockName}`;
-  const desp = `### 🔴 卖出信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**盈亏：** ${profit >= 0 ? "+" : ""}${profit.toFixed(2)}%
-**角色：** ${role}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
 
 </script>
 <style>
@@ -7410,6 +7371,9 @@ async function renderDetailMinute(code){
         {name:"均价",type:"line",data:avgs,xAxisIndex:0,yAxisIndex:0,smooth:true,showSymbol:false,lineStyle:{color:"#f0a35e",width:1,type:"dashed"}},
         {name:"成交量",type:"bar",data:vols,xAxisIndex:1,yAxisIndex:1,itemStyle:{color:(p)=>prices[p.dataIndex]>=avgs[p.dataIndex]?"#f2555a":"#3ecf8e"}}
       ]
+    });
+  }catch(e){if(window.console)console.warn("renderDetailMinute",e);}
+}
 /* 关闭弹窗：只摘 .show class，交由样式表控制显隐。
    注意：这里早期版本写了 m.style.display="none"（内联样式），它会永久压过
    .modal-mask.show{display:flex}，导致第二次打开时 add("show") 无效 ——
@@ -10987,326 +10951,13 @@ function vixLive(){
 }
 
 
-function openAIConfig(){
-  const currentKey=getDeepSeekKey()||"";
-  const key=prompt("请输入你的DeepSeek API密钥（只保存在你本地浏览器，不会上传）：\n\n没有的话去 https://platform.deepseek.com/ 注册，新用户有免费额度。", currentKey);
-  if(key!==null && key.trim()){
-    localStorage.setItem("deepseekApiKey", key.trim());
-    alert("API密钥已保存！");
-  }
-}
-async function checkDeepSeekBalance(){
-  const apiKey=getDeepSeekKey();
-  if(!apiKey){alert("请先点击⚙️按钮配置DeepSeek API密钥");return;}
-  try{
-    const response=await fetch("https://api.deepseek.com/user/balance",{
-      method:"GET",
-      headers:{"Authorization":"Bearer "+apiKey}
-    });
-    if(!response.ok) throw new Error("查询失败："+response.status);
-    const data=await response.json();
-    let msg="💰 DeepSeek API余额查询\n\n";
-    msg+="账户状态："+(data.is_available?"✅ 正常可用":"❌ 已停用")+"\n";
-    if(data.balance!==undefined){
-      msg+="总余额："+data.balance+" 元\n";
-    }
-    if(data.balance_info && data.balance_info.length){
-      data.balance_info.forEach(info=>{
-        msg+="\n【"+(info.name||"账户")+"】\n";
-        if(info.balance!==undefined) msg+="余额："+info.balance+" 元\n";
-        if(info.created_at) msg+="开通时间："+new Date(info.created_at*1000).toLocaleDateString()+"\n";
-        if(info.expired_at) msg+="到期时间："+new Date(info.expired_at*1000).toLocaleDateString()+"\n";
-      });
-    }
-    msg+="\n💡 分析一只股票约消耗0.05-0.1元";
-    alert(msg);
-  }catch(e){
-    alert("❌ 查询余额失败："+e.message+"\n\n请检查API密钥是否正确，网络是否正常。");
-  }
-}
-async function callDeepSeek(messages, temperature){
-  const apiKey=getDeepSeekKey();
-  if(!apiKey) throw new Error("未配置API密钥，请先点击⚙️按钮配置DeepSeek API密钥");
-  const response=await fetch("https://api.deepseek.com/chat/completions",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
-    body:JSON.stringify({model:"deepseek-chat",messages:messages,temperature:temperature||0.7,max_tokens:2000})
-  });
-  if(!response.ok) throw new Error("API调用失败："+response.status);
-  const data=await response.json();
-  return data.choices[0].message.content;
-}
-function showAIProgress(text){
-  const el=document.getElementById("aiAnalysisProgress");
-  if(el) el.innerHTML=text;
-}
-function addAIResultCard(title, content, color){
-  const container=document.getElementById("aiAnalysisContent");
-  if(!container) return;
-  const card=document.createElement("div");
-  card.style.cssText="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;border-left:3px solid "+(color||"var(--cyan)");
-  card.innerHTML=`<div style="font-weight:600;margin-bottom:8px;color:${color||"var(--cyan)"}">${title}</div><div style="font-size:13px;line-height:1.7;color:var(--text-dim);white-space:pre-wrap">${content}</div>`;
-  container.appendChild(card);
-}
-async function startOnlineAIAnalysis(){
-  const input=document.getElementById("quickSearchInput");
-  const code=input?input.value.trim():"";
-  if(!/^\d{6}$/.test(code)){alert("请先输入6位股票代码");return;}
-  const apiKey=getDeepSeekKey();
-  if(!apiKey){alert("请先点击⚙️按钮配置DeepSeek API密钥");return;}
-  
-  const name=STOCK_NAMES[code]||code;
-  const resultEl=document.getElementById("aiAnalysisResult");
-  const contentEl=document.getElementById("aiAnalysisContent");
-  resultEl.style.display="block";
-  contentEl.innerHTML="";
-  showAIProgress(`🔍 正在分析 ${name}(${code})，请稍候...<br><br>分析流程：技术分析师 → 基本面分析师 → 风险分析师 → 多空辩论 → 综合报告`);
-  
-  try{
-    /* 1. 技术分析师 */
-    showAIProgress(`📊 技术分析师正在分析 ${name} 的K线、均线、指标...`);
-    const techResult=await callDeepSeek([
-      {role:"system",content:"你是一位专业的股票技术分析师，擅长K线形态、均线系统、MACD、KDJ、成交量、支撑压力位分析。请用中文回答，结构清晰，给出明确判断。"},
-      {role:"user",content:`请分析股票 ${name}(${code}) 的技术面：\n1. 当前趋势判断（上升/下降/震荡）\n2. 关键支撑位和压力位\n3. 均线系统状态（MA5/MA10/MA20/MA60）\n4. MACD和KDJ指标信号\n5. 成交量分析\n6. 短期技术面结论（看涨/看跌/中性）\n\n请基于公开的技术分析方法给出你的专业判断。`}
-    ],0.5);
-    addAIResultCard(`📊 技术分析师观点 - ${name}(${code})`, techResult, "#f0a35e");
-    
-    /* 2. 基本面分析师 */
-    showAIProgress(`📈 基本面分析师正在分析 ${name} 的业务、行业、估值...`);
-    const fundResult=await callDeepSeek([
-      {role:"system",content:"你是一位专业的股票基本面分析师，擅长公司业务分析、行业地位判断、财务质量评估、估值分析、成长性预测。请用中文回答，结构清晰，客观中立。"},
-      {role:"user",content:`请分析股票 ${name}(${code}) 的基本面：\n1. 公司主营业务和行业地位\n2. 所属行业的发展前景\n3. 财务质量（盈利能力、偿债能力、运营效率）\n4. 当前估值水平（PE/PB，是否合理）\n5. 成长性和催化剂\n6. 主要风险点\n7. 基本面综合结论（优质/一般/较差）\n\n请基于公开信息和你的专业知识给出判断，注明数据可能存在滞后。`}
-    ],0.5);
-    addAIResultCard(`📈 基本面分析师观点 - ${name}(${code})`, fundResult, "#3ecf8e");
-    
-    /* 3. 风险分析师 */
-    showAIProgress(`⚠️ 风险分析师正在评估 ${name} 的各类风险...`);
-    const riskResult=await callDeepSeek([
-      {role:"system",content:"你是一位专业的股票风险分析师，擅长识别市场风险、行业风险、公司风险、估值风险、流动性风险、黑天鹅风险。请用中文回答，客观谨慎，不回避风险。"},
-      {role:"user",content:`请评估股票 ${name}(${code}) 的投资风险：\n1. 市场系统性风险\n2. 行业政策风险\n3. 公司经营风险\n4. 估值过高风险\n5. 流动性和成交量风险\n6. 潜在黑天鹅事件\n7. 风险等级评定（低/中低/中/中高/高）\n8. 风险控制建议\n\n请全面、客观地列出所有可能的风险点。`}
-    ],0.5);
-    addAIResultCard(`⚠️ 风险分析师观点 - ${name}(${code})`, riskResult, "#f2555a");
-    
-    /* 4. 多空辩论 */
-    showAIProgress(`⚖️ 多空辩论正在进行：多方 vs 空方...`);
-    const debateResult=await callDeepSeek([
-      {role:"system",content:"你是一位专业的投资策略师，擅长多空辩证分析。请同时列出多方观点和空方观点，最后给出综合判断。用中文回答，逻辑清晰，不偏不倚。"},
-      {role:"user",content:`请对股票 ${name}(${code}) 进行多空辩论：\n\n【多方观点】\n列出3-5条看涨的核心理由\n\n【空方观点】\n列出3-5条看跌的核心理由\n\n【关键分歧点】\n多空双方最大的分歧是什么\n\n【综合判断】\n当前是多头占优还是空头占优？给出明确结论。`}
-    ],0.7);
-    addAIResultCard(`⚖️ 多空辩论 - ${name}(${code})`, debateResult, "#8b5cf6");
-    
-    /* 5. 综合报告 */
-    showAIProgress(`📝 正在生成综合投资报告...`);
-    const summaryResult=await callDeepSeek([
-      {role:"system",content:"你是一位资深投资顾问，擅长综合技术面、基本面、风险面给出投资建议。请用中文回答，给出明确的操作建议和仓位建议，同时提示风险。"},
-      {role:"user",content:`请基于以下四位分析师的观点，为股票 ${name}(${code}) 生成一份综合投资报告：\n\n【技术面】${techResult.substring(0,500)}...\n\n【基本面】${fundResult.substring(0,500)}...\n\n【风险面】${riskResult.substring(0,500)}...\n\n【多空辩论】${debateResult.substring(0,500)}...\n\n请给出：\n1. 综合评级（强烈推荐/推荐/中性/谨慎/回避）\n2. 投资逻辑（3条核心理由）\n3. 操作建议（买入/持有/观望/卖出，以及适合的仓位）\n4. 关键价位（支撑位、压力位、止损位）\n5. 风险提示\n\n请给出明确、可执行的建议，不要模棱两可。`}
-    ],0.7);
-    addAIResultCard(`📝 综合投资报告 - ${name}(${code})`, summaryResult, "#06b6d4");
-    
-    showAIProgress(`✅ 分析完成！共5位分析师参与，报告已生成。`);
-    
-  }catch(e){
-    showAIProgress(`❌ 分析失败：${e.message}<br><br>请检查：1. API密钥是否正确 2. 网络是否正常 3. API额度是否用完`);
-    addAIResultCard("❌ 错误", e.message, "#f2555a");
-  }
-}
-function toggleTechFold(){
-  const fold=document.querySelector(".tech-fold");
-  const body=document.getElementById("techFoldBody");
-  if(!fold||!body)return;
-  const open=body.style.display!=="none";
-  body.style.display=open?"none":"block";
-  fold.classList.toggle("open",!open);
-  if(!open){initTech();setTimeout(()=>{if(body.style.display!=="none"){loadTech();techChart&&techChart.resize();}},80);}
-}
 /* 交易知识库折叠/展开通用函数 */
-function toggleKNFold(headEl){
-  const fold=headEl.parentElement;
-  const body=fold.querySelector(".tech-fold-body");
-  if(!fold||!body)return;
-  const open=body.style.display!=="none";
-  body.style.display=open?"none":"block";
-  fold.classList.toggle("open",!open);
-}
-function initTech(){
-  if(window.__techBound)return;window.__techBound=true; /* 只绑定一次，避免重复监听 */
-  const wrap=document.getElementById("techFoldBody");
-  if(!wrap||!simData||!simData.pricePool)return;
-  const sel=document.getElementById("techSel");
-  
-  /* ===== 自选股管理 ===== */
-  const WATCH_KEY="myWatchStocks";
-  function getWatchList(){try{return JSON.parse(localStorage.getItem(WATCH_KEY)||"[]");}catch(e){return[];}}
-  function saveWatchList(list){localStorage.setItem(WATCH_KEY,JSON.stringify(list));}
-  
-  function renderWatchList(){
-    const list=getWatchList();
-    const box=document.getElementById("watchList");
-    if(!box)return;
-    if(!list.length){box.innerHTML='<span style="color:var(--text-faint)">未添加自选股 · 输入代码添加（本地保存）</span>';return;}
-    box.innerHTML=list.map(s=>`
-      <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-hover);border:1px solid var(--border-soft);border-radius:6px;padding:4px 10px;margin:3px 6px 3px 0;font-size:13px">
-        <span style="color:var(--cyan);font-weight:600">${s.code}</span>
-        ${s.name?`<span style="color:var(--text-dim)">${escHtml(s.name)}</span>`:""}
-        <span style="color:var(--text-faint);cursor:pointer;margin-left:4px" onclick="removeWatchStock('${safeCode(s.code)}')" title="删除">✕</span>
-      </span>
-    `).join("");
-  }
-  
-  /* 添加自选股 */
-  const watchInput=document.getElementById("watchInput");
-  const watchAddBtn=document.getElementById("watchAddBtn");
-  if(watchAddBtn&&watchInput){
-    watchAddBtn.addEventListener("click",()=>{
-      const code=watchInput.value.trim();
-      if(!code||!/^\d{6}$/.test(code)){alert("请输入6位数字股票代码");return;}
-      const list=getWatchList();
-      if(list.some(s=>s.code===code)){alert("该股票已在自选股中");return;}
-      /* 尝试从候选池获取名称 */
-      let name="";
-      if(simData.pricePool[code])name=simData.pricePool[code].name;
-      list.push({code,name});
-      saveWatchList(list);
-      watchInput.value="";
-      renderWatchList();
-      refreshTechSel();
-    });
-    watchInput.addEventListener("keydown",e=>{if(e.key==="Enter")watchAddBtn.click();});
-  }
-  
-  /* 暴露删除函数到全局 */
-  window.removeWatchStock=function(code){
-    let list=getWatchList();
-    list=list.filter(s=>s.code!==code);
-    saveWatchList(list);
-    renderWatchList();
-    refreshTechSel();
-  };
-  
-  /* 刷新技术面下拉框（候选池 + 自选股） */
-  function refreshTechSel(){
-    if(!sel)return;
-    const currentCode=sel.value;
-    sel.innerHTML="";
-    /* 先添加候选池股票 */
-    Object.values(simData.pricePool).forEach(st=>{
-      if(!st||!st.code)return;
-      const tx=TDX_CODES[st.code]||(st.code[0]==="6"?"sh":"sz")+st.code;
-      sel.insertAdjacentHTML("beforeend",`<option value="${st.code}" data-tx="${tx}">${escHtml(st.name)}(${st.code})</option>`);
-    });
-    /* 再添加自选股（如果不在候选池里） */
-    const watchList=getWatchList();
-    watchList.forEach(s=>{
-      if(!s||!s.code)return;
-      if(simData.pricePool[s.code])return; /* 候选池里已有就不重复添加 */
-      const tx=TDX_CODES[s.code]||(s.code[0]==="6"?"sh":"sz")+s.code;
-      const name=s.name||"自选股";
-      sel.insertAdjacentHTML("beforeend",`<option value="${s.code}" data-tx="${tx}">${name}(${s.code})</option>`);
-    });
-    /* 恢复选中项 */
-    if(currentCode&&[...sel.options].some(o=>o.value===currentCode))sel.value=currentCode;
-  }
-  
-  /* 初始化下拉框 */
-  refreshTechSel();
-  renderWatchList();
-  
-  if(sel){
-    sel.addEventListener("change",()=>{
-      const o=sel.options[sel.selectedIndex];
-      techStock={code:o.value,name:o.text.split("(")[0],tx:o.dataset.tx};
-      loadTech();
-    });
-    const first=sel.options[0];
-    if(first&&!techStock)techStock={code:first.value,name:first.text.split("(")[0],tx:first.dataset.tx};
-  }
-  
-  wrap.addEventListener("click",e=>{
-    const btn=e.target.closest(".gmk-btn");
-    if(!btn)return;
-    if(btn.id==="techKView")techView="k";else if(btn.id==="techMView")techView="min";else if(btn.id==="techChip")techView="chip";
-    else return;
-    ["techKView","techMView","techChip"].forEach(id=>document.getElementById(id).classList.toggle("active",id===btn.id));
-    loadTech();
-  });
-}
 /* 启动市场消息自动追踪：立即拉取一次，此后每 60 秒自动刷新 */
 fetchNews();
 setInterval(fetchNews,60000);
 /* ===== 外部监控：二级/三级折叠切换 ===== */
-function toggleExt(name){
-  const e=x=>document.getElementById(x);
-  if(name==='main'){
-    const b=e("extBody"),ar=e("extArrow");const open=b.style.display!=="none";
-    b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";return;
-  }
-  const bodyMap={mom:"momBody",vix:"vixBody",lhb:"lhbBody",north:"northBody"};
-  const arrowMap={mom:"momArrow",vix:"vixArrow",lhb:"lhbArrow",north:"northArrow"};
-  const b=e(bodyMap[name]),ar=e(arrowMap[name]);
-  if(!b)return;
-  const open=b.style.display!=="none";
-  b.style.display=open?"none":"block";ar.textContent=open?"▾":"▴";
-  if(!open){
-    if(name==='mom')renderMom();
-    else if(name==='vix')renderVix();
-    else if(name==='lhb')renderLhb();
-    else if(name==='north')renderNorth();
-  }
-}
 /* ---------- 龙虎榜 ---------- */
-async function renderLhb(){
-  const el=document.getElementById("lhbBody");
-  if(!el)return;
-  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
-  try{
-    const url="https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=SECURITY_CODE,SECURITY_NAME_ABBR,TRADE_DATE,EXPLAIN,CLOSE_PRICE,CHANGE_RATE,BILLBOARD_NET_AMT&pageSize=20&pageNumber=1&sortColumns=TRADE_DATE&sortTypes=-1";
-    const r=await fetch(url);
-    const j=await r.json();
-    const data=j.result&&j.result.data?j.result.data:[];
-    if(!data.length){el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">暂无龙虎榜数据</div>';return;}
-    let html='<table style="width:100%;font-size:11px;border-collapse:collapse"><tr style="color:#8b949e;border-bottom:1px solid var(--border-soft)"><th style="padding:4px;text-align:left">股票</th><th style="padding:4px;text-align:right">涨跌</th><th style="padding:4px;text-align:right">净买入</th><th style="padding:4px;text-align:left">原因</th></tr>';
-    data.forEach(item=>{
-      const chg=item.CHANGE_RATE||0;
-      const net=(item.BILLBOARD_NET_AMT||0)/10000;
-      html+=`<tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:4px">${item.SECURITY_NAME_ABBR}</td><td style="padding:4px;text-align:right;color:${chg>=0?'#ef4444':'#22c55e'}">${chg>=0?'+':''}${chg.toFixed(2)}%</td><td style="padding:4px;text-align:right;color:${net>=0?'#ef4444':'#22c55e'}">${net>=0?'+':''}${net.toFixed(0)}万</td><td style="padding:4px;color:#8b949e">${item.EXPLAIN||''}</td></tr>`;
-    });
-    html+='</table>';
-    el.innerHTML=html;
-  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
-}
 /* ---------- 北向资金 ---------- */
-async function renderNorth(){
-  const el=document.getElementById("northBody");
-  if(!el)return;
-  el.innerHTML='<div style="padding:8px;color:#8b949e;font-size:12px">加载中...</div>';
-  try{
-    const url="https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56&ut=b2884a393a59ad64002292a3e90d46a5";
-    const r=await fetch(url);
-    const j=await r.json();
-    const data=j.data||{};
-    const sh=(data.hk2sh&&data.hk2sh.dayNetAmtIn||0)/100000000;
-    const sz=(data.hk2sz&&data.hk2sz.dayNetAmtIn||0)/100000000;
-    const total=sh+sz;
-    const color=total>=0?'#ef4444':'#22c55e';
-    const trend=total>30?'大幅流入 📈':total<-30?'大幅流出 📉':'震荡 🔄';
-    el.innerHTML=`
-      <div style="padding:12px">
-        <div style="font-size:24px;font-weight:700;color:${color};margin-bottom:8px">${total>=0?'+':''}${total.toFixed(2)}亿</div>
-        <div style="font-size:13px;color:#c9d1d9;margin-bottom:12px">北向资金今日净流入 · ${trend}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
-            <div style="font-size:11px;color:#8b949e">沪股通</div>
-            <div style="font-size:16px;font-weight:600;color:${sh>=0?'#ef4444':'#22c55e'}">${sh>=0?'+':''}${sh.toFixed(2)}亿</div>
-          </div>
-          <div style="padding:8px;background:rgba(255,255,255,.03);border-radius:6px">
-            <div style="font-size:11px;color:#8b949e">深股通</div>
-            <div style="font-size:16px;font-weight:600;color:${sz>=0?'#ef4444':'#22c55e'}">${sz>=0?'+':''}${sz.toFixed(2)}亿</div>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:#8b949e">💡 北向资金大幅流入(>30亿)时市场偏多，大幅流出(<-30亿)时偏空</div>
-      </div>`;
-  }catch(e){el.innerHTML='<div style="padding:8px;color:#e06c75;font-size:12px">加载失败</div>';}
-}
 /* ---------- 宝妈指数 ---------- */
 const ROLE_PERSONAS = {
   D1: {
@@ -13001,49 +12652,10 @@ const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "";
 
 /* 推送防重：24小时内同一标题只推一次 */
 /* 像微信消息一样发提醒（WxPusher 极简 SPT，无需订阅） */
-async function sendWeChatAlert(title, desp){
-  if(!_shouldPush(title)){ console.log("推送拦截(24h内重复):",title); return; }
-  const spt=localStorage.getItem("wxpusherSpt")||"";
-  if(!spt){ console.log("WxPusher 未配置(wxpusherSpt 为空)，已跳过推送:",title); return; }
-  const content=`## ${title}\n\n${desp}`;
-  try{
-    const resp=await fetch(`https://wxpusher.zjiecode.com/api/send/message/${spt}/${encodeURIComponent(content)}`);
-    const j=await resp.json();
-    console.log("WxPusher SPT:",title,JSON.stringify(j));
-  }catch(e){
-    console.log("WxPusher SPT 失败:",e);
-  }
-}
 
 /* 买入提醒 */
-function alertBuySignal(role, stockName, code, price, reason){
-  const title = `📈 ${role}买入提醒：${stockName}`;
-  const desp = `### 🟢 买入信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**角色：** ${role}
-**理由：** ${reason}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
 
 /* 卖出提醒 */
-function alertSellSignal(role, stockName, code, price, profit){
-  const title = `📉 ${role}卖出提醒：${stockName}`;
-  const desp = `### 🔴 卖出信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**盈亏：** ${profit >= 0 ? "+" : ""}${profit.toFixed(2)}%
-**角色：** ${role}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
 
 </script>
 <script type="application/json" id="embeddedSimData">{"players": [{"id": "D1", "name": "趋势突破", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D2", "name": "多Agent共识", "cash": 99053.2, "asset": 99053.2, "holdings": [], "trades": [{"type": "buy", "code": "603439", "name": "三力制药", "qty": 1300, "price": 15.19, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "早盘打板买入"}, {"type": "sell", "code": "603439", "name": "三力制药", "qty": 1300, "price": 14.46, "fee": 5, "time": "2026-09-22T01:34:53.000Z", "reason": "高位放量滞涨，清仓离场", "profit": -946.8}], "assetHistory": [100000, 99053.2], "winRate": 0.0, "plRatio": 0.0, "sharpe": 0, "maxDrawdown": 0.0095, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D3", "name": "多空辩论", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D4", "name": "量价共振", "cash": 76040, "asset": 102976, "holdings": [{"code": "000538", "name": "云南白药", "qty": 300, "cost": 51.73, "buyTime": "2026-09-23T02:13:08.000Z", "lots": [{"qty": 300, "price": 51.71, "time": "2026-09-23T02:13:08.000Z"}]}, {"code": "600809", "name": "山西汾酒", "qty": 100, "cost": 114.18, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 100, "price": 114.13, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "001225", "name": "和泰机电", "qty": 700, "price": 45.55, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "量价共振建仓"}, {"type": "sell", "code": "001225", "name": "和泰机电", "qty": 700, "price": 50.07, "fee": 5, "time": "2026-09-22T01:34:15.000Z", "reason": "量价背离，高位滞涨先撤", "profit": 3161.19}, {"type": "buy", "code": "600030", "name": "中信证券", "qty": 500, "price": 27.03, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破平台建仓"}, {"type": "sell", "code": "600030", "name": "中信证券", "qty": 500, "price": 26.75, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -138.38}, {"type": "buy", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.75, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破建仓"}, {"type": "sell", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.57, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -18.06}, {"type": "buy", "code": "000538", "name": "云南白药", "qty": 300, "price": 51.71, "fee": 5, "time": "2026-09-23T02:13:08.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}, {"type": "buy", "code": "600809", "name": "山西汾酒", "qty": 100, "price": 114.13, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}], "assetHistory": [100000, 102976], "winRate": 0.3333333333333333, "plRatio": 40.41, "sharpe": 0, "maxDrawdown": 0.0014, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D5", "name": "趋势回踩", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D6", "name": "涨停回踩", "cash": 83183, "asset": 100000, "holdings": [{"code": "300931", "name": "通用电梯", "qty": 900, "cost": 18.69, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 900, "price": 18.68, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "300931", "name": "通用电梯", "qty": 900, "price": 18.68, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "涨停回调·洗盘缩量站稳：涨停后MA20向上+RSI健康+洗盘缩量"}], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}], "pricePool": {"603439": {"price": 14.46, "chg": -4.8, "industry": "中药", "sectors": "医药"}, "001225": {"price": 50.07, "chg": 10.06, "industry": "通用设备", "sectors": "机械设备"}, "600030": {"price": 26.75, "chg": -1.04, "industry": "证券", "sectors": "金融"}, "000858": {"price": 70.57, "chg": -0.25, "industry": "白酒", "sectors": "食品饮料"}, "000538": {"price": 51.71, "chg": 1.12, "industry": "中药", "sectors": "医药"}, "600809": {"price": 114.13, "chg": 0.95, "industry": "白酒", "sectors": "食品饮料"}, "300931": {"price": 18.68, "chg": 2.34, "industry": "通用设备", "sectors": "机械设备"}}, "sectors": {}, "tickCount": 0, "lastCloseDate": "2026-09-22", "lastDayStr": "2026-09-23", "simDate": "2026-09-23", "dayLabels": ["09-22", "09-23"], "lastRecordKey": "", "version": 12}</script>
