@@ -4033,6 +4033,23 @@ function load(){
               h.buyPrice=totalCost/totalQty;
             }
           });
+          /* 清洗每个玩家的交易记录：归一化时间字段，避免旧版(用 date)或无 time 导致渲染 NaN */
+          if(p.trades&&p.trades.length){
+            p.trades.forEach(t=>{
+              if(!t)return;
+              /* 旧版用 t.date（可能是 Date 对象或字符串）存时间，统一归一到 ISO 字符串 t.time */
+              if((t.time===undefined||t.time===null||t.time==="")&&t.date!==undefined&&t.date!==null&&t.date!==""){
+                t.time=(t.date instanceof Date)?t.date.toISOString():(new Date(t.date).toString()!=="Invalid Date"?new Date(t.date).toISOString():String(t.date));
+              }
+              /* Date 对象也要转成 ISO 字符串，否则后续 new Date() 二次解析不稳定 */
+              if(t.time instanceof Date)t.time=t.time.toISOString();
+              /* 修复凌晨交易时间（00:00-08:59）改成当天 09:30，与 lots 一致 */
+              if(t.time){
+                const lt=new Date(t.time);
+                if(!isNaN(lt)&&lt.getHours()<9){lt.setHours(9,30,0,0);t.time=lt.toISOString();}
+              }
+            });
+          }
         });
         /* 现金校准：修复之前减仓时未加回现金的bug，确保现金不为负 */
         simData.players.forEach(p=>{
@@ -5881,9 +5898,10 @@ function renderRank(){
       const statusCls=isRunning?"running":"done";
       const statusText=isRunning?"运行中":"已完成";
       const sltp=globalAtrParams[p.id]||{sl:2,tp:3};
-      const lastTime=p.trades.length?p.trades[p.trades.length-1].time:now.toISOString();
-      const lastDate=new Date(lastTime);
-      const timeStr=`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`;
+      const lastTrade=p.trades.length?p.trades[p.trades.length-1]:null;
+      const lastRaw=lastTrade?(lastTrade.time||lastTrade.date||lastTrade.buyTime||lastTrade.createdAt):null;
+      const lastDate=lastRaw?new Date(lastRaw):null;
+      const timeStr=(lastDate&&!isNaN(lastDate))?`${lastDate.getMonth()+1}/${lastDate.getDate()} ${String(lastDate.getHours()).padStart(2,"0")}:${String(lastDate.getMinutes()).padStart(2,"0")}`:"—";
       eg.insertAdjacentHTML("beforeend",`
         <div class="engine-card" onclick="openModal('${p.id}')">
           <div class="ec-head">
