@@ -1480,9 +1480,14 @@ def main():
             if hold["code"] in all_stock_data:
                 total_value += all_stock_data[hold["code"]]["price"] * hold["qty"]
         player["asset"] = total_value
-        player["asset_history"].append(total_value)
-        if len(player["asset_history"]) > 252:
-            player["asset_history"] = player["asset_history"][-252:]
+        ah = player.get("assetHistory") or player.get("asset_history")
+        if ah is None:
+            ah = [INIT_CASH]
+        ah.append(total_value)
+        if len(ah) > 252:
+            ah = ah[-252:]
+        player["assetHistory"] = ah
+        player["asset_history"] = ah
         total_return = (total_value - INIT_CASH) / INIT_CASH * 100
         print(f"  {player['id']}: 总资产{total_value:.0f} 收益{total_return:+.2f}%")
     
