@@ -711,19 +711,21 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .ds-refresh{font-size:10px;color:var(--text-faint);white-space:nowrap;flex-shrink:0}
   .ds-refresh b{font-family:var(--mono);color:var(--cyan)}
   .dash-mod-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-  .dm-card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:10px;min-width:0}
-  .dm-head{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-  .dm-id{font-size:10px;font-weight:800;color:#fff;background:linear-gradient(135deg,#3fb6d8,#3b82f6);padding:1px 6px;border-radius:5px;flex-shrink:0}
-  .dm-name{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dm-dir{font-size:10px;padding:1px 7px;border-radius:10px;display:inline-block;background:rgba(148,163,184,.14);color:var(--text-faint)}
-  .dm-dir.on{background:rgba(242,85,90,.14);color:#ff8a8e}
-  .dm-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:7px 0}
-  .dm-metric{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;color:var(--text-faint);gap:4px;min-width:0}
-  .dm-metric b{font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap}
-  .dm-strength{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-faint);border-top:1px dashed var(--border-soft);padding-top:6px}
-  .dm-strength b{font-family:var(--mono);margin-left:auto}
-  .dm-bar{flex:1;height:5px;border-radius:3px;background:var(--border-soft);overflow:hidden;min-width:20px}
-  .dm-bar i{display:block;height:100%;border-radius:3px}
+  .dm-card{background:linear-gradient(145deg,rgba(30,41,59,.8),rgba(15,23,42,.9));border:1px solid var(--border-soft);border-radius:12px;padding:12px;min-width:0;transition:all .2s;position:relative;overflow:hidden}
+  .dm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--rc,#3b82f6)}
+  .dm-card:hover{border-color:var(--rc,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,.15)}
+  .dm-head{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .dm-id{font-size:10px;font-weight:800;color:#fff;background:var(--rc,#3b82f6);padding:2px 7px;border-radius:6px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .dm-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dm-dir{font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;background:rgba(148,163,184,.14);color:var(--text-faint);margin-bottom:6px}
+  .dm-dir.on{background:rgba(242,85,90,.15);color:#ff8a8e;font-weight:600}
+  .dm-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin:8px 0}
+  .dm-metric{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--text-faint);gap:4px;min-width:0}
+  .dm-metric b{font-family:var(--mono);font-size:13px;color:var(--text);white-space:nowrap}
+  .dm-strength{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-faint);border-top:1px dashed var(--border-soft);padding-top:7px}
+  .dm-strength b{font-family:var(--mono);margin-left:auto;font-weight:700}
+  .dm-bar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;min-width:20px}
+  .dm-bar i{display:block;height:100%;border-radius:3px;transition:width .5s ease}
   .tape-bar{display:inline-block;width:60px;vertical-align:middle}
   .tape-dir{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px}
   .tape-dir.buy{background:rgba(242,85,90,.16);color:#ff8a8e}
@@ -6707,7 +6709,7 @@ function renderDashModules(){
     const st=roleStrength(p);
     const stCol=st>=60?"var(--up)":st>=30?"var(--yellow)":"var(--down)";
     const sells=p.trades.filter(t=>t.type==="sell").length;
-    return `<div class="dm-card">
+    return `<div class="dm-card" style="--rc:${PLAYER_COLORS[p.id]||'#3b82f6'}">
       <div class="dm-head"><span class="dm-id">${escHtml(p.id)}</span><span class="dm-name" title="${escHtml(p.name)}">${escHtml(p.name)}</span></div>
       <span class="dm-dir ${hasHold?"on":""}">${hasHold?"持仓中 "+p.holdings.length+"只":"空仓"}</span>
       <div class="dm-metrics">
