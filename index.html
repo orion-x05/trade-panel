@@ -731,7 +731,13 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .tape-time{font-family:var(--mono);font-size:11px;color:var(--text-faint);white-space:nowrap}
   .tape-name small{color:var(--text-faint);margin-left:5px}
   @media (max-width:1200px){ .dash-mod-grid{grid-template-columns:repeat(3,1fr)} }
-  @media (max-width:760px){ .dash-mod-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:760px){
+    .dash-mod-grid{grid-template-columns:repeat(2,1fr)}
+    /* 半宽角色卡放不下两列指标：改单列（标签左/数值右），避免收益胜率交易回撤挤在一起 */
+    .dm-metrics{grid-template-columns:1fr;gap:3px 0}
+    .dm-metric{font-size:11px}
+    .dm-metric b{font-size:12px}
+  }
   /* ===== 每日复盘 · 结构化 ===== */
   .dp-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .dp-date{font-size:12px;color:var(--text-dim);font-family:var(--mono)}
@@ -3783,7 +3789,8 @@ function mkRenderBreadth(s){
   const r5=s.n?s.aboveMA5/s.n:0,r20=s.n?s.aboveMA20/s.n:0;
   c.setOption({
     grid:{left:38,right:10,top:14,bottom:24},
-    tooltip:{trigger:"axis",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt},valueFormatter:v=>(v*100).toFixed(0)+"%"},
+    /* 移动端触屏 tooltip 会卡住不消失、遮挡图形；柱顶已有数值标签，直接去掉 tooltip */
+    tooltip:{show:false},
     xAxis:{type:"category",data:["站上MA5","站上MA20"],axisLabel:{color:MK_C.dim},axisLine:{lineStyle:{color:MK_C.border}}},
     yAxis:{type:"value",min:0,max:1,axisLabel:{color:MK_C.dim,formatter:v=>(v*100)+"%"},splitLine:{lineStyle:{color:MK_C.border,opacity:.4}}},
     series:[{type:"bar",data:[{value:r5,itemStyle:{color:MK_C.blue}},{value:r20,itemStyle:{color:MK_C.purple}}],barWidth:"45%",label:{show:true,position:"top",color:MK_C.txt,formatter:p=>(p.value*100).toFixed(0)+"%"}}]
@@ -3792,10 +3799,13 @@ function mkRenderBreadth(s){
 /* 强弱分层：环形图 */
 function mkRenderTier(t){
   const c=mkChart("cTier");if(!c)return;
+  /* 移动端半宽卡片(~170px)：环图缩小上移、图例缩小，避免图例叠到环上 */
+  const w=c.getWidth?c.getWidth():300;
+  const narrow=w<240;
   c.setOption({
     tooltip:{trigger:"item",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt}},
-    legend:{bottom:0,textStyle:{color:MK_C.dim,fontSize:10},itemWidth:10,itemHeight:10},
-    series:[{type:"pie",radius:["42%","66%"],center:["50%","44%"],avoidLabelOverlap:true,
+    legend:{bottom:0,textStyle:{color:MK_C.dim,fontSize:narrow?9:10},itemWidth:narrow?8:10,itemHeight:narrow?8:10,itemGap:narrow?3:8},
+    series:[{type:"pie",radius:narrow?["36%","56%"]:["42%","66%"],center:narrow?["50%","36%"]:["50%","44%"],avoidLabelOverlap:true,
       label:{show:false},
       data:[
         {name:"强势(>3%)",value:t.strong,itemStyle:{color:MK_C.up}},
