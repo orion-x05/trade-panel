@@ -2687,6 +2687,7 @@ function mkRenderRadar(s){
   const c=mkChart("cRadar");if(!c)return;
   const n=s.n||1;
   const norm=v=>Math.min(1,v/n);
+  const mint="#4ecdc4";
   c.setOption({
     radar:{
       indicator:[
@@ -2697,30 +2698,26 @@ function mkRenderRadar(s){
         {name:"下跌",max:1},
         {name:"平盘",max:1}
       ],
-      radius:"68%",center:["50%","54%"],
-      axisName:{color:"#e8edf5",fontSize:11,fontWeight:600},
-      splitLine:{lineStyle:{color:"rgba(120,140,180,.25)",width:1}},
-      splitArea:{areaStyle:{color:["rgba(99,140,250,.03)","rgba(99,140,250,.07)"]}},
-      axisLine:{lineStyle:{color:"rgba(120,140,180,.3)",width:1}},
-      startAngle:90
+      radius:"65%",center:["50%","52%"],
+      axisName:{color:"#8899aa",fontSize:11,fontWeight:500,padding:[4,6]},
+      splitLine:{lineStyle:{color:"rgba(180,195,215,.3)",width:1}},
+      splitArea:{show:false},
+      axisLine:{lineStyle:{color:"rgba(180,195,215,.3)",width:1}},
+      splitNumber:4
     },
     series:[{
       type:"radar",
       data:[{
         value:[norm(s.up),norm(s.up+s.lu),norm(s.lu*5),norm(s.ld*5),norm(s.down),norm(s.flat)],
         name:"情绪分布",
-        areaStyle:{color:{type:"radial",x:0.5,y:0.5,r:0.5,colorStops:[
-          {offset:0,color:"rgba(99,140,250,.45)"},
-          {offset:1,color:"rgba(99,140,250,.08)"}
-        ]}},
-        lineStyle:{color:"#638cf2",width:2,shadowColor:"rgba(99,140,250,.5)",shadowBlur:8},
-        itemStyle:{color:"#638cf2",borderColor:"#fff",borderWidth:1.5},
-        symbol:"circle",symbolSize:6,
-        label:{show:true,color:"#fff",fontSize:9,fontWeight:600,
-          formatter:p=>(p.value*100).toFixed(0)+"%"}
+        areaStyle:{color:"rgba(78,205,196,.25)"},
+        lineStyle:{color:mint,width:2},
+        itemStyle:{color:"#fff",borderColor:mint,borderWidth:2},
+        symbol:"circle",symbolSize:7,
+        label:{show:true,color:mint,fontSize:10,fontWeight:600,
+          formatter:p=>(p.value*100).toFixed(0)}
       }],
-      animationDuration:800,
-      animationEasing:"cubicOut"
+      animationDuration:600
     }]
   });
 }
