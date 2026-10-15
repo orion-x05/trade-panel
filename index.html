@@ -2989,8 +2989,9 @@ function fetchRealQuotes(force){
         if(!price||price<=0)return;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          const industryName=arr[1]||code;
-          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:price,prevClose:prevClose,chg:0,ma5:price,ma10:price,ma20:price,ma60:price,stop:price*0.93,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
+          /* arr[1]是股票名称不是行业！行业一律取东财f100真实映射，缺失则待分类 */
+          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"");
+          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(arr[1]||code),price:price,prevClose:prevClose,chg:0,ma5:price,ma10:price,ma20:price,ma60:price,stop:price*0.93,volume:0,turnover:0,vol:1,sector:indName||"待分类",industry:indName,wx:wxOfSector(indName||code)};
         }
         const p=simData.pricePool[code];
         delete p._ph; /* 真实行情已灌入，取消占位标记 */
@@ -3017,11 +3018,15 @@ function fetchRealQuotes(force){
         if(p.dayLow===undefined||p.dayLow>p.price)p.dayLow=p.price;
         /* 规范化老数据：sectors→sector；补全缺失的五行 */
         if(!p.sector&&p.sectors)p.sector=p.sectors;
-        if(!p.industry)p.industry=arr[1]||"";
-        if(!p.wx||p.wx==="—"){
-          const mapInd=CODE_INDUSTRY[code];
+        /* 行业真实化：东财f100映射优先，绝不拿股票名(arr[1])冒充行业，也替换占位标签 */
+        const __emi=(typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"";
+        if(!p.industry||p.industry===p.name||p.industry==="蓝筹白马"){
+          if(__emi){p.industry=__emi;if(!p.sector||p.sector==="待分类"||p.sector==="行业龙头")p.sector=__emi;p.wx=wxOfSector(__emi);}
+        }
+        if(!p.wx||p.wx==="—"||p.wx==="待定"){
+          const mapInd=CODE_INDUSTRY[code]||__emi;
           if(mapInd&&(!p.sector||p.sector==="待分类"))p.sector=mapInd;
-          p.wx=(mapInd&&wxOfSector(mapInd))||wxOfSector(p.industry)||wxOfSector(p.sector)||wxOfSector(arr[1])||"—";
+          p.wx=(mapInd&&wxOfSector(mapInd))||wxOfSector(p.industry&&p.industry!==p.name?p.industry:"")||wxOfSector(p.sector&&p.sector!=="待分类"?p.sector:"")||wxOfSector(code)||"—";
         }
         okCount++;
       });
@@ -3060,6 +3065,8 @@ function fetchRealQuotes(force){
       if(okCount>0)quotesReady=true;
       /* 真实日K增强：补齐均线/前20日高点/涨停信息，喂给六Agent打分（内部3分钟节流） */
       try{enrichPoolFromKline();}catch(e){}
+      /* 行业真实化：拉一次f100真实行业映射（内部1小时节流），持仓表行业/五行随之升级 */
+      try{emIndustryFetch(Array.from(allCodes));}catch(e){}
       /* 双通道零灌数：明确告知用户当前显示的是初始参考价，而非真实行情 */
       if(okCount===0){
         try{log("warn","实时行情获取失败（腾讯无响应，已自动切换东方财富备用源），候选池暂显示初始参考价，请检查网络");}catch(e){}
@@ -3152,7 +3159,7 @@ function loadBreadthSnapshot(){
 /* 东财全市场列表（沪深京A股）：一把大请求 + total分页兜底 + 代码去重 */
 async function emClistFullMarket(){
   const fs="m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048"; /* 沪深京A股（含北交所） */
-  const fields="f12,f14,f3,f6";                                   /* 代码/名称/涨跌幅%/成交额(元) */
+  const fields="f12,f14,f3,f6,f100";                              /* 代码/名称/涨跌幅%/成交额(元)/所属行业 */
   const ut="bd1d9ddb04089700cf9c27f6f7426281";
   const mkUrl=(pn,pz)=>`https://push2.eastmoney.com/api/qt/clist/get?cb=__emBreadth&pn=${pn}&pz=${pz}&po=1&np=1&ut=${ut}&fltt=2&invt=2&fid=f12&fs=${fs}&fields=${fields}&_=${Date.now()}`;
   const first=await emJsonp(mkUrl(1,6000),"__emBreadth",25000);
@@ -3172,6 +3179,9 @@ async function emClistFullMarket(){
       if(map.size>=total)break;
     }
   }
+  /* 顺手建立 代码→真实行业 映射（东财f100）：行情建池/持仓表补全行业与五行都用它 */
+  window.EM_INDUSTRY=window.EM_INDUSTRY||{};
+  map.forEach((it,c)=>{if(it&&it.f100)EM_INDUSTRY[String(c)]=String(it.f100);});
   return map.size?[...map.values()]:null;
 }
 /* 全场统计聚合（东财/新浪两个源统一走这里；字段已归一为 code/name/chg/amt(元)） */
@@ -3845,8 +3855,9 @@ function emFallback(){
         const code=it.f12;
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
-          const industryName=it.f14||code;
-          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(industryName),price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:"待分类",industry:sanitizeText(industryName),wx:wxOfSector(industryName)};
+          /* f14同样是股票名称，行业一律取东财f100真实映射 */
+          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"");
+          simData.pricePool[code]={code:safeCode(code),name:sanitizeText(it.f14||code),price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:indName||"待分类",industry:indName,wx:wxOfSector(indName||code)};
         }
         const p=simData.pricePool[code];
         const price=parseFloat(it.f2),chg=parseFloat(it.f3);
@@ -4148,8 +4159,15 @@ function normalizePricePool(){
     if(st.rsi6==null)st.rsi6=50;
     if(st.rps50==null)st.rps50=50;
     if(!st.sector)st.sector=st.industry||"待分类";
-    if(!st.industry)st.industry=st.sector||"待分类";
-    if(!st.wx)st.wx="待定";
+    /* 行业兜底：优先东财f100真实行业；占位标签/股票名一律替换，缺失才显示"待分类" */
+    if(!st.industry||st.industry==="待分类"||st.industry===st.name||st.industry==="蓝筹白马"){
+      const emi=(typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"";
+      if(emi)st.industry=emi;
+      else if(!st.industry)st.industry=(st.sector&&st.sector!=="待分类"&&st.sector!=="行业龙头")?st.sector:"待分类";
+    }
+    if(!st.sector||st.sector==="待分类"||st.sector==="行业龙头"){if(st.industry&&st.industry!=="待分类")st.sector=st.industry;}
+    /* 五行：永远给出确定值（关键词/哈希），不再写"待定" */
+    if(!st.wx||st.wx==="待定"||st.wx==="—")st.wx=wxOfSector(st.industry&&st.industry!=="待分类"?st.industry:code);
   });
 }
 function freshSim(){
@@ -5748,6 +5766,45 @@ const fmtPct=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
 function pct(v,signed=true){const s=v>=0?"+":"";return(signed?s:"")+v.toFixed(2)+"%";}
 function pctColor(v){return v>0?"up":v<0?"down":"flat";}
 function wxClass(wx){return wx==="火"?"wx-huo":wx==="土"?"wx-tu":wx==="金"?"wx-jin":wx==="水"?"wx-shui":"wx-mu";}
+/* 持仓行的行业/五行兜底：只认真实五行值；行业绝不拿股票名/占位标签冒充，缺失显示"待分类" */
+function holdWxInd(h,st){
+  const WX5=["火","土","金","水","木"];
+  const ok=w=>w&&WX5.indexOf(w)>=0;
+  const nm=st&&st.name;
+  const cand=[st&&st.industry,h&&h.industry,st&&st.sector,h&&h.sector].filter(x=>x&&x!=="—"&&x!=="待分类"&&x!==nm&&x!=="蓝筹白马");
+  const ind=cand[0]||"待分类";
+  let wx=ok(h&&h.wx)?h.wx:ok(st&&st.wx)?st.wx:null;
+  if(!wx)wx=wxOfSector(ind!=="待分类"?ind:((st&&st.code)||(h&&h.code))||"—");
+  return{wx,ind};
+}
+function toggleLots(id){document.querySelectorAll('[data-hlot="'+id+'"]').forEach(x=>{x.style.display=x.style.display==='none'?'':'none';});}
+/* 行业真实化专用通道：直接向东财 ulist 要 f100 真实行业（持仓+候选池代码，一小时节流）；
+   不依赖全市场广度列表是否恰好拉过。成功后重渲染，持仓表的行业/五行自动升级 */
+let _emIndAt=0;
+function emIndustryFetch(codes){
+  const now=Date.now();if(now-_emIndAt<3600000)return;_emIndAt=now;
+  const secids=(codes||[]).slice(0,80).map(c=>{
+    const cc=String(c).replace(/^(sh|sz|bj)/,"");
+    const ch=cc.charAt(0);
+    return (ch==="6"||ch==="5"||ch==="9"?"1.":"0.")+cc;
+  }).filter(s=>s.length>3).join(",");
+  if(!secids)return;
+  window.__emIndCb=function(d){
+    try{delete window.__emIndCb;}catch(e){}
+    try{
+      const raw=(d&&d.data&&d.data.diff)||[];
+      const diff=Array.isArray(raw)?raw:Object.values(raw);
+      let n=0;
+      window.EM_INDUSTRY=window.EM_INDUSTRY||{};
+      diff.forEach(it=>{if(it&&it.f12&&it.f100){EM_INDUSTRY[String(it.f12)]=String(it.f100);n++;}});
+      if(n>0){try{render();}catch(e){}}
+    }catch(e){}
+  };
+  const s=document.createElement("script");
+  s.src="https://push2.eastmoney.com/api/qt/ulist.np/get?secids="+secids+"&fields=f12,f100&fltt=2&cb=__emIndCb&_="+Date.now();
+  s.charset="utf-8";
+  document.head.appendChild(s);
+}
 
 function switchTab(name){
   window.scrollTo(0,0);
@@ -6047,17 +6104,29 @@ function renderHold(){
       try{avail=canSell(h,now)?h.qty:0;}catch(e){avail=h.qty;}
       const rowId="hrow_"+(rowIdx++);
       const lots=h.lots||[{price:h.buyPrice,qty:h.qty,time:h.buyTime,reason:h.reason}];
+      /* 行业自愈：东财f100真实行业映射就绪后，把"待分类/占位/股票名"的池条目补成真行业 */
+      if(st&&typeof EM_INDUSTRY!=="undefined"){
+        const emi=EM_INDUSTRY[safeCode(h.code)];
+        if(emi&&(!st.industry||st.industry==="待分类"||st.industry===st.name||st.industry==="蓝筹白马")){
+          st.industry=emi;
+          if(!st.sector||st.sector==="待分类"||st.sector==="行业龙头")st.sector=emi;
+          if(!st.wx||st.wx==="待定"||st.wx==="—")st.wx=wxOfSector(emi);
+        }
+      }
+      const wi=holdWxInd(h,st);
       const lotsHtml=lots.map((l,i)=>{
         const lt=new Date(l.time);
         const ldate=isNaN(lt)?"--":`${lt.getMonth()+1}/${lt.getDate()} ${String(lt.getHours()).padStart(2,"0")}:${String(lt.getMinutes()).padStart(2,"0")}`;
         const lPrice=l.price||0;
-        return `<tr style="background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim)">第${i+1}笔买入</td><td class="r num" style="font-size:11.5px">${l.qty||0}股</td><td class="r num" style="font-size:11.5px">@${lPrice.toFixed(2)}</td><td colspan="9" style="font-size:11.5px;color:var(--text-dim)">${ldate} · ${escHtml(l.reason||"")}</td></tr>`;
+        /* 与主行15列对齐：空(角色)+2(股票/行业)+空(五行)+数量+空(可用)+成本+8(理由)；
+           不再嵌套表格（嵌套表会横向溢出把"600股"截断成"6"），理由超长省略号 */
+        return `<tr data-hlot="${rowId}" style="display:none;background:rgba(0,194,255,.04)"><td></td><td colspan="2" style="font-size:11.5px;color:var(--text-dim);white-space:nowrap">第${i+1}笔买入 · ${ldate}</td><td></td><td class="r num" style="font-size:11.5px;white-space:nowrap">${l.qty||0}股</td><td></td><td class="r num" style="font-size:11.5px;white-space:nowrap">@${lPrice.toFixed(2)}</td><td colspan="8" style="font-size:11.5px;color:var(--text-dim);max-width:0"><div style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(l.reason||"")}</div></td></tr>`;
       }).join("");
-      ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="const d=document.getElementById('${rowId}');d.style.display=d.style.display==='none'?'':'none'">
+      ht.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="toggleLots('${rowId}')">
         <td style="color:${PLAYER_COLORS[p.id]};font-weight:600">${p.id}${lots.length>1?`<span style="color:var(--up);font-size:11px;margin-left:4px">+${lots.length-1}</span>`:""}</td>
         <td><span style="cursor:pointer;color:#58a6ff;text-decoration:underline" onclick="event.stopPropagation();openSidePanel('${safeCode(h.code)}')">${escHtml(h.name)}</span><span style="color:var(--text-faint);font-size:11px"> ${escHtml(h.code)}</span></td>
-        <td style="color:var(--text-dim)">${escHtml((st && st.industry) || h.industry || h.sector || "—")}</td>
-        <td><span class="wx ${wxClass(h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—'))}">${h.wx && h.wx!=='—' ? h.wx : (st && st.wx && st.wx!=='—') ? st.wx : wxOfSector(st.industry||h.industry||'—')}</span></td>
+        <td style="color:var(--text-dim)">${escHtml(wi.ind)}</td>
+        <td><span class="wx ${wxClass(wi.wx)}">${wi.wx}</span></td>
         <td class="r num qty-cell">${h.qty||0}</td>
         <td class="r num qty-cell"><span class="avail">${avail||0}</span></td>
         <td class="r num">${(h.buyPrice||0).toFixed(2)}</td>
@@ -6069,7 +6138,7 @@ function renderHold(){
         <td class="r num">${posPct.toFixed(1)}%</td>
         <td class="r num">${days}</td>
         <td style="font-size:11.5px;color:var(--text-dim)">${escHtml(holdReason(p,h)||"—")}</td>
-      </tr><tr id="${rowId}" style="display:none">${lotsHtml.replace(/<tr/g,'<td colspan="15" style="padding:0"><table style="width:100%;background:transparent"><tr').replace(/<\/tr>/g,'</tr></table></td></tr>')}</tr>`);
+      </tr>${lotsHtml}`);
     });
   });
   if(!any)ht.innerHTML=`<tr><td colspan="15" style="text-align:center;color:var(--text-faint);padding:24px">当前全角色空仓 · 引擎将在交易时段自动开仓（或点"跳过休市"立即运行）</td></tr>`;
