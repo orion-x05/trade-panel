@@ -2683,10 +2683,12 @@ function mkRenderDist(stocks){
   });
 }
 /* 情绪雷达 */
-function mkRenderRadar(s){
+function mkRenderRadar(s,isMarket){
   const c=mkChart("cRadar");if(!c)return;
   const n=s.n||1;
   const norm=v=>Math.min(1,v/n);
+  const luV=isMarket?Math.min(1,(s.lu||0)/100):norm((s.lu||0)*5);
+  const ldV=isMarket?Math.min(1,(s.ld||0)/100):norm((s.ld||0)*5);
   c.setOption({
     radar:{
       indicator:[{name:"上涨",max:1},{name:"活跃",max:1},{name:"涨停",max:1},{name:"跌停",max:1},{name:"下跌",max:1},{name:"平盘",max:1}],
@@ -2696,7 +2698,7 @@ function mkRenderRadar(s){
       splitArea:{areaStyle:{color:["rgba(255,255,255,.02)","rgba(255,255,255,.04)"]}},
       axisLine:{lineStyle:{color:MK_C.border,opacity:.6}}
     },
-    series:[{type:"radar",data:[{value:[norm(s.up),norm(s.up+s.lu),norm(s.lu*5),norm(s.ld*5),norm(s.down),norm(s.flat)],
+    series:[{type:"radar",data:[{value:[norm(s.up),norm(s.up+s.lu),luV,ldV,norm(s.down),norm(s.flat)],
       areaStyle:{color:"rgba(59,130,246,.25)"},lineStyle:{color:MK_C.blue},itemStyle:{color:MK_C.blue}}]}]
   });
 }
