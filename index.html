@@ -249,6 +249,8 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .mk-grid{display:grid;gap:12px}
   .mk-g6{grid-template-columns:repeat(6,1fr)}
   .mk-g4{grid-template-columns:repeat(4,1fr)}
+  .mk-g2{grid-template-columns:repeat(2,1fr)}
+  .mk-card-head .mk-card-tip{font-size:11px;color:var(--text-faint);margin-left:auto}
   .mk-mt{margin-top:12px}
   .mk-metric{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;min-width:0}
   .mk-accent-up{border-left:3px solid var(--up)}
@@ -265,6 +267,7 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   @media (max-width:768px){
     .mk-g6{grid-template-columns:repeat(2,1fr)}
     .mk-g4{grid-template-columns:1fr}
+    .mk-g2{grid-template-columns:1fr}
     .mk-metric .m-value{font-size:18px}
     .mk-chart{height:220px}
   }
@@ -1470,6 +1473,13 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
   </div>
 
+  <div class="mk-grid mk-g2 mk-mt">
+    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业涨幅排行</div><span class="mk-card-tip">按行业平均涨跌幅 · 红涨绿跌</span></div>
+      <div class="mk-card-body"><div class="mk-chart" id="cSectorRank" style="height:320px"></div></div></div>
+    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业成交分布</div><span class="mk-card-tip">按行业成交额占比</span></div>
+      <div class="mk-card-body"><div class="mk-chart" id="cSectorAmt" style="height:320px"></div></div></div>
+  </div>
+
   <section class="stats">
     <div class="stat-card">
       <div class="stat-label">运行角色</div>
@@ -2075,6 +2085,27 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="panel-tip">基于候选池实时行情统计 · 涨跌家数 / 红盘率 / 涨跌停 / 板块强弱</span>
     </div>
     <div class="panel-body" id="reviewSentiment"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">指数行情对比</span>
+      <span class="panel-tip">六大指数实时点位 / 涨跌幅 · 红涨绿跌</span>
+    </div>
+    <div class="panel-body" id="reviewIdxCompare"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">强势 / 弱势方向</span>
+      <span class="panel-tip">行业均涨幅前6 / 后6 · 领涨领跌个股</span>
+    </div>
+    <div class="panel-body" id="reviewDirections"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">赚钱 / 亏钱效应</span>
+      <span class="panel-tip">涨幅居前 / 跌幅居前个股 · 实时</span>
+    </div>
+    <div class="panel-body" id="reviewEffect"></div>
   </div>
   <div class="panel">
     <div class="panel-head">
@@ -2903,8 +2934,89 @@ const AGENT_DETAILS = {
 /* ==================== 股票池（数据层：上传版） ==================== */
 /* 代码→行业关键词：腾讯只给公司简称、无法从名称判断行业时用此映射 */
 const CODE_INDUSTRY={
-  "600300":"食品饮料","600970":"建材工程建筑","600998":"医药商业流通",
-  "603883":"医药零售药店","002021":"专用设备缝制机械","000533":"电气设备输变电"
+  "002575":"文娱传媒",
+  "300756":"旅游酒店",
+  "300931":"专用设备",
+  "002021":"专用设备",
+  "001225":"专用设备",
+  "300022":"农机",
+  "600496":"钢结构",
+  "600970":"工程服务",
+  "603439":"中药",
+  "600968":"油气",
+  "605388":"食品饮料",
+  "600300":"食品饮料",
+  "601997":"银行",
+  "600998":"医药商业",
+  "603883":"医药商业",
+  "000533":"电气设备",
+  "600519":"白酒",
+  "000858":"白酒",
+  "600887":"乳制品",
+  "603288":"调味品",
+  "600809":"白酒",
+  "600276":"化学制药",
+  "000538":"中药",
+  "300760":"医疗器械",
+  "603259":"CXO",
+  "300750":"电池",
+  "002594":"汽车整车",
+  "600438":"光伏",
+  "002460":"能源金属",
+  "300274":"光伏设备",
+  "601012":"光伏",
+  "688981":"半导体",
+  "002371":"半导体设备",
+  "603986":"半导体",
+  "688012":"半导体设备",
+  "002049":"半导体",
+  "002230":"软件",
+  "688111":"软件",
+  "300308":"通信设备",
+  "603019":"计算机设备",
+  "000977":"计算机设备",
+  "002415":"计算机设备",
+  "600941":"通信运营",
+  "601728":"通信运营",
+  "600050":"通信运营",
+  "601899":"工业金属",
+  "600111":"稀土",
+  "603993":"工业金属",
+  "601600":"工业金属",
+  "600547":"黄金",
+  "601088":"煤炭",
+  "600188":"煤炭",
+  "601225":"煤炭",
+  "600104":"汽车整车",
+  "601633":"汽车整车",
+  "000625":"汽车整车",
+  "600150":"船舶制造",
+  "600893":"航空装备",
+  "002179":"军工电子",
+  "601989":"船舶制造",
+  "601668":"房屋建设",
+  "600585":"水泥",
+  "000333":"家电",
+  "600690":"家电",
+  "600600":"啤酒",
+  "000002":"房地产",
+  "600048":"房地产",
+  "000876":"养殖业",
+  "300498":"养殖业",
+  "601318":"保险",
+  "600036":"银行",
+  "601398":"银行",
+  "600030":"证券",
+  "002304":"白酒",
+  "000807":"工业金属",
+  "000537":"电力",
+  "600863":"电力",
+  "600475":"环保设备",
+  "000722":"电力",
+  "605162":"电力",
+  "300062":"电气设备",
+  "600468":"电气设备",
+  "601616":"电气设备",
 };
 function wxOfSector(sec){
   sec=String(sec||"未知");if(sec==="—")sec="未知";
@@ -3042,7 +3154,7 @@ function fetchRealQuotes(force){
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
           /* arr[1]是股票名称不是行业！行业一律取东财f100真实映射，缺失则待分类 */
-          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"");
+          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||CODE_INDUSTRY[code]||"");
           simData.pricePool[code]={code:safeCode(code),name:sanitizeText(arr[1]||code),price:price,prevClose:prevClose,chg:0,ma5:price,ma10:price,ma20:price,ma60:price,stop:price*0.93,volume:0,turnover:0,vol:1,sector:indName||"待分类",industry:indName,wx:wxOfSector(indName||code)};
         }
         const p=simData.pricePool[code];
@@ -3062,6 +3174,7 @@ function fetchRealQuotes(force){
         if(p.ma60===undefined)p.ma60=price;
         if(p.stop===undefined)p.stop=price*0.93;
         p.volume = parseFloat(arr[6])||0; // 成交量（手）
+        p.amount = parseFloat(arr[37])||p.amount||0; // 成交额（万元）
         p.turnover = parseFloat(arr[38])||0; // 换手率（%）
         p.vol = parseFloat(arr[49])||1; // 量比（arr[49]是量比，不是arr[38]）
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
@@ -3070,10 +3183,12 @@ function fetchRealQuotes(force){
         if(p.dayLow===undefined||p.dayLow>p.price)p.dayLow=p.price;
         /* 规范化老数据：sectors→sector；补全缺失的五行 */
         if(!p.sector&&p.sectors)p.sector=p.sectors;
-        /* 行业真实化：东财f100映射优先，绝不拿股票名(arr[1])冒充行业，也替换占位标签 */
+        /* 行业真实化：东财f100映射优先，静态表次之；绝不拿股票名(arr[1])冒充行业，也替换占位标签 */
         const __emi=(typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"";
-        if(!p.industry||p.industry===p.name||p.industry==="蓝筹白马"){
-          if(__emi){p.industry=__emi;if(!p.sector||p.sector==="待分类"||p.sector==="行业龙头")p.sector=__emi;p.wx=wxOfSector(__emi);}
+        const __mapInd=CODE_INDUSTRY[code]||"";
+        if(!p.industry||p.industry===p.name||p.industry==="蓝筹白马"||p.industry==="待分类"){
+          const realInd=__emi||__mapInd||"";
+          if(realInd){p.industry=realInd;if(!p.sector||p.sector==="待分类"||p.sector==="行业龙头")p.sector=realInd;p.wx=wxOfSector(realInd);}
         }
         if(!p.wx||p.wx==="—"||p.wx==="待定"){
           const mapInd=CODE_INDUSTRY[code]||__emi;
@@ -3154,6 +3269,7 @@ const MK_IDX=[
 ];
 const MK_CHARTS={};
 const MK_C={up:"#f2555a",down:"#3ecf8e",blue:"#3b82f6",amber:"#f59e0b",purple:"#8b5cf6",txt:"#dbe4ee",dim:"#7d8ca0",faint:"#55637a",border:"#233040"};
+const MK_PALETTE=["#f2555a","#3ecf8e","#e8b339","#3fb6d8","#8b5cf6","#ec4899","#10b981","#f97316","#3b82f6","#a3e635","#f43f5e","#14b8a6"];
 function mkChart(id){
   const el=$(id);if(!el||!window.echarts)return null;
   /* 隐藏 tab 内的元素尺寸为 0：此时 init 会得到 0×0 画布且被 MK_CHARTS 缓存，
@@ -3411,6 +3527,7 @@ function renderMarketView(){
   try{renderDashStatus();renderDashModules();renderSignalTape();}catch(e){console.warn("总览Dashboard渲染失败",e);}
   renderSentimentProcess();   /* 异步加载 K线/分时/成交量/国家队，不阻塞主面板 */
   refreshMarketBreadth();     /* 全场宽度异步刷新，到场后自动重绘（TTL 60s/移动180s） */
+  try{renderSectorBoards();}catch(e){console.warn("行业看板渲染失败",e);}
 }
 /* 图表卡标题标注数据口径 */
 function mkCardTitle(chartId,txt){
@@ -3881,6 +3998,52 @@ function mkRenderTier(t){
       ]}]
   });
 }
+/* 行业涨幅排行 + 行业成交分布（候选池按真实行业聚合 · 红涨绿跌） */
+function renderSectorBoards(){
+  const pool=Object.values(simData.pricePool||{}).filter(s=>s&&s.price>0);
+  if(!pool.length)return;
+  const map={};
+  pool.forEach(s=>{
+    const sec=(s.industry&&s.industry!=="待分类")?s.industry:(s.sector||"待分类");
+    if(!map[sec])map[sec]={sum:0,n:0,amt:0,stocks:[]};
+    const g=map[sec];
+    g.sum+=(s.chg||0);g.n++;g.amt+=(s.amount||0);g.stocks.push(s);
+  });
+  let list=Object.entries(map).map(([name,g])=>({name,...g}));
+  if(!list.length)return;
+  /* 涨幅排行：均涨幅降序，正取前10负取前8，不足补齐 */
+  const ranked=[...list].sort((a,b)=>(b.sum/b.n)-(a.sum/a.n));
+  const top=ranked.slice(0,10),bottom=ranked.slice(-8).reverse();
+  let items=top.concat(bottom.filter(x=>!top.includes(x))).slice(0,18);
+  const c1=mkChart("cSectorRank");if(c1){
+    c1.setOption({
+      grid:{left:72,right:36,top:10,bottom:24},
+      tooltip:{trigger:"axis",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt,fontSize:11},axisPointer:{type:"shadow"}},
+      xAxis:{type:"value",axisLabel:{color:MK_C.dim,fontSize:10},splitLine:{lineStyle:{color:MK_C.border,opacity:.35}}},
+      yAxis:{type:"category",data:items.map(i=>i.name),axisLabel:{color:MK_C.txt,fontSize:10.5},axisLine:{lineStyle:{color:MK_C.border}}},
+      series:[{type:"bar",data:items.map(i=>{const v=+(i.sum/i.n).toFixed(2);
+        return {value:v,itemStyle:{color:v>=0?MK_C.up:MK_C.down,borderRadius:v>=0?[0,3,3,0]:[3,0,0,3]},
+          label:{show:true,position:"right",color:MK_C.txt,fontSize:10,formatter:p=>p.value.toFixed(2)+"%",distance:4}};
+      }),barWidth:13}]
+    });
+  }
+  /* 成交分布：环形饼图，按成交额（万元），取前7+其他 */
+  const amtList=[...list].sort((a,b)=>b.amt-a.amt);
+  const amtTop=amtList.slice(0,7),amtRest=amtList.slice(7);
+  const restAmt=amtRest.reduce((s,g)=>s+g.amt,0);
+  const pieData=amtTop.map(g=>({name:g.name,value:+(g.amt/1e4).toFixed(0)||1,itemStyle:{color:MK_PALETTE[amtTop.indexOf(g)%MK_PALETTE.length]}}));
+  if(restAmt>0)pieData.push({name:"其他",value:+(restAmt/1e4).toFixed(0)||1,itemStyle:{color:MK_C.dim}});
+  const c2=mkChart("cSectorAmt");if(c2){
+    const w=c2.getWidth?c2.getWidth():300,narrow=w<260;
+    c2.setOption({
+      tooltip:{trigger:"item",backgroundColor:"#151d28",borderColor:MK_C.border,textStyle:{color:MK_C.txt,fontSize:11},formatter:p=>`${p.name}<br/>${(p.value*1e4).toLocaleString()} 万 · ${p.percent}%`},
+      legend:{bottom:0,textStyle:{color:MK_C.dim,fontSize:narrow?9:10},itemWidth:narrow?8:10,itemHeight:narrow?8:10,itemGap:narrow?3:6,type:"scroll"},
+      series:[{type:"pie",radius:narrow?["32%","52%"]:["38%","62%"],center:narrow?["50%","34%"]:["50%","42%"],
+        label:{show:false},labelLine:{show:false},data:pieData}]
+    });
+  }
+}
+
 function emFallback(){
   /* 确保pricePool和index存在 */
   if(!simData.pricePool) simData.pricePool={};
@@ -3908,7 +4071,7 @@ function emFallback(){
         /* 如果pricePool里没有这只股票，自动创建 */
         if(!simData.pricePool[code]){
           /* f14同样是股票名称，行业一律取东财f100真实映射 */
-          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||"");
+          const indName=sanitizeText((typeof EM_INDUSTRY!=="undefined"&&EM_INDUSTRY[code])||CODE_INDUSTRY[code]||"");
           simData.pricePool[code]={code:safeCode(code),name:sanitizeText(it.f14||code),price:0,prevClose:0,chg:0,ma5:0,ma20:0,volume:0,turnover:0,vol:1,sector:indName||"待分类",industry:indName,wx:wxOfSector(indName||code)};
         }
         const p=simData.pricePool[code];
@@ -3919,6 +4082,7 @@ function emFallback(){
         p.price=price; p.chg=chg||0; p.prevClose=prev; p.open=p.open||price;
         p.ma5=price;p.ma20=price;
         p.volume = parseFloat(it.f5)||0; // 成交量（手）
+        p.amount = (parseFloat(it.f6)||0)/1e4; // 成交额（万元）
         p.turnover = parseFloat(it.f8)||0; // 换手率
         p.vol = parseFloat(it.f10)||1; // 量比
         if(p.dayHigh===undefined||p.dayHigh<p.price)p.dayHigh=p.price;
@@ -3970,7 +4134,9 @@ function initStockPool(){
     if(pool[code])return; // 已经有的不重复
     const name=STOCK_NAMES[code]||code;
     const wx=wxArr[parseInt(code.slice(-1))%5];
-    pool[code]=mk(code,name,"行业龙头","蓝筹白马",wx,20.0,500,1.0,19.5,false,0,50,50,18.5);
+    const secName=CODE_INDUSTRY[code]||"蓝筹白马";
+    pool[code]=mk(code,name,"行业龙头",secName,wx,20.0,500,1.0,19.5,false,0,50,50,18.5);
+    pool[code].industry=secName;pool[code].sector=secName;
     pool[code]._ph=1; /* 占位标记：真实行情未灌入前，价格/涨跌/量比显示--而非假数据 */
   });
   /* 剔除账户未开通板块的股票，避免无权限标的进入候选池被买入 */
@@ -6932,6 +7098,87 @@ function renderReviewSentiment(){
     </div>
     <h4 style="margin:14px 0 6px;font-size:14px">行业强弱榜（按平均涨幅）</h4>
     ${secHtml}`;
+  try{renderReviewIdxCompare();renderReviewDirections();renderReviewEffect();}catch(e){console.warn("复盘增强渲染失败",e);}
+}
+
+/* ===== 复盘：指数行情对比 ===== */
+function renderReviewIdxCompare(){
+  const box=$("reviewIdxCompare");if(!box)return;
+  const iq=window.idxQuotes||{};
+  const rows=MK_IDX.map(d=>{
+    const r=iq[d.full];
+    if(!r)return `<div style="display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--border-soft)">
+      <span style="font-size:13px">${d.short}</span><span style="font-size:12px;color:var(--text-faint)">--</span></div>`;
+    const up=r.chg>=0,c=up?"var(--up)":"var(--down)";
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border-soft)">
+      <span style="font-size:13px;width:76px;flex-shrink:0">${d.short}</span>
+      <span style="font-size:13px;font-family:var(--mono);color:var(--text);text-align:right">${r.price.toFixed(2)}</span>
+      <span style="font-size:13px;font-family:var(--mono);color:${c};width:80px;text-align:right;font-weight:600">${r.chg>=0?"+":""}${r.chg.toFixed(2)}%</span>
+    </div>`;
+  }).join("");
+  box.innerHTML=`<div style="display:flex;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-faint)">
+    <span>指数</span><span style="margin-left:auto;margin-right:66px">点位</span><span style="width:80px;text-align:right">涨跌幅</span></div>`+rows;
+}
+
+/* ===== 复盘：强势/弱势方向 ===== */
+function renderReviewDirections(){
+  const box=$("reviewDirections");if(!box)return;
+  const pool=Object.values(simData.pricePool||{}).filter(s=>s&&s.price>0);
+  if(!pool.length){box.innerHTML='<div class="review-note">行情数据加载中…</div>';return;}
+  const map={};
+  pool.forEach(s=>{
+    const sec=(s.industry&&s.industry!=="待分类")?s.industry:(s.sector||"待分类");
+    if(!map[sec])map[sec]={sum:0,n:0,best:null};
+    const g=map[sec];g.sum+=(s.chg||0);g.n++;
+    if(!g.best||(s.chg||0)>(g.best.chg||0))g.best=s;
+  });
+  const list=Object.values(map).map(g=>({name:g.best?(g.best.industry||g.best.sector||"待分类"):"",avg:g.sum/g.n,best:g.best})).sort((a,b)=>b.avg-a.avg);
+  if(!list.length){box.innerHTML='<div class="review-note">暂无行业数据</div>';return;}
+  const strong=list.slice(0,6),weak=list.slice(-6).reverse();
+  const rowHtml=(arr,strong)=>{return arr.map(g=>{
+    const c=g.avg>=0?"var(--up)":"var(--down)";
+    const b=g.best;
+    const bName=b?(b.name||b.code):"—",bChg=b?(b.chg||0):0;
+    return `<div style="display:flex;align-items:center;padding:8px 4px;border-bottom:1px solid var(--border-soft);gap:8px">
+      <span style="font-size:13px;width:82px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(g.name)}</span>
+      <span style="font-size:11px;color:var(--text-faint);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">领涨 ${escHtml(bName)} <span style="color:${bChg>=0?"var(--up)":"var(--down)"};font-family:var(--mono)">${bChg>=0?"+":""}${bChg.toFixed(2)}%</span></span>
+      <span style="font-size:13px;font-family:var(--mono);color:${c};font-weight:600">${g.avg>=0?"+":""}${g.avg.toFixed(2)}%</span>
+    </div>`;
+  }).join("");};
+  box.innerHTML=`
+    <div style="margin-bottom:6px">
+      <div style="font-size:12px;color:var(--text-faint);margin:8px 0 2px">🔥 强势方向</div>
+      ${rowHtml(strong,true)}
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--text-faint);margin:8px 0 2px">🧊 弱势方向</div>
+      ${rowHtml(weak,false)}
+    </div>`;
+}
+
+/* ===== 复盘：赚钱/亏钱效应 ===== */
+function renderReviewEffect(){
+  const box=$("reviewEffect");if(!box)return;
+  const pool=Object.values(simData.pricePool||{}).filter(s=>s&&s.price>0&&s.chg!=null);
+  if(!pool.length){box.innerHTML='<div class="review-note">行情数据加载中…</div>';return;}
+  const sorted=[...pool].sort((a,b)=>(b.chg||0)-(a.chg||0));
+  const gain=sorted.slice(0,8),loss=sorted.slice(-8).reverse();
+  const rowHtml=(arr)=>{return arr.map(s=>{
+    const c=(s.chg||0)>=0?"var(--up)":"var(--down)";
+    return `<div style="display:flex;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border-soft);gap:8px">
+      <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name||s.code)} <span style="font-size:10.5px;color:var(--text-faint);font-family:var(--mono)">${escHtml(s.code||"")}</span></span>
+      <span style="font-size:13px;font-family:var(--mono);color:${c};font-weight:600;width:82px;text-align:right">${(s.chg||0)>=0?"+":""}${(s.chg||0).toFixed(2)}%</span>
+    </div>`;
+  }).join("");};
+  box.innerHTML=`
+    <div style="margin-bottom:6px">
+      <div style="font-size:12px;color:var(--text-faint);margin:8px 0 2px">💰 赚钱效应 · 涨幅居前</div>
+      ${rowHtml(gain)}
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--text-faint);margin:8px 0 2px">💸 亏钱效应 · 跌幅居前</div>
+      ${rowHtml(loss)}
+    </div>`;
 }
 
 /* ==================== 系统总览：状态条 + 业务模块卡 + 信号Tape ==================== */
