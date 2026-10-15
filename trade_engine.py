@@ -958,6 +958,21 @@ def trade_date(t):
     """交易日期兼容：time / date"""
     return (t.get("time") or t.get("date") or "")[:10]
 
+def fmt_trade_time(t):
+    """交易时间 → 北京时间 'MM-DD HH:MM'。
+    兼容两种格式：前端 JS 写的 UTC ISO（带 Z，如 2026-09-21T01:30:00.000Z）
+    与引擎写的 naive 北京时间 ISO（如 2026-10-15T09:30:00）"""
+    raw = (t.get("time") or t.get("date") or "").strip()
+    if not raw:
+        return "--:--"
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if dt.tzinfo is not None:                      # 带时区（UTC）→ 转北京时间
+            dt = dt.astimezone(CN_TZ).replace(tzinfo=None)
+        return dt.strftime("%m-%d %H:%M")
+    except Exception:
+        return raw[5:16].replace("T", " ") if len(raw) >= 16 else raw
+
 def send_daily_summary(data, market_trend):
     """【每日收盘总结推送】—— 数据以前端页面为准"""
     # 跨运行去重：15:00/15:05/15:30 多个 cron 都落在收盘窗口内，
@@ -993,10 +1008,14 @@ def send_daily_summary(data, market_trend):
         content += "\n## 今日交易\n\n"
         for role_id, t in today_trades:
             if t["type"] == "buy":
-                content += f"- 📈 {role_id} 买入 {t['name']} {t['qty']}股 @{t['price']:.2f}\n"
+                # 买入行带上买入时间 + 买入原因，便于复盘归因
+                tm = fmt_trade_time(t)
+                rs = (t.get("reason") or "").strip() or "综合评分达标"
+                content += f"- 📈 {role_id} 买入 {t['name']} {t['qty']}股 @{t['price']:.2f}｜🕐{tm}｜💡{rs}\n"
             else:
                 pnl = t.get("profit", 0)
-                content += f"- 📉 {role_id} 卖出 {t['name']} {t['qty']}股 @{t['price']:.2f} 盈亏{pnl:+.2f}\n"
+                tm = fmt_trade_time(t)
+                content += f"- 📉 {role_id} 卖出 {t['name']} {t['qty']}股 @{t['price']:.2f} 盈亏{pnl:+.2f}｜🕐{tm}\n"
     
     content += "\n## 明日计划\n\n"
 
@@ -1340,13 +1359,12 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
         "qty": qty, "price": st["price"], "fee": fee,
         "time": cn_now().isoformat(), "reason": reason
     })
-    push_key = f".push_{player['id']}_{code}_buy_{cn_now().strftime('%Y%m%d')}"
-    if not os.path.exists(push_key):
-        open(push_key, "w").close()
-        send_wechat(
-            f"📈 {player['id']} 建仓 {st['name']}",
-            f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+    # 【每笔买入都推送】去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
+    # 只要真实成交就推；统一走 push_report（WxPusher 优先、Server酱兜底），消息含时间+原因
+    push_report(
+        f"📈 {player['id']} 建仓 {st['name']}",
+        f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
     print(f"  ✅ {player['id']} 买入 {st['name']} {qty}股 @{st['price']:.2f}")
 
 def do_sell(player, hold, st, reason, data, ratio=1.0):

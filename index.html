@@ -5234,13 +5234,9 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const profitHint = exist ? `加仓${qty}股，累计${exist.qty}股，新成本${exist.buyPrice.toFixed(2)}` : `建仓${qty}股，成本${costPerShare.toFixed(2)}`;
   log("info", `【${p.id}】${escHtml(target.name)}买入已考虑T+1规则，明日可卖出`);
   
-  /* 去重：同一角色+同一股票+买入，当天只推一次 */
-  const pushKey = `push_${p.id}_${target.code}_建仓_${now.toISOString().slice(0,10)}`;
-  if(!localStorage.getItem(pushKey)){
-    localStorage.setItem(pushKey, '1');
-    sendWechat(`📈 ${p.id} ${exist?"加仓":"建仓"} ${escHtml(target.name)}`, 
-      `股票：${escHtml(target.name)}(${target.code})\n操作：${exist?"加仓":"建仓"}\n数量：${qty}股\n价格：${target.price.toFixed(2)}元\n${profitHint}\n⏰ T+1：明日可卖出\n原因：${buyReason}\n时间：${now.toLocaleString('zh-CN')}`);
-  }
+  /* 【每笔买入都推送】去掉"同角色同股当天只推一次"的去重，只要真实成交就推（消息已含原因+时间） */
+  sendWechat(`📈 ${p.id} ${exist?"加仓":"建仓"} ${escHtml(target.name)}`, 
+    `股票：${escHtml(target.name)}(${target.code})\n操作：${exist?"加仓":"建仓"}\n数量：${qty}股\n价格：${target.price.toFixed(2)}元\n${profitHint}\n⏰ T+1：明日可卖出\n原因：${buyReason}\n时间：${now.toLocaleString('zh-CN')}`);
   return true;
 }
 function doSell(p,hold,st,now,reason,ratio){
