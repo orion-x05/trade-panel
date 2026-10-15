@@ -3596,7 +3596,11 @@ function renderBottomDetector(policy, tech){
     </div>
     ${eviHtml}
     ${valiHtml}`;
-  /* 综合底部信号 gauge */
+  /* 综合底部信号 gauge —— 关键：上面的 innerHTML 重建了 #cBottom DOM 节点，
+     缓存里的旧实例指向已分离的节点，setOption 会画进"看不见"的画布导致仪表盘空白
+     （renderSentimentProcess 异步返回后二次渲染时必现）。必须先 dispose 并清缓存再 init。 */
+  if(MK_CHARTS["cBottom"]){try{MK_CHARTS["cBottom"].dispose();}catch(e){}}
+  delete MK_CHARTS["cBottom"];
   const c=mkChart("cBottom");
   if(c){c.setOption({
     series:[{type:"gauge",min:0,max:100,radius:"92%",center:["50%","62%"],startAngle:210,endAngle:-30,
@@ -5783,8 +5787,16 @@ function switchTab(name){
     /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
        导致 cBottom(综合底部信号)/cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
     if(name==="airesearch"){
-      if(!MK_CHARTS["cBottom"]){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){console.warn("补渲染底部信号仪表盘失败",e);}}
+      /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
+         导致 cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
       if(!MK_CHARTS["cGauge"]){try{renderFearGreed();}catch(e){console.warn("补渲染恐惧贪婪仪表盘失败",e);}}
+    }
+    /* 修复：底部探测器面板在"个股研究"tab(view-research)，页面加载时该 tab 隐藏，
+       cBottom(综合底部信号)仪表盘拿到 0×0 容器被跳过且不再重试 → 一直空白。
+       这里不认 tab 名，只要该元素已可见且未初始化就补渲染（哪个 tab 含它都能触发）。 */
+    {
+      const cbe=document.getElementById("cBottom");
+      if(cbe&&cbe.offsetWidth>0&&!MK_CHARTS["cBottom"]){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){console.warn("补渲染底部信号仪表盘失败",e);}}
     }
     if(name==="settings"){try{fillSettings();}catch(e){}}
     try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
