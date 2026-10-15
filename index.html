@@ -5770,6 +5770,12 @@ function switchTab(name){
     if(name==="hold"){try{renderHold();}catch(e){}}
     if(name==="overview"){try{renderMarketView();}catch(e){}}
     if(name==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该tab内 */
+    /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
+       导致 cBottom(综合底部信号)/cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
+    if(name==="airesearch"){
+      if(!MK_CHARTS["cBottom"]){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){console.warn("补渲染底部信号仪表盘失败",e);}}
+      if(!MK_CHARTS["cGauge"]){try{renderFearGreed();}catch(e){console.warn("补渲染恐惧贪婪仪表盘失败",e);}}
+    }
     if(name==="settings"){try{fillSettings();}catch(e){}}
     try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
   },100);
