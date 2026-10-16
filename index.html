@@ -1484,7 +1484,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="stat-card">
       <div class="stat-label">运行角色</div>
       <div class="stat-value" id="statRun">–</div>
-      <div class="stat-sub">共 6 个 · 全自动AI决策</div>
+      <div class="stat-sub">共 7 个 · 全自动AI决策</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">行情接口</div>
@@ -1532,6 +1532,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           <option value="D4">D4 假突破低吸</option>
           <option value="D5">D5 回踩确认</option>
           <option value="D6">D6 涨停回踩</option>
+          <option value="D7">D7 周线超卖反转</option>
         </select>
         <button class="gmk-btn" id="returnUnitBtn" style="padding:5px 10px;font-size:12px;white-space:nowrap" onclick="toggleReturnUnit()">百分比</button>
         <input type="month" id="returnMonthSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:120px" onchange="renderCharts()">
@@ -1711,6 +1712,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
                 <option value="D4">D4 假突破低吸</option>
                 <option value="D5">D5 回踩确认</option>
                 <option value="D6">D6 涨停回踩</option>
+                <option value="D7">D7 周线超卖反转</option>
               </select>
             </div>
             <div id="singleBTResult" style="margin-top:10px;font-size:13px;color:var(--text-dim);display:none"></div>
@@ -2029,11 +2031,19 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <span style="font-weight:600;color:var(--text)">📊 今日五行分布：</span>
         <span style="color:var(--text-dim)">统计候选池各五行股票数量，数量最多为今日主方向</span>
       </div>
+      <!-- 周线超卖拐头仪表盘（D7 · HLC3随机指标14/5 −50 ≤−40 + 拐头向上） -->
+      <div id="wkOversoldStrip" style="margin-bottom:12px;padding:10px 14px;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.25);border-radius:8px;font-size:12px;display:none">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-weight:600;color:#ff6b35">🔄 周线超卖拐头 <span id="wkStripCount" style="font-size:11px;color:var(--text-dim)"></span></span>
+          <span style="color:var(--text-dim)">HLC3典型价随机指标(14,5)减50：读数≤−40超卖且%K拐头向上 → D7做多候选 · 一半止盈看周线EMA21，另一半看日线KD≥+40</span>
+        </div>
+        <div id="wkStripBody" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr>
             <th>代码</th><th>名称</th><th>板块/行业</th><th>五行</th>
-            <th class="r">最新价</th><th class="r">涨跌幅%</th><th class="r">量比</th><th>主力意图</th>
+            <th class="r">最新价</th><th class="r">涨跌幅%</th><th class="r">量比</th><th>主力意图</th><th class="r">周线KD</th>
             <th class="r">RSI6</th><th class="r">透支分</th><th class="r">动量分</th><th class="r">筹码分</th>
             <th class="r">综合评分</th><th>结论</th><th>建议</th><th>门禁</th>
           </tr></thead>
@@ -2210,13 +2220,14 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="panel-body">
       <div class="gmk-toolbar" style="flex-wrap:wrap">
         <select id="simRoleSel" class="mini-select" style="min-width:170px">
-          <option value="ALL">🔀 六角色一起回测</option>
+          <option value="ALL">🔀 七角色一起回测</option>
           <option value="D1">D1 严格趋势突破</option>
           <option value="D2">D2 多角色共识</option>
           <option value="D3">D3 多空辩论</option>
           <option value="D4">D4 量价共振</option>
           <option value="D5">D5 趋势回踩</option>
           <option value="D6">D6 涨停回调</option>
+          <option value="D7">D7 周线超卖反转</option>
         </select>
         <label class="sim-opt"><input type="checkbox" id="simRuleSL" checked> 止损</label>
         <input type="number" id="simSlPct" value="7" min="1" max="30" step="1" style="width:54px" title="止损幅度%">%
@@ -2895,10 +2906,10 @@ function purgeUnauthorizedHoldings(){
   if(n)try{save();}catch(e){}
   return n;
 }
-const PLAYER_COLORS = { D1:"#ff5d8f", D2:"#00e5a0", D3:"#b388ff", D4:"#ffc300", D5:"#00c2ff", D6:"#ff8a3d" };
+const PLAYER_COLORS = { D1:"#ff5d8f", D2:"#00e5a0", D3:"#b388ff", D4:"#ffc300", D5:"#00c2ff", D6:"#ff8a3d", D7:"#ff6b35" };
 const PLAYER_NAMES = {
   D1:"统一底座-严格趋势突破", D2:"AI Agents-多角色共识", D3:"TradingAgents-多空辩论",
-  D4:"量价共振-突破确认", D5:"趋势回踩-低追高", D6:"涨停回调-强势股低吸"
+  D4:"量价共振-突破确认", D5:"趋势回踩-低追高", D6:"涨停回调-强势股低吸", D7:"周线超卖-反转低吸"
 };
 const STORE_KEY = "stockSimV2";
 let forceTrade = localStorage.getItem("forceTrade") === "1";
@@ -2928,7 +2939,11 @@ const AGENT_DETAILS = {
   D6:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"涨停回调低吸策略。先定板块：锁定当日主力资金洗盘/回调的活跃板块；再从板块内筛选最近5个交易日内出现过涨停、且回调未跌破涨停当日最低点的个股；等待缩量回踩后低吸进场，博取强势股二次拉升。",
     adv:"强势股回调买点确定性强，盈亏比高，贴合涨停板后洗盘再启动节奏；板块联动过滤了弱势股。", dis:"板块整体退潮时涨停回调股易持续阴跌，必须严格执行跌破涨停低点即离场。",
-    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【进场】缩量回踩MA5/涨停低点附近低吸，不追高。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【模拟执行】最多同时持有5只；单笔首次买入资金上限20%；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。" }
+    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【进场】缩量回踩MA5/涨停低点附近低吸，不追高。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【模拟执行】最多同时持有5只；单笔首次买入资金上限20%；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。" },
+  D7:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
+    desc:"周线超卖反转波段策略。用典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50 做周线波段过滤器：读数 ≤−40 算超卖、且拐头向上才做多，专接周线级别深跌后的反转拐点，不追跌不接落刀。止盈分批：一半仓位看周线 EMA21（21周≈季度趋势线，触及/跌破兑现），另一半看日线同款过滤器进入超买（读数 ≥+40）离场。",
+    adv:"与其他角色完全错位：六角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
+    rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上）才做多，缺一不可。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】最多同时持有5只；单笔首次买入资金上限20%；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。" }
 };
 
 /* ==================== 股票池（数据层：上传版） ==================== */
@@ -4152,7 +4167,7 @@ const SECTORS_INIT={};
 
 /* ==================== 玩家（数据层） ==================== */
 function initPlayers(){
-  return["D1","D2","D3","D4","D5","D6"].map(id=>({
+  return["D1","D2","D3","D4","D5","D6","D7"].map(id=>({
     id,name:PLAYER_NAMES[id],cash:INIT_CASH,asset:INIT_CASH,holdings:[],trades:[],assetHistory:[INIT_CASH],
     winRate:0,plRatio:0,sharpe:0,maxDrawdown:0,revised:false,dailySummary:[],weeklySummary:[],monthlySummary:[],
     startAsset:INIT_CASH
@@ -4222,6 +4237,7 @@ function load(){
       if(simData&&simData.players&&simData.pricePool&&simData.version===12){
         /* 加载成功，备份一份 */
         try{if(tryKey===STORE_KEY)localStorage.setItem(BACKUP_KEY,raw);}catch(e){}
+        if(simData.running==null)simData.running=true; /* 旧快照可能缺running，补上让引擎能跑 */
         simData.players.forEach(p=>{p.asset=p.asset||p.cash;if(!p.assetHistory||!p.assetHistory.length)p.assetHistory=[INIT_CASH];
           /* 补默认统计字段，防止旧数据缺字段导致渲染报错 */
           if(p.winRate===undefined||p.winRate===null)p.winRate=0;
@@ -4295,6 +4311,7 @@ function load(){
           }
         });
         /* 现金校准：修复之前减仓时未加回现金的bug，确保现金不为负 */
+        ensurePlayerD7(); /* 旧快照可能只有6角色，补D7 */
         simData.players.forEach(p=>{
           const totalCost=p.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
           const correctCash=INIT_CASH-totalCost;
@@ -4345,13 +4362,29 @@ function load(){
     const EMB=document.getElementById('embeddedSimData');
     if(EMB){
       simData=JSON.parse(EMB.textContent);
+      if(simData.running==null)simData.running=true; /* 内嵌演示快照可能缺running，补上让引擎能跑 */
       try{purgeUnauthorizedHoldings();}catch(e){}
       try{normalizePricePool();}catch(e){}
+      ensurePlayerD7();
       save();
       return;
     }
   }catch(e){}
   freshSim();
+}
+/* D7 角色兼容：从旧快照加载时 players 可能只有6个，补齐D7（字段与initPlayers一致） */
+function ensurePlayerD7(){
+  if(!simData||!simData.players)return;
+  if(simData.players.some(p=>p.id==="D7"))return;
+  simData.players.push({
+    id:"D7",name:PLAYER_NAMES.D7,cash:INIT_CASH,asset:INIT_CASH,holdings:[],trades:[],
+    assetHistory:[INIT_CASH],winRate:0,plRatio:0,sharpe:0,maxDrawdown:0,revised:false,
+    dailySummary:[],weeklySummary:[],monthlySummary:[],startAsset:INIT_CASH
+  });
+  if(simData.players[0]&&simData.dayLabels&&simData.dayLabels.length){
+    const len=simData.dayLabels.length;
+    simData.players.find(p=>p.id==="D7").assetHistory=simData.players[0].assetHistory.slice(0,len);
+  }
 }
 /* 候选池字段规整：补齐缺失的 code/name 及关键字段（修复旧快照股票缺code导致门禁点不开） */
 function normalizePricePool(){
@@ -4973,6 +5006,85 @@ async function enrichPoolFromKline(){
   finally{_enrichBusy=false;}
 }
 
+/* ==================== 周线波段过滤器（HLC3 典型价随机指标 14/5 −50） ====================
+   策略来源（用户定义）：典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50做波段过滤器；
+   读数跌到 −40 以下算超卖，拐头向上才做多；一半止盈看周线 EMA21，另一半看日线同款过滤器进入超买。
+   数据源：腾讯周K（txKline code,"week"），缓存10分钟，预载不阻塞tick。 */
+const wkKDCache={}; /* code -> {t,kd,kdPrev,turnUp,ema21,ema21Up,dayKd} */
+async function calcWeeklyKD(code){
+  const now=Date.now();
+  const hit=wkKDCache[code];
+  if(hit&&now-hit.t<600000)return hit;
+  try{
+    const bars=await txKline(poolFullCode(code),"week",80); /* 80周≈1.5年，够14窗口+5平滑+EMA21 */
+    if(!bars||bars.length<25)return null;
+    const hlcs=bars.map(b=>(b.high+b.low+b.close)/3);
+    /* %K(14)原始 → 减50居中 */
+    const kRaw=[];
+    for(let i=13;i<hlcs.length;i++){
+      const win=hlcs.slice(i-13,i+1);
+      const lo=Math.min(...win),hi=Math.max(...win);
+      const k=(hi>lo)?(hlcs[i]-lo)/(hi-lo)*100:50;
+      kRaw.push(k-50);
+    }
+    /* %D = %K的5周期SMA */
+    const d=[];
+    for(let i=4;i<kRaw.length;i++)d.push(kRaw.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5);
+    const kd=+kRaw[kRaw.length-1].toFixed(1);
+    const kdPrev=+kRaw[kRaw.length-2].toFixed(1);
+    const kdPrev2=+kRaw[kRaw.length-3].toFixed(1);
+    /* 拐头向上：今日%K>昨日%K 且 昨日%K<=前日%K（由降转升）；或 %K上穿%D */
+    const turnUp=(kd>kdPrev&&kdPrev<=kdPrev2)||(kd>d[d.length-1]&&kdPrev<=d[d.length-2]);
+    /* 周线EMA21（21周≈季度趋势线，一半止盈参考） */
+    const closes=bars.map(b=>b.close);
+    let ema=closes[0],emaPrev=ema;
+    for(let i=1;i<closes.length;i++){emaPrev=ema;ema=closes[i]*(2/22)+ema*(20/22);}
+    const rec={t:now,kd,kdPrev,turnUp,ema21:+ema.toFixed(2),ema21Up:ema>emaPrev};
+    wkKDCache[code]=rec;
+    return rec;
+  }catch(e){return null;}
+}
+/* 日线同款过滤器（HLC3 KD14/5 −50，D7另一半止盈：进入超买 ≥+40 离场） */
+async function calcDailyKD(code){
+  try{
+    const bars=await txDay(poolFullCode(code),30);
+    if(!bars||bars.length<25)return null;
+    const hlcs=bars.map(b=>(b.high+b.low+b.close)/3);
+    const kRaw=[];
+    for(let i=13;i<hlcs.length;i++){
+      const win=hlcs.slice(i-13,i+1);
+      const lo=Math.min(...win),hi=Math.max(...win);
+      const k=(hi>lo)?(hlcs[i]-lo)/(hi-lo)*100:50;
+      kRaw.push(k-50);
+    }
+    const d=[];
+    for(let i=4;i<kRaw.length;i++)d.push(kRaw.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5);
+    return {kd:+kRaw[kRaw.length-1].toFixed(1),d:+d[d.length-1].toFixed(1)};
+  }catch(e){return null;}
+}
+/* 批量预载周线KD+日线KD：异步、小并发、10分钟TTL，tick同步读缓存 */
+let _wkPreloadBusy=false,_wkPreloadAt=0;
+async function preloadWeeklyKD(codes){
+  if(_wkPreloadBusy)return;
+  if(Date.now()-_wkPreloadAt<120000)return; /* 2分钟防抖 */
+  _wkPreloadBusy=true;_wkPreloadAt=Date.now();
+  try{
+    const need=(codes||[]).filter(c=>{
+      const hit=wkKDCache[c];
+      return !hit||Date.now()-hit.t>=600000;
+    }).slice(0,30);
+    for(let i=0;i<need.length;i+=4){
+      await Promise.all(need.slice(i,i+4).map(async c=>{
+        try{const w=await calcWeeklyKD(c);if(w){const dk=await calcDailyKD(c);if(dk)w.dayKd=dk;}}catch(e){}
+      }));
+    }
+  }catch(e){console.warn("周线KD预载失败：",e);}
+  finally{_wkPreloadBusy=false;}
+}
+/* 同步读取：优先缓存，未预载返回null（tick/渲染均不等待网络） */
+function weeklyKD(code){const w=wkKDCache[code];return w?(Date.now()-w.t<600000?w:null):null;}
+function dailyKD(code){const w=weeklyKD(code);return w&&w.dayKd?w.dayKd:null;}
+
 /* ==================== 大盘环境 / 资金流向（数据层） ==================== */
 let marketEnv={score:50,flow:"震荡",bias:"中性",shChg:0,note:"等待行情数据",riskOff:false};
 let marketEnvLogKey="";
@@ -5102,7 +5214,7 @@ function liveGlobalGuard(st){
 /* ==================== 六Agent策略核心：多因子打分 + 多Agent共识（v2） ==================== */
 /* 每个角色对单只股票打 0-100 分，分数越高越符合角色核心逻辑；
    取代原来"按当日涨幅排序"的粗逻辑：选股从"涨得凶"变成"逻辑最顺" */
-const ROLE_SCORE_MIN={D1:70,D2:60,D3:60,D4:70,D5:70,D6:70}; /* 各角色开仓分数线 */
+const ROLE_SCORE_MIN={D1:70,D2:60,D3:60,D4:70,D5:70,D6:70,D7:80}; /* 各角色开仓分数线 */
 let __rolePicks=null; /* 每轮 tick 各角色候选快照：D2共识打分 + 共识看板共用 */
 
 /* 各角色核心逻辑打分 → {score, why[]} */
@@ -5212,6 +5324,18 @@ function roleSignalScore(p,st){
       }
       return{score:0,why:[]};
     }
+    case"D7":{
+      /* 周线超卖反转：HLC3随机指标(14,5)−50 读数≤−40 + %K拐头向上 */
+      const w=weeklyKD(st.code);
+      if(!w)return{score:0,why:["周线KD未预载，稍后重试"]};
+      if(w.kd>-40)return{score:0,why:["周线KD "+w.kd.toFixed(1)+" 未超卖（需≤−40）"]};
+      if(!w.turnUp)return{score:0,why:["周线超卖("+w.kd.toFixed(1)+")但未拐头，不接落刀"]};
+      score=85;why.push("周线超卖"+w.kd.toFixed(1)+"且拐头向上");
+      if(w.ema21Up){score+=8;why.push("周线EMA21向上·趋势修复中");}
+      if(chg>=0&&chg<5){score+=5;why.push("当日未深跌·反转初期");}
+      if(rps>=30){score+=2;}
+      break;
+    }
   }
   return{score,why};
 }
@@ -5244,7 +5368,8 @@ const BUY_REASONS={
   D3:"多空辩论：多头信号≥2（均线多头+站上MA20+收阳+放量），多方论点占优，判定偏多；不追高（涨幅>5%或量比>2.5等回调，接近20日高点+放量大涨不追）",
   D4:"量价共振：放量突破平台且量比健康，突破后回踩确认支撑有效，主升启动",
   D5:"趋势回踩：MA20>MA60中期趋势向上，缩量回踩MA20获支撑，低吸追高",
-  D6:"涨停回调·洗盘缩量站稳：涨停后1-10天，MA20必须向上+RSI40-65健康+洗盘缩量(量比<1.0)+站稳MA20(偏离≤5%)+重新转强(收阳)+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤10%+从高点回调3%-18%，低吸追高；反包涨停需MA20向上+站上MA20+放量≥1.5+短期未翻倍"
+  D6:"涨停回调·洗盘缩量站稳：涨停后1-10天，MA20必须向上+RSI40-65健康+洗盘缩量(量比<1.0)+站稳MA20(偏离≤5%)+重新转强(收阳)+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤10%+从高点回调3%-18%，低吸追高；反包涨停需MA20向上+站上MA20+放量≥1.5+短期未翻倍",
+  D7:"周线超卖反转：HLC3典型价随机指标(14,5)减50，读数≤−40超卖且%K拐头向上才做多"
 };
 const SELL_REASONS={
   D1:"跌破趋势支撑位，突破逻辑证伪，止损离场",
@@ -5252,7 +5377,8 @@ const SELL_REASONS={
   D3:"空方论点被证实：跌破关键均线，辩论转向偏空，止损",
   D4:"量价背离：放量下跌破位，突破确认失败，止损离场",
   D5:"跌破MA20支撑，回踩逻辑失效，趋势转弱离场",
-  D6:"跌破涨停当日最低点，涨停回调逻辑证伪，止损离场"
+  D6:"跌破涨停当日最低点，涨停回调逻辑证伪，止损离场",
+  D7:"周线超卖反转逻辑证伪：跌破−10%止损位，或周线读数回升至−30以上且拐头向下，清仓离场"
 };
 /* 各角色差异化止损/止盈比例（D1/D3回撤大收紧止损，D4/D6保持宽止损博弹性） */
 const ROLE_PARAMS={
@@ -5261,7 +5387,8 @@ const ROLE_PARAMS={
   D3:{sl:5,tp:10,note:"多空辩论·紧止损控回撤·偏防御"},
   D4:{sl:9,tp:15,note:"量价共振·突破确认·中等偏宽"},
   D5:{sl:7,tp:12,note:"趋势回踩·离支撑近·跌破即失效"},
-  D6:{sl:10,tp:20,note:"涨停回调·强势股弹性大·涨停低点硬止损"}
+  D6:{sl:10,tp:20,note:"涨停回调·强势股弹性大·涨停低点硬止损"},
+  D7:{sl:10,tp:25,note:"周线超卖反转·波段弹性大·分批止盈"}
 };
 /* 出厂默认值快照：回测调参出错/清除时用它回滚（ROLE_PARAMS 会被调参改写） */
 const ROLE_PARAMS_DEFAULT=JSON.parse(JSON.stringify(ROLE_PARAMS));
@@ -5553,6 +5680,7 @@ function tick(){
   fetchRealQuotes();
   updateMarket();
   preloadATR(); /* 预加载持仓股票的ATR（异步，不阻塞） */
+  try{preloadWeeklyKD(Object.keys(simData.pricePool||{}));}catch(e){}
   if(!quotesReady){render();return;} /* 等真实行情 */
   const trading=isTradeTime(now);
   const env=calcMarketEnv(); /* 大盘环境：按上证指数+资金流向驱动买入频率，盘面复杂/极弱时空仓 */
@@ -5582,8 +5710,10 @@ function tick(){
     simData.players.forEach(p=>{
       /* v2：候选已按角色核心逻辑打分排序（取代按当日涨幅排序） */
       const rawTargets=__rolePicks[p.id];
-      /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买 */
+      /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买；
+         D7 周线超卖反转角色用自己的过滤器（周线KD≤−40+拐头），不走日线KDJ金叉闸 */
       const kdjPass=s=>{
+        if(p.id==="D7"){const w=weeklyKD(s.code);return !!(w&&w.kd<=-40&&w.turnUp);}
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
         return s.kdjK!==undefined&&s.kdjD!==undefined&&s.kdjKPrev!==undefined&&s.kdjDPrev!==undefined&&s.kdjK>s.kdjD&&s.kdjKPrev<=s.kdjDPrev;
       };
@@ -5612,8 +5742,24 @@ function tick(){
         let signal=null;
         const rp=ROLE_PARAMS[p.id]||{sl:7,tp:8};
         const chg=(st.price-h.buyPrice)/h.buyPrice;
+        /* D7 周线超卖反转：分批止盈 —— 一半看周线EMA21（触及/跌破兑现），一半看日线同款过滤器超买(≥+40) */
+        if(p.id==="D7"){
+          const w7=weeklyKD(h.code);
+          const d7=dailyKD(h.code);
+          const emaHit=w7&&st.price>0&&st.price>=w7.ema21*0.995;
+          const dayOb=d7&&d7.kd>=40;
+          if(!signal&&!h.partialTaken&&(emaHit||dayOb)){
+            signal="周线超卖反转·第一止盈（周线EMA21或日线KD超买）减半落袋";
+          }
+          else if(!signal&&h.partialTaken&&((w7&&w7.kd>=-30&&!w7.turnUp)||(d7&&d7.kd>=50))){
+            signal="周线超卖反转·第二止盈（日线超买加深/周线反转）清仓剩余";
+          }
+          else if(!signal&&st.price<=h.buyPrice*0.90){
+            signal="周线超卖反转·跌破10%止损位·清仓";
+          }
+        }
         /* ATR止盈止损参数（和回测一致，六角色梯度分明） */
-        const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5}};
+        const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5},D7:{tpMult:3,slMult:1.5}};
         const atrParams=atrParamsMap[p.id]||atrParamsMap.D2;
         const atrVal=atrCache[h.code]?atrCache[h.code].atr:null;
         if(p.id==="D6"){if(st.price<h.ztLow)signal=SELL_REASONS.D6;}
@@ -5680,7 +5826,7 @@ function tick(){
           const body=Math.abs(st.price-st.open);
           const chg=st.chg||0, vol=st.vol||1;
           /* 角色风格系数：1=严格防守, 0.6=宽松, 1.3=极严格 */
-          const roleStrict={D1:0.6,D2:1.3,D3:0.7,D4:1.0,D5:0.8,D6:0.5}[p.id]||1.0;
+          const roleStrict={D1:0.6,D2:1.3,D3:0.7,D4:1.0,D5:0.8,D6:0.5,D7:0.9}[p.id]||1.0;
           /* 巨量长上影线：量比≥2×style + 上影线≥实体2倍 + 高位 */
           if(vol>=2*roleStrict&&body>0&&upperShadow/body>=2&&high)signal=`${p.id}风格·巨量长上影清仓`;
           /* 高位崩盘保护：暴跌>7%×style系数 + 高位 → 清仓 */
@@ -5721,7 +5867,9 @@ function tick(){
           else if(!canSell(h,now)){} /* AI已考虑T+1规则，当日买入不尝试卖出，不重复提示 */
           else{
             const isPartial=signal.indexOf("第一止盈")>=0;
-            doSell(p,h,st,now,signal,isPartial?0.3:1); /* 第一止盈只卖30%，留70%跑利润 */
+            /* D7 周线超卖反转：第一止盈卖一半（50%）；其他角色第一止盈卖30%留70%跑利润 */
+            const partRatio=(p.id==="D7")?0.5:0.3;
+            doSell(p,h,st,now,signal,isPartial?partRatio:1); /* 第一止盈只卖部分，留仓跑利润 */
             if(isPartial)h.partialTaken=true;
           }
         }
@@ -5839,7 +5987,8 @@ const REVISION_SUGGEST={
   D3:"辩论耗时拖慢信号：建议限制单轮辩论 30 秒上限，提升极端行情响应速度",
   D4:"假突破损耗过大：建议量比下限由 1.2 上调至 1.5，过滤无量假突破",
   D5:"回踩误判下跌：建议增加量能确认，仅缩量回踩 MA20 才允许低吸",
-  D6:"板块退潮风险：建议加设板块指数过滤，板块指数跌破 MA20 时暂停开仓"
+  D6:"板块退潮风险：建议加设板块指数过滤，板块指数跌破 MA20 时暂停开仓",
+  D7:"周线超卖反转低频：建议在周线读数≤−40且拐头向上后再叠加日线企稳确认，减少深跌中继的误接"
 };
 const HOLD_REASONS={
   D1:"趋势结构完好，仍站稳中期均线上方，按突破持仓逻辑继续持有",
@@ -5847,7 +5996,8 @@ const HOLD_REASONS={
   D3:"多头逻辑仍占优，空头风险点未被证实，持仓待涨",
   D4:"量价结构未破坏，未跌破止损位 7%，量价共振逻辑延续",
   D5:"未跌破 MA20 支撑，趋势仍属多头，回踩低吸逻辑延续",
-  D6:"未跌破涨停当日最低点，板块仍处洗盘后修复，二次拉升预期未证伪"
+  D6:"未跌破涨停当日最低点，板块仍处洗盘后修复，二次拉升预期未证伪",
+  D7:"周线超卖反转逻辑未证伪：未跌破10%止损位、周线读数未回升至−30以上且未拐头向下，继续持有待涨"
 };
 function weekKey(d){
   const t=new Date(d);
@@ -6183,12 +6333,12 @@ function renderRank(){
     eg.innerHTML="";
     const strategyNames={
       D1:"趋势突破", D2:"多因子量化", D3:"多空辩论",
-      D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩"
+      D4:"量价共振", D5:"趋势回踩", D6:"涨停回踩", D7:"周线超卖反转"
     };
     /* 从全局ATR参数读取，和实际交易逻辑完全联动 */
     const globalAtrParams={
       D1:{sl:3, tp:4}, D2:{sl:1.5, tp:2}, D3:{sl:1, tp:1.5},
-      D4:{sl:2, tp:3}, D5:{sl:2, tp:2.5}, D6:{sl:3.5, tp:5}
+      D4:{sl:2, tp:3}, D5:{sl:2, tp:2.5}, D6:{sl:3.5, tp:5}, D7:{sl:1.5, tp:4}
     };
     const now=new Date();
     simData.players.forEach(p=>{
@@ -6602,6 +6752,35 @@ function renderPool(){
       `).join("")}
     `;
   }
+  /* 周线超卖拐头仪表盘：从 wkKDCache 同步读，筛 读数≤−40 且拐头向上（D7做多候选） */
+  try{
+    const stripEl=$("wkOversoldStrip"),stripBody=$("wkStripBody"),stripCnt=$("wkStripCount");
+    if(stripEl&&stripBody){
+      const hits=[];
+      Object.keys(simData.pricePool||{}).forEach(code=>{
+        const w=weeklyKD(code);
+        if(w&&w.kd<=-40&&w.turnUp){
+          const st=simData.pricePool[code];
+          hits.push({code,name:st&&st.name?st.name:code,w,price:st&&st.price||0});
+        }
+      });
+      if(hits.length){
+        hits.sort((a,b)=>a.w.kd-b.w.kd);
+        stripCnt.textContent=`${hits.length}只 · 读数≤−40且拐头向上 · 点击查看详情`;
+        stripBody.innerHTML=hits.slice(0,12).map(h=>`
+          <div onclick="showDetail('${safeCode(h.code)}')" style="cursor:pointer;padding:6px 10px;background:rgba(255,255,255,.06);border-radius:6px;display:flex;gap:8px;align-items:center;font-size:12px">
+            <span style="font-weight:600">${escHtml(h.name)}</span>
+            <span style="color:var(--text-dim);font-size:11px">${h.code}</span>
+            <span style="color:#ff6b35;font-family:ui-monospace,monospace;font-weight:700">${h.w.kd.toFixed(1)}</span>
+            <span style="color:var(--text-dim);font-size:11px">${h.w.ema21Up?"EMA21↑":"EMA21↓"}</span>
+            ${h.w.dayKd?`<span style="color:${h.w.dayKd.kd>=40?"var(--up)":"var(--text-dim)"};font-size:11px">日KD ${h.w.dayKd.kd.toFixed(1)}</span>`:""}
+          </div>`).join("");
+        stripEl.style.display="block";
+      }else{
+        stripEl.style.display="none";
+      }
+    }
+  }catch(e){console.warn("周线超卖仪表盘渲染失败：",e);}
   
   const allStocks=Object.entries(simData.pricePool).map(([key,st])=>{
     if(!st||typeof st!=="object")return null;
@@ -6631,6 +6810,7 @@ function renderPool(){
       <td class="r num ${pctColor(st.chg)}">${st._ph?'<span style="color:var(--text-faint)">--</span>':pct(st.chg)}</td>
       <td class="r num">${st._ph?'<span style="color:var(--text-faint)">--</span>':(st.vol||0).toFixed(2)}</td>
       <td>${st._ph?'<span style="color:var(--text-faint);font-size:11px" title="行情未更新">待更新</span>':`<span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span>`}</td>
+      <td class="r num">${(()=>{const w=weeklyKD(st.code);if(!w)return '<span style="color:var(--text-faint)">--</span>';const c=w.kd<=-40?'#ff6b35':w.kd<=-20?'#fbbf24':'var(--text-dim)';return `<span style="color:${c};font-weight:${w.turnUp?"700":"400"}">${w.kd.toFixed(1)}${w.turnUp?"↑":""}</span>`;})()}</td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
       <td class="r num">${over}</td>
       <td class="r num">${mom}</td>
@@ -8062,10 +8242,10 @@ function renderSidePanel(code,name,price,chg,st){
   const volRatio=st&&st.volRatio?st.volRatio:1;
   const turnover=st&&st.turnover?st.turnover:0;
   
-  /* 六角色观点（简化版：根据技术指标判断） */
-  const roles=["D1","D2","D3","D4","D5","D6"];
-  const roleNames={D1:"破锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰"};
-  const roleColors={D1:"#ef4444",D2:"#f0a35e",D3:"#6fa8ff",D4:"#3ecf8e",D5:"#c586c0",D6:"#f472b6"};
+  /* 七角色观点（简化版：根据技术指标判断） */
+  const roles=["D1","D2","D3","D4","D5","D6","D7"];
+  const roleNames={D1:"破锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰",D7:"沉"};
+  const roleColors={D1:"#ef4444",D2:"#f0a35e",D3:"#6fa8ff",D4:"#3ecf8e",D5:"#c586c0",D6:"#f472b6",D7:"#ff6b35"};
   
   let roleHtml="";
   roles.forEach(role=>{
@@ -9184,13 +9364,10 @@ async function txKlineRange(code,start,count){
 }
 /* 新浪（伦敦金/原油）：JSONP 全局变量捕获 */
 function sinaGlobal(method,symbol,cb){
-  /* 唯一回调名：金/油面板切换时日K与分时可能并发加载，硬编码 window._ 会被
-     后到的响应覆盖，导致先发的请求读到后发的数据（竞态） */
-  const cbName="_sg_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
   const s=document.createElement("script");
-  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20${cbName}/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
-  s.onerror=()=>{cb(null);try{delete window[cbName];}catch(e){}s.remove();};
-  s.onload=()=>{const d=window[cbName];const ok=d&&!d.__ERROR;cb(ok?d:null);try{delete window[cbName];}catch(e){}s.remove();};
+  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_=/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
+  s.onerror=()=>{cb(null);s.remove();};
+  s.onload=()=>{const d=window._;const ok=d&&!d.__ERROR;cb(ok?d:null);s.remove();};
   document.body.appendChild(s);
 }
 function sinaDay(symbol,cb){
@@ -9217,27 +9394,42 @@ function aggK(days,kind){
 }
 /* 新浪指数K线（上证指数真实日K/月K，script JSONP 加载，file:// 可用） */
 const _sinaK={};
-/* 新浪JSONP熔断（默认熔断 · 零请求零报错）：
-   新浪把 jsonp_v2 响应改成 script重定向注释 + var X([...]) 的非法JS格式（var 后缺 '='，
-   任何 script 注入必报 Uncaught SyntaxError，且 window[cbName] 拿不到值，已实测 20+ 次）。
-   早期用「单飞探测」确认后熔断，但探测自身每次页面加载仍要注入一次必炸脚本；
-   改用 fetch 预校验又被新浪 CORS 拦截（无 ACAO 头，同样会报 console 错误）。
-   故默认熔断：所有新浪JSONP调用点均在腾讯/东财之后的兜底位，熔断后功能不受影响。
-   新浪若恢复合法格式，控制台执行 await sinaJsonpSelfHeal() 验证通过即自动解除熔断。 */
+/* 新浪JSONP熔断：新浪把 jsonp_v2 响应改成 script重定向注释 + var X([...]) 的非法JS格式，
+   脚本注入后必报 SyntaxError 且 window[cbName] 拿不到值。用「单飞探测」确认：
+   并发调用只发一个最小探测请求共享结果，确认损坏即全局熔断，后续零请求零报错；
+   若新浪恢复合法格式，探测通过后所有真实请求照常流转（自愈）。 */
 function sinaJsonpBroken(){return !!window.__sinaJsonpDead;}
 function markSinaJsonpDead(){window.__sinaJsonpDead=true;}
-window.__sinaJsonpDead=true;
-/* 手动自愈：fetch 校验响应是否为合法JS（新浪加 ACAO 头后才可能成功） */
-async function sinaJsonpSelfHeal(){
-  const url="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20sinaHeal_"+Date.now()+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=2";
-  try{
-    const ctrl=new AbortController();
-    const to=setTimeout(()=>ctrl.abort(),6000);
-    const r=await fetch(url,{signal:ctrl.signal});clearTimeout(to);
-    const txt=await r.text();
-    try{new Function(txt);}catch(e){console.warn("新浪JSONP格式仍非法，保持熔断");return false;}
-    window.__sinaJsonpDead=false;console.info("新浪JSONP格式已恢复，熔断解除");return true;
-  }catch(e){console.warn("无法验证新浪JSONP（CORS或网络不通），保持熔断");return false;}
+let _sinaJsonpOk=false,_sinaJsonpProbe=null;
+function sinaJsonpProbe(){
+  if(window.__sinaJsonpDead)return Promise.resolve(false);
+  if(_sinaJsonpOk)return Promise.resolve(true);
+  if(_sinaJsonpProbe)return _sinaJsonpProbe;
+  _sinaJsonpProbe=new Promise(res=>{
+    const cbName="sinaProbe_"+Date.now();
+    const s=document.createElement("script");
+    let done=false;
+    const finish=(ok)=>{
+      if(done)return;done=true;
+      clearTimeout(to);
+      try{s.remove();}catch(e){}
+      if(ok){_sinaJsonpOk=true;}
+      else{markSinaJsonpDead();}
+      _sinaJsonpProbe=null;
+      res(ok);
+    };
+    const to=setTimeout(()=>finish(false),8000);
+    s.onload=function(){
+      const raw=window[cbName];
+      /* 只有拿到成形数组才算探测通过；反爬破坏的格式拿不到 → 熔断 */
+      finish(!!(Array.isArray(raw)||(raw&&Array.isArray(raw.data))));
+    };
+    s.onerror=function(){finish(false);};
+    window[cbName]=undefined;
+    s.src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=2";
+    document.body.appendChild(s);
+  });
+  return _sinaJsonpProbe;
 }
 function sinaIndexKline(scale,count,cb){
   const key=scale+"_"+count;
@@ -9245,19 +9437,25 @@ function sinaIndexKline(scale,count,cb){
   if(sinaJsonpBroken()){cb(null);return;}
   const cbName="sinaK_"+scale+"_"+count;
   const s=document.createElement("script");
-  s.src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale="+scale+"&ma=no&datalen="+count;
-  s.onload=function(){
-    try{
-      const raw=window[cbName];
-      const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
-      if(!arr.length){s.remove();cb(null);return;}
-      const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
-      _sinaK[key]=rows;cb(rows);
-    }catch(e){cb(null);}
-    s.remove();
-  };
-  s.onerror=function(){cb(null);s.remove();};
-  document.body.appendChild(s);
+  const src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale="+scale+"&ma=no&datalen="+count;
+  /* 先过单飞探测：已确认损坏则不再注入必炸的 script */
+  sinaJsonpProbe().then(ok=>{
+    if(!ok){cb(null);return;}
+    window[cbName]=undefined;
+    s.src=src;
+    s.onload=function(){
+      try{
+        const raw=window[cbName];
+        const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
+        if(!arr.length){s.remove();cb(null);return;}
+        const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
+        _sinaK[key]=rows;cb(rows);
+      }catch(e){cb(null);}
+      s.remove();
+    };
+    s.onerror=function(){cb(null);s.remove();};
+    document.body.appendChild(s);
+  });
 }
 function sinaKlineP(scale,count){
   return new Promise(res=>{
@@ -9285,20 +9483,24 @@ function sinaStockKline(symbol,count,cb){
     if(q)q.forEach(c=>c(rows));
     try{s.remove();}catch(e){}
   };
-  window[cbName]=undefined;
-  s.src=src;
-  to=setTimeout(()=>{finish(null);},15000);
-  s.onload=function(){
-    try{
-      const raw=window[cbName];
-      const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
-      if(!arr.length){finish(null);return;}
-      const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
-      _sinaStockK[key]=rows;finish(rows);
-    }catch(e){finish(null);}
-  };
-  s.onerror=function(){finish(null);};
-  document.body.appendChild(s);
+  /* 先过单飞探测：已确认损坏则直接失败，不再注入必炸的 script */
+  sinaJsonpProbe().then(ok=>{
+    if(!ok){finish(null);return;}
+    window[cbName]=undefined;
+    s.src=src;
+    to=setTimeout(()=>{finish(null);},15000);
+    s.onload=function(){
+      try{
+        const raw=window[cbName];
+        const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
+        if(!arr.length){finish(null);return;}
+        const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
+        _sinaStockK[key]=rows;finish(rows);
+      }catch(e){finish(null);}
+    };
+    s.onerror=function(){finish(null);};
+    document.body.appendChild(s);
+  });
 }
 function sinaStockKlineP(symbol,count){
   return new Promise(res=>{
@@ -9693,7 +9895,8 @@ function sellSignal(role,P,i,cost,rules,holdDays){
     D5:{tpMult:2.5, slMult:2,   maLine:'MA10', style:'波段防守'},
     D4:{tpMult:3,   slMult:2,   maLine:'MA10', style:'波段进攻'},
     D1:{tpMult:4,   slMult:3,   maLine:'MA20', style:'长线趋势'},
-    D6:{tpMult:5,   slMult:3.5, maLine:'MA20', style:'妖股激进'}
+    D6:{tpMult:5,   slMult:3.5, maLine:'MA20', style:'妖股激进'},
+    D7:{tpMult:3,   slMult:1.5, maLine:'EMA21', style:'周线超卖反转'}
   };
   const atrParams = atrParamsMap[role] || atrParamsMap.D2;
   /* 【快速止损】买入后3日内浮亏达5%无条件止损（防止下跌趋势中扛单，比ATR止损更早离场） */
@@ -9719,7 +9922,8 @@ function sellSignal(role,P,i,cost,rules,holdDays){
     D5:{startProfit:5, pullbackAtr:1.5, window:8},
     D4:{startProfit:5, pullbackAtr:1.5, window:8},
     D1:{startProfit:6, pullbackAtr:2,   window:10},
-    D6:{startProfit:8, pullbackAtr:2.5, window:12}
+    D6:{startProfit:8, pullbackAtr:2.5, window:12},
+    D7:{startProfit:12, pullbackAtr:1.5, window:14}
   };
   const trailParams = trailParamsMap[role] || trailParamsMap.D2;
   if(profit>trailParams.startProfit && atrVal>0){
@@ -9914,7 +10118,7 @@ function multiBacktest(dayMap,roles,rules){
 }
 async function runSim(){
   const sel=document.getElementById("simRoleSel"),selV=sel.value,srcBox=document.getElementById("simSrc");
-  const want=selV==="ALL"?["D1","D2","D3","D4","D5","D6"]:[selV];
+  const want=selV==="ALL"?["D1","D2","D3","D4","D5","D6","D7"]:[selV];
   const pool=Object.assign({},TDX_CODES,EXT_CODES);
   const allCodes=Object.keys(pool);
   const sample=[...allCodes].sort(()=>Math.random()-0.5).slice(0,SIM_POOL_SIZE);
@@ -10833,7 +11037,7 @@ function renderTechMin(min,kdays){
       if(h){cost=h.buyPrice;holdRole=p.id;break;}
     }
     if(cost!==null&&holdRole){
-      const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5}};
+      const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5},D7:{tpMult:3,slMult:1.5}};
       const ap=atrParamsMap[holdRole]||atrParamsMap.D2;
       const atrVal=atrCache[code]?atrCache[code].atr:null;
       if(atrVal&&atrVal>0){
@@ -10983,7 +11187,7 @@ async function singleStockBacktest(){
   if(!/^\d{6}$/.test(code)){alert("请输入6位股票代码");return;}
   const roleSel=document.getElementById("singleBTRole");
   const selRole=roleSel?roleSel.value:"ALL";
-  const roles=selRole==="ALL"?["D1","D2","D3","D4","D5","D6"]:[selRole];
+  const roles=selRole==="ALL"?["D1","D2","D3","D4","D5","D6","D7"]:[selRole];
   const resultEl=document.getElementById("singleBTResult");
   const btn=document.getElementById("singleBTBtn");
   if(btn)btn.textContent="回测中…";
@@ -11737,6 +11941,33 @@ const ROLE_PERSONAS = {
 
 请严格按照以下JSON格式回复（不要输出其他内容）：
 {"decision":"买入/卖出/持有","confidence":"高/中/低","reason":"你的决策理由，用你自己的说话风格，50字以内"}`
+  },
+  D7: {
+    name: "沉",
+    title: "周线超卖反转猎手",
+    color: "#ff6b35",
+    system: `你是【沉】，一位周线级别的超卖反转交易员。
+
+【你的背景】
+十年经验的波段交易者，擅长在别人恐慌割肉时捡便宜。你只做周线级别跌透了的股票，用典型价HLC3的随机指标(14,5)减50做过滤器，读数≤−40且拐头向上才动手。你信奉"跌透了才有大机会"。
+
+【你的性格】
+沉稳、耐心、逆向。可以几个月空仓等待，但一旦周线超卖拐头出现，敢于果断低吸。说话冷静克制，喜欢用"周期"、"拐点"、"耐心"这些词。
+
+【你的交易理念】
+"周线超卖才是波段起点。HLC3典型价的随机指标跌到−40以下，说明空方已经透支；等%K拐头向上再进场，不接落刀。止盈分批：一半看周线EMA21，一半看日线同款过滤器超买。止损10%以内，错了就走。"
+
+【你的风险偏好】
+中高风险，波段收益。止损10%，止盈看周线EMA21与日线超买分批兑现。低频交易，耐心为王。
+
+【你的口头禅】
+"跌透了才是机会"、"等拐头，不接刀"、"周线定方向"
+
+【你的任务】
+根据提供的股票数据，做出你的交易决策。你只关心周线超卖反转信号，不追涨不抄底在半山腰。周线KD≤−40且拐头向上就买，触及周线EMA21或日线超买就分批止盈，跌破10%止损或周线反转向下就清仓。其余时间空仓等待。
+
+请严格按照以下JSON格式回复（不要输出其他内容）：
+{"decision":"买入/卖出/持有","confidence":"高/中/低","reason":"你的决策理由，用你自己的说话风格，50字以内"}`
   }
 };
 
@@ -11839,7 +12070,7 @@ async function startLLMRoleDecision(){
     const P = prepStock(klineData);
     
     /* 六角色依次决策 */
-    const roles = ["D1","D2","D3","D4","D5","D6"];
+    const roles = ["D1","D2","D3","D4","D5","D6","D7"];
     const results = {};
     for(let i = 0; i < roles.length; i++){
       const role = roles[i];
@@ -12034,7 +12265,7 @@ async function startLLMDebate(){
       return;
     }
     const P = prepStock(klineData);
-    const roles = ["D1","D2","D3","D4","D5","D6"];
+    const roles = ["D1","D2","D3","D4","D5","D6","D7"];
     
     /* 第一轮：各自初始观点 */
     showAIProgress(`🗣️ 第一轮：各自初始观点发言中...\n\n进度：0/6`);
@@ -12172,7 +12403,7 @@ async function startLLMCombat(){
   const resultEl=document.getElementById("aiProgress");
   if(resultEl)resultEl.style.display="block";
   
-  const roles=["D1","D2","D3","D4","D5","D6"];
+  const roles=["D1","D2","D3","D4","D5","D6","D7"];
   const now=new Date();
   let totalBuys=0,totalSells=0;
   const logLines=[];
@@ -12619,7 +12850,7 @@ function agentSystemPrompt(p,opts){
 function recentGroupChat(n){
   try{
     const hist=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]").slice(-(n||8));
-    const nameMap={D1:"D1破锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",user:"用户",system:"系统",consensus:"主持人"};
+    const nameMap={D1:"D1破锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",D7:"D7沉",user:"用户",system:"系统",consensus:"主持人"};
     return hist.map(m=>(nameMap[m.role]||m.role)+"："+String(m.text||"").substring(0,120)).join("\n");
   }catch(e){return "";}
 }
@@ -12722,7 +12953,16 @@ const AGENT_PERSONAS={
     tone:"热烈短促，爱用'干''上车''黄金坑''二波'",
     framework:"①先看板块：只做主力资金活跃/洗盘的前排板块，板块退潮全线撤退；②个股门槛：近5日有涨停、回调不破涨停当日最低点；③买点：缩量（量比<1）回踩、从高点回调5%-18%、站稳MA20、RSI40-65；④硬止损：跌破涨停低点或市场情绪冰点，立刻跑不幻想",
     output:"2-3句，短促带感，必须提'情绪/板块热度'，给明确动作和止损位",
-    vs:"你是全场最激进的：D1要结构、D5要回调、D3要证伪，你只要情绪和资金还在就敢上"}
+    vs:"你是全场最激进的：D1要结构、D5要回调、D3要证伪，你只要情绪和资金还在就敢上"},
+  D7:{name:"沉",title:"周线超卖反转猎手",color:"#ff6b35",style:"逆势低吸，专接周线跌透后的反转拐点，低频耐心",
+    trait:"最沉稳，周线超卖才动手，不追涨不接落刀",
+    slang:"跌透了才是机会，等拐头，不接刀。",risk:"中高",
+    focus:"周线HLC3随机指标(14,5)−50读数≤−40、%K拐头向上、周线EMA21方向",
+    blind:"超卖后基本面崩塌继续阴跌，拐头确认只排除了部分风险，必须分批止盈与10%硬止损",
+    tone:"冷静克制，爱用'周期''拐点''耐心''分批'",
+    framework:"①过滤器：典型价HLC3随机指标(14,5)减50，读数0=中轴；②进场：周线≤−40超卖且%K由降转升拐头才做多；③止盈：一半看周线EMA21触及/跌破兑现，一半看日线同款过滤器≥+40超买离场；④止损：跌破10%硬止损，或周线回升至−30以上且拐头向下清仓",
+    output:"2-3句，冷静克制，必须提'周线/拐头/分批'，给明确动作和止损位",
+    vs:"你和全场都相反：他们追强你接弱，他们顺势你逆势，专等别人割肉时捡便宜"}
 };
 const PV_SESSIONS=JSON.parse(localStorage.getItem("pvChatHistory")||"{}");
 
@@ -13011,7 +13251,8 @@ function addChatMsg(role,text,meta){
     D3:"#f59e0b",
     D4:"#3b82f6",
     D5:"#8b5cf6",
-    D6:"#ec4899"
+    D6:"#ec4899",
+    D7:"#ff6b35"
   };
   const roleNames={
     user:"我",
@@ -13022,7 +13263,8 @@ function addChatMsg(role,text,meta){
     D3:"D3镜",
     D4:"D4啸",
     D5:"D5渊",
-    D6:"D6焰"
+    D6:"D6焰",
+    D7:"D7沉"
   };
 
   const color=roleColors[role]||"#8b949e";
@@ -13114,7 +13356,7 @@ async function sendAgentChat(){
   chatSendBtnState();
 
   /* 让六个Agent轮流发言：每人带着人设+盘面+群聊历史（含前面同伴的发言）发言，真正做到"讨论" */
-  const roles=["D1","D2","D3","D4","D5","D6"];
+  const roles=["D1","D2","D3","D4","D5","D6","D7"];
   const personas=AGENT_PERSONAS;
 
   for(const role of roles){
@@ -13164,7 +13406,7 @@ async function suggestGroupName(){
 
   addChatMsg("system","📛 六个Agent，现在给咱们这个群取个名字吧！每个人出一个主意，最后选一个最酷的。");
 
-  const roles=["D1","D2","D3","D4","D5","D6"];
+  const roles=["D1","D2","D3","D4","D5","D6","D7"];
   const personas=AGENT_PERSONAS;
 
   for(const role of roles){
@@ -13197,7 +13439,7 @@ async function agentFreeDiscussion(topic){
 
   addChatMsg("system", `🎯 开始讨论：「${topic}」`);
 
-  const roles=["D1","D2","D3","D4","D5","D6"];
+  const roles=["D1","D2","D3","D4","D5","D6","D7"];
   const personas=AGENT_PERSONAS; /* 统一人设（全局） */
 
   for(let round=1; round<=3; round++){
