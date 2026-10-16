@@ -9184,10 +9184,13 @@ async function txKlineRange(code,start,count){
 }
 /* 新浪（伦敦金/原油）：JSONP 全局变量捕获 */
 function sinaGlobal(method,symbol,cb){
+  /* 唯一回调名：金/油面板切换时日K与分时可能并发加载，硬编码 window._ 会被
+     后到的响应覆盖，导致先发的请求读到后发的数据（竞态） */
+  const cbName="_sg_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
   const s=document.createElement("script");
-  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_=/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
-  s.onerror=()=>{cb(null);s.remove();};
-  s.onload=()=>{const d=window._;const ok=d&&!d.__ERROR;cb(ok?d:null);s.remove();};
+  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20${cbName}/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
+  s.onerror=()=>{cb(null);try{delete window[cbName];}catch(e){}s.remove();};
+  s.onload=()=>{const d=window[cbName];const ok=d&&!d.__ERROR;cb(ok?d:null);try{delete window[cbName];}catch(e){}s.remove();};
   document.body.appendChild(s);
 }
 function sinaDay(symbol,cb){
