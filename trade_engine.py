@@ -51,6 +51,8 @@ ROLES = {
     "D4": {"name": "啸", "sl": 7, "tp": 10},
     "D5": {"name": "渊", "sl": 6, "tp": 9},
     "D6": {"name": "焰", "sl": 8, "tp": 15},
+    # D7 周线超卖反转（与前端 ROLE_PARAMS 对齐：sl10/tp25，atrParamsMap sl1.5/tp3）
+    "D7": {"name": "沉", "sl": 10, "tp": 25},
 }
 
 STOCK_POOL = [
@@ -79,10 +81,30 @@ STOCK_INDUSTRY = {
 }
 
 # ==================== 工具函数 ====================
+def ensure_players(data):
+    """对齐前端 ensurePlayerD7：data.json 历史快照缺新角色时幂等补齐，
+       不动 D1-D6 的持仓/成交/历史。返回是否有新增。"""
+    existing = {p.get("id") for p in data.get("players", [])}
+    added = False
+    for role_id, role in ROLES.items():
+        if role_id in existing:
+            continue
+        data["players"].append({
+            "id": role_id, "name": role["name"],
+            "cash": INIT_CASH, "holdings": [], "trades": [],
+            "asset_history": [INIT_CASH]
+        })
+        data.setdefault("consecutive_losses", {})[role_id] = 0
+        added = True
+        print(f"  ➕ 已补齐新角色 {role_id} {role['name']}（初始资金 {INIT_CASH}）")
+    return added
+
 def load_data():
     if os.path.exists("data.json"):
         with open("data.json", "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        ensure_players(data)
+        return data
     data = {"players": [], "last_update": cn_now().isoformat(),
             "consecutive_losses": {}, "market_trend": "neutral"}
     for role_id, role in ROLES.items():
@@ -1092,12 +1114,167 @@ def can_sell_t1(hold):
     bt = hold.get("buyTime") or hold.get("buy_time") or hold.get("buyDate") or hold.get("time") or ""
     return bt[:10] != cn_now().strftime("%Y-%m-%d")
 
+# ==================== D7 周线超卖反转（与前端 calcWeeklyKD/calcDailyKD 同口径） ====================
+WEEKLY_KD_CACHE = {}  # code -> {t,kd,kdPrev,turnUp,ema21,ema21Up}，10分钟TTL（对齐前端 wkKDCache）
+
+def _tx_kline(code, scale, count):
+    """腾讯K线（与前端 txKline 同源）：scale=day/week，返回原始行列表（无数据返回 []）"""
+    prefix = "sh" if code.startswith("6") else "sz"
+    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix}{code},{scale},,{count},qfq"
+    r = requests.get(url, timeout=8)
+    j = r.json()
+    node = j.get("data", {}).get(f"{prefix}{code}", {})
+    return node.get(f"qfq{scale}") or node.get(scale) or []
+
+def _hlc3_kd(bars):
+    """HLC3=(H+L+C)/3 典型价随机指标：%K(14)−50 居中，%D=%K的5周期SMA。
+    turnUp=%K由降转升 或 %K上穿%D（与前端一致）。bars 需 ≥25 根。"""
+    if not bars or len(bars) < 25:
+        return None
+    hlcs = [(float(b[3]) + float(b[4]) + float(b[2])) / 3 for b in bars]
+    k_raw = []
+    for i in range(13, len(hlcs)):
+        win = hlcs[i - 13:i + 1]
+        lo, hi = min(win), max(win)
+        k = (hlcs[i] - lo) / (hi - lo) * 100 if hi > lo else 50
+        k_raw.append(k - 50)
+    if len(k_raw) < 7:
+        return None
+    d_last = sum(k_raw[-5:]) / 5
+    d_prev = sum(k_raw[-6:-1]) / 5
+    kd, kd_prev, kd_prev2 = k_raw[-1], k_raw[-2], k_raw[-3]
+    turn_up = (kd > kd_prev and kd_prev <= kd_prev2) or (kd > d_last and kd_prev <= d_prev)
+    return {"kd": kd, "kdPrev": kd_prev, "kdPrev2": kd_prev2,
+            "dLast": d_last, "dPrev": d_prev, "turnUp": turn_up}
+
+def get_weekly_kd(code):
+    """D7 周线过滤器：腾讯周K 80根（≈1.5年，够14窗口+5平滑+EMA21）。
+    返回 {t,kd,kdPrev,turnUp,ema21,ema21Up}；网络/数据异常返回 None。"""
+    import time as _t
+    now = _t.time()
+    hit = WEEKLY_KD_CACHE.get(code)
+    if hit and now - hit["t"] < 600:
+        return hit
+    try:
+        bars = _tx_kline(code, "week", 80)
+        kd = _hlc3_kd(bars)
+        if not kd:
+            return None
+        closes = [float(b[2]) for b in bars]
+        ema = closes[0]
+        ema_prev = ema
+        for c in closes[1:]:
+            ema_prev = ema
+            ema = c * (2 / 22) + ema * (20 / 22)
+        rec = {"t": now, "kd": round(kd["kd"], 1), "kdPrev": round(kd["kdPrev"], 1),
+               "turnUp": kd["turnUp"], "ema21": round(ema, 2), "ema21Up": ema > ema_prev}
+        WEEKLY_KD_CACHE[code] = rec
+        return rec
+    except Exception as e:
+        print(f"  周线KD获取失败 {code}: {e}")
+        return None
+
+def get_daily_kd(code):
+    """日线同款过滤器（HLC3 KD14/5 −50，D7 另一半止盈：读数≥+40 超买离场）"""
+    try:
+        kd = _hlc3_kd(_tx_kline(code, "day", 30))
+        if not kd:
+            return None
+        return {"kd": round(kd["kd"], 1), "d": round(kd["dLast"], 1)}
+    except Exception:
+        return None
+
+def check_buy_d7(player, all_codes_data, market_trend, all_players=None):
+    """D7 周线超卖反转·开仓（复刻前端 D7 分支口径）：
+    ① 基础过滤（持仓/ST/涨跌停/跨角色重合/大盘择时）② 全局风控闸照过
+    ③ 日线粗筛超卖形态（RSI6≤45 或 贴近20日低点）④ top8 拉周线KD：
+       kd≤−40 且 %K 拐头向上才开仓。打分：base85 + EMA21向上8 + 当日未深跌5。"""
+    if len(player["holdings"]) >= MAX_POS:
+        return None
+    if market_trend == "bear" and len(player["holdings"]) >= 2:
+        return None
+    shortlist = []
+    for code, st in all_codes_data.items():
+        if any(h["code"] == code for h in player["holdings"]):
+            continue
+        if st["chg"] >= 9.8 or st["chg"] <= -9.8:
+            continue
+        if "ST" in st.get("name", ""):
+            continue
+        if all_players:
+            overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
+            if overlap >= MAX_OVERLAP:
+                continue
+        guard_ok, _why = global_guard(st)
+        if not guard_ok:
+            continue
+        rsi = st.get("rsi6", 50)
+        price = st["price"]
+        lo20 = st.get("lo20") or price
+        if rsi <= 45 or price <= lo20 * 1.06:
+            heat = (50 - rsi) + max(0.0, (lo20 * 1.06 - price) / price * 100)
+            shortlist.append((code, st, heat))
+    shortlist.sort(key=lambda x: -x[2])
+    best = None
+    for code, st, _heat in shortlist[:8]:
+        w = get_weekly_kd(code)
+        if not w or w["kd"] > -40 or not w["turnUp"]:
+            continue
+        score = 85
+        why = [f"周线超卖{w['kd']:.1f}且拐头向上"]
+        if w["ema21Up"]:
+            score += 8
+            why.append("周线EMA21向上·趋势修复中")
+        if 0 <= st["chg"] < 5:
+            score += 5
+            why.append("当日未深跌·反转初期")
+        if best is None or score > best[2]:
+            best = (code, st, score, " + ".join(why))
+    if best:
+        print(f"  🎯 D7 周线超卖反转候选：{best[1]['name']}({best[0]}) 评分{best[2]}（{best[3]}）")
+    return best
+
+def d7_sell_signal(hold, st):
+    """D7 分批止盈（复刻前端）：未半仓时 周线EMA21触及 或 日线KD≥+40 → 减半；
+    已半仓时 周线kd≥−30且拐头向下 或 日线KD≥+50 → 清仓；−10% 硬止损。
+    返回 (hold, reason, ratio, 标记半仓) 或 None。"""
+    bp = hold.get("buyPrice") or hold.get("cost") or 0
+    price = st["price"]
+    if bp <= 0:
+        return None
+    chg = (price - bp) / bp
+    if chg <= -0.10:
+        return (hold, f"周线超卖反转·跌破10%止损位·清仓（{chg*100:.1f}%）", 1.0, False)
+    w = get_weekly_kd(hold["code"])
+    d = get_daily_kd(hold["code"])
+    if not hold.get("partialTaken"):
+        ema_hit = bool(w) and price > 0 and price >= w["ema21"] * 0.995
+        day_ob = bool(d) and d["kd"] >= 40
+        if ema_hit or day_ob:
+            why = "周线EMA21" if ema_hit else f"日线KD{d['kd']:.1f}超买"
+            return (hold, f"周线超卖反转·第一止盈（{why}）减半落袋", 0.5, True)
+    else:
+        wk_rev = bool(w) and w["kd"] >= -30 and not w["turnUp"]
+        day_deep = bool(d) and d["kd"] >= 50
+        if wk_rev or day_deep:
+            return (hold, "周线超卖反转·第二止盈（日线超买加深/周线反转）清仓剩余", 1.0, False)
+    return None
+
 def check_sell_signals(player, stock_data):
     signals = []
     role = ROLES[player["id"]]
     for hold in player["holdings"]:
         if hold["code"] not in stock_data or not can_sell_t1(hold): continue
         st = stock_data[hold["code"]]
+        # D7 周线超卖反转：分批止盈/硬止损专属逻辑优先，未命中再走下方通用规则
+        if player["id"] == "D7":
+            sig = d7_sell_signal(hold, st)
+            if sig:
+                h, reason, ratio, mark_half = sig
+                if mark_half:
+                    h["partialTaken"] = True
+                signals.append((h, reason, ratio))
+                continue
         bp = hold.get("buyPrice") or hold.get("cost") or 0
         chg = (st["price"] - bp) / bp * 100
         if chg <= -role["sl"]: signals.append((hold, f"止损-{abs(chg):.1f}%", 1.0)); continue
@@ -1260,10 +1437,23 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
         return None
     if len(player["holdings"]) >= MAX_POS: return None
 
-    # 【多Agent共识预计算】D2的开仓依据：其他五个角色各自的最高分候选，汇总共识度
+    # 【D7 周线超卖反转】独立分支：反趋势角色，不走日线打分管线与六步门禁，
+    # 由周线 KD（HLC3 随机指标 14/5 −50）≤−40 且拐头向上闸门单独裁决
+    if role_id == "D7":
+        return check_buy_d7(player, all_codes_data, market_trend, all_players)
+
+    # 【多Agent共识预计算】D2的开仓依据：其他角色各自的最高分候选，汇总共识度
     consensus = {}
     if role_id == "D2":
-        for rid in ["D1", "D3", "D4", "D5", "D6"]:
+        for rid in ["D1", "D3", "D4", "D5", "D6", "D7"]:
+            if rid == "D7":
+                # D7 的最优候选来自周线KD闸门（含网络，10分钟缓存兜底）
+                d7p = next((p for p in (all_players or []) if p.get("id") == "D7"), None)
+                if d7p:
+                    best_d7 = check_buy_d7(d7p, all_codes_data, market_trend, all_players)
+                    if best_d7:
+                        consensus[best_d7[0]] = consensus.get(best_d7[0], 0) + 1
+                continue
             best = None
             for code, st in all_codes_data.items():
                 if any(h["code"] == code for h in player["holdings"]): continue
@@ -1305,10 +1495,10 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
         # 【多Agent共识】D2专属：其他角色≥3个指向同一只 → 共识加成
         if role_id == "D2" and consensus.get(code, 0) >= 3:
             score += 30
-            reason_parts.append(f"多Agent共识{consensus[code]}/5")
+            reason_parts.append(f"多Agent共识{consensus[code]}/6")
         elif role_id == "D2" and consensus.get(code, 0) >= 2:
             score += 10
-            reason_parts.append(f"部分共识{consensus[code]}/5")
+            reason_parts.append(f"部分共识{consensus[code]}/6")
         if score >= 60:
             candidates.append((code, st, score, " + ".join(reason_parts) or "综合评分达标"))
 

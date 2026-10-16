@@ -14,7 +14,7 @@
    纯属无效 token。加 15 秒 TTL：同一轮内数据一致（也更合理），跨轮自动刷新。 */
 let __ctxCache={t:0,s:""};
 const AGENT_CTX_TTL=15000;
-/* 把当前真实盘面（大盘环境 + 六角色持仓盈亏）拼成文本，喂给 AI，避免空话 */
+/* 把当前真实盘面（大盘环境 + 七角色持仓盈亏）拼成文本，喂给 AI，避免空话 */
 function buildAgentContext(){
   const now=Date.now();
   if(__ctxCache.s&&now-__ctxCache.t<AGENT_CTX_TTL)return __ctxCache.s;
@@ -25,7 +25,7 @@ function buildAgentContext(){
       if(env)s+="大盘：环境"+(env.bias||"-")+"（评分"+(env.score||0)+"），上证"+(env.shChg>=0?"+":"")+(env.shChg||0).toFixed(2)+"%，资金"+(env.flow||"-")+"\n";
       const ps=simData.players||[];
       if(ps.length){
-        s+="六角色当前状态：\n";
+        s+="七角色当前状态：\n";
         const IC=(typeof INIT_CASH!=="undefined")?INIT_CASH:100000;
         ps.forEach(function(p){
           const ret=(p.asset-IC)/IC*100;
@@ -922,7 +922,7 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .modal .rule b { color:var(--text); }
   .modal .note { margin-top:16px; font-size:12px; color:var(--text-faint); border-top:1px solid var(--border-soft); padding-top:10px; }
 
-  /* ===== 6大自动化核心模块卡片 ===== */
+  /* ===== 7大自动化核心模块卡片 ===== */
   .engine-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; padding:4px; }
   .engine-card { background:var(--bg-card); border:1px solid var(--border-soft); border-radius:12px; padding:14px 16px; position:relative; transition:all .2s; cursor:pointer; }
   .engine-card:hover { border-color:var(--cyan); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.2); }
@@ -1216,7 +1216,7 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
 /* ============================================================
    精英化升级层 v2（Redesign·Preserve，作用域 .modern）
    目标：机构级质感（Bloomberg 的精确 × Linear 的发丝线与留白）+ 去拥挤。
-   保护契约：不动 DOM/JS/数据/A股红涨绿跌约定/六角色身份色/左侧彩色状态条。
+   保护契约：不动 DOM/JS/数据/A股红涨绿跌约定/七角色身份色/左侧彩色状态条。
    说明：JS 模板卡片约25处带内联样式，材质属性用 !important 覆盖；
         .mk-metric 用三边描边以保留左侧 mk-accent-* 状态条；
         .gmk-btn（强调按钮）与 .chat-bubble（群聊气泡）不纳入材质组。
@@ -1462,53 +1462,68 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="m-sub" id="vTempSub">等待数据…</div>
     </div>
   </div>
-  <div class="mk-grid mk-g4 mk-mt">
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">涨跌分布</div></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cDist"></div></div></div>
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">情绪雷达</div></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cRadar"></div></div></div>
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">市场广度</div></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cBreadth"></div></div></div>
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">强弱分层</div></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
+  <!-- ===== 市场深度（四连图 + 行业看板 融合为一个可折叠 panel） ===== -->
+  <div class="panel collapsible" id="panel-market-depth" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-market-depth')">
+      <span class="panel-title">📊 市场深度</span>
+      <span class="panel-tip">涨跌分布 / 情绪雷达 / 市场广度 / 强弱分层 / 行业涨幅 / 行业成交 · 六图合一 ▼</span>
+    </div>
+    <div class="panel-body">
+      <div class="mk-grid mk-g4">
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">涨跌分布</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cDist"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">情绪雷达</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cRadar"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">市场广度</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cBreadth"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">强弱分层</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
+      </div>
+      <div class="mk-grid mk-g2 mk-mt">
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业涨幅排行</div><span class="mk-card-tip">按行业平均涨跌幅 · 红涨绿跌</span></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cSectorRank" style="height:320px"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业成交分布</div><span class="mk-card-tip">按行业成交额占比</span></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cSectorAmt" style="height:320px"></div></div></div>
+      </div>
+    </div>
   </div>
 
-  <div class="mk-grid mk-g2 mk-mt">
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业涨幅排行</div><span class="mk-card-tip">按行业平均涨跌幅 · 红涨绿跌</span></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cSectorRank" style="height:320px"></div></div></div>
-    <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业成交分布</div><span class="mk-card-tip">按行业成交额占比</span></div>
-      <div class="mk-card-body"><div class="mk-chart" id="cSectorAmt" style="height:320px"></div></div></div>
+  <!-- ===== 角色总览：组合汇总指标 + 7 角色卡片（融合为一个可折叠 panel） ===== -->
+  <div class="panel collapsible" id="panel-role-summary" data-collapsed style="margin-bottom:12px">
+    <div class="panel-head" onclick="togglePanel('panel-role-summary')">
+      <span class="panel-title">🎭 角色总览</span>
+      <span class="panel-tip">组合汇总指标 + 7 角色收益 / 胜率 / 回撤卡片 ▼</span>
+    </div>
+    <div class="panel-body">
+      <section class="stats">
+        <div class="stat-card">
+          <div class="stat-label">运行角色</div>
+          <div class="stat-value" id="statRun">–</div>
+          <div class="stat-sub">共 7 个 · 全自动AI决策</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">行情接口</div>
+          <div class="stat-value" id="statApi">–</div>
+          <div class="stat-sub">腾讯实时行情 · JSONP</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">组合平均收益率</div>
+          <div class="stat-value" id="statNet">–</div>
+          <div class="stat-sub">按同批盯市收益计算</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">领先角色</div>
+          <div class="stat-value" id="statLead">–</div>
+          <div class="stat-sub" id="statLeadSub">–</div>
+        </div>
+      </section>
+      <div class="dash-mod-grid" id="dashModules"></div>
+    </div>
   </div>
-
-  <section class="stats">
-    <div class="stat-card">
-      <div class="stat-label">运行角色</div>
-      <div class="stat-value" id="statRun">–</div>
-      <div class="stat-sub">共 7 个 · 全自动AI决策</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">行情接口</div>
-      <div class="stat-value" id="statApi">–</div>
-      <div class="stat-sub">腾讯实时行情 · JSONP</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">组合平均收益率</div>
-      <div class="stat-value" id="statNet">–</div>
-      <div class="stat-sub">按同批盯市收益计算</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">领先角色</div>
-      <div class="stat-value" id="statLead">–</div>
-      <div class="stat-sub" id="statLeadSub">–</div>
-    </div>
-  </section>
-
-  <!-- ===== 业务模块卡 + 最近信号 Tape ===== -->
-  <div class="dash-mod-grid" id="dashModules"></div>
-  <div class="panel" style="margin-top:12px">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-tape" data-collapsed style="margin-top:12px">
+    <div class="panel-head" onclick="togglePanel('panel-tape')">
       <span class="panel-title">📡 最近信号 Tape</span>
-      <span class="panel-tip">六角色成交信号 · 时间 / 方向 / 标的 / 价格 / 盈亏 / 信号强度 · 按时间倒序</span>
+      <span class="panel-tip">七角色成交信号 · 时间 / 方向 / 标的 / 价格 / 盈亏 / 信号强度 · 按时间倒序</span>
     </div>
     <div class="panel-body">
       <div class="table-wrap">
@@ -1520,9 +1535,9 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel collapsible" id="panel-return-trend" data-collapsed>
     <div class="panel-head" style="flex-wrap:wrap;gap:8px">
-      <span class="panel-title">📈 收益走势分析</span>
+      <span class="panel-title" onclick="togglePanel('panel-return-trend')" style="cursor:pointer" title="点击折叠/展开">📈 收益走势分析 ▼</span>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px">
         <select id="returnRoleSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:100px" onchange="renderCharts()">
           <option value="ALL">组合平均</option>
@@ -1549,8 +1564,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="chart-box" id="chartEq" style="height:320px"></div>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-return-stat" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-return-stat')">
       <span class="panel-title">收益统计（本月 / 本年）</span>
       <span class="panel-tip" id="statNote">模拟赛局运行于本自然月内，本月=本年=当前累计收益</span>
     </div>
@@ -1567,9 +1582,9 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   </div>
 
   <!-- ===== 六步门禁（全局，实时日志上方） ===== -->
-  <div class="panel collapsible" id="panel-six-step">
+  <div class="panel collapsible" id="panel-six-step" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-six-step')">
-      <span class="panel-title">📋 整合买入策略 · 六步门禁（由 D1-D6 规则与股票池共同点整合）</span>
+      <span class="panel-title">📋 整合买入策略 · 六步门禁（由 D1-D6 顺势规则整合；D7 为周线反趋势角色，不走日线门禁，仅受「周线KD≤−40 且 %K拐头」独立闸门约束）</span>
       <span class="panel-tip">任一环节不满足即拦截，不进入下一环节 ▼</span>
     </div>
     <div class="panel-body">
@@ -1579,11 +1594,14 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           <tbody id="strategyBody"></tbody>
         </table>
       </div>
+      <div style="margin-top:10px;padding:8px 12px;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.25);border-radius:8px;font-size:12px;color:var(--text-dim)">
+        ⚠️ <b style="color:#ff6b35">D7 沉（周线超卖反转）为例外角色</b>：反趋势逻辑，不走上面六步顺势门禁（第3步 MA20&gt;MA60 趋势过滤与其互斥）。D7 只受独立闸门约束：周线 HLC3 随机指标(14,5)−50 读数 ≤−40 且 %K 拐头向上才开仓；止盈分批（周线EMA21 / 日线KD≥+40），止损 −10%。
+      </div>
     </div>
   </div>
 
   <!-- ===== 日志窗口 ===== -->
-  <section class="panel collapsible" id="panel-event-log">
+  <section class="panel collapsible" id="panel-event-log" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-event-log')">
       <span class="panel-title">📝 实时事件日志</span>
       <span class="panel-tip">成交 / 告警 / 提示 · 最多保留 300 条 ▼</span>
@@ -1596,15 +1614,15 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 
 <!-- ===== Tab1 收益排名 ===== -->
 <section class="tab-view" id="view-rank">
-  <!-- ===== 6大自动化核心模块 ===== -->
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">🤖 6大自动化交易引擎</span>
-      <span class="panel-tip">全自动无人值守 · 每30分钟自动跑一次 · 微信推送买卖</span>
+  <!-- ===== 7大自动化核心模块 ===== -->
+  <div class="panel collapsible" id="panel-engines" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-engines')">
+      <span class="panel-title">🤖 7大自动化交易引擎</span>
+      <span class="panel-tip">全自动无人值守 · 每30分钟自动跑一次 · 微信推送买卖 ▼</span>
     </div>
     <div class="panel-body">
       <div class="engine-grid" id="engineGrid">
-        <!-- 6张卡片由JS渲染 -->
+        <!-- 7张卡片由JS渲染 -->
       </div>
     </div>
   </div>
@@ -1699,13 +1717,13 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
               <button class="gmk-btn" id="singleBTBtn" style="padding:8px 20px;background:#8b5cf6;color:#fff;font-weight:600" onclick="singleStockBacktest()">🔄 策略回测</button>
               <button class="gmk-btn" style="padding:8px 20px;background:#10b981;color:#fff;font-weight:600" onclick="openAIDeepAnalysis()">🤖 本地AI分析</button>
               <button class="gmk-btn" style="padding:8px 20px;background:#f97316;color:#fff;font-weight:600" onclick="startOnlineAIAnalysis()">🧠 在线多智能体分析</button>
-              <button class="gmk-btn" style="padding:8px 20px;background:#ec4899;color:#fff;font-weight:600" onclick="startLLMRoleDecision()">🎭 六角色LLM决策</button>
+              <button class="gmk-btn" style="padding:8px 20px;background:#ec4899;color:#fff;font-weight:600" onclick="startLLMRoleDecision()">🎭 七角色LLM决策</button>
               <button class="gmk-btn" style="padding:8px 20px;background:#a855f7;color:#fff;font-weight:600" onclick="startLLMDebate()">⚖️ 角色辩论会</button>
               <button class="gmk-btn" style="padding:8px 20px;background:#ef4444;color:#fff;font-weight:600" onclick="startLLMCombat()">🚀 LLM实战模式</button>
               <button class="gmk-btn" style="padding:8px 12px;background:#374151;color:#fff" onclick="openAIConfig()" title="配置API密钥">⚙️</button>
               <button class="gmk-btn" style="padding:8px 12px;background:#059669;color:#fff" onclick="checkDeepSeekBalance()" title="查看API余额">💰</button>
               <select id="singleBTRole" class="mini-select" style="padding:8px 12px;font-size:13px">
-                <option value="ALL">六角色全部</option>
+                <option value="ALL">七角色全部</option>
                 <option value="D1">D1 趋势突破</option>
                 <option value="D2">D2 多Agent共识</option>
                 <option value="D3">D3 多空辩论</option>
@@ -1748,7 +1766,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <div class="panel">
     <div class="panel-body" style="padding:16px">
 
-    <!-- 6 Agent 卡片 - 一行6个 -->
+    <!-- 7 Agent 卡片 - 自动换行 -->
     <div class="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:16px">
       <button class="agent-card" onclick="privateChatAgent('D1')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">锋</span>
@@ -1774,6 +1792,10 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <span style="width:40px;height:40px;border-radius:50%;background:#ec4899;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">焰</span>
         <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D6 焰</span><br><span style="font-size:10px;color:var(--text-faint)">涨停敢死</span><br><span id="agentLive-D6" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
+      <button class="agent-card" onclick="privateChatAgent('D7')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
+        <span style="width:40px;height:40px;border-radius:50%;background:#ff6b35;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">沉</span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D7 沉</span><br><span style="font-size:10px;color:var(--text-faint)">周线超卖反转</span><br><span id="agentLive-D7" style="font-size:10px;color:var(--text-faint)">--</span></span>
+      </button>
     </div>
 
     <!-- 两列布局：左技能矩阵+Skill总览，右雷达+报告+群聊 -->
@@ -1783,7 +1805,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <span style="font-size:16px;font-weight:700">Agent 技能矩阵</span>
-        <span style="font-size:12px;color:var(--text-faint)">6 Agent · 15 Skill · 只读</span>
+        <span style="font-size:12px;color:var(--text-faint)">7 Agent · 18 Skill · 只读</span>
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table style="width:100%;min-width:620px;border-collapse:collapse;font-size:13px">
@@ -1855,6 +1877,15 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
                 <span style="background:rgba(59,130,246,.15);color:#3b82f6;padding:3px 9px;border-radius:6px;font-size:11px">daily_stock_analysis Pro</span>
                 <span style="background:rgba(59,130,246,.15);color:#3b82f6;padding:3px 9px;border-radius:6px;font-size:11px">Financial-API</span>
                 <span style="background:rgba(139,92,246,.15);color:#8b5cf6;padding:3px 9px;border-radius:6px;font-size:11px">PandaAI quantskills</span>
+              </div></td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-soft)">
+              <td style="padding:12px 10px;color:#ff6b35;font-weight:600">D7 沉</td>
+              <td style="padding:12px 10px;color:var(--text-dim)">逆向耐心，专抓周线跌透后的反转拐点，不接落刀</td>
+              <td style="padding:12px 10px"><div style="display:flex;flex-wrap:wrap;gap:5px">
+                <span style="background:rgba(16,185,129,.15);color:#10b981;padding:3px 9px;border-radius:6px;font-size:11px">TradingAgents</span>
+                <span style="background:rgba(59,130,246,.15);color:#3b82f6;padding:3px 9px;border-radius:6px;font-size:11px">daily_stock_analysis</span>
+                <span style="background:rgba(59,130,246,.15);color:#3b82f6;padding:3px 9px;border-radius:6px;font-size:11px">Financial-API</span>
               </div></td>
             </tr>
           </tbody>
@@ -1949,8 +1980,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 <!-- ===== Tab3 个股研究（候选行情池+研究评分合并） ===== -->
 <section class="tab-view" id="view-research">
   <!-- ===== 外部监控（放在五行日历上方） ===== -->
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-sentiment" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-sentiment')">
       <span class="panel-title">📊 情绪监控 · 主参考：大盘情绪</span>
       <span class="panel-tip">宝妈 / 美股估值 / 龙虎 / 北向 为辅助情绪</span>
     </div>
@@ -1997,8 +2028,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
   <!-- ===== 底部探测器：政策底 + 技术底（消息面判断核心模块） ===== -->
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-bottom" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-bottom')">
       <span class="panel-title">🔭 底部探测器 · 政策底 / 技术底</span>
       <span class="panel-tip">技术底=上证量价(回撤/乖离/RSI/缩量/连跌/下影/布林) · 政策底=消息面政策关键词(降准/降息/汇金/印花税/减持新规…) · 二者共振=底部确认</span>
     </div>
@@ -2006,7 +2037,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="ms-loading">探测中…（拉取上证日K + 政策面消息）</div>
     </div>
   </div>
-  <div class="panel collapsible" id="panel-wx-cal">
+  <div class="panel collapsible" id="panel-wx-cal" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-wx-cal')">
       <span class="panel-title">🔮 五行日历 · 交易日干支 + 财经大事</span>
       <span class="panel-tip">近三日=上一交易日/当日/下一交易日 · 天干地支双五行 ▼</span>
@@ -2089,36 +2120,30 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       </div>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-review-sentiment" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-review-sentiment')">
       <span class="panel-title">市场情绪与广度</span>
-      <span class="panel-tip">基于候选池实时行情统计 · 涨跌家数 / 红盘率 / 涨跌停 / 板块强弱</span>
+      <span class="panel-tip">基于候选池实时行情统计 · 涨跌家数 / 红盘率 / 涨跌停 / 板块强弱 ▼</span>
     </div>
     <div class="panel-body" id="reviewSentiment"></div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">指数行情对比</span>
-      <span class="panel-tip">六大指数实时点位 / 涨跌幅 · 红涨绿跌</span>
+  <!-- ===== 市场结构（指数对比 + 强弱方向 + 赚钱亏钱效应 三合一可折叠） ===== -->
+  <div class="panel collapsible" id="panel-market-structure" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-market-structure')">
+      <span class="panel-title">🧭 市场结构</span>
+      <span class="panel-tip">指数对比 / 强弱方向 / 赚钱亏钱效应 · 三合一 ▼</span>
     </div>
-    <div class="panel-body" id="reviewIdxCompare"></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">强势 / 弱势方向</span>
-      <span class="panel-tip">行业均涨幅前6 / 后6 · 领涨领跌个股</span>
+    <div class="panel-body">
+      <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">📈 指数行情对比</div>
+      <div id="reviewIdxCompare" style="margin-bottom:20px"></div>
+      <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">🧭 强势 / 弱势方向</div>
+      <div id="reviewDirections" style="margin-bottom:20px"></div>
+      <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">💰 赚钱 / 亏钱效应</div>
+      <div id="reviewEffect"></div>
     </div>
-    <div class="panel-body" id="reviewDirections"></div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">赚钱 / 亏钱效应</span>
-      <span class="panel-tip">涨幅居前 / 跌幅居前个股 · 实时</span>
-    </div>
-    <div class="panel-body" id="reviewEffect"></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-review-daily" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-review-daily')">
       <span class="panel-title">每日收盘小结</span>
       <span class="panel-tip">每个交易日 15:00 收盘后自动生成 · 含持仓个股、板块与四大指数对比</span>
     </div>
@@ -2126,8 +2151,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。</div>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-review-weekmonth" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-review-weekmonth')">
       <span class="panel-title">周总结 · 月总结</span>
       <span class="panel-tip">每周五收盘自动生成周总结 · 每月末收盘自动生成月总结 · 未到节点时展示至今累计统计</span>
     </div>
@@ -2136,20 +2161,20 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="review-card" id="reviewMonth"></div>
     </div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-review-sector" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-review-sector')">
       <span class="panel-title">板块轮动强度</span>
       <span class="panel-tip">红色=强势 · 蓝色=弱势 · 橙色=洗盘</span>
     </div>
     <div class="panel-body"><div class="chart-box" id="chartSector" style="height:260px"></div></div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
+  <div class="panel collapsible" id="panel-review-revisions" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-review-revisions')">
       <span class="panel-title">策略自适应修正记录</span>
       <span class="panel-tip">引擎依据走势持续评估各策略表现，表现弱于组合的策略自动下发修正建议</span>
     </div>
     <div class="panel-body" id="reviewRevisions">
-      <div class="review-note">尚无修正记录：引擎将持续评估 D1-D6 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>
+      <div class="review-note">尚无修正记录：引擎将持续评估 D1-D7 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>
     </div>
   </div>
 </section>
@@ -2214,8 +2239,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 <section class="tab-view" id="view-sim">
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">策略模拟 · 六角色独立回测</span>
-      <span class="panel-tip">六角色策略+KDJ金叉买入+反包涨停(妖股通行证)+分批建仓+部分止盈+巨量长上影/放量下跌/高位崩盘保护卖出+顶背离超买前高受阻止盈+差异化止损·MACD仅参考</span>
+      <span class="panel-title">策略模拟 · 七角色独立回测</span>
+      <span class="panel-tip">七角色策略+KDJ金叉买入+反包涨停(妖股通行证)+分批建仓+部分止盈+巨量长上影/放量下跌/高位崩盘保护卖出+顶背离超买前高受阻止盈+差异化止损·MACD仅参考</span>
     </div>
     <div class="panel-body">
       <div class="gmk-toolbar" style="flex-wrap:wrap">
@@ -2240,7 +2265,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       </div>
       <div id="simSampleInfo" class="sim-sample-info">点击「开始回测」：随机抽样市场候选股 + 随机时间段（真实日K，不编造）</div>
       <div id="simRoleCards" class="sim-role-grid"></div>
-      <div class="sim-chart-title">回测收益对比（六角色·红涨绿跌）</div>
+      <div class="sim-chart-title">回测收益对比（七角色·红涨绿跌）</div>
       <div id="simFinalStats" class="sim-final-stats"></div>
       <div id="simAdvice" class="sim-advice"></div>
       <div id="simTuneBox" class="sim-advice"></div>
@@ -2397,7 +2422,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 
-  <div class="panel collapsible" id="panel-dual-track">
+  <div class="panel collapsible" id="panel-dual-track" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-dual-track')">
       <span class="panel-title">🔄 双轨运行模式</span>
       <span class="panel-tip">全市场扫描 + 自选股池深度盯盘 ▼</span>
@@ -2495,7 +2520,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 
-  <div class="panel collapsible" id="panel-kpattern">
+  <div class="panel collapsible" id="panel-kpattern" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-kpattern')">
       <span class="panel-title">📊 25种常见K线形态速查</span>
       <span class="panel-tip">单根K线基础形态 · 位置决定性质 ▼</span>
@@ -2531,7 +2556,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 
-  <div class="panel collapsible" id="panel-zt-huicai">
+  <div class="panel collapsible" id="panel-zt-huicai" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-zt-huicai')">
       <span class="panel-title">⚡ 涨停回踩突破战法（N字结构）</span>
       <span class="panel-tip">主力建仓 → 洗盘 → 二次拉升 · K线结构像一个N字 ▼</span>
@@ -2650,8 +2675,12 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
 
     <!-- 运行状态 -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px">
-      <div style="font-size:15px;font-weight:600;margin-bottom:14px">运行状态</div>
+    <div class="panel collapsible" id="panel-set-run" data-collapsed>
+      <div class="panel-head" onclick="togglePanel('panel-set-run')">
+        <span class="panel-title">运行状态</span>
+        <span class="panel-tip">数据源 / 刷新 / 版本 ▼</span>
+      </div>
+      <div class="panel-body" style="padding:14px 16px">
       <div class="rwd-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">行情数据源</div>
@@ -2681,8 +2710,12 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
 
     <!-- 持仓备份与迁移 -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px">
-      <div style="font-size:15px;font-weight:600;margin-bottom:14px">持仓备份与迁移</div>
+    <div class="panel collapsible" id="panel-set-backup" data-collapsed>
+      <div class="panel-head" onclick="togglePanel('panel-set-backup')">
+        <span class="panel-title">持仓备份与迁移</span>
+        <span class="panel-tip">导出 / 导入 / 旧版迁移 ▼</span>
+      </div>
+      <div class="panel-body" style="padding:14px 16px">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="gmk-btn" style="padding:9px 16px;background:transparent;color:var(--text);border:1px solid var(--border)" onclick="exportData()">导出持仓 JSON</button>
         <button class="gmk-btn" style="padding:9px 16px;background:transparent;color:var(--text);border:1px solid var(--border)" onclick="document.getElementById('importFile').click()">导入持仓 JSON</button>
@@ -2691,22 +2724,33 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
 
     <!-- 本地数据管理 -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px">
-      <div style="font-size:15px;font-weight:600;margin-bottom:14px">本地数据管理</div>
+    <div class="panel collapsible" id="panel-set-data" data-collapsed>
+      <div class="panel-head" onclick="togglePanel('panel-set-data')">
+        <span class="panel-title">本地数据管理</span>
+        <span class="panel-tip">清理 / 重置 / 布局还原 ▼</span>
+      </div>
+      <div class="panel-body" style="padding:14px 16px">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="gmk-btn" style="padding:9px 18px;background:transparent;color:var(--red);border:1px solid rgba(242,85,90,.4);border-radius:20px" onclick="clearDataGroup('chat')">清群聊</button>
         <button class="gmk-btn" style="padding:9px 18px;background:transparent;color:var(--red);border:1px solid rgba(242,85,90,.4);border-radius:20px" onclick="clearDataGroup('hold')">清持仓</button>
         <button class="gmk-btn" style="padding:9px 18px;background:transparent;color:var(--red);border:1px solid rgba(242,85,90,.4);border-radius:20px" onclick="clearDataGroup('alert')">清告警</button>
         <button class="gmk-btn" style="padding:9px 18px;background:transparent;color:var(--red);border:1px solid rgba(242,85,90,.4);border-radius:20px" onclick="resetAllDefault()">恢复全部默认</button>
         <button class="gmk-btn" style="padding:9px 18px;background:rgba(242,85,90,.15);color:var(--red);border:1px solid var(--red);border-radius:20px;font-weight:600" onclick="hardReset()">彻底重置交易数据</button>
+        <button class="gmk-btn" style="padding:9px 18px;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.4);border-radius:20px" onclick="resetPanelFolds()">↺ 重置面板布局</button>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-faint)">「重置面板布局」清除所有面板的折叠/展开记忆，恢复默认收纳态（不动交易数据）。</div>
       </div>
     </div>
 
     <!-- 关于 Orion-X -->
-    <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px">
-      <div style="font-size:15px;font-weight:600;margin-bottom:12px">关于 Orion-X</div>
+    <div class="panel collapsible" id="panel-set-about" data-collapsed>
+      <div class="panel-head" onclick="togglePanel('panel-set-about')">
+        <span class="panel-title">关于 Orion-X</span>
+        <span class="panel-tip">版本 / 能力 / 风险声明 ▼</span>
+      </div>
+      <div class="panel-body" style="padding:14px 16px">
       <div style="font-size:13.5px;color:var(--text-dim);line-height:1.8">
-        Orion-X 是一个 AI 量化投研面板：左侧导航集成市场看板、AI 研究所（6 Agent / 15 Skill）、持仓、个股、回测、监控、热度与复盘。回测中心支持「每 5 次回测 → 6 Agent 研讨 → 自主小幅迭代」。后台可由 GitHub Actions 定时运行，关机断网仍执行。
+        Orion-X 是一个 AI 量化投研面板：左侧导航集成市场看板、AI 研究所（7 Agent / 18 Skill）、持仓、个股、回测、监控、热度与复盘。回测中心支持「每 5 次回测 → 7 Agent 研讨 → 自主小幅迭代」。后台可由 GitHub Actions 定时运行，关机断网仍执行。
       </div>
       <div style="margin-top:12px;font-size:13.5px;color:var(--text-dim);line-height:1.8">
         <span style="color:var(--yellow);font-weight:600">风险声明：</span>本面板所有数据、报告、回测与 Agent 观点仅用于研究与学习，历史回测存在过拟合风险，<span style="color:var(--text);font-weight:600">不构成任何投资建议</span>，股市有风险，入市需谨慎。
@@ -2942,7 +2986,7 @@ const AGENT_DETAILS = {
     rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【进场】缩量回踩MA5/涨停低点附近低吸，不追高。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【模拟执行】最多同时持有5只；单笔首次买入资金上限20%；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。" },
   D7:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"周线超卖反转波段策略。用典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50 做周线波段过滤器：读数 ≤−40 算超卖、且拐头向上才做多，专接周线级别深跌后的反转拐点，不追跌不接落刀。止盈分批：一半仓位看周线 EMA21（21周≈季度趋势线，触及/跌破兑现），另一半看日线同款过滤器进入超买（读数 ≥+40）离场。",
-    adv:"与其他角色完全错位：六角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
+    adv:"与其他角色完全错位：其他六个角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
     rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上）才做多，缺一不可。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】最多同时持有5只；单笔首次买入资金上限20%；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。" }
 };
 
@@ -4474,9 +4518,58 @@ function showConfirm(title,msg,onOk){
   m.querySelector("#confirmOk").onclick=()=>{m.remove();onOk()};
 }
 /* ==================== 面板折叠功能 ==================== */
+/* ===== 面板折叠（localStorage 持久化 + 展开时图表刷新） =====
+   默认折叠态由 HTML data-collapsed 属性表达；用户手动切换后写入
+   localStorage，刷新/重开保持用户选择；设置页「重置布局」清空前缀键。 */
+const PANEL_FOLD_KEY="panelFold_v1";
+function getPanelFoldPrefs(){try{return JSON.parse(localStorage.getItem(PANEL_FOLD_KEY)||"{}");}catch(e){return{};}}
+function setPanelFoldPref(id,collapsed){
+  try{const p=getPanelFoldPrefs();p[id]=collapsed;localStorage.setItem(PANEL_FOLD_KEY,JSON.stringify(p));}catch(e){}
+}
+function resetPanelFolds(){
+  try{localStorage.removeItem(PANEL_FOLD_KEY);}catch(e){}
+  if(typeof showToast==="function")showToast("布局已重置，恢复默认折叠态");
+  setTimeout(()=>location.reload(),400);
+}
+/* 折叠容器展开后图表可能停在 0×0（display:none 期间 init 的量到 0 尺寸）：
+   展开时统一 resize + 缓存缺失的重渲染，延迟重试兜底数据竞态 */
+function refreshFoldedCharts(){
+  const tryRefresh=()=>{
+    try{
+      [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
+        if(c){try{c.resize();}catch(e){}}
+      });
+      ["cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt","cKline","cIntraday","cVol","cGauge"].forEach(id=>{
+        const ch=MK_CHARTS[id];if(ch){try{ch.resize();}catch(e){}}
+      });
+      /* 折叠期间 init 会拿到 0×0 画布被 mkChart 跳过 → 实例不存在时，展开后按可见性补渲染 */
+      const _vis=id=>{const el=document.getElementById(id);return el&&el.offsetWidth>0;};
+      if(_vis("cGauge")&&!MK_CHARTS["cGauge"]&&typeof renderFearGreed==="function"){try{renderFearGreed();}catch(e){}}
+      if(_vis("cBottom")&&!MK_CHARTS["cBottom"]&&typeof renderBottomDetector==="function"){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){}}
+      if(_vis("cKline")&&!MK_CHARTS["cKline"]&&typeof renderSentimentProcess==="function"){try{renderSentimentProcess();}catch(e){}}
+      if(typeof renderMarketView==="function")renderMarketView();
+      if(typeof renderSectorBoards==="function")renderSectorBoards();
+      if(typeof renderCharts==="function")renderCharts();
+    }catch(e){}
+  };
+  tryRefresh();setTimeout(tryRefresh,300);setTimeout(tryRefresh,900);
+}
 function togglePanel(panelId){
   const panel = document.getElementById(panelId);
-  if(panel) panel.classList.toggle('collapsed');
+  if(!panel)return;
+  const willCollapse=!panel.classList.contains('collapsed');
+  panel.classList.toggle('collapsed');
+  setPanelFoldPref(panelId,willCollapse);
+  if(!willCollapse)refreshFoldedCharts(); /* 仅展开时刷新，折叠无需动作 */
+}
+/* 初始化：优先本地偏好；无记录时用 data-collapsed 默认态 */
+function initPanelFolds(){
+  const prefs=getPanelFoldPrefs();
+  document.querySelectorAll('.panel.collapsible').forEach(p=>{
+    const id=p.id;if(!id)return;
+    if(id in prefs){p.classList.toggle('collapsed',!!prefs[id]);}
+    else if(p.hasAttribute('data-collapsed')){p.classList.add('collapsed');}
+  });
 }
 /* 研究评分面板股票搜索过滤 */
 function filterResearchTable(){
@@ -4941,12 +5034,12 @@ function washSectors(){
 
 /* ==================== 实时引擎：真实日K增强（六Agent因子的数据地基） ==================== */
 /* 实时池原来只有 EMA 近似均线 + 当日高低价，且 fetchRealQuotes 每 30 秒用盘中价覆盖 ma5/ma20，
-   导致六角色因子大面积恒真/恒假：
+   导致七角色因子大面积恒真/恒假：
      · ma5==ma20==price            → D1/D2/D4/D5 的均线多头因子恒假
      · ma60 / stop 从未赋值        → trendUp、D4 突破确认恒假
      · hi20 从未赋值              → D1「突破前20日高点」恒真（回退成 price）
      · hasZt5 / ztLow 从未赋值     → D6「涨停回调洗盘」永不触发
-   这里用真实日K（txDay 自带 60 秒缓存）批量补齐，让 D1-D6 的打分真正可计算。 */
+   这里用真实日K（txDay 自带 60 秒缓存）批量补齐，让 D1-D7 的打分真正可计算。 */
 const ENRICH_TTL=180000;  /* 单轮增强间隔 3 分钟 */
 const ENRICH_BATCH=6;     /* 小批并发，避免手机端并发受限导致整批失败 */
 let _enrichAt=0,_enrichBusy=false,_enrichAgain=false;
@@ -5069,10 +5162,21 @@ async function preloadWeeklyKD(codes){
   if(Date.now()-_wkPreloadAt<120000)return; /* 2分钟防抖 */
   _wkPreloadBusy=true;_wkPreloadAt=Date.now();
   try{
+    /* 超卖优先排序：RSI6 越低、离20日低点越近的越靠前——
+       有限预算（40只）优先覆盖最可能触发 D7「周线KD≤−40+拐头」的标的 */
+    const _pool=simData.pricePool||{};
+    const _oversoldFirst=(a,b)=>{
+      const sa=_pool[a],sb=_pool[b];
+      const ra=sa?(sa.rsi6||50):50, rb=sb?(sb.rsi6||50):50;
+      if(ra!==rb)return ra-rb;
+      const la=sa&&sa.lo20&&sa.price?(sa.price/sa.lo20-1)*100:99;
+      const lb=sb&&sb.lo20&&sb.price?(sb.price/sb.lo20-1)*100:99;
+      return la-lb;
+    };
     const need=(codes||[]).filter(c=>{
       const hit=wkKDCache[c];
       return !hit||Date.now()-hit.t>=600000;
-    }).slice(0,30);
+    }).sort(_oversoldFirst).slice(0,40);
     for(let i=0;i<need.length;i+=4){
       await Promise.all(need.slice(i,i+4).map(async c=>{
         try{const w=await calcWeeklyKD(c);if(w){const dk=await calcDailyKD(c);if(dk)w.dayKd=dk;}}catch(e){}
@@ -5450,7 +5554,7 @@ function pickTargets(p){
 }
 
 /* ==================== 买卖（数据层） ==================== */
-const MAX_OVERLAP=2; /* 全局：同一只股票最多允许 2 个角色持有，禁止六角色大幅重合 */
+const MAX_OVERLAP=2; /* 全局：同一只股票最多允许 2 个角色持有，禁止七角色大幅重合 */
 let todayBuyMap={};  /* 当日"个股+买入原因"已买入记录（6 角色合并），保证当日同股同因只买一笔 */
 function overlapCount(code){return simData.players.filter(p=>p.holdings.some(h=>h.code===code)).length;}
 const MAX_LOTS=2; /* 每只股票最多2批（首次建仓+1次加仓） */
@@ -5691,7 +5795,7 @@ function tick(){
   if(trading&&!env.riskOff){
     /* 第一遍：各角色按自身逻辑打分并过分数线，得到本轮真实候选快照。
        共识看板与 D2 的多Agent共识都以这份"过线名单"为准——
-       若用粗筛名单算共识，六角色候选都等于全池，共识计数会恒为 5/5 而失去意义。 */
+       若用粗筛名单算共识，七角色候选都等于全池，共识计数会恒为 6/6 而失去意义。 */
     __rolePicks={};
     simData.players.forEach(p=>{
       __rolePicks[p.id]=pickTargets(p)
@@ -5758,7 +5862,7 @@ function tick(){
             signal="周线超卖反转·跌破10%止损位·清仓";
           }
         }
-        /* ATR止盈止损参数（和回测一致，六角色梯度分明） */
+        /* ATR止盈止损参数（和回测一致，七角色梯度分明） */
         const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5},D7:{tpMult:3,slMult:1.5}};
         const atrParams=atrParamsMap[p.id]||atrParamsMap.D2;
         const atrVal=atrCache[h.code]?atrCache[h.code].atr:null;
@@ -6327,7 +6431,7 @@ function renderStats(){
 }
 
 function renderRank(){
-  /* 渲染6大自动化核心模块卡片 */
+  /* 渲染7大自动化核心模块卡片 */
   const eg=$("engineGrid");
   if(eg){
     eg.innerHTML="";
@@ -6338,7 +6442,7 @@ function renderRank(){
     /* 从全局ATR参数读取，和实际交易逻辑完全联动 */
     const globalAtrParams={
       D1:{sl:3, tp:4}, D2:{sl:1.5, tp:2}, D3:{sl:1, tp:1.5},
-      D4:{sl:2, tp:3}, D5:{sl:2, tp:2.5}, D6:{sl:3.5, tp:5}, D7:{sl:1.5, tp:4}
+      D4:{sl:2, tp:3}, D5:{sl:2, tp:2.5}, D6:{sl:3.5, tp:5}, D7:{sl:1.5, tp:3}
     };
     const now=new Date();
     simData.players.forEach(p=>{
@@ -6724,6 +6828,11 @@ function renderHold(){
   if(!any)ht.innerHTML=`<tr><td colspan="15" style="text-align:center;color:var(--text-faint);padding:24px">当前全角色空仓 · 引擎将在交易时段自动开仓（或点"跳过休市"立即运行）</td></tr>`;
 }
 
+/* 候选池展开/收起（默认12行，状态存 window 上，重渲染不丢失） */
+function togglePoolExpand(){
+  window.poolExpandAll=!window.poolExpandAll;
+  renderPool();
+}
 function renderPool(){
   /* 防御：pricePool 未初始化（如冷启动 seeds 未跑）时按空池处理，
      不让整函数抛错——函数尾部还挂着六步门禁表格的填充逻辑 */
@@ -6800,7 +6909,10 @@ function renderPool(){
     return {st,gate,it,compScore,over,mom,chip,conc,cls};
   }).filter(Boolean).sort((a,b)=>b.compScore-a.compScore);
 
-  allStocks.forEach(({st,gate,it,compScore,over,mom,chip,conc,cls})=>{
+  /* 候选池默认只显示评分前12行（移动端友好），可展开全部；有搜索词时自动全量 */
+  const _searchKw=((document.getElementById('researchSearch')||{}).value||"").trim();
+  const _poolLimit=(window.poolExpandAll||_searchKw)?allStocks.length:12;
+  allStocks.slice(0,_poolLimit).forEach(({st,gate,it,compScore,over,mom,chip,conc,cls})=>{
     pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${safeCode(st.code)}')">
       <td class="num">${st.code}</td>
       <td>${escHtml(st.name)}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
@@ -6821,6 +6933,13 @@ function renderPool(){
       <td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>
     </tr>`);
   });
+  /* 展开/收起按钮行（池子大于12只时才出现） */
+  if(allStocks.length>12){
+    pt.insertAdjacentHTML("beforeend",`<tr><td colspan="17" style="text-align:center;padding:10px;border:none">
+      <button onclick="togglePoolExpand()" style="padding:5px 18px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,.12);color:#3b82f6;cursor:pointer">${window.poolExpandAll?"▲ 收起（仅看评分前 12）":"▼ 展开全部 "+allStocks.length+" 只"}</button>
+      <span style="margin-left:10px;font-size:11px;color:var(--text-faint)">按综合评分排序 · 已显示 ${Math.min(_poolLimit,allStocks.length)} / ${allStocks.length}</span>
+    </td></tr>`);
+  }
   /* 六步门禁说明表：已抽成独立的 renderSixSteps()（render() 里单独调用），
      不再依赖 renderPool 的选股管线——管线中途抛错时门禁表也曾跟着空白 */
   try{renderSixSteps();}catch(e){}
@@ -7130,7 +7249,7 @@ function openRolePKModal(){
   let html = `
     <div class="modal-head">
       <div>
-        <div class="modal-title">⚔️ 六角色PK对战</div>
+        <div class="modal-title">⚔️ 七角色PK对战</div>
         <div class="modal-sub">按收益率排名 · 红涨绿跌 · 数据实时更新</div>
       </div>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -7563,7 +7682,7 @@ function renderReview(){
     revBox.innerHTML=revisions.slice().reverse().map(r=>`
       <div class="reason-item"><b>${escHtml(r.date)}</b> ${escHtml(r.role)} ${escHtml(r.strategy)}<br>问题：${escHtml(r.issue)}<br>修正：${escHtml(r.action)}</div>`).join("");
   }else{
-    revBox.innerHTML=`<div class="review-note">尚无修正记录：引擎将持续评估 D1-D6 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>`;
+    revBox.innerHTML=`<div class="review-note">尚无修正记录：引擎将持续评估 D1-D7 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>`;
   }
 }
 
@@ -7575,7 +7694,7 @@ function renderMarketBar(){
   $("marketBarText").textContent=
     marketStateText(new Date())+(trading?" · 模拟交易时段（A股 9:30-11:30/13:00-15:00）":" · 休市时段，仅盯市不产生买卖")+" · A股 T+1 · 每天15:00后不再买卖"+" · "+marketFundBrief();
 }
-/* 市场资金总览：板块资金流入流出方向 + 大盘环境 + 六角色持仓状态（国家队/大资金护盘近似指标） */
+/* 市场资金总览：板块资金流入流出方向 + 大盘环境 + 七角色持仓状态（国家队/大资金护盘近似指标） */
 function marketFundBrief(){
   try{
     const env=calcMarketEnv();
@@ -7583,7 +7702,7 @@ function marketFundBrief(){
     const inflow=flows.filter(f=>f>0).length;
     const outflow=flows.filter(f=>f<0).length;
     const holds=simData.players.reduce((s,p)=>s+(p.holdings?p.holdings.length:0),0);
-    const pos=holds>0?`六角色共持仓${holds}只`:"六角色空仓";
+    const pos=holds>0?`七角色共持仓${holds}只`:"七角色空仓";
     return `资金：板块${inflow}流入/${outflow}流出 · ${env.flow} · ${pos}`;
   }catch(e){return"";}
 }
@@ -7594,8 +7713,8 @@ function fillSimSel(){
   if(!sel)return;
   const prev=sel.value; /* 保留当前选中值，避免定时刷新重置 */
   const ps=(simData&&simData.players)||[];
-  if(!ps.length){sel.innerHTML='<option value="ALL">🔀 六角色一起回测</option>';return;}
-  const opts=['<option value="ALL">🔀 六角色一起回测</option>'];
+  if(!ps.length){sel.innerHTML='<option value="ALL">🔀 七角色一起回测</option>';return;}
+  const opts=['<option value="ALL">🔀 七角色一起回测</option>'];
   ps.forEach(p=>{
     const label=p.name||PLAYER_NAMES[p.id]||"";
     opts.push(`<option value="${p.id}">${p.id} ${label}</option>`);
@@ -7775,7 +7894,7 @@ function renderConsensusBoard(){
   }));
   const rows=Object.keys(map).map(k=>map[k]).sort((a,b)=>b.roles.length-a.roles.length);
   if(!rows.length){
-    box.innerHTML='<div style="font-size:12px;color:var(--text-faint);padding:6px 0">当前六角色均空仓等待 · 出现持仓后这里会实时显示共识度</div>';
+    box.innerHTML='<div style="font-size:12px;color:var(--text-faint);padding:6px 0">当前七角色均空仓等待 · 出现持仓后这里会实时显示共识度</div>';
     return;
   }
   box.innerHTML=rows.map(r=>{
@@ -7930,7 +8049,7 @@ function showDetail(code){
     </div>
     
     <!-- ATR风控矩阵 -->
-    <h4 style="margin-top:16px;padding-left:10px;border-left:3px solid var(--orange)">ATR风控矩阵 · 六角色止损止盈计划</h4>
+    <h4 style="margin-top:16px;padding-left:10px;border-left:3px solid var(--orange)">ATR风控矩阵 · 七角色止损止盈计划</h4>
     <div id="riskMatrixBox" style="margin-bottom:16px"><div class="review-note">ATR计算中…</div></div>
 
     <!-- 位置与结构 -->
@@ -7978,14 +8097,15 @@ async function renderRiskMatrix(code){
   }
   if(!atr||atr<=0){box.innerHTML='<div class="review-note">ATR数据不足（需至少15根K线），无法计算止损止盈位。</div>';return;}
   const price=st.price;
-  /* 六角色参数：[止损乘数,止盈乘数,风格,颜色] */
+  /* 七角色参数：[止损乘数,止盈乘数,风格,颜色] */
   const params=[
     ["D1 破锋",3,4,"高风险·趋势突破"],
     ["D2 衡",1.5,2,"中风险·高胜率"],
     ["D3 镜",1,1.5,"最低风险·最谨慎"],
     ["D4 啸",2,3,"中高风险·强势股"],
     ["D5 渊",1.25,2.5,"中低风险·高盈亏比"],
-    ["D6 焰",3.5,5,"最高风险·妖股"]
+    ["D6 焰",3.5,5,"最高风险·妖股"],
+    ["D7 沉",1.5,3,"中风险·周线波段·高盈亏比"]
   ];
   const rows=params.map(([role,sl,tp,style])=>{
     const slPrice=price-sl*atr;
@@ -8303,7 +8423,7 @@ function renderSidePanel(code,name,price,chg,st){
     </div>`;
   });
   
-  /* 六角色历史记忆：基于自己的交易记录分析当前股票 */
+  /* 七角色历史记忆：基于自己的交易记录分析当前股票 */
   let memoryHtml="<div style='margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)'>";
   memoryHtml+="<div style='font-size:13px;font-weight:600;margin-bottom:8px;opacity:.9'>🧠 各角色历史记忆</div>";
   roles.forEach(role=>{
@@ -8378,7 +8498,7 @@ function renderSidePanel(code,name,price,chg,st){
     </div>
     
     <div class="sp-card">
-      <div class="sp-card-title">🤖 六角色观点</div>
+      <div class="sp-card-title">🤖 七角色观点</div>
       ${roleHtml}
       ${memoryHtml}
     </div>
@@ -8783,6 +8903,9 @@ window.addEventListener("DOMContentLoaded",()=>{
   /* 先从localStorage加载数据 */
   load();
 
+  /* 应用面板折叠偏好（localStorage 优先，其次 data-collapsed 默认态） */
+  if(typeof initPanelFolds==="function")initPanelFolds();
+
   /* 恢复上次「回测调参 → 实盘」的止损/止盈/仓位系数（刷新后依然生效） */
   const __bt=loadSimTune();
   if(__bt){
@@ -8822,6 +8945,9 @@ window.addEventListener("DOMContentLoaded",()=>{
             try{localStorage.setItem(STORE_KEY,JSON.stringify(remoteData));}catch(e){}
             /* 直接更新当前simData */
             simData.players=remoteData.players;
+            /* D7 兼容：后台引擎旧快照可能只有6角色，同步替换后立即补齐（与 load 路径一致），
+               否则 simRoleSel 等动态下拉会退回6角色；后台引擎升级后此调用自动变为空操作 */
+            ensurePlayerD7();
             simData.last_update=newUpdate;
             /* 重新渲染所有界面 */
             if(typeof render==='function') render();
@@ -9364,10 +9490,13 @@ async function txKlineRange(code,start,count){
 }
 /* 新浪（伦敦金/原油）：JSONP 全局变量捕获 */
 function sinaGlobal(method,symbol,cb){
+  /* 唯一回调名：金/油面板切换时日K与分时可能并发加载，硬编码 window._ 会被
+     后到的响应覆盖，导致先发的请求读到后发的数据（竞态） */
+  const cbName="_sg_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
   const s=document.createElement("script");
-  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20_=/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
-  s.onerror=()=>{cb(null);s.remove();};
-  s.onload=()=>{const d=window._;const ok=d&&!d.__ERROR;cb(ok?d:null);s.remove();};
+  s.src=`https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20${cbName}/GlobalFuturesService.${method}?symbol=${symbol}&_=${Date.now()}`;
+  s.onerror=()=>{cb(null);try{delete window[cbName];}catch(e){}s.remove();};
+  s.onload=()=>{const d=window[cbName];const ok=d&&!d.__ERROR;cb(ok?d:null);try{delete window[cbName];}catch(e){}s.remove();};
   document.body.appendChild(s);
 }
 function sinaDay(symbol,cb){
@@ -9394,12 +9523,27 @@ function aggK(days,kind){
 }
 /* 新浪指数K线（上证指数真实日K/月K，script JSONP 加载，file:// 可用） */
 const _sinaK={};
-/* 新浪JSONP熔断：新浪把 jsonp_v2 响应改成 script重定向注释 + var X([...]) 的非法JS格式，
-   脚本注入后必报 SyntaxError 且 window[cbName] 拿不到值。用「单飞探测」确认：
-   并发调用只发一个最小探测请求共享结果，确认损坏即全局熔断，后续零请求零报错；
-   若新浪恢复合法格式，探测通过后所有真实请求照常流转（自愈）。 */
+/* 新浪JSONP熔断（默认熔断 · 零请求零报错）：新浪把 jsonp_v2 响应改成
+   script重定向注释 + var X([...]) 的非法JS格式（var 后接调用表达式），
+   任何 script 注入都会抛 Uncaught SyntaxError: Unexpected token '('。
+   故默认熔断：初始化即 window.__sinaJsonpDead=true，指数/个股K线降为腾讯源兜底，
+   控制台零报错。新浪恢复后控制台执行 await sinaJsonpSelfHeal() 验证通过即自动解除。
+   注：sinaJsonpProbe 保留为注入式探测（默认熔断下永不触发，仅供手动解除后备路径）。 */
 function sinaJsonpBroken(){return !!window.__sinaJsonpDead;}
 function markSinaJsonpDead(){window.__sinaJsonpDead=true;}
+window.__sinaJsonpDead=true;
+/* 手动自愈：fetch 校验响应是否为合法JS（新浪加 ACAO 头后才可能成功，不走script注入） */
+async function sinaJsonpSelfHeal(){
+  const url="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20sinaHeal_"+Date.now()+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=2";
+  try{
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(url,{signal:ctrl.signal});clearTimeout(to);
+    const txt=await r.text();
+    try{new Function(txt);}catch(e){console.warn("新浪JSONP格式仍非法，保持熔断");return false;}
+    window.__sinaJsonpDead=false;console.info("新浪JSONP格式已恢复，熔断解除");return true;
+  }catch(e){console.warn("无法验证新浪JSONP（CORS或网络不通），保持熔断");return false;}
+}
 let _sinaJsonpOk=false,_sinaJsonpProbe=null;
 function sinaJsonpProbe(){
   if(window.__sinaJsonpDead)return Promise.resolve(false);
@@ -9520,7 +9664,7 @@ function sinaStockKlineP(symbol,count){
 }
 
 /* ==================== 策略模拟 · 历史回测（真实日K，不编造） ==================== */
-/* ==================== 策略模拟 · 六角色独立回测（真实日K · 不编造） ==================== */
+/* ==================== 策略模拟 · 七角色独立回测（真实日K · 不编造） ==================== */
 let simChart=null;
 function simE(){const el=document.getElementById("simChart");if(el&&!simChart&&window.echarts)simChart=echarts.init(el);return simChart;}
 function rsiArr(closes,n){const out=[];for(let i=0;i<closes.length;i++){if(i<n){out.push(50);continue;}let g=0,l=0;for(let j=i-n+1;j<=i;j++){const dd=closes[j]-closes[j-1];if(dd>0)g+=dd;else l-=dd;}out.push(l===0?100:g/(g+l)*100);}return out;}
@@ -9886,7 +10030,7 @@ function sellSignal(role,P,i,cost,rules,holdDays){
   if(holdDays===undefined) holdDays=999;
   const c=pxAt(P,i),ma20=P.ma20[i];
   const rp=ROLE_PARAMS[role]||{sl:7,tp:8};
-  /* ATR止盈止损参数（师傅策略：波动率自适应，六角色梯度分明）
+  /* ATR止盈止损参数（师傅策略：波动率自适应，七角色梯度分明）
      D3最防守→D2短线→D5波段防守→D4波段进攻→D1长线→D6妖股最激进 */
   const atrVal = P.atr[i]||0;
   const atrParamsMap = {
@@ -9914,7 +10058,7 @@ function sellSignal(role,P,i,cost,rules,holdDays){
   if(rules.tp && atrVal>0 && c >= cost + atrParams.tpMult*0.75*atrVal){
     return `第一止盈·涨${(atrParams.tpMult*0.75).toFixed(1)}倍ATR（+${((c-cost)/cost*100).toFixed(1)}%）`;
   }
-  /* ATR移动止盈：盈利后从高点回撤一定倍数的ATR就锁利（波动率自适应，六角色梯度分明） */
+  /* ATR移动止盈：盈利后从高点回撤一定倍数的ATR就锁利（波动率自适应，七角色梯度分明） */
   const profit=(c-cost)/cost*100;
   const trailParamsMap = {
     D3:{startProfit:3, pullbackAtr:1,   window:5},
@@ -10372,7 +10516,7 @@ function renderSimTune(res){
 function btTuneJson(){
   const t=window._lastSimTune;
   if(!t)return "";
-  const out={updated:t.ts,source:"index.html 回测调参（六角色历史模拟回测）",roles:{}};
+  const out={updated:t.ts,source:"index.html 回测调参（七角色历史模拟回测）",roles:{}};
   Object.keys(t.roles).forEach(r=>{const v=t.roles[r];
     out.roles[r]={sl:v.sl,tp:v.tp,pos_cap:v.posCap,enabled:!!v.enabled};});
   return JSON.stringify(out,null,2);
@@ -11841,7 +11985,7 @@ const ROLE_PERSONAS = {
     system: `你是【镜】，一位谨慎的多空辩论家。
 
 【你的背景】
-前卖方分析师，写过无数看多和看空报告，深知"任何股票都有上涨和下跌的理由"。交易前必须先进行多空辩论，把多方和空方的论据一条条列出来，只有多方明显占优才买入。是六角色里最谨慎的一个。
+前卖方分析师，写过无数看多和看空报告，深知"任何股票都有上涨和下跌的理由"。交易前必须先进行多空辩论，把多方和空方的论据一条条列出来，只有多方明显占优才买入。是七角色里最谨慎的一个。
 
 【你的性格】
 谨慎、多疑、喜欢辩证思考。凡事都要从正反两面看。宁可错过，不可做错。说话辩证，先说利好再说利空，最后给结论。
@@ -12058,7 +12202,7 @@ async function startLLMRoleDecision(){
   const contentEl = document.getElementById("aiAnalysisContent");
   resultEl.style.display = "block";
   contentEl.innerHTML = "";
-  showAIProgress(`🎭 六角色LLM决策中...\n\n正在获取 ${name}(${code}) 的K线数据，然后六个角色依次决策...`);
+  showAIProgress(`🎭 七角色LLM决策中...\n\n正在获取 ${name}(${code}) 的K线数据，然后七个角色依次决策...`);
   
   try{
     /* 获取K线数据 */
@@ -12069,7 +12213,7 @@ async function startLLMRoleDecision(){
     }
     const P = prepStock(klineData);
     
-    /* 六角色依次决策 */
+    /* 七角色依次决策 */
     const roles = ["D1","D2","D3","D4","D5","D6","D7"];
     const results = {};
     for(let i = 0; i < roles.length; i++){
@@ -12097,7 +12241,7 @@ async function startLLMRoleDecision(){
     
     const summaryHtml = `
       <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:16px;margin-bottom:12px">
-        <div style="font-weight:600;margin-bottom:10px;color:#c9d1d9">🎭 六角色LLM决策汇总 — ${name}(${code})</div>
+        <div style="font-weight:600;margin-bottom:10px;color:#c9d1d9">🎭 七角色LLM决策汇总 — ${name}(${code})</div>
         <div style="display:flex;gap:16px;font-size:14px">
           <span style="color:#ef4444">🟢 买入：${buyCount}人</span>
           <span style="color:#22c55e">🔴 卖出：${sellCount}人</span>
