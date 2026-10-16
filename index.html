@@ -9214,42 +9214,27 @@ function aggK(days,kind){
 }
 /* 新浪指数K线（上证指数真实日K/月K，script JSONP 加载，file:// 可用） */
 const _sinaK={};
-/* 新浪JSONP熔断：新浪把 jsonp_v2 响应改成 script重定向注释 + var X([...]) 的非法JS格式，
-   脚本注入后必报 SyntaxError 且 window[cbName] 拿不到值。用「单飞探测」确认：
-   并发调用只发一个最小探测请求共享结果，确认损坏即全局熔断，后续零请求零报错；
-   若新浪恢复合法格式，探测通过后所有真实请求照常流转（自愈）。 */
+/* 新浪JSONP熔断（默认熔断 · 零请求零报错）：
+   新浪把 jsonp_v2 响应改成 script重定向注释 + var X([...]) 的非法JS格式（var 后缺 '='，
+   任何 script 注入必报 Uncaught SyntaxError，且 window[cbName] 拿不到值，已实测 20+ 次）。
+   早期用「单飞探测」确认后熔断，但探测自身每次页面加载仍要注入一次必炸脚本；
+   改用 fetch 预校验又被新浪 CORS 拦截（无 ACAO 头，同样会报 console 错误）。
+   故默认熔断：所有新浪JSONP调用点均在腾讯/东财之后的兜底位，熔断后功能不受影响。
+   新浪若恢复合法格式，控制台执行 await sinaJsonpSelfHeal() 验证通过即自动解除熔断。 */
 function sinaJsonpBroken(){return !!window.__sinaJsonpDead;}
 function markSinaJsonpDead(){window.__sinaJsonpDead=true;}
-let _sinaJsonpOk=false,_sinaJsonpProbe=null;
-function sinaJsonpProbe(){
-  if(window.__sinaJsonpDead)return Promise.resolve(false);
-  if(_sinaJsonpOk)return Promise.resolve(true);
-  if(_sinaJsonpProbe)return _sinaJsonpProbe;
-  _sinaJsonpProbe=new Promise(res=>{
-    const cbName="sinaProbe_"+Date.now();
-    const s=document.createElement("script");
-    let done=false;
-    const finish=(ok)=>{
-      if(done)return;done=true;
-      clearTimeout(to);
-      try{s.remove();}catch(e){}
-      if(ok){_sinaJsonpOk=true;}
-      else{markSinaJsonpDead();}
-      _sinaJsonpProbe=null;
-      res(ok);
-    };
-    const to=setTimeout(()=>finish(false),8000);
-    s.onload=function(){
-      const raw=window[cbName];
-      /* 只有拿到成形数组才算探测通过；反爬破坏的格式拿不到 → 熔断 */
-      finish(!!(Array.isArray(raw)||(raw&&Array.isArray(raw.data))));
-    };
-    s.onerror=function(){finish(false);};
-    window[cbName]=undefined;
-    s.src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=2";
-    document.body.appendChild(s);
-  });
-  return _sinaJsonpProbe;
+window.__sinaJsonpDead=true;
+/* 手动自愈：fetch 校验响应是否为合法JS（新浪加 ACAO 头后才可能成功） */
+async function sinaJsonpSelfHeal(){
+  const url="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20sinaHeal_"+Date.now()+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale=240&ma=no&datalen=2";
+  try{
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(url,{signal:ctrl.signal});clearTimeout(to);
+    const txt=await r.text();
+    try{new Function(txt);}catch(e){console.warn("新浪JSONP格式仍非法，保持熔断");return false;}
+    window.__sinaJsonpDead=false;console.info("新浪JSONP格式已恢复，熔断解除");return true;
+  }catch(e){console.warn("无法验证新浪JSONP（CORS或网络不通），保持熔断");return false;}
 }
 function sinaIndexKline(scale,count,cb){
   const key=scale+"_"+count;
@@ -9257,25 +9242,19 @@ function sinaIndexKline(scale,count,cb){
   if(sinaJsonpBroken()){cb(null);return;}
   const cbName="sinaK_"+scale+"_"+count;
   const s=document.createElement("script");
-  const src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale="+scale+"&ma=no&datalen="+count;
-  /* 先过单飞探测：已确认损坏则不再注入必炸的 script */
-  sinaJsonpProbe().then(ok=>{
-    if(!ok){cb(null);return;}
-    window[cbName]=undefined;
-    s.src=src;
-    s.onload=function(){
-      try{
-        const raw=window[cbName];
-        const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
-        if(!arr.length){s.remove();cb(null);return;}
-        const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
-        _sinaK[key]=rows;cb(rows);
-      }catch(e){cb(null);}
-      s.remove();
-    };
-    s.onerror=function(){cb(null);s.remove();};
-    document.body.appendChild(s);
-  });
+  s.src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20"+cbName+"/CN_MarketDataService.getKLineData?symbol=sh000001&scale="+scale+"&ma=no&datalen="+count;
+  s.onload=function(){
+    try{
+      const raw=window[cbName];
+      const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
+      if(!arr.length){s.remove();cb(null);return;}
+      const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
+      _sinaK[key]=rows;cb(rows);
+    }catch(e){cb(null);}
+    s.remove();
+  };
+  s.onerror=function(){cb(null);s.remove();};
+  document.body.appendChild(s);
 }
 function sinaKlineP(scale,count){
   return new Promise(res=>{
@@ -9303,24 +9282,20 @@ function sinaStockKline(symbol,count,cb){
     if(q)q.forEach(c=>c(rows));
     try{s.remove();}catch(e){}
   };
-  /* 先过单飞探测：已确认损坏则直接失败，不再注入必炸的 script */
-  sinaJsonpProbe().then(ok=>{
-    if(!ok){finish(null);return;}
-    window[cbName]=undefined;
-    s.src=src;
-    to=setTimeout(()=>{finish(null);},15000);
-    s.onload=function(){
-      try{
-        const raw=window[cbName];
-        const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
-        if(!arr.length){finish(null);return;}
-        const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
-        _sinaStockK[key]=rows;finish(rows);
-      }catch(e){finish(null);}
-    };
-    s.onerror=function(){finish(null);};
-    document.body.appendChild(s);
-  });
+  window[cbName]=undefined;
+  s.src=src;
+  to=setTimeout(()=>{finish(null);},15000);
+  s.onload=function(){
+    try{
+      const raw=window[cbName];
+      const arr=(Array.isArray(raw)?raw:(raw&&raw.data))||[];
+      if(!arr.length){finish(null);return;}
+      const rows=arr.map(x=>({date:x.day,open:+x.open,high:+x.high,low:+x.low,close:+x.close,vol:+x.volume||0}));
+      _sinaStockK[key]=rows;finish(rows);
+    }catch(e){finish(null);}
+  };
+  s.onerror=function(){finish(null);};
+  document.body.appendChild(s);
 }
 function sinaStockKlineP(symbol,count){
   return new Promise(res=>{
