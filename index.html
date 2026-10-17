@@ -9516,10 +9516,19 @@ async function txKlineRange(code,start,count){
       if(arr&&arr.length){days=arr.map(x=>{const v=Array.isArray(x)?x:String(x).split(" ");return {date:v[0],open:+v[1],close:+v[2],high:+v[3],low:+v[4],vol:+v[5]||0};});break;}
     }catch(e){}
   }
-  if(days.length<10){ /* 腾讯被限流 → 新浪日K兜底（真实数据） */
-    days=await sinaStockKlineP(code,count*2);
+  if(days.length<10){ /* 腾讯被限流 → 新浪日K兜底（真实数据，支持任意起始时间段） */
+    /* 新浪 getKLineData 只支持 datalen（最近N根），必须按 start 动态计算 N：
+       start 距今天的自然日数 + count + 缓冲。旧代码固定 count*2 且 slice(-count)，
+       无论 start 取哪天都只返回【最近】count 根 —— 随机时间段被架空，"换一批"
+       只有股票在变、K 线数据永远不变。修复：按 start 扩 datalen，过滤后取【前】count 根。 */
+    let need=count;
+    if(start){
+      const spanDays=Math.max(1,Math.round((Date.now()-new Date(start).getTime())/86400000));
+      need=Math.min(1023,spanDays+count+80); /* 1023=新浪 datalen 上限；+80 缓冲覆盖周末/停牌 */
+    }
+    days=await sinaStockKlineP(code,need);
     if(start){const t=+new Date(start);days=days.filter(d=>+new Date(d.date)>=t);}
-    if(days.length>count)days=days.slice(-count);
+    if(days.length>count)days=days.slice(0,count);
   }
   return days;
 }
