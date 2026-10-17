@@ -1462,34 +1462,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="m-sub" id="vTempSub">等待数据…</div>
     </div>
   </div>
-  <!-- ===== 市场深度（四连图 + 行业看板 融合为一个可折叠 panel） ===== -->
-  <div class="panel collapsible" id="panel-market-depth" data-collapsed>
-    <div class="panel-head" onclick="togglePanel('panel-market-depth')">
-      <span class="panel-title">📊 市场深度</span>
-      <span class="panel-tip">涨跌分布 / 情绪雷达 / 市场广度 / 强弱分层 / 行业涨幅 / 行业成交 · 六图合一 ▼</span>
-    </div>
-    <div class="panel-body">
-      <div class="mk-grid mk-g4">
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">涨跌分布</div></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cDist"></div></div></div>
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">情绪雷达</div></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cRadar"></div></div></div>
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">市场广度</div></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cBreadth"></div></div></div>
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">强弱分层</div></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
-      </div>
-      <div class="mk-grid mk-g2 mk-mt">
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业涨幅排行</div><span class="mk-card-tip">按行业平均涨跌幅 · 红涨绿跌</span></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cSectorRank" style="height:320px"></div></div></div>
-        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业成交分布</div><span class="mk-card-tip">按行业成交额占比</span></div>
-          <div class="mk-card-body"><div class="mk-chart" id="cSectorAmt" style="height:320px"></div></div></div>
-      </div>
-    </div>
-  </div>
-
   <!-- ===== 角色总览：组合汇总指标 + 7 角色卡片（融合为一个可折叠 panel） ===== -->
-  <div class="panel collapsible" id="panel-role-summary" data-collapsed style="margin-bottom:12px">
+  <div class="panel collapsible" id="panel-role-summary" data-collapsed style="margin-bottom:12px;margin-top:16px">
     <div class="panel-head" onclick="togglePanel('panel-role-summary')">
       <span class="panel-title">🎭 角色总览</span>
       <span class="panel-tip">组合汇总指标 + 7 角色收益 / 胜率 / 回撤卡片 ▼</span>
@@ -1770,7 +1744,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:16px">
       <button class="agent-card" onclick="privateChatAgent('D1')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">锋</span>
-        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D1 破锋</span><br><span style="font-size:10px;color:var(--text-faint)">趋势突破</span><br><span id="agentLive-D1" style="font-size:10px;color:var(--text-faint)">--</span></span>
+        <span style="text-align:center"><span style="font-size:13px;font-weight:600;color:var(--text)">D1 锋</span><br><span style="font-size:10px;color:var(--text-faint)">趋势突破</span><br><span id="agentLive-D1" style="font-size:10px;color:var(--text-faint)">--</span></span>
       </button>
       <button class="agent-card" onclick="privateChatAgent('D2')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;cursor:pointer">
         <span style="width:40px;height:40px;border-radius:50%;background:#10b981;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0">衡</span>
@@ -1816,7 +1790,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           </tr></thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border-soft)">
-              <td style="padding:12px 10px;color:#ef4444;font-weight:600">D1 破锋</td>
+              <td style="padding:12px 10px;color:#ef4444;font-weight:600">D1 锋</td>
               <td style="padding:12px 10px;color:var(--text-dim)">激进，抓主升浪，擅长突破信号与动量追踪</td>
               <td style="padding:12px 10px"><div style="display:flex;flex-wrap:wrap;gap:5px">
                 <span style="background:rgba(16,185,129,.15);color:#10b981;padding:3px 9px;border-radius:6px;font-size:11px">TradingAgents</span>
@@ -2044,6 +2018,33 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
     <div class="panel-body" id="wxBody"></div>
   </div>
+
+  <!-- ===== 市场深度（六图合一，自总览迁入研究池：看完候选池再对照大盘结构） ===== -->
+  <div class="panel collapsible" id="panel-market-depth" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-market-depth')">
+      <span class="panel-title">📊 市场深度</span>
+      <span class="panel-tip">涨跌分布 / 情绪雷达 / 市场广度 / 强弱分层 / 行业涨幅 / 行业成交 · 六图合一 ▼</span>
+    </div>
+    <div class="panel-body">
+      <div class="mk-grid mk-g4">
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">涨跌分布</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cDist"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">情绪雷达</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cRadar"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">市场广度</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cBreadth"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">强弱分层</div></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cTier"></div></div></div>
+      </div>
+      <div class="mk-grid mk-g2 mk-mt">
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业涨幅排行</div><span class="mk-card-tip">按行业平均涨跌幅 · 红涨绿跌</span></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cSectorRank" style="height:320px"></div></div></div>
+        <div class="mk-card"><div class="mk-card-head"><div class="ch-title">行业成交分布</div><span class="mk-card-tip">按行业成交额占比</span></div>
+          <div class="mk-card-body"><div class="mk-chart" id="cSectorAmt" style="height:320px"></div></div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 候选行情池 + 研究评分 融合面板 -->
   <div class="panel">
     <div class="panel-head">
@@ -4356,6 +4357,7 @@ function load(){
         });
         /* 现金校准：修复之前减仓时未加回现金的bug，确保现金不为负 */
         ensurePlayerD7(); /* 旧快照可能只有6角色，补D7 */
+        ensureRoleNames(); /* 旧数据角色名收敛为单字（D1 破锋/趋势突破 → 锋） */
         simData.players.forEach(p=>{
           const totalCost=p.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
           const correctCash=INIT_CASH-totalCost;
@@ -4410,6 +4412,7 @@ function load(){
       try{purgeUnauthorizedHoldings();}catch(e){}
       try{normalizePricePool();}catch(e){}
       ensurePlayerD7();
+      ensureRoleNames();
       save();
       return;
     }
@@ -4417,6 +4420,26 @@ function load(){
   freshSim();
 }
 /* D7 角色兼容：从旧快照加载时 players 可能只有6个，补齐D7（字段与initPlayers一致） */
+/* 角色名统一收敛：历史快照/本地存储/后台旧版数据里 D1 曾用"破锋"/"趋势突破"/"统一底座-严格趋势突破"，
+   D2~D7 在旧内嵌快照里也曾用长名。统一收敛为单字（锋/衡/镜/啸/渊/焰/沉），与后端 ROLES 及
+   前端展示名（agent卡/roleNames/人设）保持一致。幂等：已是目标名则不动，后台升级后自动空操作。 */
+const ROLE_NAME_CANON={D1:"锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰",D7:"沉"};
+const ROLE_NAME_LEGACY={
+  D1:["破锋","趋势突破","统一底座-严格趋势突破"],
+  D2:["多Agent共识","AI Agents-多角色共识"],
+  D3:["多空辩论","TradingAgents-多空辩论"],
+  D4:["量价共振","量价共振-突破确认"],
+  D5:["趋势回踩","回踩低吸","趋势回踩-低追高"],
+  D6:["涨停回踩","涨停敢死","涨停回调-强势股低吸"],
+  D7:["周线超卖反转","周线超卖-反转低吸"]
+};
+function ensureRoleNames(){
+  if(!simData||!simData.players)return;
+  simData.players.forEach(p=>{
+    const lg=ROLE_NAME_LEGACY[p.id];
+    if(lg&&lg.indexOf(p.name)>=0)p.name=ROLE_NAME_CANON[p.id];
+  });
+}
 function ensurePlayerD7(){
   if(!simData||!simData.players)return;
   if(simData.players.some(p=>p.id==="D7"))return;
@@ -4473,6 +4496,7 @@ function freshSim(){
     index:{sh:3260,sz:10240,cyb:2056,kc:985,shChg:0,shPrev:3260,shUpdate:0},logs:[],running:true,startDate:today.toISOString(),
     tickCount:0,lastCloseDate:"",lastDayStr:ymd,simDate:today,dayLabels:[md],lastRecordKey:"",version:11};
   todayBuyMap={}; /* 重置时清空当日买入去重记录 */
+  ensureRoleNames(); /* 初始角色名统一为单字 */
   save();
 }
 function resetSim(){
@@ -6299,8 +6323,8 @@ function switchTab(name){
     [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
       if(c){try{c.resize();}catch(e){}}
     });
-    /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0） */
-    ["cKline","cIntraday","cVol","cBottom","cGauge","cDist","cRadar","cBreadth","cTier"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
+    /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0）；cSectorRank/cSectorAmt 为市场深度行业两图（已随面板迁入 research tab） */
+    ["cKline","cIntraday","cVol","cBottom","cGauge","cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
     if(name==="overview"||name==="rank"||name==="review"||name==="research"){ try{renderSentimentProcess();}catch(e){} }
     /* 特定tab需要重新渲染 */
     if(name==="global"){try{renderGlobal();}catch(e){}}
@@ -6309,6 +6333,7 @@ function switchTab(name){
     if(name==="hold"){try{renderHold();}catch(e){}}
     if(name==="overview"){try{renderMarketView();}catch(e){}}
     if(name==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该tab内 */
+    if(name==="research"){try{renderMarketView();}catch(e){}} /* 市场深度六图已自总览迁入本tab：切换到时初始化（含隐藏期0×0被跳过的兜底） */
     /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
        导致 cBottom(综合底部信号)/cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
     if(name==="airesearch"){
@@ -8099,7 +8124,7 @@ async function renderRiskMatrix(code){
   const price=st.price;
   /* 七角色参数：[止损乘数,止盈乘数,风格,颜色] */
   const params=[
-    ["D1 破锋",3,4,"高风险·趋势突破"],
+    ["D1 锋",3,4,"高风险·趋势突破"],
     ["D2 衡",1.5,2,"中风险·高胜率"],
     ["D3 镜",1,1.5,"最低风险·最谨慎"],
     ["D4 啸",2,3,"中高风险·强势股"],
@@ -8364,7 +8389,7 @@ function renderSidePanel(code,name,price,chg,st){
   
   /* 七角色观点（简化版：根据技术指标判断） */
   const roles=["D1","D2","D3","D4","D5","D6","D7"];
-  const roleNames={D1:"破锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰",D7:"沉"};
+  const roleNames={D1:"锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰",D7:"沉"};
   const roleColors={D1:"#ef4444",D2:"#f0a35e",D3:"#6fa8ff",D4:"#3ecf8e",D5:"#c586c0",D6:"#f472b6",D7:"#ff6b35"};
   
   let roleHtml="";
@@ -8373,7 +8398,7 @@ function renderSidePanel(code,name,price,chg,st){
     
     /* 每个角色按自己的策略和人格来判断 */
     if(role==="D1"){
-      /* D1破锋：趋势突破，只做多头趋势，突破即真理 */
+      /* D1锋：趋势突破，只做多头趋势，突破即真理 */
       if(price>ma20&&ma5>ma20&&chg>2){opinion="买入";tagClass="sp-tag-buy";reason="趋势突破，让利润奔跑";}
       else if(price<ma20){opinion="卖出";tagClass="sp-tag-sell";reason="趋势破位，绝不恋战";}
       else{opinion="持有";tagClass="sp-tag-hold";reason="等待突破信号";}
@@ -8948,6 +8973,7 @@ window.addEventListener("DOMContentLoaded",()=>{
             /* D7 兼容：后台引擎旧快照可能只有6角色，同步替换后立即补齐（与 load 路径一致），
                否则 simRoleSel 等动态下拉会退回6角色；后台引擎升级后此调用自动变为空操作 */
             ensurePlayerD7();
+            ensureRoleNames(); /* 后台旧快照角色名收敛（D1 破锋 → 锋） */
             simData.last_update=newUpdate;
             /* 重新渲染所有界面 */
             if(typeof render==='function') render();
@@ -11925,10 +11951,10 @@ setInterval(fetchNews,60000);
 /* ---------- 宝妈指数 ---------- */
 const ROLE_PERSONAS = {
   D1: {
-    name: "破锋",
+    name: "锋",
     title: "趋势突破猎手",
     color: "#ef4444",
-    system: `你是【破锋】，一位经验丰富的趋势交易员。
+    system: `你是【锋】，一位经验丰富的趋势交易员。
 
 【你的背景】
 前私募趋势交易员，经历过2015年股灾和2020年熔断，信奉"趋势是你唯一的朋友"。曾经因为逆势抄底爆过仓，从此只做MA60以上的多头趋势，突破关键压力位时敢于重仓出击。
@@ -12994,7 +13020,7 @@ function agentSystemPrompt(p,opts){
 function recentGroupChat(n){
   try{
     const hist=JSON.parse(localStorage.getItem(AGENT_CHAT_KEY)||"[]").slice(-(n||8));
-    const nameMap={D1:"D1破锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",D7:"D7沉",user:"用户",system:"系统",consensus:"主持人"};
+    const nameMap={D1:"D1锋",D2:"D2衡",D3:"D3镜",D4:"D4啸",D5:"D5渊",D6:"D6焰",D7:"D7沉",user:"用户",system:"系统",consensus:"主持人"};
     return hist.map(m=>(nameMap[m.role]||m.role)+"："+String(m.text||"").substring(0,120)).join("\n");
   }catch(e){return "";}
 }
@@ -13044,7 +13070,7 @@ function quickSearchStock2(){
 /* 六Agent人设 v2：新增 framework(决策框架)/output(输出格式)/vs(与其他角色的差异化)，
    群聊与私聊的 system prompt 均以此为骨架，保证"说的"和"做的"一致 */
 const AGENT_PERSONAS={
-  D1:{name:"破锋",title:"趋势突破猎手",color:"#ef4444",style:"激进，抓主升浪，擅长突破信号与动量追踪",
+  D1:{name:"锋",title:"趋势突破猎手",color:"#ef4444",style:"激进，抓主升浪，擅长突破信号与动量追踪",
     trait:"激进果断，只做确认过的主升结构，最烦拖泥带水，看准就上",
     slang:"结构一到，我就上。",risk:"高",
     focus:"MA20>MA60 多头排列、突破前20日高点、结构不破就拿着",
@@ -13402,7 +13428,7 @@ function addChatMsg(role,text,meta){
     user:"我",
     system:"系统",
     consensus:"共识结论",
-    D1:"D1破锋",
+    D1:"D1锋",
     D2:"D2衡",
     D3:"D3镜",
     D4:"D4啸",
@@ -13660,7 +13686,7 @@ const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "";
 /* 卖出提醒 */
 
 </script>
-<script type="application/json" id="embeddedSimData">{"players": [{"id": "D1", "name": "趋势突破", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D2", "name": "多Agent共识", "cash": 99053.2, "asset": 99053.2, "holdings": [], "trades": [{"type": "buy", "code": "603439", "name": "三力制药", "qty": 1300, "price": 15.19, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "早盘打板买入"}, {"type": "sell", "code": "603439", "name": "三力制药", "qty": 1300, "price": 14.46, "fee": 5, "time": "2026-09-22T01:34:53.000Z", "reason": "高位放量滞涨，清仓离场", "profit": -946.8}], "assetHistory": [100000, 99053.2], "winRate": 0.0, "plRatio": 0.0, "sharpe": 0, "maxDrawdown": 0.0095, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D3", "name": "多空辩论", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D4", "name": "量价共振", "cash": 76040, "asset": 102976, "holdings": [{"code": "000538", "name": "云南白药", "qty": 300, "cost": 51.73, "buyTime": "2026-09-23T02:13:08.000Z", "lots": [{"qty": 300, "price": 51.71, "time": "2026-09-23T02:13:08.000Z"}]}, {"code": "600809", "name": "山西汾酒", "qty": 100, "cost": 114.18, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 100, "price": 114.13, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "001225", "name": "和泰机电", "qty": 700, "price": 45.55, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "量价共振建仓"}, {"type": "sell", "code": "001225", "name": "和泰机电", "qty": 700, "price": 50.07, "fee": 5, "time": "2026-09-22T01:34:15.000Z", "reason": "量价背离，高位滞涨先撤", "profit": 3161.19}, {"type": "buy", "code": "600030", "name": "中信证券", "qty": 500, "price": 27.03, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破平台建仓"}, {"type": "sell", "code": "600030", "name": "中信证券", "qty": 500, "price": 26.75, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -138.38}, {"type": "buy", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.75, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破建仓"}, {"type": "sell", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.57, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -18.06}, {"type": "buy", "code": "000538", "name": "云南白药", "qty": 300, "price": 51.71, "fee": 5, "time": "2026-09-23T02:13:08.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}, {"type": "buy", "code": "600809", "name": "山西汾酒", "qty": 100, "price": 114.13, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}], "assetHistory": [100000, 102976], "winRate": 0.3333333333333333, "plRatio": 40.41, "sharpe": 0, "maxDrawdown": 0.0014, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D5", "name": "趋势回踩", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D6", "name": "涨停回踩", "cash": 83183, "asset": 100000, "holdings": [{"code": "300931", "name": "通用电梯", "qty": 900, "cost": 18.69, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 900, "price": 18.68, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "300931", "name": "通用电梯", "qty": 900, "price": 18.68, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "涨停回调·洗盘缩量站稳：涨停后MA20向上+RSI健康+洗盘缩量"}], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}], "pricePool": {"603439": {"price": 14.46, "chg": -4.8, "industry": "中药", "sectors": "医药"}, "001225": {"price": 50.07, "chg": 10.06, "industry": "通用设备", "sectors": "机械设备"}, "600030": {"price": 26.75, "chg": -1.04, "industry": "证券", "sectors": "金融"}, "000858": {"price": 70.57, "chg": -0.25, "industry": "白酒", "sectors": "食品饮料"}, "000538": {"price": 51.71, "chg": 1.12, "industry": "中药", "sectors": "医药"}, "600809": {"price": 114.13, "chg": 0.95, "industry": "白酒", "sectors": "食品饮料"}, "300931": {"price": 18.68, "chg": 2.34, "industry": "通用设备", "sectors": "机械设备"}}, "sectors": {}, "tickCount": 0, "lastCloseDate": "2026-09-22", "lastDayStr": "2026-09-23", "simDate": "2026-09-23", "dayLabels": ["09-22", "09-23"], "lastRecordKey": "", "version": 12}</script>
+<script type="application/json" id="embeddedSimData">{"players": [{"id": "D1", "name": "锋", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D2", "name": "多Agent共识", "cash": 99053.2, "asset": 99053.2, "holdings": [], "trades": [{"type": "buy", "code": "603439", "name": "三力制药", "qty": 1300, "price": 15.19, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "早盘打板买入"}, {"type": "sell", "code": "603439", "name": "三力制药", "qty": 1300, "price": 14.46, "fee": 5, "time": "2026-09-22T01:34:53.000Z", "reason": "高位放量滞涨，清仓离场", "profit": -946.8}], "assetHistory": [100000, 99053.2], "winRate": 0.0, "plRatio": 0.0, "sharpe": 0, "maxDrawdown": 0.0095, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D3", "name": "多空辩论", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D4", "name": "量价共振", "cash": 76040, "asset": 102976, "holdings": [{"code": "000538", "name": "云南白药", "qty": 300, "cost": 51.73, "buyTime": "2026-09-23T02:13:08.000Z", "lots": [{"qty": 300, "price": 51.71, "time": "2026-09-23T02:13:08.000Z"}]}, {"code": "600809", "name": "山西汾酒", "qty": 100, "cost": 114.18, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 100, "price": 114.13, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "001225", "name": "和泰机电", "qty": 700, "price": 45.55, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "量价共振建仓"}, {"type": "sell", "code": "001225", "name": "和泰机电", "qty": 700, "price": 50.07, "fee": 5, "time": "2026-09-22T01:34:15.000Z", "reason": "量价背离，高位滞涨先撤", "profit": 3161.19}, {"type": "buy", "code": "600030", "name": "中信证券", "qty": 500, "price": 27.03, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破平台建仓"}, {"type": "sell", "code": "600030", "name": "中信证券", "qty": 500, "price": 26.75, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -138.38}, {"type": "buy", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.75, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破建仓"}, {"type": "sell", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.57, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -18.06}, {"type": "buy", "code": "000538", "name": "云南白药", "qty": 300, "price": 51.71, "fee": 5, "time": "2026-09-23T02:13:08.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}, {"type": "buy", "code": "600809", "name": "山西汾酒", "qty": 100, "price": 114.13, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}], "assetHistory": [100000, 102976], "winRate": 0.3333333333333333, "plRatio": 40.41, "sharpe": 0, "maxDrawdown": 0.0014, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D5", "name": "趋势回踩", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D6", "name": "涨停回踩", "cash": 83183, "asset": 100000, "holdings": [{"code": "300931", "name": "通用电梯", "qty": 900, "cost": 18.69, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 900, "price": 18.68, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "300931", "name": "通用电梯", "qty": 900, "price": 18.68, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "涨停回调·洗盘缩量站稳：涨停后MA20向上+RSI健康+洗盘缩量"}], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}], "pricePool": {"603439": {"price": 14.46, "chg": -4.8, "industry": "中药", "sectors": "医药"}, "001225": {"price": 50.07, "chg": 10.06, "industry": "通用设备", "sectors": "机械设备"}, "600030": {"price": 26.75, "chg": -1.04, "industry": "证券", "sectors": "金融"}, "000858": {"price": 70.57, "chg": -0.25, "industry": "白酒", "sectors": "食品饮料"}, "000538": {"price": 51.71, "chg": 1.12, "industry": "中药", "sectors": "医药"}, "600809": {"price": 114.13, "chg": 0.95, "industry": "白酒", "sectors": "食品饮料"}, "300931": {"price": 18.68, "chg": 2.34, "industry": "通用设备", "sectors": "机械设备"}}, "sectors": {}, "tickCount": 0, "lastCloseDate": "2026-09-22", "lastDayStr": "2026-09-23", "simDate": "2026-09-23", "dayLabels": ["09-22", "09-23"], "lastRecordKey": "", "version": 12}</script>
 <script type="application/json" id="embeddedSumData">{"daily": {"date": "2026-09-23", "indices": [{"name": "上证指数", "chg": 0.45}, {"name": "深证成指", "chg": 0.62}, {"name": "创业板指", "chg": 0.38}, {"name": "科创50", "chg": 0.71}], "holds": [{"role": "D4", "name": "云南白药", "code": "000538", "qty": 300, "chg": 1.12, "sector": "医药", "industry": "中药", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D4", "name": "山西汾酒", "code": "600809", "qty": 100, "chg": 0.95, "sector": "食品饮料", "industry": "白酒", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D6", "name": "通用电梯", "code": "300931", "qty": 900, "chg": 2.34, "sector": "机械设备", "industry": "通用设备", "reason": "涨停回调洗盘缩量站稳"}], "revisions": 0, "shAnalysis": "上证指数+0.45% · 大盘中性偏多(58) · 资金净流入 · 医药消费板块领涨。", "pastVsNow": "今日组合均值 0.34%，较昨日 0.37% 微降。当前持仓 3 只。", "nextDayExpect": "次日中性偏多：精选资金流入板块个股，控制仓位。"}, "week": {"key": "2026-W39", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}, "month": {"key": "2026-09", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}}</script>
 </body>
 </html>

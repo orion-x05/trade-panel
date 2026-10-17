@@ -45,7 +45,7 @@ SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
 BT_TUNE_FILE = "bt_tune.json"
 
 ROLES = {
-    "D1": {"name": "破锋", "sl": 7, "tp": 12},
+    "D1": {"name": "锋", "sl": 7, "tp": 12},
     "D2": {"name": "衡", "sl": 6, "tp": 8},
     "D3": {"name": "镜", "sl": 5, "tp": 6},
     "D4": {"name": "啸", "sl": 7, "tp": 10},
