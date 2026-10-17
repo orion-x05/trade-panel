@@ -7105,22 +7105,31 @@ function renderCharts(){
     }]
   });
 
+  /* 本月每日收益（组合均值）：修复 D7 等短历史角色 assetHistory 越界读成 undefined、
+     单个 NaN 通过 sum 污染整个均值导致 tooltip 显示"NaN%"的问题——
+     逐角色容错（越界/非有限/前值≤0 跳过，按有效角色计数取平均）+ tooltip/series 兜底 */
   const n=players[0].assetHistory.length;
   const dailyRet=[];
   for(let i=1;i<n;i++){
-    let sum=0;
-    players.forEach(p=>{sum+=(p.assetHistory[i]-p.assetHistory[i-1])/p.assetHistory[i-1]*100;});
-    dailyRet.push(+(sum/players.length).toFixed(3));
+    let sum=0,cnt=0;
+    players.forEach(p=>{
+      const h=p.assetHistory;
+      if(!h||i>=h.length)return; /* 该角色历史到此为止（如刚补齐的D7），跳过而非产出NaN */
+      const prev=h[i-1],cur=h[i];
+      if(typeof prev!=="number"||typeof cur!=="number"||!isFinite(prev)||!isFinite(cur)||prev<=0)return;
+      sum+=(cur-prev)/prev*100;cnt++;
+    });
+    dailyRet.push(cnt?+(sum/cnt).toFixed(3):0);
   }
   const dlabels=labels.slice(1);
   if(!monthChart)monthChart=echarts.init($("monthChart"));
   monthChart.setOption({
     backgroundColor:"transparent",animation:false,
-    tooltip:{trigger:"axis",formatter:p=>`${p[0].name}<br/>日收益：${p[0].value>=0?"+":""}${p[0].value}%`},
+    tooltip:{trigger:"axis",formatter:p=>{const v=p[0].value;return `${p[0].name}<br/>日收益：${isFinite(v)?(v>=0?"+":"")+v+"%":"--"}`;}},
     grid:{left:45,right:10,top:10,bottom:35},
     xAxis:{type:"category",data:dlabels,axisLabel:{color:"#7d8ca0",rotate:30,fontSize:10}},
     yAxis:{type:"value",axisLabel:{color:"#55637a",formatter:"{value}%"},splitLine:{lineStyle:{color:"#1b2533"}}},
-    series:[{type:"bar",data:dailyRet.map(v=>({value:v,itemStyle:{color:v>=0?"#f2555a":"#3ecf8e"}}))}]
+    series:[{type:"bar",data:dailyRet.map(v=>{const val=isFinite(v)?v:0;return{value:val,itemStyle:{color:val>=0?"#f2555a":"#3ecf8e"}};})}]
   });
 
   if(!yearChart)yearChart=echarts.init($("yearChart"));
