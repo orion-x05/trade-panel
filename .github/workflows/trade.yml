@@ -51,10 +51,10 @@ jobs:
         env:
           # 在仓库 Settings → Secrets and variables → Actions 配置：
           #   WXPUSHER_APP_TOKEN (AT_xxx)、WXPUSHER_UID (UID_xxx)
+          # 推送通道唯一：WxPusher（Server酱 已移除，WECHAT_PUSH_KEY 不再注入）
           WXPUSHER_APP_TOKEN: ${{ secrets.WXPUSHER_APP_TOKEN }}
           WXPUSHER_UID: ${{ secrets.WXPUSHER_UID }}
           WXPUSHER_TOPIC_ID: ${{ secrets.WXPUSHER_TOPIC_ID }}
-          WECHAT_PUSH_KEY: ${{ secrets.WECHAT_PUSH_KEY }}
           FORCE_SUMMARY: ${{ github.event.inputs.force_summary || '0' }}
         run: python trade_engine.py
 

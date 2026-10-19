@@ -29,12 +29,12 @@ FORCE_SUMMARY = os.environ.get("FORCE_SUMMARY", "").strip().lower() in ("1", "tr
 INIT_CASH = 100000
 MAX_POS = 5
 MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁止六角色持仓大幅重复
-WECHAT_PUSH_KEY = os.environ.get("WECHAT_PUSH_KEY", "SCT419380Tp3TtzFORow9mBwTVWfBbZOu7")
 
-# ===== WxPusher 推送配置（推荐）=====
+# ===== WxPusher 推送配置（唯一推送通道）=====
 # 在仓库 Settings → Secrets and variables → Actions 添加：
 #   WXPUSHER_APP_TOKEN = AT_xxxxx
 #   WXPUSHER_UID      = UID_xxxxx（多个用英文逗号分隔）
+# 注：Server酱（WECHAT_PUSH_KEY）通道已按需求移除，全部消息只走 WxPusher
 WXPUSHER_APP_TOKEN = os.environ.get("WXPUSHER_APP_TOKEN", "")
 WXPUSHER_UID       = os.environ.get("WXPUSHER_UID", "")
 WXPUSHER_TOPIC_ID  = os.environ.get("WXPUSHER_TOPIC_ID", "")
@@ -742,15 +742,7 @@ def get_stock_info(code):
                      "rsi6": 50, "kdj_k": 50, "kdj_d": 50, "kdj_j": 50})
     return info
 
-def send_wechat(title, content):
-    try:
-        url = f"https://sctapi.ftqq.com/{WECHAT_PUSH_KEY}.send"
-        requests.post(url, data={"title": title, "desp": content}, timeout=10)
-        print(f"  推送: {title}")
-    except Exception as e:
-        print(f"  推送失败: {e}")
-
-# ==================== 推送通道：WxPusher（主）+ Server酱（兜底）====================
+# ==================== 推送通道：WxPusher（唯一通道，Server酱已移除）====================
 def send_wxpusher(title, content, content_type=3):
     """WxPusher 推送。contentType: 1=文本 2=HTML 3=Markdown"""
     if not WXPUSHER_APP_TOKEN:
@@ -778,11 +770,13 @@ def send_wxpusher(title, content, content_type=3):
         return False
 
 def push_report(title, content):
-    """统一推送入口：WxPusher 优先，失败则 Server酱 兜底"""
+    """统一推送入口：仅 WxPusher（Server酱通道已按需求移除，不再兜底）。
+    每笔成交（买入/卖出）各调用一次 → 每笔交易对应一条消息。
+    未配置 token 或发送失败时打日志告警，不影响交易主流程。"""
     if send_wxpusher(title, content):
         return True
-    send_wechat(title, content)
-    return True
+    print("  [warn] WxPusher 推送未成功（未配置 WXPUSHER_APP_TOKEN 或发送失败），本条消息未送达")
+    return False
 
 # ==================== 五行干支（日 / 月 / 年）====================
 TIANGAN = "甲乙丙丁戊己庚辛壬癸"
@@ -1589,7 +1583,7 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
         "time": cn_now().isoformat(), "reason": reason
     })
     # 【每笔买入都推送】去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
-    # 只要真实成交就推；统一走 push_report（WxPusher 优先、Server酱兜底），消息含时间+原因
+    # 只要真实成交就推；统一走 push_report（仅 WxPusher），消息含时间+原因
     push_report(
         f"📈 {player['id']} 建仓 {st['name']}",
         f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -1625,7 +1619,7 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     # 【每笔卖出都推送】与买入对称：
     # 1) 去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
     #    只要真实成交（含部分止盈分笔）就推
-    # 2) 改走 push_report 统一入口（WxPusher 优先、Server酱兜底），
+    # 2) 改走 push_report 统一入口（仅 WxPusher，Server酱通道已移除），
     #    此前只走 send_wechat 单通道，WxPusher 可用时收不到卖出消息
     # 3) 文案区分清仓/部分止盈，附剩余持仓；bp<=0 时收益率显示 -- 防除零
     action = "清仓" if cleared else f"部分止盈{int(ratio*100)}%"

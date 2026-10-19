@@ -6661,7 +6661,8 @@ function renderHoldCards(){
           const lp=(l.profit!=null&&isFinite(l.profit))?l.profit:(l.pnl!=null&&isFinite(l.pnl)?l.pnl:null);
           const lpQty=(l.qty||0),lpPrice=(l.price||0);
           const lpShow=lp!=null?((lp>=0?"+":"")+lp.toFixed(0)):(lpPrice>0?`@${lpPrice.toFixed(2)}`:"--");
-          return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">卖出 · ${ldate} · ${lpQty}股 @${lpPrice.toFixed(2)} · 盈亏${lpShow}</div>`;
+          const lReason=l.reason?`<div style="margin-top:3px;color:var(--text-faint)">${escHtml(l.reason)}</div>`:"";
+          return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">卖出 · ${ldate} · ${lpQty}股 @${lpPrice.toFixed(2)} · 盈亏${lpShow}${lReason}</div>`;
         }).join("");
         ht.insertAdjacentHTML("beforeend",`<div class="hold-card" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
           <div class="hc-top">
