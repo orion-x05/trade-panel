@@ -3584,6 +3584,7 @@ async function renderSentimentProcess(){
   /* 底部探测器：技术底（上证日K量价） + 政策底（消息面政策关键词） */
   try{ window.__techBottom = calcTechBottom(await txKline("sh000001","day",120)); }catch(e){ console.warn("技术底计算失败",e); window.__techBottom=null; }
   try{ window.__policyBottom = detectPolicyBottom(); }catch(e){ console.warn("政策底探测失败",e); window.__policyBottom=null; }
+  try{ if(window.__policyBottom&&window.__techBottom) saveBottomSnapshot(window.__policyBottom,window.__techBottom); }catch(e){ console.warn("底部快照保存失败",e); }
   try{ renderBottomDetector(window.__policyBottom, window.__techBottom); }catch(e){ console.warn("底部探测器渲染失败",e); }
   /* 恐惧贪婪指数（依赖温度/涨跌家数/量能/国家队，须在其后计算） */
   try{ renderFearGreed(); }catch(e){ console.warn("恐惧贪婪渲染失败",e); }
@@ -3748,6 +3749,61 @@ function calcTechBottom(k){
     "布林位置":(bollPos*100).toFixed(0)+"%",布林分:bollScore
   }};
 }
+/* 底部信号日快照：每天一条（政策底/技术底分数+等级），localStorage 保留60天。
+   2026-10-20：政策底/技术底原为"当日实时值"——消息面关键词与技术指标每天都跳，
+   单日数值误导性大（用户要求"不要每天都变、要综合来看"）。改为日快照沉淀 +
+   近20日轨迹 + 近10日综合统计，单日波动不再主导结论。 */
+const BOTTOM_SNAP_KEY="tradePanelBottomSnapV1";
+function loadBottomSnap(){
+  try{const o=JSON.parse(localStorage.getItem(BOTTOM_SNAP_KEY)||"{}");return (o&&typeof o==="object")?o:{};}
+  catch(e){return{};}
+}
+function saveBottomSnapshot(policy,tech){
+  try{
+    if(!policy||!tech||tech.score==null)return; /* 数据不完整不记，避免污染快照 */
+    const dstr=todayStr(new Date());
+    const snap=loadBottomSnap();
+    snap[dstr]={p:Math.round(policy.score||0),pl:policy.level||"—",t:Math.round(tech.score),tl:tech.level||"—",ts:Date.now()};
+    const keys=Object.keys(snap).sort();
+    while(keys.length>60)delete snap[keys.shift()]; /* 只留最近60天，防无限增长 */
+    localStorage.setItem(BOTTOM_SNAP_KEY,JSON.stringify(snap));
+  }catch(e){}
+}
+/* 近N日轨迹数据（按日期升序）；不足2天返回null（单日无"综合"意义） */
+function bottomTrendData(n){
+  const snap=loadBottomSnap();
+  const days=Object.keys(snap).sort().slice(-n);
+  if(days.length<2)return null;
+  return {days,snap};
+}
+/* 近10日综合统计HTML（轨迹图容器由 renderBottomDetector 在 innerHTML 后init） */
+function bottomTrendHtml(trend){
+  if(!trend||trend.days.length<2)return ""; /* 快照不足2天不展示综合视图 */
+  const d=trend.days, snap=trend.snap;
+  const last10=d.slice(-10);
+  const avg=a=>a.length?Math.round(a.reduce((s,v)=>s+v,0)/a.length):0;
+  const p10=last10.map(k=>snap[k].p), t10=last10.map(k=>snap[k].t);
+  const pAvg=avg(p10), tAvg=avg(t10);
+  const reso=last10.filter(k=>snap[k].p>=30&&snap[k].t>=50).length;
+  const pMax=Math.max(...p10), tMax=Math.max(...t10);
+  /* 综合判定：以近10日均值为准，避免单日脉冲误导 */
+  let compVerdict,compCls;
+  if(pAvg>=45&&tAvg>=55){compVerdict="综合看：政策底与技术底近10日整体处于底部区域（均分双高），底部判断成立，可左侧分批布局。";compCls="var(--up)";}
+  else if(pAvg>=45&&tAvg<55){compVerdict="综合看：政策端近10日持续发力但技术端未确认，政策底领先、等市场底传导（常滞后1-3月），左侧窗口控仓参与。";compCls="var(--amber)";}
+  else if(pAvg<45&&tAvg>=55){compVerdict="综合看：技术端近10日深度超卖但缺政策配合，反弹易反复，等政策信号或右侧放量收复MA20再加仓。";compCls="var(--blue)";}
+  else {compVerdict="综合看：近10日政策与技术端均分双低，未见底部合力，继续空仓等待，不接落刀。";compCls="var(--text-dim)";}
+  const stat=(label,val,maxv)=>`<span>${label}</span><b>${val}<small style="color:var(--text-faint);font-weight:400"> / 最高${maxv}</small></b>`;
+  return `<div class="bd-evi" style="margin-top:8px">
+    <h5>📈 底部信号综合视图（近${last10.length}个交易日 · 日快照沉淀，非当日跳动值）</h5>
+    <div class="bd-detail">
+      ${stat("政策底均分",pAvg,pMax)}
+      ${stat("技术底均分",tAvg,tMax)}
+      <span>双共振天数</span><b>${reso} / ${last10.length} 天</b>
+    </div>
+    <div id="cBottomTrend" class="ech" style="height:150px;margin-top:6px"></div>
+    <div class="bd-vali" style="color:${compCls}">🧭 ${compVerdict}</div>
+  </div>`;
+}
 /* 渲染底部探测器 */
 function renderBottomDetector(policy, tech){
   const el=document.getElementById("bottomBody"); if(!el)return;
@@ -3797,6 +3853,7 @@ function renderBottomDetector(policy, tech){
         <span class="bd-step ${tOn?"on":""}">技术底</span>
       </div>
     </div>
+    ${bottomTrendHtml(bottomTrendData(20)||{days:[],snap:{}})}
     ${eviHtml}
     ${valiHtml}`;
   /* 综合底部信号 gauge —— 关键：上面的 innerHTML 重建了 #cBottom DOM 节点，
@@ -3817,6 +3874,30 @@ function renderBottomDetector(policy, tech){
       data:[{value:comb,name:"综合底部信号 "+(comb>=60?"强(布局区)":comb>=30?"中(观察)":"弱(等待)")}]
     }]
   });}
+  /* 近20日底部信号轨迹（政策底/技术底双线，日快照）——同样先dispose再init，
+     否则 innerHTML 重建节点后旧实例画进分离节点导致图表空白 */
+  const trend=bottomTrendData(20);
+  if(trend){
+    if(MK_CHARTS["cBottomTrend"]){try{MK_CHARTS["cBottomTrend"].dispose();}catch(e){}}
+    delete MK_CHARTS["cBottomTrend"];
+    const ct=mkChart("cBottomTrend");
+    if(ct){
+      const tDays=trend.days, tSnap=trend.snap;
+      ct.setOption({
+        grid:{left:34,right:10,top:26,bottom:20},
+        tooltip:{trigger:"axis"},
+        legend:{data:["政策底","技术底"],textStyle:{color:"#7d8ca0",fontSize:10},top:0,itemWidth:14,itemHeight:8},
+        xAxis:{type:"category",data:tDays.map(x=>x.slice(5)),axisLabel:{color:"#7d8ca0",fontSize:9}},
+        yAxis:{type:"value",min:0,max:100,axisLabel:{color:"#7d8ca0",fontSize:9},splitLine:{lineStyle:{color:"rgba(125,140,160,.12)"}}},
+        series:[
+          {name:"政策底",type:"line",data:tDays.map(x=>tSnap[x].p),smooth:true,symbolSize:4,
+           lineStyle:{color:"#f59e0b",width:2},itemStyle:{color:"#f59e0b"},areaStyle:{color:"rgba(245,158,11,.10)"}},
+          {name:"技术底",type:"line",data:tDays.map(x=>tSnap[x].t),smooth:true,symbolSize:4,
+           lineStyle:{color:"#3ecf8e",width:2},itemStyle:{color:"#3ecf8e"},areaStyle:{color:"rgba(62,207,142,.10)"}}
+        ]
+      });
+    }
+  }
 }
 
 /* ==================== 多周期共振 + 恐惧贪婪指数 ==================== */
@@ -4194,7 +4275,11 @@ async function calcATR(code){
   const now=Date.now();
   if(atrCache[code] && now-atrCache[code].updateTime<ATR_CACHE_TTL) return atrCache[code].atr;
   try{
-    const klineData=await txDay(code,30);
+    /* 腾讯K线参数必须带sh/sz前缀（param=sh600809,day,...）：早期直接传裸代码
+       "600809"，腾讯不认、j.data[裸代码]恒为undefined，持仓ATR预载全部静默
+       失败（风险矩阵ATR列一直空）。缓存键仍用裸代码，与读取方atrCache[code]一致。 */
+    const tx=TDX_CODES[code]||(String(code)[0]==="6"?"sh":"sz")+String(code);
+    const klineData=await txDay(tx,30);
     if(!klineData||klineData.length<15) return null;
     const trList=[];
     for(let i=1;i<klineData.length;i++){
@@ -5136,6 +5221,9 @@ function applyPicks(top,holdCodes){
     if(!newDyn.has(full)&&!holdCodes.has(code))delete simData.pricePool[code];
   });
   dynamicQuoteCodes=newDyn;
+  /* 换池后立刻触发一轮周线KD预载（重置防抖计时，下一tick即跑）：
+     否则新池要等满1分钟防抖，候选表周线KD列长时间显示"--" */
+  try{_wkPreloadAt=0;}catch(e){}
 }
 function setPickStatus(txt,kind){
   const el=document.getElementById("pickStatus");
@@ -5308,15 +5396,25 @@ async function calcDailyKD(code){
     return {kd:+kRaw[kRaw.length-1].toFixed(1),d:+d[d.length-1].toFixed(1)};
   }catch(e){return null;}
 }
-/* 批量预载周线KD+日线KD：异步、小并发、10分钟TTL，tick同步读缓存 */
+/* 批量预载周线KD+日线KD：异步、小并发、10分钟TTL，tick同步读缓存。
+   2026-10-20 重修（用户报"周线kd为空"）：
+   ① 原实现每轮只预载40只且按"超卖优先"排序，而候选表按综合评分取前12行展示——
+     最强的股票RSI6最高、恰排在预载末位，页面加载/换池后可见行的周线KD列
+     长时间显示"--"。现改为全池覆盖（不切片），可见行与D7 strip 同一轮拿齐；
+   ② 并发4→6、防抖2分钟→1分钟，正常网络下一轮≈40-70秒覆盖全池；
+   ③ 每只加20秒超时赛跑：单只请求挂起曾把整批 Promise.all 拖死、
+     _wkPreloadBusy 永真致预载器整个会话失效（复现实测卡在58/106不再推进）；
+   ④ 扫描换池后重置防抖计时，下一tick立即对新池重跑。 */
 let _wkPreloadBusy=false,_wkPreloadAt=0;
+function _wkWithTimeout(p,ms){return Promise.race([p,new Promise(r=>setTimeout(r,ms))]);}
 async function preloadWeeklyKD(codes){
   if(_wkPreloadBusy)return;
-  if(Date.now()-_wkPreloadAt<120000)return; /* 2分钟防抖 */
+  if(Date.now()-_wkPreloadAt<60000)return; /* 1分钟防抖 */
   _wkPreloadBusy=true;_wkPreloadAt=Date.now();
+  const poolSize=Object.keys(simData.pricePool||{}).length;
   try{
-    /* 超卖优先排序：RSI6 越低、离20日低点越近的越靠前——
-       有限预算（40只）优先覆盖最可能触发 D7「周线KD≤−40+拐头」的标的 */
+    /* 超卖优先排序保留为次要排序：RSI6 越低、离20日低点越近的越靠前，
+       同轮内优先覆盖最可能触发 D7「周线KD≤−40+拐头」的标的 */
     const _pool=simData.pricePool||{};
     const _oversoldFirst=(a,b)=>{
       const sa=_pool[a],sb=_pool[b];
@@ -5329,14 +5427,25 @@ async function preloadWeeklyKD(codes){
     const need=(codes||[]).filter(c=>{
       const hit=wkKDCache[c];
       return !hit||Date.now()-hit.t>=600000;
-    }).sort(_oversoldFirst).slice(0,40);
-    for(let i=0;i<need.length;i+=4){
-      await Promise.all(need.slice(i,i+4).map(async c=>{
-        try{const w=await calcWeeklyKD(c);if(w){const dk=await calcDailyKD(c);if(dk)w.dayKd=dk;}}catch(e){}
+    }).sort(_oversoldFirst);
+    for(let i=0;i<need.length;i+=6){
+      await Promise.all(need.slice(i,i+6).map(async c=>{
+        try{
+          /* 超时赛跑只解放循环：输掉赛跑的后台请求继续跑，数据仍会落缓存 */
+          await _wkWithTimeout((async()=>{
+            const w=await calcWeeklyKD(c);
+            if(w){const dk=await calcDailyKD(c);if(dk)w.dayKd=dk;}
+          })(),20000);
+        }catch(e){}
       }));
     }
   }catch(e){console.warn("周线KD预载失败：",e);}
-  finally{_wkPreloadBusy=false;}
+  finally{
+    _wkPreloadBusy=false;
+    /* 扫描可能在预载期间换池（如东财故障切新浪兜底）：池大小变了就重置防抖
+       计时，下一tick（3秒）立即对新池重跑，不让用户等满1分钟 */
+    if(Object.keys(simData.pricePool||{}).length!==poolSize)_wkPreloadAt=0;
+  }
 }
 /* 同步读取：优先缓存，未预载返回null（tick/渲染均不等待网络） */
 function weeklyKD(code){const w=wkKDCache[code];return w?(Date.now()-w.t<600000?w:null):null;}
@@ -6219,7 +6328,26 @@ function saveSum(){try{localStorage.setItem("stockSimSum",JSON.stringify(summari
 let lastDailyDate="";
 let weekClosedKey="";
 let monthClosedKey="";
-const revisions=[];
+/* 策略自适应修正记录：localStorage 持久化（tradePanelRevisionsV1）。
+   2026-10-20：早期为纯内存数组，刷新页面即丢；且玩家的 p.revised 标记已随
+   simData 持久化，记录丢失后不会再生——等于永久丢失（用户要求"一直保留"）。
+   现加载时恢复、每次新增即保存；上限1000条FIFO（每天最多7条，约3年量，
+   导出备份走设置页全量导出，覆盖该键）。 */
+const REV_STORE_KEY="tradePanelRevisionsV1";
+function loadRevisions(){
+  try{
+    const a=JSON.parse(localStorage.getItem(REV_STORE_KEY)||"[]");
+    return Array.isArray(a)?a.filter(r=>r&&r.date&&r.role):[];
+  }catch(e){return[];}
+}
+function saveRevisions(){
+  try{
+    let a=revisions.slice();
+    if(a.length>1000)a=a.slice(a.length-1000); /* FIFO 截断，防配额爆掉 */
+    localStorage.setItem(REV_STORE_KEY,JSON.stringify(a));
+  }catch(e){}
+}
+const revisions=loadRevisions();
 const REVISION_SUGGEST={
   D1:"趋势突破条件过于严苛：建议将 MA20>MA60 放宽为 MA10>MA20，提高震荡市参与度",
   D2:"多Agent 共识阈值过高：建议由全数一致放宽为多数一致（≥3/4），避免踏空主升",
@@ -6321,6 +6449,7 @@ function buildDailySummary(){
     }
   });
   newRev.forEach(r=>{revisions.push(r);log("warn",`策略修正：${r.role} ${r.strategy} → ${r.action}`);});
+  if(newRev.length)saveRevisions(); /* 持久化：刷新/重开不丢失（用户要求一直保留） */
   return{date,indices,holds,revisions:newRev.length,shAnalysis,pastVsNow,nextDayExpect};
 }
 function checkCloseSummaries(){
@@ -7064,7 +7193,7 @@ function renderPool(){
       <td class="r num ${pctColor(st.chg)}">${st._ph?'<span style="color:var(--text-faint)">--</span>':pct(st.chg)}</td>
       <td class="r num">${st._ph?'<span style="color:var(--text-faint)">--</span>':(st.vol||0).toFixed(2)}</td>
       <td>${st._ph?'<span style="color:var(--text-faint);font-size:11px" title="行情未更新">待更新</span>':`<span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span>`}</td>
-      <td class="r num">${(()=>{const w=weeklyKD(st.code);if(!w)return '<span style="color:var(--text-faint)">--</span>';const c=w.kd<=-40?'#ff6b35':w.kd<=-20?'#fbbf24':'var(--text-dim)';return `<span style="color:${c};font-weight:${w.turnUp?"700":"400"}">${w.kd.toFixed(1)}${w.turnUp?"↑":""}</span>`;})()}</td>
+      <td class="r num">${(()=>{const w=weeklyKD(st.code);if(!w)return '<span style="color:var(--text-faint)" title="周线KD预载中（约1分钟内自动补齐）">--</span>';const c=w.kd<=-40?'#ff6b35':w.kd<=-20?'#fbbf24':'var(--text-dim)';return `<span style="color:${c};font-weight:${w.turnUp?"700":"400"}">${w.kd.toFixed(1)}${w.turnUp?"↑":""}</span>`;})()}</td>
       <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
       <td class="r num">${over}</td>
       <td class="r num">${mom}</td>
@@ -9542,15 +9671,19 @@ async function txKline(code,period,count){
     const hosts=["https://web.ifzq.gtimg.cn","https://ifzq.gtimg.cn"];
     for(let attempt=0;attempt<2&&!out.length;attempt++){
       for(const h of hosts){
+        /* 超时计时器必须覆盖到 body 读取完成为止。早期写法在 fetch 拿到响应头后
+           立即 clearTimeout，若连接在 body 中途停滞（弱网/服务端挂起），
+           await r.json() 将永远挂起——该请求会把周线KD预载的整批 Promise.all
+           拖死、_wkPreloadBusy 永真致预载器整个会话失效（2026-10-20 复现实测）。 */
+        const ctrl=new AbortController();
+        const to=setTimeout(()=>ctrl.abort(),10000);
         try{
-          const ctrl=new AbortController();
-          const to=setTimeout(()=>ctrl.abort(),10000);
           const r=await fetch(`${h}/appstock/app/fqkline/get?param=${code},${period},,,${count},qfq`,{signal:ctrl.signal});
-          clearTimeout(to);
           const j=await r.json();const k=j.data[code];
           let arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day||k.qfqweek||k.week||k.qfqmonth||k.month))||[];
           if(arr&&arr.length){out=arr.map(x=>{const v=Array.isArray(x)?x:String(x).split(" ");return {date:v[0],open:+v[1],close:+v[2],high:+v[3],low:+v[4],vol:+v[5]||0};});break;}
         }catch(e){}
+        finally{clearTimeout(to);}
       }
     }
   }
