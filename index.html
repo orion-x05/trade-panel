@@ -3142,7 +3142,7 @@ const EXT_CODES={
 };
 /* 全市场候选 → 名称映射（交易表显示股票名称用） */
 const STOCK_NAMES={
-  "002575":"群兴玩具","300756":"金马游乐","300931":"通用电梯","002021":"中捷资源","001225":"和泰机电","300022":"吉峰科技",
+  "002575":"群兴玩具","300756":"金马游乐","300931":"通用电梯","002021":"中捷资源","001225":"和泰机电","300022":"吉峰科技","601519":"大智慧",
   "600496":"精工钢构","600970":"中材国际","603439":"三力制药","600968":"海油发展","605388":"均瑶健康","600300":"维维股份",
   "601997":"贵阳银行","600998":"九州通","603883":"老百姓","000533":"顺钠股份",
   "600519":"贵州茅台","000858":"五粮液","600887":"伊利股份","603288":"海天味业","600809":"山西汾酒","600276":"恒瑞医药",
@@ -6582,7 +6582,7 @@ function renderHoldCards(){
       const buyPrice=h.buyPrice||h.cost||0;
       const buyTime=h.buyTime||h.buyDate||now.toISOString();
       const reason=h.reason||h.buyReason||"";
-      const safeH={...h, buyPrice, buyTime, reason, name:h.name||h.code||""};
+      const safeH={...h, buyPrice, buyTime, reason, name:h.name||STOCK_NAMES[h.code]||h.code||""};
       if(!mergedHoldings[safeH.code]){
         mergedHoldings[safeH.code]={...safeH, lots: safeH.lots?[...safeH.lots]:[{price:buyPrice,qty:safeH.qty,time:buyTime,reason:reason}]};
       }else{
@@ -6606,14 +6606,14 @@ function renderHoldCards(){
         if(t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈"){
           const code=t.code||t.stock||"";
           if(!code||heldCodes.has(code))return;
-          if(!closedMap[code])closedMap[code]={code,name:t.name||t.stockName||code,qty:t.qty||0,price:t.price||0,profit:t.profit||t.pnl||0,time:t.time||t.date||t.buyTime||"",lots:[t]};
+          if(!closedMap[code])closedMap[code]={code,name:t.name||t.stockName||STOCK_NAMES[code]||(simData.pricePool[code]||{}).name||code,qty:t.qty||0,price:t.price||0,profit:t.profit||t.pnl||0,time:t.time||t.date||t.buyTime||"",lots:[t]};
           else{closedMap[code].profit+=(t.profit||t.pnl||0);closedMap[code].qty+=(t.qty||0);closedMap[code].lots.push(t);}
         }
       });
       Object.values(closedMap).forEach(h=>{
         if(search&&!(h.name||"").includes(search)&&!String(h.code).includes(search))return;
         any=true;
-        const st=simData.pricePool[h.code]||{price:0,chg:0};
+        const st=simData.pricePool[h.code]||{price:h.price,chg:0};
         const rowId="hrow_"+(rowIdx++);
         const lots=h.lots||[];
         const lotsHtml=lots.map((l,i)=>{
@@ -6773,7 +6773,7 @@ function renderHold(){
       const buyPrice=h.buyPrice||h.cost||0;
       const buyTime=h.buyTime||h.buyDate||now.toISOString();
       const reason=h.reason||h.buyReason||"";
-      const safeH={...h, buyPrice, buyTime, reason, name:h.name||h.code||""};
+      const safeH={...h, buyPrice, buyTime, reason, name:h.name||STOCK_NAMES[h.code]||h.code||""};
       if(!mergedHoldings[safeH.code]){
         mergedHoldings[safeH.code]={...safeH, lots: safeH.lots?[...safeH.lots]:[{price:buyPrice,qty:safeH.qty,time:buyTime,reason:reason}]};
       }else{
