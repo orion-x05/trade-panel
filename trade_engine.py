@@ -1198,13 +1198,47 @@ def can_sell_t1(hold):
 WEEKLY_KD_CACHE = {}  # code -> {t,kd,kdPrev,turnUp,ema21,ema21Up}，10分钟TTL（对齐前端 wkKDCache）
 
 def _tx_kline(code, scale, count):
-    """腾讯K线（与前端 txKline 同源）：scale=day/week，返回原始行列表（无数据返回 []）"""
+    """腾讯K线（与前端 txKline 同源）：scale=day/week，返回原始行列表（无数据返回 []）。
+    行格式 [date, open, close, high, low, volume(, 分红dict)]，_hlc3_kd 取 close/high/low。
+    ⚠️ param 必须是 code,scale,,,count,qfq（4 个逗号）：少一个逗号腾讯返回
+    {"code":0,"msg":"param error","data":[]}（data 为 list），旧写法
+    j.get("data", {}).get(key) 会在 list 上调 .get 抛 TypeError 被静默吞掉——
+    2026-10-19 生产日志 D7 八个候选全部「'list' object has no attribute 'get'」即此因。
+    解析容错对照前端 index.html 9477-9511：data 可为 dict/list，节点可为行数组或
+    含 qfq{scale}/{scale} 子键的 dict；双 host 重试；全部失败抛出最后异常保留诊断。"""
     prefix = "sh" if code.startswith("6") else "sz"
-    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={prefix}{code},{scale},,{count},qfq"
-    r = requests.get(url, timeout=8)
-    j = r.json()
-    node = j.get("data", {}).get(f"{prefix}{code}", {})
-    return node.get(f"qfq{scale}") or node.get(scale) or []
+    key = f"{prefix}{code}"
+    last_err = None
+    msgs = []
+    for host in ("https://web.ifzq.gtimg.cn", "https://ifzq.gtimg.cn"):
+        try:
+            url = f"{host}/appstock/app/fqkline/get?param={key},{scale},,,{count},qfq"
+            r = requests.get(url, timeout=8)
+            j = r.json()
+            data = j.get("data") if isinstance(j, dict) else j
+            node = None
+            if isinstance(data, dict):
+                node = data.get(key)
+            elif isinstance(data, list):
+                node = next((n for n in data
+                             if isinstance(n, dict) and (n.get(f"qfq{scale}") or n.get(scale))), None)
+                if node is None and data and isinstance(data[0], list) and len(data[0]) >= 5:
+                    node = data  # data 直接是行数组的罕见形态
+            if isinstance(node, list) and node:
+                return node
+            if isinstance(node, dict):
+                arr = node.get(f"qfq{scale}") or node.get(scale)
+                if isinstance(arr, list) and arr:
+                    return arr
+            if isinstance(j, dict) and j.get("msg"):
+                msgs.append(str(j.get("msg")))
+        except Exception as e:
+            last_err = e
+    if last_err:
+        raise last_err
+    if msgs:
+        print(f"  腾讯K线无数据 {key}/{scale}: {msgs[-1]!r}")
+    return []
 
 def _hlc3_kd(bars):
     """HLC3=(H+L+C)/3 典型价随机指标：%K(14)−50 居中，%D=%K的5周期SMA。
