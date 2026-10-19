@@ -98,36 +98,6 @@ async function sendWeChatAlert(title, desp){
   }
 }
 
-/* 买入提醒 */
-function alertBuySignal(role, stockName, code, price, reason){
-  const title = `📈 ${role}买入提醒：${stockName}`;
-  const desp = `### 🟢 买入信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**角色：** ${role}
-**理由：** ${reason}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
-
-/* 卖出提醒 */
-function alertSellSignal(role, stockName, code, price, profit){
-  const title = `📉 ${role}卖出提醒：${stockName}`;
-  const desp = `### 🔴 卖出信号
-  
-**股票：** ${stockName}（${code}）
-**价格：** ¥${price}
-**盈亏：** ${profit >= 0 ? "+" : ""}${profit.toFixed(2)}%
-**角色：** ${role}
-
-[点击查看面板](https://orion-x05.github.io/trade-panel/)`;
-  
-  sendWeChatAlert(title, desp);
-}
-
 </script>
 <script>/* ECharts 5.4.3 (Apache-2.0) 内联自包含：无需 vendor/ 目录，手机本地打开或离线也能显示图表 */
 /*
@@ -4359,6 +4329,7 @@ function load(){
         ensurePlayerD7(); /* 旧快照可能只有6角色，补D7 */
         ensureRoleNames(); /* 旧数据角色名收敛为单字（D1 破锋/趋势突破 → 锋） */
         ensureTradeProfit(); /* 旧数据卖出记录补 profit + 持仓旧字段名规整 */
+        ensureDayLabels(); /* 日期标签与资产曲线等长（后端 day_labels 或按 last_update 倒推） */
         simData.players.forEach(p=>{
           const totalCost=p.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
           const correctCash=INIT_CASH-totalCost;
@@ -4379,9 +4350,15 @@ function load(){
           if(p.length===2&&p[1].length===1)p[1]="0"+p[1];
           return p.join("-");
         });
+        /* 标签与资产曲线长度对齐：只增补/裁剪标签，绝不裁撤资产数据
+           （旧代码在 ah 比标签长时截断 assetHistory，会直接丢掉最新收盘快照） */
         const ahLen=simData.players[0].assetHistory.length;
-        if(ahLen>simData.dayLabels.length){
-          simData.players.forEach(p=>p.assetHistory=p.assetHistory.slice(-simData.dayLabels.length));
+        if(simData.dayLabels.length<ahLen){
+          const padLabel=simData.dayLabels[simData.dayLabels.length-1]||"";
+          const fallbackLabel=String(new Date().getMonth()+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
+          while(simData.dayLabels.length<ahLen)simData.dayLabels.push(padLabel||fallbackLabel);
+        }else if(simData.dayLabels.length>ahLen){
+          simData.dayLabels=simData.dayLabels.slice(-ahLen);
         }
         /* 候选池合并：单独try-catch，确保不影响主流程 */
         try{
@@ -4415,6 +4392,7 @@ function load(){
       ensurePlayerD7();
       ensureRoleNames();
       ensureTradeProfit(); /* 旧数据卖出记录补 profit + 持仓旧字段名规整 */
+      ensureDayLabels(); /* 日期标签与资产曲线等长 */
       save();
       return;
     }
@@ -4488,6 +4466,72 @@ function ensureTradeProfit(){
       }
     });
   });
+}
+/* 日期标签与角色资产曲线等长对齐（收益曲线/本月收益图 x 轴用）：
+   优先用后端 day_labels；长度不匹配时按 last_update 起每个工作日倒推一条
+   （引擎每交易日多次运行、周末不记）。防止同步后标签陈旧/错位导致
+   x 轴对不上、tooltip 全显示同一个标签。 */
+function ensureDayLabels(){
+  if(!simData||!simData.players||!simData.players.length)return;
+  const p0=simData.players[0];
+  const n=(p0.assetHistory&&p0.assetHistory.length)||0;
+  if(!n)return;
+  if(simData.dayLabels&&simData.dayLabels.length===n)return;
+  const dl=simData.day_labels;
+  if(dl&&dl.length===n){simData.dayLabels=dl.slice();return;}
+  const out=[];let d=new Date(simData.last_update||Date.now());let guard=0;
+  while(out.length<n&&guard++<n*3+10){
+    const wd=d.getDay();
+    if(wd!==0&&wd!==6){
+      out.unshift(String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"));
+    }
+    d=new Date(d.getTime()-86400000);
+  }
+  if(out.length===n)simData.dayLabels=out;
+}
+/* 给所有角色追加今日资产占位槽位（取上一收盘值），与标签同步推进保证等长 */
+function pushTodayPlaceholder(){
+  simData.players.forEach(p=>{
+    if(!p.assetHistory)p.assetHistory=[];
+    const base=p.assetHistory.length?p.assetHistory[p.assetHistory.length-1]:INIT_CASH;
+    p.assetHistory.push(base);
+    if(p.assetHistory.length>800)p.assetHistory.shift();
+  });
+}
+/* 跨天识别 + 收盘记录对齐（从 tick 抽出；nowMin/dayOverride 供测试注入"距 0 点分钟数/日期"，缺省取真实时间）：
+   - 新的一天（工作日）：今日标签与资产占位槽位同步推进，且幂等
+     （旧缺陷：只 push 标签不更新 lastDayStr，跨天到 15:00 前每个 tick 都重复追加，
+      标签一路涨到 800 上限；且标签追加了资产槽位没追加，15:00 记录时覆盖的是昨天收盘值）
+   - 15:00 后（工作日）且今日未记录：needRecord=true，由调用方在资产计算后覆盖今日槽位；
+     标签缺失时先给所有角色补标签+占位，保证标签与曲线始终等长
+   - 周末不推进不记录（与后端 is_trade_time 口径一致）
+   返回 {needRecord, todayKey} */
+function advanceTradingDay(nowMin,dayOverride){
+  if(!simData||!simData.players||!simData.players.length)return {needRecord:false,todayKey:""};
+  const today=dayOverride||new Date();
+  const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+  const todayLabel=`${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const isWeekday=today.getDay()!==0&&today.getDay()!==6;
+  if(simData.lastDayStr!==todayKey&&isWeekday){
+    todayBuyMap={}; /* 新交易日：清空"当日个股+原因"买入去重记录 */
+    if(simData.dayLabels[simData.dayLabels.length-1]!==todayLabel){
+      simData.dayLabels.push(todayLabel);
+      if(simData.dayLabels.length>800)simData.dayLabels.shift();
+      pushTodayPlaceholder();
+    }
+    simData.simDate=today;
+    simData.lastDayStr=todayKey; /* 标记今天已识别，避免后续每个 tick 重复追加标签 */
+  }
+  const hm=(nowMin==null)?(today.getHours()*60+today.getMinutes()):nowMin;
+  const needRecord=isWeekday&&hm>=900&&simData.lastRecordKey!==todayKey;
+  if(needRecord&&simData.dayLabels[simData.dayLabels.length-1]!==todayLabel){
+    /* 今日标签缺失的边角（快照 lastDayStr 已是今天但标签停在昨天，跨天识别未覆盖）：
+       先补标签+占位槽位，调用方随后统一走"覆盖今日槽位" */
+    simData.dayLabels.push(todayLabel);
+    if(simData.dayLabels.length>800)simData.dayLabels.shift();
+    pushTodayPlaceholder();
+  }
+  return {needRecord:needRecord,todayKey:todayKey};
 }
 /* 候选池字段规整：补齐缺失的 code/name 及关键字段（修复旧快照股票缺code导致门禁点不开） */
 function normalizePricePool(){
@@ -4736,15 +4780,6 @@ function sendWechat(title, content){
   })();
 }
 /* ==================== 日报/周报自动推送 ==================== */
-function generateDailyReport(){
-  /* 日报功能，待适配新数据结构 */
-  console.log("generateDailyReport called");
-}
-
-function checkScheduledPush(){
-  /* 定时推送功能，待适配新数据结构 */
-}
-
 function pushBigEvent(type, title, content){
   const eventKey = `${type}_${new Date().toISOString().slice(0,10)}_${title}`;
   // 同一事件当天只推一次，避免刷屏
@@ -5841,6 +5876,7 @@ function log(type,msg){
 /* ==================== 主循环（数据层 + 收盘小结） ==================== */
 function tick(){
   if(!simData||!simData.running)return;
+  ensureDayLabels(); /* 运行时自愈：标签与资产曲线等长（跨天/同步/外部改动造成的漂移，一个 tick 内修正） */
   const now=new Date();
   fetchRealQuotes();
   updateMarket();
@@ -6041,35 +6077,15 @@ function tick(){
       });
     });
   }
-  /* 新一天检测：打开页面时如果真实日期变了，先记录昨天收盘再开始今天 */
-  const today=new Date();
-  const todayKey=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-  const lastKey=simData.lastDayStr;
-  if(lastKey!==todayKey&&today.getDay()!==0&&today.getDay()!==6){
-    todayBuyMap={}; /* 新交易日：清空"当日个股+原因"买入去重记录 */
-    const ml=String(today.getMonth()+1).padStart(2,"0"),dl=String(today.getDate()).padStart(2,"0");
-    simData.dayLabels.push(`${ml}-${dl}`);
-    if(simData.dayLabels.length>800)simData.dayLabels.shift();
-    simData.simDate=today;
-  }
+  /* 跨天识别 + 收盘记录对齐（needRecord 时在下方资产计算后覆盖今日槽位） */
+  const day=advanceTradingDay();
+  const needRecord=day.needRecord;
   simData.players.forEach(p=>{
     const mv=p.holdings.reduce((a,h)=>a+(simData.pricePool[h.code]?simData.pricePool[h.code].price*h.qty:0),0);
     p.asset=p.cash+mv;
-    const now2=new Date();
-    const hm=now2.getHours()*60+now2.getMinutes();
-    /* 每日收盘记录一次（15:00 后），lastRecordKey 去重；assetHistory 与 dayLabels 始终等长 */
-    const needRecord=(hm>=900&&simData.lastRecordKey!==todayKey);
     if(needRecord){
-      const lastLabel=simData.dayLabels[simData.dayLabels.length-1];
-      const todayLabel=`${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      if(lastLabel===todayLabel){
-        p.assetHistory[p.assetHistory.length-1]=+p.asset.toFixed(2); /* 当天覆盖今日槽位 */
-      }else{
-        p.assetHistory.push(+p.asset.toFixed(2));                     /* 新交易日追加 */
-        if(p.assetHistory.length>800)p.assetHistory.shift();
-      }
-      simData.lastRecordKey=todayKey;
-      simData.lastDayStr=todayKey;
+      if(p.assetHistory.length)p.assetHistory[p.assetHistory.length-1]=+p.asset.toFixed(2); /* 覆盖今日槽位 */
+      else p.assetHistory.push(+p.asset.toFixed(2));
     }
     const m=calcMetrics(p);
     p.winRate=+m.winRate.toFixed(3);p.plRatio=+m.plRatio.toFixed(2);
@@ -6080,6 +6096,7 @@ function tick(){
         `角色：${p.id}\n最大回撤：${(p.maxDrawdown*100).toFixed(2)}%\n已超过10%预警线，请注意风险控制\n时间：${new Date().toLocaleString('zh-CN')}`);
     }
   });
+  if(needRecord){simData.lastRecordKey=day.todayKey;simData.lastDayStr=day.todayKey;}
   simData.tickCount++;
   if(simData.tickCount%15===0)save();
   checkCloseSummaries();
@@ -9027,7 +9044,13 @@ window.addEventListener("DOMContentLoaded",()=>{
             ensurePlayerD7();
             ensureRoleNames(); /* 后台旧快照角色名收敛（D1 破锋 → 锋） */
             ensureTradeProfit(); /* 后台旧快照卖出记录补 profit（已清仓盈亏/胜率口径） */
+            /* 日期标签同步：优先用后端 day_labels，长度不匹配则按 last_update 工作日
+               倒推重建——此前只换 players 不换 dayLabels，图表 x 轴停留在内嵌快照的
+               陈旧标签，与多条资产曲线长度不匹配 */
+            simData.dayLabels=(remoteData.day_labels&&remoteData.day_labels.length===remoteData.players[0].assetHistory.length)
+              ?remoteData.day_labels.slice():simData.dayLabels;
             simData.last_update=newUpdate;
+            ensureDayLabels();
             /* 重新渲染所有界面 */
             if(typeof render==='function') render();
             if(typeof renderStats==='function') renderStats();
@@ -13748,7 +13771,7 @@ const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "";
 /* 卖出提醒 */
 
 </script>
-<script type="application/json" id="embeddedSimData">{"players": [{"id": "D1", "name": "锋", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D2", "name": "多Agent共识", "cash": 99053.2, "asset": 99053.2, "holdings": [], "trades": [{"type": "buy", "code": "603439", "name": "三力制药", "qty": 1300, "price": 15.19, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "早盘打板买入"}, {"type": "sell", "code": "603439", "name": "三力制药", "qty": 1300, "price": 14.46, "fee": 5, "time": "2026-09-22T01:34:53.000Z", "reason": "高位放量滞涨，清仓离场", "profit": -946.8}], "assetHistory": [100000, 99053.2], "winRate": 0.0, "plRatio": 0.0, "sharpe": 0, "maxDrawdown": 0.0095, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D3", "name": "多空辩论", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D4", "name": "量价共振", "cash": 76040, "asset": 102976, "holdings": [{"code": "000538", "name": "云南白药", "qty": 300, "cost": 51.73, "buyTime": "2026-09-23T02:13:08.000Z", "lots": [{"qty": 300, "price": 51.71, "time": "2026-09-23T02:13:08.000Z"}]}, {"code": "600809", "name": "山西汾酒", "qty": 100, "cost": 114.18, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 100, "price": 114.13, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "001225", "name": "和泰机电", "qty": 700, "price": 45.55, "fee": 5, "time": "2026-09-21T01:30:00.000Z", "reason": "量价共振建仓"}, {"type": "sell", "code": "001225", "name": "和泰机电", "qty": 700, "price": 50.07, "fee": 5, "time": "2026-09-22T01:34:15.000Z", "reason": "量价背离，高位滞涨先撤", "profit": 3161.19}, {"type": "buy", "code": "600030", "name": "中信证券", "qty": 500, "price": 27.03, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破平台建仓"}, {"type": "sell", "code": "600030", "name": "中信证券", "qty": 500, "price": 26.75, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -138.38}, {"type": "buy", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.75, "fee": 5, "time": "2026-09-22T01:30:00.000Z", "reason": "突破建仓"}, {"type": "sell", "code": "000858", "name": "五粮液", "qty": 100, "price": 70.57, "fee": 5, "time": "2026-09-23T01:31:20.000Z", "reason": "高位放量十字星，警惕见顶", "profit": -18.06}, {"type": "buy", "code": "000538", "name": "云南白药", "qty": 300, "price": 51.71, "fee": 5, "time": "2026-09-23T02:13:08.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}, {"type": "buy", "code": "600809", "name": "山西汾酒", "qty": 100, "price": 114.13, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "量价共振：放量突破平台且量比健康，主升启动"}], "assetHistory": [100000, 102976], "winRate": 0.3333333333333333, "plRatio": 40.41, "sharpe": 0, "maxDrawdown": 0.0014, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D5", "name": "趋势回踩", "cash": 100000, "asset": 100000, "holdings": [], "trades": [], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}, {"id": "D6", "name": "涨停回踩", "cash": 83183, "asset": 100000, "holdings": [{"code": "300931", "name": "通用电梯", "qty": 900, "cost": 18.69, "buyTime": "2026-09-23T01:52:02.000Z", "lots": [{"qty": 900, "price": 18.68, "time": "2026-09-23T01:52:02.000Z"}]}], "trades": [{"type": "buy", "code": "300931", "name": "通用电梯", "qty": 900, "price": 18.68, "fee": 5, "time": "2026-09-23T01:52:02.000Z", "reason": "涨停回调·洗盘缩量站稳：涨停后MA20向上+RSI健康+洗盘缩量"}], "assetHistory": [100000, 100000], "winRate": 0, "plRatio": 0, "sharpe": 0, "maxDrawdown": 0, "revised": false, "dailySummary": [], "weeklySummary": [], "monthlySummary": [], "startAsset": 100000}], "pricePool": {"603439": {"price": 14.46, "chg": -4.8, "industry": "中药", "sectors": "医药"}, "001225": {"price": 50.07, "chg": 10.06, "industry": "通用设备", "sectors": "机械设备"}, "600030": {"price": 26.75, "chg": -1.04, "industry": "证券", "sectors": "金融"}, "000858": {"price": 70.57, "chg": -0.25, "industry": "白酒", "sectors": "食品饮料"}, "000538": {"price": 51.71, "chg": 1.12, "industry": "中药", "sectors": "医药"}, "600809": {"price": 114.13, "chg": 0.95, "industry": "白酒", "sectors": "食品饮料"}, "300931": {"price": 18.68, "chg": 2.34, "industry": "通用设备", "sectors": "机械设备"}}, "sectors": {}, "tickCount": 0, "lastCloseDate": "2026-09-22", "lastDayStr": "2026-09-23", "simDate": "2026-09-23", "dayLabels": ["09-22", "09-23"], "lastRecordKey": "", "version": 12}</script>
+<script type="application/json" id="embeddedSimData">{"players":[{"id":"D1","name":"锋","cash":68763.0,"holdings":[{"code":"600887","name":"伊利股份","qty":600,"buyPrice":27.828333333333333,"buyTime":"2026-10-15T13:59:36.327964","reason":"MA20>MA60且向上 + MA5>MA20 + 站稳MA20不追高 + 突破/贴近前20日高点","score":75},{"code":"601519","name":"大智慧","qty":1500,"buyPrice":9.693333333333333,"buyTime":"2026-10-15T14:37:33.300117","reason":"MA20>MA60且向上 + MA5>MA20 + 突破/贴近前20日高点 + 放量确认·量比1.4","score":75}],"trades":[{"type":"buy","code":"600887","name":"伊利股份","qty":600,"price":27.82,"fee":5,"time":"2026-10-15T13:59:36.327979","reason":"MA20>MA60且向上 + MA5>MA20 + 站稳MA20不追高 + 突破/贴近前20日高点"},{"type":"buy","code":"601519","name":"大智慧","qty":1500,"price":9.69,"fee":5,"time":"2026-10-15T14:37:33.300126","reason":"MA20>MA60且向上 + MA5>MA20 + 突破/贴近前20日高点 + 放量确认·量比1.4"}],"assetHistory":[100000,100000,99995.0,100176.0,99660.0,99561.0],"asset":99903.0,"asset_history":[100000,100000,99995.0,100176.0,99660.0,99561.0]},{"id":"D2","name":"衡","cash":78758.0,"holdings":[{"code":"600276","name":"恒瑞医药","qty":200,"buyPrice":46.115,"buyTime":"2026-10-15T13:59:37.087502","reason":"量能适中 + 均线多头 + 涨幅适中 + 收在MA5上方 + 医药板块强势","score":65},{"code":"600809","name":"山西汾酒","qty":100,"buyPrice":116.03,"buyTime":"2026-10-15T14:37:34.273558","reason":"量能适中 + RSI健康 + 均线多头 + 涨幅适中 + 收在MA5上方 + 白酒板块强势","score":73}],"trades":[{"date":"2026-09-21","type":"buy","code":"603439","name":"三力制药","price":15.17,"qty":1300,"reason":"打板买入，突破前高"},{"date":"2026-09-22","type":"sell","code":"603439","name":"三力制药","price":14.85,"qty":1300,"reason":"止损卖出，跌破MA20"},{"type":"buy","code":"600276","name":"恒瑞医药","qty":200,"price":46.09,"fee":5,"time":"2026-10-15T13:59:37.087515","reason":"量能适中 + 均线多头 + 涨幅适中 + 收在MA5上方 + 医药板块强势"},{"type":"buy","code":"600809","name":"山西汾酒","qty":100,"price":115.98,"fee":5,"time":"2026-10-15T14:37:34.273568","reason":"量能适中 + RSI健康 + 均线多头 + 涨幅适中 + 收在MA5上方 + 白酒板块强势"}],"assetHistory":[100000,99584,99579.0,99652.0,99580.0,99441.0],"asset":99754.0,"asset_history":[100000,99584,99579.0,99652.0,99580.0,99441.0]},{"id":"D3","name":"镜","cash":70986.0,"holdings":[{"code":"601519","name":"大智慧","qty":1800,"buyPrice":9.672777777777778,"buyTime":"2026-10-15T13:59:37.755941","reason":"大资金放量流入 + 多空5比1","score":63},{"code":"600809","name":"山西汾酒","qty":100,"buyPrice":116.03,"buyTime":"2026-10-15T14:37:35.255108","reason":"大资金放量流入 + 多空6比0 + 白酒板块强势","score":100}],"trades":[{"type":"buy","code":"601519","name":"大智慧","qty":1800,"price":9.67,"fee":5,"time":"2026-10-15T13:59:37.755956","reason":"大资金放量流入 + 多空5比1"},{"type":"buy","code":"600809","name":"山西汾酒","qty":100,"price":115.98,"fee":5,"time":"2026-10-15T14:37:35.255117","reason":"大资金放量流入 + 多空6比0 + 白酒板块强势"}],"assetHistory":[100000,100000,99995.0,100026.0,99572.0,99431.0],"asset":99720.0,"asset_history":[100000,100000,99995.0,100026.0,99572.0,99431.0]},{"id":"D4","name":"啸","cash":82603.19,"holdings":[{"code":"600030","name":"中信证券","qty":500,"cost":26.99,"buyDate":"2026-09-22","buyReason":"量价共振：放量突破平台，主升启动"},{"code":"000858","name":"五粮液","qty":100,"cost":70.63,"buyDate":"2026-09-22","buyReason":"量价共振：放量突破平台，主升启动"}],"trades":[{"date":"2026-09-20","type":"buy","code":"001225","name":"和泰机电","price":43.53,"qty":700,"reason":"量价共振突破"},{"date":"2026-09-22","type":"sell","code":"001225","name":"和泰机电","price":50.07,"qty":700,"reason":"盈利止盈，量价背离"},{"date":"2026-09-22","type":"buy","code":"600030","name":"中信证券","price":26.99,"qty":500,"reason":"量价共振，主升启动"},{"date":"2026-09-22","type":"buy","code":"000858","name":"五粮液","price":70.63,"qty":100,"reason":"量价共振，主升启动"}],"assetHistory":[100000,103161.19,103161.19,102659.19,102791.19,102667.19,102629.19],"asset":102870.19,"asset_history":[100000,103161.19,103161.19,102659.19,102791.19,102667.19,102629.19]},{"id":"D5","name":"渊","cash":69202.0,"holdings":[{"code":"600036","name":"招商银行","qty":400,"buyPrice":42.1325,"buyTime":"2026-10-16T14:18:58.580130","reason":"MA20>MA60趋势向上 + 回踩MA20 + 缩量·量比0.8 + 银行板块强势","score":80},{"code":"600887","name":"伊利股份","qty":500,"buyPrice":27.89,"buyTime":"2026-10-16T14:43:31.413318","reason":"MA20>MA60趋势向上 + 回踩MA10企稳 + 缩量·量比0.8 + 食品板块强势","score":85}],"trades":[{"type":"buy","code":"600036","name":"招商银行","qty":400,"price":42.12,"fee":5,"time":"2026-10-16T14:18:58.580135","reason":"MA20>MA60趋势向上 + 回踩MA20 + 缩量·量比0.8 + 银行板块强势"},{"type":"buy","code":"600887","name":"伊利股份","qty":500,"price":27.88,"fee":5,"time":"2026-10-16T14:43:31.413327","reason":"MA20>MA60趋势向上 + 回踩MA10企稳 + 缩量·量比0.8 + 食品板块强势"}],"assetHistory":[100000,100000,100000,100000,99995.0,100030.0],"asset":100282.0,"asset_history":[100000,100000,100000,100000,99995.0,100030.0]},{"id":"D6","name":"焰","cash":100000,"holdings":[],"trades":[],"assetHistory":[100000,100000,100000,100000,100000,100000],"asset":100000,"asset_history":[100000,100000,100000,100000,100000,100000]},{"id":"D7","name":"沉","cash":100000,"holdings":[],"trades":[],"asset_history":[100000],"asset":100000,"assetHistory":[100000]}],"pricePool":{},"sectors":{},"tickCount":0,"lastCloseDate":"","lastDayStr":"2026-10-19","simDate":"2026-10-19","dayLabels":["10-09","10-12","10-13","10-14","10-15","10-16"],"lastRecordKey":"","version":12,"last_update":"2026-10-17T15:57:13.712668"}</script>
 <script type="application/json" id="embeddedSumData">{"daily": {"date": "2026-09-23", "indices": [{"name": "上证指数", "chg": 0.45}, {"name": "深证成指", "chg": 0.62}, {"name": "创业板指", "chg": 0.38}, {"name": "科创50", "chg": 0.71}], "holds": [{"role": "D4", "name": "云南白药", "code": "000538", "qty": 300, "chg": 1.12, "sector": "医药", "industry": "中药", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D4", "name": "山西汾酒", "code": "600809", "qty": 100, "chg": 0.95, "sector": "食品饮料", "industry": "白酒", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D6", "name": "通用电梯", "code": "300931", "qty": 900, "chg": 2.34, "sector": "机械设备", "industry": "通用设备", "reason": "涨停回调洗盘缩量站稳"}], "revisions": 0, "shAnalysis": "上证指数+0.45% · 大盘中性偏多(58) · 资金净流入 · 医药消费板块领涨。", "pastVsNow": "今日组合均值 0.34%，较昨日 0.37% 微降。当前持仓 3 只。", "nextDayExpect": "次日中性偏多：精选资金流入板块个股，控制仓位。"}, "week": {"key": "2026-W39", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}, "month": {"key": "2026-09", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}}</script>
 </body>
 </html>

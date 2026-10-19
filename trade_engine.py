@@ -137,6 +137,53 @@ def ensure_trade_profit(data):
         print(f"  🔧 交易数据自愈：持仓字段规整 {fixed_hold} 处、卖出记录补 profit {fixed_profit} 笔")
     return data
 
+def record_daily_asset(data, player, total_value, new_day):
+    """把当日资产快照记入 assetHistory：每个交易日只记一条（与前端「每日收盘记录一次」同口径）。
+    此前每次运行都 append——盘内 9 个 cron（9:35~15:00）会让曲线每日 +9 条、
+    x 轴标签重复，日报表失真。new_day=False 时刷新今日槽位（更晚行情更接近收盘价）。"""
+    ah = player.get("assetHistory") or player.get("asset_history")
+    if ah is None:
+        ah = [INIT_CASH]
+    if new_day or not ah:
+        ah.append(total_value)
+        if len(ah) > 252:
+            del ah[:-252]
+    else:
+        ah[-1] = total_value
+    player["assetHistory"] = ah
+    player["asset_history"] = ah
+
+def backfill_weekday_labels(count, last_update):
+    """按 last_update 起每个工作日倒推 count 个日期标签（与前端 ensureDayLabels 同算法）。
+    后台旧数据没有 day_labels 时一次性补齐，避免整条曲线共用同一个 x 轴标签。"""
+    base = None
+    if last_update:
+        try:
+            base = datetime.fromisoformat(str(last_update).replace("Z", ""))
+        except Exception:
+            base = None
+    if base is None:
+        base = cn_now()
+    out, d, guard = [], base, 0
+    while len(out) < count and guard < count * 3 + 10:
+        if d.weekday() < 5:
+            out.insert(0, d.strftime("%m-%d"))
+        d -= timedelta(days=1)
+        guard += 1
+    return out[:count]
+
+def align_day_labels(data):
+    """日期标签与资产快照序列等长（前端收益曲线/本月收益图的 x 轴用）。
+    对齐口径：与 players[0]（前端图表基准角色）的 assetHistory 等长；
+    长度不匹配（新增记录/旧数据缺标签/历史按 max_len 补齐过）时按 last_update
+    工作日倒推重建——而非今天日期重复填充，那会让整条曲线共用同一个 x 轴标签。"""
+    ref = data["players"][0] if data.get("players") else None
+    ref_len = len((ref.get("assetHistory") or ref.get("asset_history") or [])) if ref else 0
+    day_labels = data.setdefault("day_labels", [])
+    if len(day_labels) != ref_len:
+        day_labels[:] = backfill_weekday_labels(ref_len, data.get("last_update"))
+    return day_labels
+
 def load_data():
     if os.path.exists("data.json"):
         with open("data.json", "r", encoding="utf-8") as f:
@@ -1666,12 +1713,20 @@ def main():
         for code in all_codes:
             info = get_stock_info(code)
             if info: all_stock_data[code] = info
+        # 收盘记录：每交易日一条资产快照（此前收盘分支只刷新 asset 不进曲线，
+        # 且交易时段分支每次运行都 append 一条，盘内 9 个 cron 会让曲线每日 +9 条）
+        today_str = cn_now().strftime("%Y-%m-%d")
+        new_day = data.get("last_record_date") != today_str
+        if new_day:
+            data["last_record_date"] = today_str
         for player in data["players"]:
             total_value = player["cash"]
             for hold in player["holdings"]:
                 if hold["code"] in all_stock_data:
                     total_value += all_stock_data[hold["code"]]["price"] * hold["qty"]
             player["asset"] = total_value
+            record_daily_asset(data, player, total_value, new_day)
+        align_day_labels(data)
         send_daily_summary(data, market_trend)
         save_data(data)
         return
@@ -1721,23 +1776,30 @@ def main():
             do_buy(player, code, st, score, reason, ntf)
     
     print(f"\n💰 更新资产...")
+    # 资产曲线口径：每个交易日只记一条（与前端「每日收盘记录一次」及后台收盘分支一致）。
+    # 此前每次运行都 append——盘内 9 个 cron 会让曲线每日 +9 条、x 轴标签重复，日报表失真。
+    today_str = cn_now().strftime("%Y-%m-%d")
+    new_day = data.get("last_record_date") != today_str
+    if new_day:
+        data["last_record_date"] = today_str
     for player in data["players"]:
         total_value = player["cash"]
         for hold in player["holdings"]:
             if hold["code"] in all_stock_data:
                 total_value += all_stock_data[hold["code"]]["price"] * hold["qty"]
         player["asset"] = total_value
-        ah = player.get("assetHistory") or player.get("asset_history")
-        if ah is None:
-            ah = [INIT_CASH]
-        ah.append(total_value)
-        if len(ah) > 252:
-            ah = ah[-252:]
-        player["assetHistory"] = ah
-        player["asset_history"] = ah
+        record_daily_asset(data, player, total_value, new_day)
         total_return = (total_value - INIT_CASH) / INIT_CASH * 100
         print(f"  {player['id']}: 总资产{total_value:.0f} 收益{total_return:+.2f}%")
-    
+
+    # 日期标签与资产快照序列等长（前端收益曲线/本月收益图的 x 轴用）。
+    # 此前服务器不产标签，前端只有内嵌快照里的陈旧 ["09-22","09-23"]，
+    # 同步后标签与 6+ 条资产曲线长度不匹配，x 轴错位、tooltip 全显示同一标签。
+    # 对齐口径：与 players[0]（前端图表基准角色）的 assetHistory 等长；
+    # 长度不匹配（新增记录/旧数据缺标签/历史按 max_len 补齐过）时按 last_update
+    # 工作日倒推重建——而非今天日期重复填充，那会让整条曲线共用同一个 x 轴标签。
+    align_day_labels(data)
+
     save_data(data)
     print(f"\n{'='*50}")
     print(f"  ✅ 交易引擎完成，数据已保存")
