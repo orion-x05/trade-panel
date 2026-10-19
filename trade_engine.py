@@ -1619,16 +1619,22 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
         data["consecutive_losses"][player["id"]] = 0
     
     hold["qty"] -= sell_qty
-    if hold["qty"] <= 0:
+    cleared = hold["qty"] <= 0
+    if cleared:
         player["holdings"] = [h for h in player["holdings"] if h["code"] != hold["code"]]
-    push_key = f".push_{player['id']}_{hold['code']}_sell_{cn_now().strftime('%Y%m%d')}"
-    if not os.path.exists(push_key):
-        open(push_key, "w").close()
-        send_wechat(
-            f"📉 {player['id']} 清仓 {hold['name']} {'盈利' if profit>=0 else '亏损'}{abs(profit):.2f}元",
-            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{profit/(bp*sell_qty)*100:.2f}%\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-    print(f"  ✅ {player['id']} 卖出 {hold['name']} {sell_qty}股 @{st['price']:.2f} 盈亏{profit:.2f}")
+    # 【每笔卖出都推送】与买入对称：
+    # 1) 去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
+    #    只要真实成交（含部分止盈分笔）就推
+    # 2) 改走 push_report 统一入口（WxPusher 优先、Server酱兜底），
+    #    此前只走 send_wechat 单通道，WxPusher 可用时收不到卖出消息
+    # 3) 文案区分清仓/部分止盈，附剩余持仓；bp<=0 时收益率显示 -- 防除零
+    action = "清仓" if cleared else f"部分止盈{int(ratio*100)}%"
+    pnl_pct = f"{profit/(bp*sell_qty)*100:.2f}%" if bp > 0 and sell_qty > 0 else "--"
+    push_report(
+        f"📉 {player['id']} {action} {hold['name']} {'盈利' if profit>=0 else '亏损'}{abs(profit):.2f}元",
+        f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{pnl_pct}\n剩余：{max(0, hold['qty'])}股\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+    print(f"  ✅ {player['id']} {action} {hold['name']} {sell_qty}股 @{st['price']:.2f} 盈亏{profit:.2f}")
 
 # ==================== 主函数 ====================
 def main():
