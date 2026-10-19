@@ -99,11 +99,50 @@ def ensure_players(data):
         print(f"  ➕ 已补齐新角色 {role_id} {role['name']}（初始资金 {INIT_CASH}）")
     return added
 
+def ensure_trade_profit(data):
+    """旧交易数据自愈（幂等，对齐前端 ensureTradeProfit）：
+    1) 旧版持仓字段名收敛：cost→buyPrice、buyDate→buyTime（旧引擎遗产）
+    2) 旧版卖出记录补 profit：旧引擎不写 profit 字段，导致
+       - 胜率统计 wins=[t for t in sells if t.get("profit",0)>0] 把盈利卖出计为非盈利
+         （D4 胜率被拉低到 0，do_buy 单笔仓位系数从 25% 压到 15%，实盘影响）
+       - 前端「已清仓」卡片盈亏显示 +0（误导"不亏不赚"）
+       用同角色同 code 的买入记录反算：profit=(卖价-买价)*数量-手续费。"""
+    fixed_hold = fixed_profit = 0
+    for p in data.get("players", []):
+        for h in p.get("holdings") or []:
+            if h.get("code"):
+                if (h.get("buyPrice") in (None, 0)) and h.get("cost"):
+                    h["buyPrice"] = h["cost"]
+                    fixed_hold += 1
+                if not h.get("buyTime") and h.get("buyDate"):
+                    h["buyTime"] = h["buyDate"]
+                    fixed_hold += 1
+        trades = p.get("trades") or []
+        buy_price = {}
+        for t in trades:
+            if t.get("type") == "buy":
+                c = t.get("code") or t.get("stock")
+                pr = t.get("price") or 0
+                if c and pr > 0 and c not in buy_price:
+                    buy_price[c] = pr
+        for t in trades:
+            if t.get("type") == "sell" and t.get("profit") is None:
+                c = t.get("code") or t.get("stock")
+                bp = buy_price.get(c)
+                if bp:
+                    t["profit"] = round((t.get("price", 0) - bp) * (t.get("qty") or 0)
+                                        - (t.get("fee") or 0), 2)
+                    fixed_profit += 1
+    if fixed_hold or fixed_profit:
+        print(f"  🔧 交易数据自愈：持仓字段规整 {fixed_hold} 处、卖出记录补 profit {fixed_profit} 笔")
+    return data
+
 def load_data():
     if os.path.exists("data.json"):
         with open("data.json", "r", encoding="utf-8") as f:
             data = json.load(f)
         ensure_players(data)
+        ensure_trade_profit(data)
         return data
     data = {"players": [], "last_update": cn_now().isoformat(),
             "consecutive_losses": {}, "market_trend": "neutral"}

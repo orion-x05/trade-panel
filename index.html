@@ -4358,6 +4358,7 @@ function load(){
         /* 现金校准：修复之前减仓时未加回现金的bug，确保现金不为负 */
         ensurePlayerD7(); /* 旧快照可能只有6角色，补D7 */
         ensureRoleNames(); /* 旧数据角色名收敛为单字（D1 破锋/趋势突破 → 锋） */
+        ensureTradeProfit(); /* 旧数据卖出记录补 profit + 持仓旧字段名规整 */
         simData.players.forEach(p=>{
           const totalCost=p.holdings.reduce((s,h)=>s+h.qty*h.buyPrice,0);
           const correctCash=INIT_CASH-totalCost;
@@ -4413,6 +4414,7 @@ function load(){
       try{normalizePricePool();}catch(e){}
       ensurePlayerD7();
       ensureRoleNames();
+      ensureTradeProfit(); /* 旧数据卖出记录补 profit + 持仓旧字段名规整 */
       save();
       return;
     }
@@ -4452,6 +4454,40 @@ function ensurePlayerD7(){
     const len=simData.dayLabels.length;
     simData.players.find(p=>p.id==="D7").assetHistory=simData.players[0].assetHistory.slice(0,len);
   }
+}
+/* 交易数据自愈（幂等，对齐后端 ensure_trade_profit）：
+   1) 旧版持仓字段名收敛：cost→buyPrice、buyDate→buyTime（9-22 旧引擎遗产；前端虽有
+      buyPrice||cost 兼容层，但现金校准/复盘等直接读 buyPrice 的路径会算出 NaN）
+   2) 旧版卖出记录补 profit：旧引擎不写 profit 字段，导致「已清仓」卡片盈亏显示 +0
+      （误导"不亏不赚"）；后端胜率统计也把盈利卖出计为非盈利（D4 单笔仓位系数被压低）。
+      用同角色同 code 的买入记录反算：profit=(卖价-买价)*数量-手续费。 */
+function ensureTradeProfit(){
+  if(!simData||!simData.players)return;
+  simData.players.forEach(p=>{
+    (p.holdings||[]).forEach(h=>{
+      if(h&&h.code){
+        if((h.buyPrice==null||h.buyPrice<=0)&&h.cost>0)h.buyPrice=h.cost;
+        if(!h.buyTime&&h.buyDate)h.buyTime=h.buyDate;
+      }
+    });
+    const trades=p.trades||[];
+    const buyPrice={};
+    trades.forEach(t=>{
+      if(t&&t.type==="buy"){
+        const c=t.code||t.stock;
+        const pr=(t.price!=null&&t.price>0)?t.price:(buyPrice[c]||0);
+        if(c&&pr>0)buyPrice[c]=pr;
+      }
+    });
+    trades.forEach(t=>{
+      if(t&&(t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈")&&(t.profit==null||!isFinite(t.profit))){
+        const c=t.code||t.stock;
+        const bp=buyPrice[c];
+        const qty=t.qty||0,sp=t.price||0;
+        if(c&&bp>0&&qty>0&&sp>0)t.profit=+(((sp-bp)*qty-(t.fee||0))).toFixed(2);
+      }
+    });
+  });
 }
 /* 候选池字段规整：补齐缺失的 code/name 及关键字段（修复旧快照股票缺code导致门禁点不开） */
 function normalizePricePool(){
@@ -4497,6 +4533,7 @@ function freshSim(){
     tickCount:0,lastCloseDate:"",lastDayStr:ymd,simDate:today,dayLabels:[md],lastRecordKey:"",version:11};
   todayBuyMap={}; /* 重置时清空当日买入去重记录 */
   ensureRoleNames(); /* 初始角色名统一为单字 */
+  ensureTradeProfit(); /* 初始快照卖出记录 profit 自愈（幂等） */
   save();
 }
 function resetSim(){
@@ -6614,12 +6651,17 @@ function renderHoldCards(){
         if(search&&!(h.name||"").includes(search)&&!String(h.code).includes(search))return;
         any=true;
         const st=simData.pricePool[h.code]||{price:h.price,chg:0};
+        const pnlOk=isFinite(h.profit);
+        const pnlTxt=pnlOk?((h.profit>=0?"+":"")+h.profit.toFixed(0)):"--";
         const rowId="hrow_"+(rowIdx++);
         const lots=h.lots||[];
         const lotsHtml=lots.map((l,i)=>{
           const lt=new Date(l.time);
           const ldate=isNaN(lt)?"--":`${lt.getMonth()+1}/${lt.getDate()} ${String(lt.getHours()).padStart(2,"0")}:${String(lt.getMinutes()).padStart(2,"0")}`;
-          return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">卖出 · ${ldate} · ${l.qty||0}股 @${(l.price||0).toFixed(2)} · 盈亏${(l.profit||l.pnl||0)>=0?"+":""}${(l.profit||l.pnl||0).toFixed(0)}</div>`;
+          const lp=(l.profit!=null&&isFinite(l.profit))?l.profit:(l.pnl!=null&&isFinite(l.pnl)?l.pnl:null);
+          const lpQty=(l.qty||0),lpPrice=(l.price||0);
+          const lpShow=lp!=null?((lp>=0?"+":"")+lp.toFixed(0)):(lpPrice>0?`@${lpPrice.toFixed(2)}`:"--");
+          return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">卖出 · ${ldate} · ${lpQty}股 @${lpPrice.toFixed(2)} · 盈亏${lpShow}</div>`;
         }).join("");
         ht.insertAdjacentHTML("beforeend",`<div class="hold-card" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
           <div class="hc-top">
@@ -6628,7 +6670,7 @@ function renderHoldCards(){
               <div class="hc-tags"><span class="hc-tag">${p.id} 已清仓</span></div>
             </div>
             <div class="hc-pnl">
-              <div class="hc-pnl-amt ${(h.profit||0)>=0?"up":"down"}" style="color:${(h.profit||0)>=0?"var(--up)":"var(--down)"}">${(h.profit||0)>=0?"+":""}${(h.profit||0).toFixed(0)}</div>
+              <div class="hc-pnl-amt ${pnlOk&&h.profit>=0?"up":"down"}" style="color:${pnlOk?(h.profit>=0?"var(--up)":"var(--down)"):"var(--text-faint)"}">${pnlTxt}</div>
             </div>
           </div>
           <div class="hc-metrics">
@@ -8983,6 +9025,7 @@ window.addEventListener("DOMContentLoaded",()=>{
                否则 simRoleSel 等动态下拉会退回6角色；后台引擎升级后此调用自动变为空操作 */
             ensurePlayerD7();
             ensureRoleNames(); /* 后台旧快照角色名收敛（D1 破锋 → 锋） */
+            ensureTradeProfit(); /* 后台旧快照卖出记录补 profit（已清仓盈亏/胜率口径） */
             simData.last_update=newUpdate;
             /* 重新渲染所有界面 */
             if(typeof render==='function') render();
