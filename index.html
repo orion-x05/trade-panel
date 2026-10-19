@@ -3331,8 +3331,8 @@ function mkPct(v){return (v>=0?"+":"")+v.toFixed(2)+"%";}
 /* 数据源（按优先级，全部失败才回退样本口径）：
    ① 东方财富 push2 clist JSONP：script注入无CORS限制，fs含北交所，pz=6000一把拉全；
       服务端若钳制pz，按返回的total自动分页补齐，并按代码去重。与"全市场扫描选股"同一通道。
-   ② 新浪 Market_Center getHQNodeData（node=hs_a，约56页并行fetch）：CORS条件性放行，
-      并发突发会触发限流丢CORS头，仅作次选。
+   ② 新浪 Market_Center getHQNodeData（node=hs_a，sinaMarketList 限并发6页分页）：
+      CORS条件性放行，并发突发会触发限流丢CORS头，故限并发；与选股扫描共用同一兜底通道。
    ③ 两个源都失败：渲染层回退候选样本口径，并明确标注"样本"。
    统计口径：涨跌家数/涨停跌停/平均涨跌幅/成交额/涨跌分布/强弱分层全部基于全市场。 */
 const _mkBreadth={t:0,d:null,dist:null,tiers:null};
@@ -3412,17 +3412,11 @@ async function fetchMarketBreadth(force){
     const list=await emClistFullMarket();
     if(list&&list.length>=3000)all=list.map(it=>({code:String(it.f12||""),name:String(it.f14||""),chg:parseFloat(it.f3),amt:parseFloat(it.f6)||0}));
   }catch(e){}
-  /* ② 新浪 fetch 次选（约56页并行） */
+  /* ② 新浪 fetch 次选（限并发分页，避开58页齐发触发限流丢CORS头） */
   if(!all){
     try{
-      const PAGES=58,jobs=[];
-      for(let p=1;p<=PAGES;p++){
-        jobs.push(fetch("https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page="+p+"&num=100&sort=symbol&asc=1&node=hs_a")
-          .then(r=>r.json()).then(a=>Array.isArray(a)?a:[]).catch(()=>[]));
-      }
-      const res=await Promise.all(jobs);
-      const sin=[];res.forEach(a=>{if(a&&a.length)sin.push(...a);});
-      if(sin.length>=3000)all=sin.map(s=>({code:String(s.code||""),name:String(s.name||""),chg:parseFloat(s.changepercent),amt:parseFloat(s.amount)||0}));
+      const sin=await sinaMarketList();
+      if(sin&&sin.length>=3000)all=sin.map(s=>({code:String(s.code||""),name:String(s.name||""),chg:parseFloat(s.changepercent),amt:parseFloat(s.amount)||0}));
     }catch(e){}
   }
   if(!all){_breadthFailAt=Date.now();return _mkBreadth.d||null;}  /* 两个源都失败：保留旧值，渲染层回退样本 */
@@ -4920,7 +4914,7 @@ const PICK_CFG={
   ampMax:12           /* 振幅上限 */
 };
 let dynamicQuoteCodes=new Set();   /* 动态选股代码（带sh/sz前缀） */
-let lastPickTime=0,pickBusy=false;
+let lastPickTime=0,pickBusy=false,pickFailAt=0,lastPickOkAt=0;
 /* 通用 JSONP 封装（带超时） */
 function emJsonp(url,cbName,timeoutMs){
   return new Promise(resolve=>{
@@ -4934,15 +4928,53 @@ function emJsonp(url,cbName,timeoutMs){
     document.head.appendChild(s);
   });
 }
-/* 拉一批：fid排序字段，返回 diff 数组 */
+/* 拉一批：fid排序字段，返回 diff 数组。东财单点故障时退避900ms重试1次 */
 async function fetchClistPage(fid,pz){
-  const cbName="__emClist_"+fid+"_"+Date.now();
   const fs="m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23"; /* 沪深A股，排除北交所 */
   const fields="f2,f3,f5,f6,f7,f8,f10,f12,f14,f15,f16,f17,f18,f20,f21,f23,f100";
-  const url=`https://push2.eastmoney.com/api/qt/clist/get?cb=${cbName}&pn=1&pz=${pz}&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=${fid}&fs=${fs}&fields=${fields}&_=${Date.now()}`;
-  const d=await emJsonp(url,cbName,12000);
-  if(d&&d.data&&d.data.diff)return d.data.diff;
+  for(let attempt=1;attempt<=2;attempt++){
+    const cbName="__emClist_"+fid+"_"+Date.now()+"_"+attempt;
+    const url=`https://push2.eastmoney.com/api/qt/clist/get?cb=${cbName}&pn=1&pz=${pz}&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=${fid}&fs=${fs}&fields=${fields}&_=${Date.now()}`;
+    const d=await emJsonp(url,cbName,10000);
+    if(d&&d.data&&d.data.diff)return d.data.diff;
+    if(attempt<2)await new Promise(r=>setTimeout(r,900));
+  }
   return null;
+}
+/* ==================== 新浪兜底通道（东财不可达时的全市场源，2026-10-19 新增） ==================== */
+/* 背景：2026-10-19 生产环境 push2.eastmoney.com 对面板用户返回403/超时，全市场扫描双请求齐挂，
+   候选池只能保留旧股。新浪 Market_Center 与腾讯qt均已验证可达，作为兜底源。
+   口径说明：
+   - amount/volume(股)/turnoverratio(%) 均为标准单位；新浪的 nmc/mktcap 字段是脏数据不可用
+     （实证：长鑫科技nmc=1870万却成交181亿），流通市值用 amount/(turnover/100) 反推
+     （实证：长鑫188.5亿/中际旭创733亿/新易盛384亿，均吻合）；
+   - 量比(f10)新浪不提供→扫描期放宽量比门，入选后由 fetchRealQuotes 的腾讯qt(arr[49])实时补齐；
+   - CORS 放行但并发突发会丢头→限并发6页，不做58页齐发。 */
+async function sinaMarketList(){
+  const PAGES=58,CONC=6,out=[];
+  const page=p=>fetch("https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page="+p+"&num=100&sort=amount&asc=0&node=hs_a")
+    .then(r=>r.json()).then(a=>({ok:true,items:Array.isArray(a)?a:[]})).catch(()=>({ok:false,items:[]}));
+  for(let i=1;i<=PAGES;i+=CONC){
+    const jobs=[];for(let j=i;j<i+CONC&&j<=PAGES;j++)jobs.push(page(j));
+    const res=await Promise.all(jobs);
+    let batchGot=0,batchErr=0;
+    res.forEach(r=>{if(!r.ok){batchErr++;return;}batchGot+=r.items.length;out.push(...r.items);});
+    if(batchGot===0&&batchErr>0)break;   /* 整批失败：后续无望，中止 */
+  }
+  return out.length>=1000?out:null;
+}
+/* 新浪字段 → 东财f编码（选股扫描/市场宽度两处复用） */
+function sinaToF(s){
+  const price=parseFloat(s.trade)||0,prev=parseFloat(s.settlement)||0;
+  const high=parseFloat(s.high)||price,low=parseFloat(s.low)||price;
+  const amt=parseFloat(s.amount)||0,turn=parseFloat(s.turnoverratio)||0;
+  return {f12:String(s.code||""),f14:String(s.name||""),f2:price,f3:parseFloat(s.changepercent)||0,
+    f5:(parseFloat(s.volume)||0)/100,               /* 股→手，对齐东财f5口径 */
+    f6:amt,f7:prev>0?(high-low)/prev*100:0,f8:turn,
+    f10:0,                                          /* 量比：新浪无此字段，后续腾讯qt补 */
+    f15:high,f16:low,f17:parseFloat(s.open)||price,f18:prev,
+    f20:0,f21:turn>0?amt/(turn/100):0,              /* 流通市值反推（元），替代新浪脏nmc */
+    f23:0,f100:"",_sina:1};
 }
 /* 单只评分（0-100） */
 function scorePick(it){
@@ -4970,8 +5002,8 @@ function scoreQuietPick(it){
   if(amt>0)s+=Math.min(25,8+Math.log10(amt/1e6)*6);
   return s;
 }
-/* 从全市场 map 里筛出缩量回调标的 */
-function pickQuietFromMap(map){
+/* 从全市场 map 里筛出缩量回调标的。sinaMode=新浪兜底源：量比门放宽（f10恒0，入选后腾讯qt补） */
+function pickQuietFromMap(map,sinaMode){
   const c=QUIET_CFG,res=[];
   map.forEach(it=>{
     const name=String(it.f14||""),code=String(it.f12||"");
@@ -4980,7 +5012,7 @@ function pickQuietFromMap(map){
     const price=it.f2,chg=it.f3,lb=it.f10,turn=it.f8,amt=it.f6,amp=it.f7,fmv=it.f21;
     if(!(price>=c.priceMin))return;
     if(!(chg>=c.chgMin&&chg<=c.chgMax))return;
-    if(!(lb<=c.lbMax))return;
+    if(!sinaMode&&!(lb<=c.lbMax))return;
     if(!(turn>=c.turnMin&&turn<=c.turnMax))return;
     if(!(amt>=c.amountMin))return;
     if(amp>c.ampMax)return;
@@ -4990,18 +5022,43 @@ function pickQuietFromMap(map){
   res.sort((a,b)=>b.score-a.score);
   return res.slice(0,c.target);
 }
-/* 主流程：全市场拉取→筛选→评分→应用 */
+/* 主流程：全市场拉取→筛选→评分→应用。数据源级联：东财JSONP(重试1次)→新浪兜底→保留旧候选 */
 async function pickFromFullMarket(manual){
   const now=Date.now();
   if(pickBusy)return;
   if(!manual&&now-lastPickTime<120000)return; /* 2分钟一次 */
+  if(!manual&&now-pickFailAt<60000)return;    /* 失败退避60秒，避免空跑耗电耗流量 */
   pickBusy=true;setPickStatus("正在扫描全市场…","busy");
   try{
-    const [aAmount,aLb]=await Promise.all([fetchClistPage("f6",300),fetchClistPage("f10",200)]);
-    const map=new Map();
-    (aAmount||[]).forEach(it=>it&&it.f12&&map.set(it.f12,it));
-    (aLb||[]).forEach(it=>it&&it.f12&&!map.has(it.f12)&&map.set(it.f12,it));
-    if(map.size===0){setPickStatus("全市场扫描失败，保留当前候选","err");pickBusy=false;return;}
+    /* ① 东财 JSONP（双排序字段：成交额/量比，各自重试1次） */
+    let map=null,sinaMode=false;
+    try{
+      const [aAmount,aLb]=await Promise.all([fetchClistPage("f6",300),fetchClistPage("f10",200)]);
+      if((aAmount&&aAmount.length)||(aLb&&aLb.length)){
+        map=new Map();
+        (aAmount||[]).forEach(it=>it&&it.f12&&map.set(it.f12,it));
+        (aLb||[]).forEach(it=>it&&it.f12&&!map.has(it.f12)&&map.set(it.f12,it));
+      }
+    }catch(e){console.warn("东财clist通道异常：",e);}
+    /* ② 东财不可达 → 新浪兜底（限并发分页，字段映射到f编码） */
+    if(!map||map.size===0){
+      try{
+        const sin=await sinaMarketList();
+        if(sin&&sin.length){
+          map=new Map();
+          sin.forEach(s=>{const it=sinaToF(s);if(it.f12)map.set(it.f12,it);});
+          sinaMode=true;
+          console.warn("东财clist不可达，已切换新浪备用源：",map.size,"只");
+        }
+      }catch(e){console.warn("新浪兜底通道异常：",e);}
+    }
+    /* ③ 两个源都不可达：保留旧候选，状态注明上次成功时间 */
+    if(!map||map.size===0){
+      pickFailAt=Date.now();
+      const last=lastPickOkAt?new Date(lastPickOkAt).toTimeString().slice(0,5):"从未";
+      setPickStatus(`全市场扫描失败（东财+新浪均不可达）· 保留当前候选 · 上次成功 ${last}`,"err");
+      pickBusy=false;return;
+    }
     const c=PICK_CFG,holdCodes=getHoldingCodes();
     const passed=[];
     map.forEach(it=>{
@@ -5012,7 +5069,7 @@ async function pickFromFullMarket(manual){
       const price=it.f2,chg=it.f3,lb=it.f10,turn=it.f8,amt=it.f6,amp=it.f7,fmv=it.f21;
       if(!(price>=c.priceMin))return;
       if(!(chg>=c.chgMin&&chg<=c.chgMax))return;
-      if(!(lb>=c.lbMin&&lb<=c.lbMax))return;
+      if(!sinaMode&&!(lb>=c.lbMin&&lb<=c.lbMax))return; /* 量比门：新浪模式放宽（f10恒0，入选后腾讯qt实时补） */
       if(!(turn>=c.turnMin&&turn<=c.turnMax))return;
       if(!(amt>=c.amountMin))return;
       if(amp>c.ampMax)return;
@@ -5023,7 +5080,7 @@ async function pickFromFullMarket(manual){
     let top=passed.slice(0,c.target);
     if(top.length<10){setPickStatus(`达标仅${top.length}只，保留当前候选池`,"err");pickBusy=false;return;}
     /* 合并第二桶：缩量回调股（D5渊 的回踩低吸专用），按代码去重 */
-    const quiet=pickQuietFromMap(map);
+    const quiet=pickQuietFromMap(map,sinaMode);
     const seen=new Set(top.map(t=>String(t.it.f12)));
     let quietAdded=0;
     quiet.forEach(q=>{
@@ -5032,10 +5089,10 @@ async function pickFromFullMarket(manual){
       seen.add(cd);top.push(q);quietAdded++;
     });
     applyPicks(top,holdCodes);
-    lastPickTime=Date.now();
+    lastPickTime=Date.now();lastPickOkAt=Date.now();pickFailAt=0;
     /* 新候选池就位，立即补一轮真实日K（六Agent打分依赖） */
     try{_enrichAt=0;enrichPoolFromKline();}catch(e){}
-    setPickStatus(`全市场扫描：${map.size}只 → 放量达标${passed.length} + 缩量回调${quietAdded} → 入选${top.length}只`,"ok");
+    setPickStatus(`${sinaMode?"全市场扫描（新浪备用源·量比门稍后自愈）":"全市场扫描"}：${map.size}只 → 放量达标${passed.length} + 缩量回调${quietAdded} → 入选${top.length}只`,"ok");
     /* 先立即渲染一次让新股票显示，再拉技术行情更新 */
     try{renderPool();}catch(e){}
     try{render();}catch(e){}
