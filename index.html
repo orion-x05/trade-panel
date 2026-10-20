@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r17</title>
+<title>Orion-X AI量化投研面板 · v20260910-r18</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r17";
+<script>window.APP_VERSION="20260910-r18";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2680,7 +2680,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r17</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r18</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -13932,22 +13932,30 @@ ${recent||"（还没有人发言，你是第一个）"}
     }
   }
 
-  /* 主持人总结：D2衡基于全场发言输出结构化共识结论（多空比/共识度/建议动作/关键风险） */
+  /* 主持人总结：D2衡基于全场发言输出结构化共识结论（市场判断/多空比/共识度/建议动作/止盈止损退出规则/关键风险）
+     格式纪律来自 2026-10-20 对高质量「AI 最终结论」样例的学习：
+     ①三层结构（环境判断→决策+依据→风控退出）②每个判断带数值锚点 ③仓位给含费口径
+     ④止盈规则必填、不许只给止损 ⑤退出四要素（价格带口径+结构线+盘中动态阈值+成交兜底）
+     ⑥数据缺陷显式声明 ⑦同一论据不重复陈述 */
   addChatMsg("system","🧑‍⚖️ 主持人 D2衡 正在汇总全场发言，生成共识结论…");
   try{
     showTyping("D2");
     const allChat=recentGroupChat(40);
     const sys=agentSystemPrompt(AGENT_PERSONAS.D2,{market:true});
-    const prompt="你是这场六Agent讨论的主持人。请基于以下全场发言记录，输出一份结构化共识结论：\n\n"+allChat+
+    const prompt="你是这场六Agent讨论的主持人。请结合上面的真实盘面数据和以下全场发言记录，输出一份可直接执行的共识结论：\n\n"+allChat+
       "\n\n严格按以下格式逐行输出（不要多余解释）：\n"+
+      "市场判断：<指数分化/下跌广度/均线状态/宏观与新闻情绪；数据不完整的部分必须显式声明，如'行业板块数据不完整'>\n"+
       "共识话题：<一句话>\n"+
       "多空比：<多方人数>比<空方人数>\n"+
       "共识度：<0-100的整数>%\n"+
       "主流观点：<2-3句话概括>\n"+
       "最大分歧：<谁和谁分歧在哪>\n"+
-      "建议动作：<加仓/持有/减仓/观望>，仓位<0-100>%\n"+
+      "建议动作：<加仓/持有/减仓/观望>，仓位<含费资金百分比，如'约10%含费资金'>\n"+
+      "操作依据：<信号源+评分+位置/动量/量能，每个判断必须带数值；同一论据只陈述一次，不重复>\n"+
+      "止盈规则：<必须给出分批止盈规则，如'冲高放量兑现一半+跌破MA10全部离场'；确无参考位时写明理由，不许省略>\n"+
+      "止损/退出：<价格线(注明口径来源)+结构线+盘中动态阈值(如量比超2.2)+成交兜底，四要素至少给两条>\n"+
       "关键风险：<一句话>";
-    const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],400,1);
+    const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],600,1);
     hideTyping();
     addChatMsg("consensus","📋 共识结论（主持人 D2衡）\n"+reply);
   }catch(e){
