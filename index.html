@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r24</title>
+<title>Orion-X AI量化投研面板 · v20260910-r26</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r24";
+<script>window.APP_VERSION="20260910-r26";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2698,7 +2698,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r24</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r26</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -2959,9 +2959,9 @@ let forceTrade = localStorage.getItem("forceTrade") === "1";
 /* ---------- 角色详情（界面层：弹窗展示） ---------- */
 const AGENT_DETAILS = {
   D1:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
-    desc:"大结构趋势追踪策略，开仓条件严苛。需先确认中长期均线多头、底部抬升的上涨大结构，满足多项趋势判定条件后，才允许在关键压力位突破进场；一旦趋势结构被破坏，立刻离场。",
+    desc:"大结构趋势追踪策略，开仓条件严苛。需先确认中长期均线多头、底部抬升的上涨大结构，只在放量突破前20日高点或窄幅盘整平台上沿时进场（贴MA20缩量整理是D5回踩的领地，D1不碰）；一旦趋势结构被破坏，立刻离场。",
     adv:"过滤大量无效假突破，止损次数少，纪律性强。", dis:"入场门槛高，小幅波段行情容易直接放弃，震荡阶段大概率空仓，收益弹性有限。",
-    rules:"【数据与股票池门禁】沪深京A股、有效证券状态、上市超过60个自然日、前复权历史充足；非ST。【策略触发】MA20>MA60 且 MA5>MA20；收盘突破前20日高点；量比1.2-3.0且量额为正；RSI6 45-76；乖离MA20≤15%（超15%判定为追高，禁止进场）。【止损】跌破突破K最低点或MA20（取近者），幅度3%-8%，须注明口径来源（如「三买=中枢上沿ZG下方」）。【止盈】冲高放量长上影或量价背离→兑现一半；跌破MA10→全部离场。【禁止】下跌趋势中的反弹、无量假突破、乖离MA20>15%追高。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
+    rules:"【数据与股票池门禁】沪深京A股、有效证券状态、上市超过60个自然日、前复权历史充足；非ST。【策略触发】MA20向上（5日前MA20<当前）+ 价格站上MA60 + 近20日相对强势 + MA5>MA20且收盘>MA20；突破二选一：A 放量突破前20日高点（收盘≥前高99%且当日涨幅>1%）；B 窄幅平台突破（近10日振幅<12%的盘整+收盘突破10日高点+收阳）。放量确认：量比≥1.5，无量突破=假突破。追高控制：乖离MA20≤8%。【止损】跌破突破K最低点或MA20（取近者），幅度3%-8%，须注明口径来源（三买视角：离开中枢回抽不跌回，止损=ZG/突破K低点）。【止盈】冲高放量长上影或量价背离→兑现一半；跌破MA10→全部离场。【禁止】下跌趋势中的反弹、无量假突破、乖离MA20>8%追高、贴MA20的缩量整理日买入（回踩是D5的领地，越界双重持仓）。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
   D2:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"多智能体投票共识框架。拆分多个独立 AI 子 Agent，分别负责技术面、基本面、资金面、风控评估；只有多数 Agent 观点达成一致看多才执行下单，意见分歧时选择空仓观望。",
     adv:"单一维度信号不容易误导交易，风控稳健，震荡市表现较好。", dis:"单边快速拉升时多个 Agent 难以快速达成共识，容易踏空主升行情。",
@@ -2977,15 +2977,15 @@ const AGENT_DETAILS = {
   D5:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"趋势回调低吸策略。先确认个股处于中期上涨趋势，不追新高突破；等待股价短期回调、回踩均线或箱体支撑位之后再低吸进场；原有上涨趋势破坏则卖出离场。",
     adv:"进场位置相对安全，止损幅度小，盈亏比优秀，规避高位追高。", dis:"容易把下跌反弹误判成趋势回调；连续加速暴涨行情没有回调机会，全程踏空。",
-    rules:"【数据与股票池门禁】沪深京A股、有效证券状态、上市超过60个自然日。【趋势前提】MA5>MA20>MA60 且 MA20向上；下跌趋势中的反弹一律不接。【回踩进场·硬门禁】量比<1.2（缩量回踩）；量比>1.5的放量拉升一律判定为追高，禁止以「回踩」名义买入；距MA20偏离≤3%或回踩MA10企稳、收阳止跌；距前20日高点>3%视为追新高，禁止买入。【止损】跌破回踩K最低点或MA20（取近者），幅度3%-7%，须注明口径来源。【止盈】高于MA20超10%主动兑现一半；跌破MA10全部离场。【禁止】把下跌反弹误判为趋势回调；在量比>1.5的放量拉升中买入。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
+    rules:"【数据与股票池门禁】沪深京A股、有效证券状态、上市超过60个自然日。【趋势前提】MA5>MA20>MA60 且 MA20向上；下跌趋势中的反弹一律不接。【越界禁止·v0268】距前20日高点≤3%（收盘≥前高97%）一律不买——靠近前高是D1锋的突破领地，D5只做确定性的回调，不越界（旧实现漏了这条门禁，19%触发日违反）。【回踩进场·硬门禁】量比<1.2（缩量回踩）；量比>1.5的放量拉升一律判定为追高，禁止以「回踩」名义买入；距MA20偏离≤3%或回踩MA10企稳、收阳止跌；距前20日高点>3%视为追新高，禁止买入。【止损】跌破回踩K最低点或MA20（取近者），幅度3%-7%，须注明口径来源。【止盈】高于MA20超10%主动兑现一半；跌破MA10全部离场。【禁止】把下跌反弹误判为趋势回调；在量比>1.5的放量拉升中买入。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
   D6:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"涨停回调低吸策略。先定板块：锁定当日主力资金洗盘/回调的活跃板块；再从板块内筛选最近5个交易日内出现过涨停、且回调未跌破涨停当日最低点的个股；等待缩量回踩后低吸进场，博取强势股二次拉升。",
     adv:"强势股回调买点确定性强，盈亏比高，贴合涨停板后洗盘再启动节奏；板块联动过滤了弱势股。", dis:"板块整体退潮时涨停回调股易持续阴跌，必须严格执行跌破涨停低点即离场。",
-    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【情绪温度门禁】炸板率>35%、板块退潮或龙头大跌→禁止打板与低吸；板块须在当日主力资金活跃前列。【进场】缩量回踩MA5/涨停低点附近低吸，不追高。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【止盈】冲高放量长上影→兑现一半；跌破MA10→全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
+    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【专属信号·v0268】涨停基因（近5日涨停）是D6专属信号；周线超卖但无涨停基因的股票归D7沉，两者选股空间互斥、互不越界。【情绪温度门禁】炸板率>35%、板块退潮或龙头大跌→禁止打板与低吸；板块须在当日主力资金活跃前列。【进场·v0268量化口径】涨停后1-10日内、收盘价低于涨停价（未反包才算真回调）、量比<1.2缩量、站稳MA20（偏离上界5%、下界容忍刺破2%）、当日收阳且高于前收、MA20向上、未破涨停当日最低点、无放量恐慌盘、自涨停后高点回调2%-25%、距涨停低点≤12%、回调期均量比<1.6、近5日涨幅≤35%（反包涨停路≤30%）；防追涨类全局过滤（近5日>20%/乖离MA5>4%等）对D6豁免——选股池天然是近期涨停基因股，改由本套门禁控风险。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【止盈】冲高放量长上影→兑现一半；跌破MA10→全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
   D7:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"周线超卖反转波段策略。用典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50 做周线波段过滤器：读数 ≤−40 算超卖、且拐头向上才做多，专接周线级别深跌后的反转拐点，不追跌不接落刀。止盈分批：一半仓位看周线 EMA21（21周≈季度趋势线，触及/跌破兑现），另一半看日线同款过滤器进入超买（读数 ≥+40）离场。",
     adv:"与其他角色完全错位：其他六个角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
-    rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上）才做多，缺一不可。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%，须注明口径（周线背驰段起点/结构低点）；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" }
+    rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上）才做多，缺一不可；当日须收阳确认。【选股边界·v0268】近5日有涨停的股票一律不碰（涨停基因是D6焰的专属信号），D7只做无涨停基因的阴跌超卖股——旧版无此界，实测D7触发的股票100%也被D6触发，选股空间被完全包含。【路径一致·v0268】回测与实盘同口径：周线聚合KD≤−40+拐头向上+无涨停基因+收阳（旧版回测无D7分支、永远空仓，仅实盘有信号）。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%，须注明口径（周线背驰段起点/结构低点）；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" }
 };
 
 /* ==================== 股票池（数据层：上传版） ==================== */
@@ -5540,7 +5540,11 @@ function volumePriceBreakout(st){
    数据全部来自真实日K增强（close5/close10/upDays/lo20/hi20/ma5）与实时行情
    （open/chg/vol/dayHigh/dayLow）；任一字段缺失时该项自动跳过——
    宁可放行也绝不让缺数据变成恒拦截。 */
-function liveGlobalGuard(st){
+function liveGlobalGuard(st,role){
+  /* v0268 round3：D6 涨停回调选股池豁免①-⑤⑨防追涨过滤（与回测 buySignal 同口径）——
+     涨停基因股天然 ret5/乖离大，硬套这套过滤 D6 实盘也永不触发；改由 roleSignalScore 的
+     D6 自身门禁（缩量<1.2+回调2-25%+收盘低于涨停价+未破涨停低点+距低点≤12%+ret5≤35）控风险 */
+  const d6=(role==="D6");
   if(!st||!(st.price>0))return{ok:true};
   const price=st.price,open=(st.open&&st.open>0)?st.open:price,chg=st.chg||0,v=st.vol||1;
   const ma5=st.ma5||0,hi20=st.hi20||0,lo20=st.lo20||0;
@@ -5551,20 +5555,20 @@ function liveGlobalGuard(st){
   const lowerShadow=dayLow>0?Math.min(price,open)-dayLow:0;
   const isHigh=hi20>0&&price>=hi20*0.95;   /* 高位：贴近20日高点 */
   const isLow=lo20>0&&price<=lo20*1.05;    /* 低位：贴近20日低点 */
-  /* ① 近5日涨幅>20% 不追 */
-  if(st.close5>0&&(price/st.close5-1)*100>20)
+  /* ① 近5日涨幅>20% 不追（D6 豁免，见函数头） */
+  if(!d6&&st.close5>0&&(price/st.close5-1)*100>20)
     return{ok:false,why:"近5日涨幅"+((price/st.close5-1)*100).toFixed(0)+"%·追高风险"};
-  /* ② 近10日涨幅>25% 不追 */
-  if(st.close10>0&&(price/st.close10-1)*100>25)
+  /* ② 近10日涨幅>25% 不追（D6 豁免） */
+  if(!d6&&st.close10>0&&(price/st.close10-1)*100>25)
     return{ok:false,why:"近10日涨幅"+((price/st.close10-1)*100).toFixed(0)+"%·中期涨幅过大"};
-  /* ③ 距20日低点反弹>30% 不追 */
-  if(lo20>0&&(price/lo20-1)*100>30)
+  /* ③ 距20日低点反弹>30% 不追（D6 豁免） */
+  if(!d6&&lo20>0&&(price/lo20-1)*100>30)
     return{ok:false,why:"较20日低点反弹"+((price/lo20-1)*100).toFixed(0)+"%·等回调"};
   /* ④ 连续收阳≥3天不追（含今日，与回测同口径） */
   const upStreak=(st.upDays||0)+((st.chg||0)>0?1:0);
-  if(upStreak>=3)return{ok:false,why:"连涨"+upStreak+"天·情绪高点等回调"};
-  /* ⑤ 偏离MA5>4% 不追 */
-  if(ma5>0&&(price-ma5)/ma5>0.04)
+  if(!d6&&upStreak>=3)return{ok:false,why:"连涨"+upStreak+"天·情绪高点等回调"};
+  /* ⑤ 偏离MA5>4% 不追（D6 豁免） */
+  if(!d6&&ma5>0&&(price-ma5)/ma5>0.04)
     return{ok:false,why:"偏离MA5 "+((price-ma5)/ma5*100).toFixed(1)+"%·等回均线"};
   /* ⑥ 高位放量长上影线：见顶信号 */
   if(isHigh&&v>=1.5&&body>0&&upperShadow/body>=1.5)
@@ -5580,7 +5584,7 @@ function liveGlobalGuard(st){
   let isDeepDrop=false;
   if(hi20>0&&(hi20-price)/hi20*100>15)isDeepDrop=true;
   if(st.close5>0&&(price/st.close5-1)*100<-12)isDeepDrop=true;
-  if(isDeepDrop&&!(isLow&&isDoji&&v<1.3)&&dayLow>0){
+  if(!d6&&isDeepDrop&&!(isLow&&isDoji&&v<1.3)&&dayLow>0){
     const isStabilize=v<0.8&&(lowerShadow>body*2||isDoji);
     if(!isStabilize)return{ok:false,why:"下跌中继反抽·需企稳K线（缩量+长下影）才买"};
   }
@@ -5607,12 +5611,14 @@ function roleSignalScore(p,st){
   let score=0;
   switch(p.id){
     case"D1":{
-      /* 趋势突破：大结构 + 放量突破前高 + 贴线不追高（补上原来缺失的突破确认） */
+      /* v0268：与 buySignal 新版对齐——D1 只打「放量突破」分，贴MA20整理分划归 D5 */
       if(trendUp){score+=25;why.push("MA20>MA60趋势向上");}
       if(maAlign){score+=10;why.push("MA5>MA20");}
-      if(price>=ma20&&(price-ma20)/ma20<=0.03){score+=15;why.push("站稳MA20不追高");}
-      if(hi20>0&&price>=hi20*0.97){score+=20;why.push("突破/贴近前20日高点");}
-      if(vol>=1.2&&vol<=3){score+=20;why.push("放量确认·量比"+vol.toFixed(1));}
+      if(hi20>0&&price>=hi20*0.99&&chg>1){score+=30;why.push("放量突破前20日高点");}
+      if(hi20>0&&price>=hi20*0.97&&price<hi20*0.99){score+=12;why.push("贴近前20日高点");}
+      if(vol>=1.5){score+=20;why.push("放量确认·量比"+vol.toFixed(1));}
+      else if(vol>=1.2){score+=8;why.push("量比温和"+vol.toFixed(1));}
+      if(ma20>0&&(price-ma20)/ma20>0.08)return{score:0,why:["乖离MA20超8%·追高不买"]};
       if(rsi>=50&&rsi<=75){score+=5;}
       if(rps>=50){score+=5;}
       break;
@@ -5665,6 +5671,8 @@ function roleSignalScore(p,st){
       break;
     }
     case"D5":{
+      /* v0268：与 buySignal 对齐——距前20日高点≤3% 是 D1 突破领地，D5 不越界 */
+      if(hi20>0&&price>=hi20*0.97)return{score:0,why:["贴近前20日高点·归D1突破领地，D5不越界"]};
       /* 回踩低吸：趋势向上为前提 + 缩量回踩MA20/MA10企稳 + 收阳。
          容差按实测放宽：回踩带 ±3%（原2%）、MA10 ±2%（原1.5%）、缩量判据 <1.0（原0.9）——
          选股池已补"缩量回调桶"，但盘中量比常在 0.9-1.0 徘徊，原阈值会把正常整理全部误杀 */
@@ -5680,19 +5688,24 @@ function roleSignalScore(p,st){
       break;
     }
     case"D6":{
+      /* v0268 round3：与回测 buySignal 新版对齐——缩量<1.2（原<1）、距涨停低点≤12%（原8）、
+         自涨停后高点回调2-25%（原5-25）、站稳MA20容忍刺破2%（原MA5>MA20硬多头）；
+         两路门禁一致后，实盘 tick 与回测对 D6 的触发频率不再系统性背离 */
       /* 涨停敢死队：妖股反包/强势涨停 或 涨停回调洗盘 + 板块热度 */
       if(chg>=9.5&&vol>=1){
+        if(st.close5>0&&(price/st.close5-1)*100>30)return{score:0,why:["近5日涨幅>30%·反包不追末端"]};
         score=85;why.push("反包/强势涨停");
         if(rps>=50)score+=5;
         break;
       }
-      if(st.hasZt5&&price>(st.ztLow||0)&&vol<1&&chg<5){
+      if(st.hasZt5&&price>(st.ztLow||0)&&vol<1.2&&chg<5){
+        if(st.close5>0&&(price/st.close5-1)*100>35)return{score:0,why:["近5日涨幅>35%·不买二次拉升末端"]};
         const nearLow=(price-st.ztLow)/st.ztLow*100;
         const hh=Math.max(st.high5||price,price);
         const pb=hh>0?(hh-price)/hh*100:0;
-        if(nearLow>8)return{score:0,why:["离涨停低点太远"]};
-        if(pb<5||pb>25)return{score:0,why:["回调幅度不合"]};
-        if(!maAlign)return{score:0,why:["无趋势承接"]};
+        if(nearLow>12)return{score:0,why:["离涨停低点太远"]};
+        if(pb<2||pb>25)return{score:0,why:["回调幅度不合"]};
+        if(!(ma20>0&&price>=ma20*0.98))return{score:0,why:["未站稳MA20·无趋势承接"]};
         score=75;why.push("涨停回调洗盘");
         if(rsi>=40&&rsi<=65)score+=5;
         const hot=sectorHeatRank(st.sector);
@@ -5702,6 +5715,8 @@ function roleSignalScore(p,st){
       return{score:0,why:[]};
     }
     case"D7":{
+      /* v0268：与 buySignal 对齐——涨停基因是 D6 专属，D7 只做无涨停的阴跌超卖 */
+      if(st.hasZt5)return{score:0,why:["近5日有涨停·归D6涨停回调，D7不越界"]};
       /* 周线超卖反转：HLC3随机指标(14,5)−50 读数≤−40 + %K拐头向上 */
       const w=weeklyKD(st.code);
       if(!w)return{score:0,why:["周线KD未预载，稍后重试"]};
@@ -5740,13 +5755,13 @@ function sectorHeatRank(sector){
 
 /* ==================== 策略选股（数据层） ==================== */
 const BUY_REASONS={
-  D1:"严格趋势突破：股价站上中期均线、结构未破，缩量回踩不破支撑位，突破逻辑成立",
+  D1:"严格趋势突破：MA20向上+站上MA60+放量突破前20日高点/窄幅平台（量比≥1.5），乖离MA20≤8%不追高；贴MA20缩量整理是D5领地，不越界",
   D2:"AI Agents共识：量能适中+均线多头+收阳+RSI中性+近20日相对强势，多维度因子综合达标",
   D3:"多空辩论：多头信号≥2（均线多头+站上MA20+收阳+放量），多方论点占优，判定偏多；不追高（涨幅>5%或量比>2.5等回调，接近20日高点+放量大涨不追）",
   D4:"量价共振：放量突破平台且量比健康，突破后回踩确认支撑有效，主升启动",
-  D5:"趋势回踩：MA20>MA60中期趋势向上，缩量回踩MA20获支撑，低吸追高",
-  D6:"涨停回调·洗盘缩量站稳：涨停后1-10天，MA20必须向上+RSI40-65健康+洗盘缩量(量比<1.0)+站稳MA20(偏离≤5%)+重新转强(收阳)+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤10%+从高点回调3%-18%，低吸追高；反包涨停需MA20向上+站上MA20+放量≥1.5+短期未翻倍",
-  D7:"周线超卖反转：HLC3典型价随机指标(14,5)减50，读数≤−40超卖且%K拐头向上才做多"
+  D5:"趋势回踩：MA20>MA60中期趋势向上，距前20日高点>3%（不越D1突破界），缩量回踩MA20/MA10获支撑，低吸",
+  D6:"涨停回调·洗盘缩量站稳：涨停后1-10天，收盘低于涨停价+洗盘缩量(量比<1.2)+站稳MA20(上界5%、容忍刺破2%)+重新转强(收阳且>前收)+MA20向上+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤12%+自涨停后高点回调2-25%+回调期均量<1.6+近5日涨幅≤35%；防追涨全局过滤对D6豁免（选股池天然近期涨幅大），改由本套门禁控风险；反包涨停需MA20向上+站上MA20+放量≥1.5+近5日涨幅≤30%",
+  D7:"周线超卖反转：HLC3典型价随机指标(14,5)减50，读数≤−40超卖且%K拐头向上+当日收阳；无涨停基因（涨停回调归D6），回测实盘同路径"
 };
 const SELL_REASONS={
   D1:"跌破趋势支撑位，突破逻辑证伪，止损离场",
@@ -6139,16 +6154,22 @@ function tick(){
       /* v2：候选已按角色核心逻辑打分排序（取代按当日涨幅排序） */
       const rawTargets=__rolePicks[p.id];
       /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买；
-         D7 周线超卖反转角色用自己的过滤器（周线KD≤−40+拐头），不走日线KDJ金叉闸 */
+         D7 周线超卖反转角色用自己的过滤器（周线KD≤−40+拐头），不走日线KDJ金叉闸；
+         v0268 round3：D6 同样豁免——回测 D6 分支本就不看KDJ，此前实盘多一道金叉闸
+         导致两路径频率系统性背离；D6 的过滤器是「涨停基因+缩量站稳涨停低点」 */
       const kdjPass=s=>{
-        if(p.id==="D7"){const w=weeklyKD(s.code);return !!(w&&w.kd<=-40&&w.turnUp);}
+        if(p.id==="D7"){const w=weeklyKD(s.code);return !!(w&&w.kd<=-40&&w.turnUp&&!(s.ztLow!=null));}
+        if(p.id==="D6"){
+          if((s.chg||0)>=9.5&&s.vol>=1)return true;
+          return !!(s.hasZt5&&s.price>(s.ztLow||0)&&s.vol<1.2&&s.ma20>0&&s.price>=s.ma20*0.98);
+        }
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
         return s.kdjK!==undefined&&s.kdjD!==undefined&&s.kdjKPrev!==undefined&&s.kdjDPrev!==undefined&&s.kdjK>s.kdjD&&s.kdjKPrev<=s.kdjDPrev;
       };
       /* 全局风控闸（与回测同口径）：追高/下跌中继/高位变盘一律拦截。
          只在"闸门实际改变了选股结果"时记一条日志，避免每 tick 刷屏。 */
       const prePick=rawTargets.find(kdjPass)||null;
-      const guarded=rawTargets.filter(s=>{const g=liveGlobalGuard(s);s.__guard=g;return g.ok;});
+      const guarded=rawTargets.filter(s=>{const g=liveGlobalGuard(s,p.id);s.__guard=g;return g.ok;});
       const t=guarded.find(kdjPass)||null;
       if(prePick&&prePick.__guard&&!prePick.__guard.ok&&(!t||t.code!==prePick.code)){
         log("warn",`【${p.id}】风控闸改选：${escHtml(prePick.name)}(${prePick.code})被拦（${prePick.__guard.why}）→ ${t?escHtml(t.name)+"("+t.code+")":"本轮回落空"}`);
@@ -6555,9 +6576,10 @@ async function genRevisionProposal(p,avgRet){
       `近期成交（最多20笔）：\n${recent.join("\n")||"（无成交记录）"}\n\n`+
       `只输出如下结构的JSON：\n`+
       `{"category":"英文蛇形根因标签(如 trend_too_strict)","diagnosis":"100字内中文诊断，必须引用上面给出的真实数据","confidence":"0-100整数",`+
+      `"frameworkCheck":{"chanlun":"该角色买点/止损是否符合其框架镜头(缠论口径)，一句中文，无问题写符合","munger":"近期交易有无违反三筐/达尔文协议(如该进Too Hard却交易)，一句中文，无写符合","cycle":"有无逆周期位置操作(顶部加仓/底部割肉)，一句中文，无写符合"},`+
       `"changes":[{"type":"param","target":"sl或tp","current":当前数值,"proposed":建议数值,"rationale":"一句中文"},`+
       `{"type":"structure","rulePatch":"一条具体可执行的中文规则条款，将追加到角色规则末尾","rationale":"一句中文"}]}\n`+
-      `约束：param 的 target 只能是 sl 或 tp；proposed 与 current 差值不超过 ${AUTO_PARAM_MAX_STEP}；changes 共 1-3 条；除 JSON 外不输出任何字符。`;
+      `约束：param 的 target 只能是 sl 或 tp；proposed 与 current 差值不超过 ${AUTO_PARAM_MAX_STEP}；changes 共 1-3 条；frameworkCheck 三项必填；除 JSON 外不输出任何字符。`;
     let reply=null;
     try{reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],800,1);}catch(e){reply=null;}
     let rec=null;
@@ -6570,6 +6592,10 @@ async function genRevisionProposal(p,avgRet){
             issue:`${role} 当日收益 ${ret.toFixed(2)}%（组合均值 ${avgRet.toFixed(2)}%）`,
             action:obj.diagnosis,category:String(obj.category||"unspecified").slice(0,40),
             diagnosis:String(obj.diagnosis).slice(0,200),confidence:Number(obj.confidence)||0,source:"ai",
+            frameworkCheck:obj.frameworkCheck&&typeof obj.frameworkCheck==="object"?{
+              chanlun:String(obj.frameworkCheck.chanlun||"").slice(0,80),
+              munger:String(obj.frameworkCheck.munger||"").slice(0,80),
+              cycle:String(obj.frameworkCheck.cycle||"").slice(0,80)}:null,
             changes:obj.changes.slice(0,3).map(c=>revNormalizeChange(c,role)),status:"open"};
         }
       }catch(e){}
@@ -10390,6 +10416,56 @@ function calcTradeQuality(role,P,i){
 function qualityStars(stars){
   return "⭐".repeat(stars)+"☆".repeat(3-stars);
 }
+/* v0268：日线聚合周线 HLC3 KD(14,5)−50 序列（与 calcWeeklyKD 腾讯周K同口径，供回测/无网络场景用）。
+   自然周聚合 → 每周 kd/turnUp → 映射到每日（第 i 日用「最近已完成周」状态，未完成周不采信）。
+   缓存 key=code，数据长度变化（N）自动失效。 */
+const weeklySeriesCache={};
+function weeklySeriesFor(P){
+  if(!P||!P.days||!P.code)return null;
+  const hit=weeklySeriesCache[P.code];
+  if(hit&&hit.N===P.N)return hit.byDay;
+  const days=P.days,N=P.N;
+  const weeks=[];let cur=null,curKey="";
+  for(let i=0;i<N;i++){
+    const d=days[i];
+    const dt=new Date((d.date||"").replace(/-/g,"/"));
+    if(isNaN(dt.getTime()))continue;
+    const wk=Math.floor(dt.getTime()/604800000);
+    if(!cur||curKey!==wk){if(cur)weeks.push(cur);cur={high:d.high,low:d.low,close:d.close,endIdx:i};curKey=wk;}
+    else{cur.high=Math.max(cur.high,d.high);cur.low=Math.min(cur.low,d.low);cur.close=d.close;cur.endIdx=i;}
+  }
+  if(cur)weeks.push(cur);
+  const hlcs=weeks.map(b=>(b.high+b.low+b.close)/3);
+  const kRaw=[];
+  for(let i=13;i<hlcs.length;i++){
+    const win=hlcs.slice(i-13,i+1);
+    const lo=Math.min.apply(null,win),hi=Math.max.apply(null,win);
+    kRaw.push((hi>lo?(hlcs[i]-lo)/(hi-lo)*100:50)-50);
+  }
+  const dSma=[];
+  for(let i=4;i<kRaw.length;i++)dSma.push(kRaw.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5);
+  const wkState=new Array(weeks.length).fill(null);
+  for(let w=0;w<weeks.length;w++){
+    const j=w-13;
+    if(j<0||j>=kRaw.length)continue;
+    const kd=kRaw[j];
+    const kdPrev=j-1>=0?kRaw[j-1]:kd;
+    const kdPrev2=j-2>=0?kRaw[j-2]:kdPrev;
+    const dj=w-17;
+    const dNow=dj>=0&&dj<dSma.length?dSma[dj]:null;
+    const dPrev=dj-1>=0&&dj-1<dSma.length?dSma[dj-1]:null;
+    const turnUp=(kd>kdPrev&&kdPrev<=kdPrev2)||(dNow!==null&&dPrev!==null&&kd>dNow&&kdPrev<=dPrev);
+    wkState[w]={kd:+kd.toFixed(1),kdPrev:+kdPrev.toFixed(1),turnUp:!!turnUp};
+  }
+  const byDay=new Array(N).fill(null);
+  let wi=0;
+  for(let i=0;i<N;i++){
+    while(wi<weeks.length-1&&weeks[wi].endIdx<i)wi++;
+    byDay[i]=wi-1>=0?wkState[wi-1]:null;
+  }
+  weeklySeriesCache[P.code]={N,byDay};
+  return byDay;
+}
 function buySignal(role,P,i){
   if(!P.ma20[i])return false;
   const c=P.closes[i],open=P.days[i].open;
@@ -10400,41 +10476,57 @@ function buySignal(role,P,i){
   const kdjTooHigh = P.K[i]>70 || (P.J && P.J[i]>80);
   const v=P.volR[i]||1,chg=P.chg[i]||0,ma20=P.ma20[i],ma5=P.ma5[i]||ma20,ma60=P.ma60[i];
   const ret20=i>=20?(c/P.closes[i-20]-1)*100:0; /* 近20日相对强度，全角色过滤弱势股 */
+  /* v0268 round3：D6「涨停回调」选股池豁免防追涨过滤——实测 184 个涨停基因候选日仅 26 个
+     能穿过下面这套过滤（ret5>20/ret10>25/乖离MA5>4%/连涨3天/下跌中继都是为突破型角色设计的），
+     D6 触发因此恒 0。涨停基因股天然近期涨幅大、乖离大，用 D6 自身门禁控风险：
+     缩量<1.2 + 自涨停后高点回调2-25% + 收盘低于涨停价 + 未破涨停低点 + 无放量恐慌盘 + 距低点≤12% + 均量<1.6 + ret5≤35 */
+  const d6Exempt=(role==="D6");
   /* 高位追涨过滤：近5日涨幅>20%（原来30%太宽松）或高位放量长上影线，不买入（避免追高被套） */
   if(i>=5){
     const ret5=(c/P.closes[i-5]-1)*100;
-    if(ret5>20)return false; /* 短期涨幅过大，追高风险大 */
+    if(!d6Exempt&&ret5>20)return false; /* 短期涨幅过大，追高风险大 */
   }
   /* 【新增】近10日涨幅>25%不买，中期涨幅过大，风险高 */
   if(i>=10){
     const ret10=(c/P.closes[i-10]-1)*100;
-    if(ret10>25)return false;
+    if(!d6Exempt&&ret10>25)return false;
   }
   /* 【新增】从20日低点反弹>30%不买，已经反弹很多了，等回调 */
   if(i>=20){
     let lo20=Infinity;
     for(let j=i-19;j<=i;j++){if(P.closes[j]<lo20)lo20=P.closes[j];}
-    if(lo20>0&&(c/lo20-1)*100>30)return false;
+    if(!d6Exempt&&lo20>0&&(c/lo20-1)*100>30)return false;
   }
   /* 连续上涨过滤：连续收阳≥3天（原来4天太宽松）不追（短期情绪高点，等回调） */
   if(i>=2){
     let upDays=0;
     for(let j=i;j>Math.max(0,i-3);j--){if(P.chg[j]>0)upDays++;else break;}
-    if(upDays>=3)return false;
+    if(!d6Exempt&&upDays>=3)return false;
   }
   /* 偏离MA5过大过滤：收盘价偏离MA5>4%（原来5%太宽松）不追（等回调到均线附近） */
-  if(ma5&&(c-ma5)/ma5>0.04)return false;
+  if(!d6Exempt&&ma5&&(c-ma5)/ma5>0.04)return false;
   const day=P.days[i]||{},hi=day.high||0,lo=day.low||0;
   const isHigh=hi>0&&c>=P.hi20[i]*0.95; /* 原来0.97太宽松，接近20日高点就算高位 */
   const isLow=lo>0&&c<=P.lo20[i]*1.05; /* 低位：接近20日低点 */
   const upperShadow=hi-Math.max(c,open);
   const lowerShadow=Math.min(c,open)-lo;
   const body=Math.abs(c-open);
-  const isDoji=body>0&&c>0&&(body/c)<0.008; /* 十字星：实体小于0.8% */
-  /* 【新增】低位十字星买入：低位+缩量十字星+KDJ金叉 → 抛压衰竭，见底信号，可以买入（用户：低位十字星结合其他指标可以考虑买入） */
-  if(isLow && isDoji && v<1.3){
-    /* 低位十字星已经是强见底信号，只要KDJ金叉（前面已验证）就可以买，放宽其他过滤 */
-    return true;
+  /* v0268：十字星定义收紧——实体<0.3%（原0.8%对低价股恒真：5元股0.8%仅4分钱，
+     实测旧定义命中 18.9% 扫描日，七角色在这批日子齐触发、差异化被完全抹平）
+     且要求至少一边影线≥1.5倍实体（光实体小不算见底信号） */
+  const isDoji=body>0&&c>0&&(body/c)<0.003&&Math.max(upperShadow,lowerShadow)>=body*1.5;
+  /* v0268：低位缩量十字星（抛压衰竭见底信号）由「全球 return true」改为角色作用域——
+     它本质是低吸/反转类信号，只属于 D5（回踩企稳）与 D7（反转拐头确认）；
+     突破角色(D1/D4)、共识角色(D2/D3)、涨停角色(D6)各有自己的入场逻辑，不吃免费午餐。
+     D5/D7 也仍需过自身门禁（趋势上下文+越界 / 周线超卖拐头），不是无条件放行。 */
+  if(isLow && isDoji && v<1.3 && (role==="D5"||role==="D7")){
+    if(role==="D5"){
+      const ma20UpD=i>=5&&ma20>P.ma20[i-5];
+      if(!(P.hi20[i]>0 && c >= P.hi20[i]*0.97) && ret20>0 && ma5>ma20 && c>ma20 && ma20UpD) return true;
+    }else{
+      const w7=weeklySeriesFor(P); const st7=w7?w7[i]:null;
+      if(st7 && st7.kd<=-40 && st7.turnUp && chg>0 && !(P.ztLow[i]!=null)) return true;
+    }
   }
   if(isHigh&&v>=1.5&&body>0&&upperShadow/body>=1.5)return false; /* 高位放量长上影线，见顶信号不买 */
   /* 【新增】高位十字星过滤：高位+放量+实体极小（开盘收盘几乎一样），典型变盘见顶信号，绝对不买 */
@@ -10458,7 +10550,7 @@ function buySignal(role,P,i){
     const ret5=(c/P.closes[i-5]-1)*100;
     if(ret5 < -12) isDeepDrop = true;
   }
-  if(isDeepDrop && !(isLow && isDoji && v<1.3)){
+  if(!d6Exempt && isDeepDrop && !(isLow && isDoji && v<1.3)){
     /* 下跌趋势中，只有企稳K线才允许买入：缩量+长下影/十字星 */
     const isStabilize = v<0.8 && (lowerShadow > body*2 || isDoji);
     if(!isStabilize) return false;
@@ -10466,18 +10558,27 @@ function buySignal(role,P,i){
   
   switch(role){
     case"D1":{
-      /* 趋势突破策略优化（针对北方稀土这类下跌趋势反弹误判）：
-         1. MA20必须向上（5日前MA20 < 当前MA20），下跌趋势中的反弹不买
-         2. 价格必须在MA60上方，大趋势向上，弱势股不碰
-         3. 接近前期20日高点压力位时，必须放量（量比>=1.5）突破才买
-         4. 保留原条件：近20日强势+MA5>MA20+价格站上MA20+回踩不超过3% */
+      /* v0268：D1 回归「趋势突破」本质。
+         旧版最终条件 c<=ma20*1.03（贴近MA20）与突破意图自相矛盾——实测 71% 触发日贴在 MA20 上、
+         只有 12% 接近前高，与 D5 回踩角色混居（Jaccard 0.77）。现在只买两类突破日： */
       const ma20Up = i>=5 && ma20 > P.ma20[i-5];
-      if(!ma20Up) return false; /* MA20向下，下跌趋势，不买 */
-      if(!ma60 || c <= ma60) return false; /* 价格在MA60下方，弱势股，不买 */
-      /* 接近前期高点压力位时，必须放量突破 */
-      const nearHigh = hi>0 && c >= P.hi20[i]*0.97;
-      if(nearHigh && v < 1.5) return false; /* 接近压力位但没放量，假突破，不买 */
-      return ret20>0 && ma5>ma20 && c>ma20 && c<=ma20*1.03;
+      if(!ma20Up) return false;              /* MA20向下=下跌趋势，不买 */
+      if(!ma60 || c <= ma60) return false;   /* 价格在MA60下方，弱势股，不买 */
+      if(ret20<=0) return false;             /* 近20日相对强势 */
+      if(!(ma5>ma20 && c>ma20)) return false;/* 短期多头排列 */
+      /* 突破A：放量突破前20日高点（收盘≥前高99% 且 当日涨幅>1%，贴脸不算突破） */
+      const breakHigh = P.hi20[i]>0 && c >= P.hi20[i]*0.99 && chg > 1;
+      /* 突破B：窄幅平台后突破（近10日振幅<12% 的盘整 + 收盘突破10日高点 + 收阳） */
+      let platBreak=false;
+      if(i>=10 && !breakHigh){
+        let hh=-1e9, ll=1e9;
+        for(let j=i-10;j<i;j++){hh=Math.max(hh,P.days[j].high);ll=Math.min(ll,P.days[j].low);}
+        if(ll>0 && (hh-ll)/ll*100 < 12 && c >= hh*0.999 && chg > 0.5) platBreak=true;
+      }
+      if(!breakHigh && !platBreak) return false; /* 非突破日不买——贴MA20缩量整理是D5的领地 */
+      if(v < 1.5) return false;              /* 放量确认：无量突破=假突破 */
+      if(ma20 && (c-ma20)/ma20 > 0.08) return false; /* 乖离MA20≤8% 追高控制（突破日天然远离MA20，3%太紧） */
+      return true;
     }
     case"D2":{
       /* D2多因子共识：KDJ金叉 + 多因子综合评分（放宽条件，增加交易频率） */
@@ -10535,8 +10636,12 @@ function buySignal(role,P,i){
       /* 相对强势：近20日必须跑赢大盘 */
       return ret20>0&&bull>=4&&safeScore>=0;
     }
-    case"D4":return ma60&&ma20>ma60&&c>=ma20&&c>=P.hi20[i]*0.995&&v>=1.5&&v<=3&&P.rsi[i]>=45&&P.rsi[i]<=76; /* 量价共振：本身就是强势突破 */
+    case"D4":return ma60&&ma20>ma60&&ma5>P.ma10[i]&&P.ma10[i]>ma20&&c>=ma20&&c>=P.hi20[i]*0.995&&v>=1.5&&v<=3&&P.rsi[i]>=45&&P.rsi[i]<=76; /* v0268 round3：量价共振=全面多头（MA5>MA10>MA20）下的放量触顶；D1 允许早期趋势（MA10可在MA20下方）突破，两者选股空间拉开 */
     case"D5":{
+      /* v0268：补 rules 漏实现的门禁——「距前20日高点>3%禁止买入」。
+         旧实现四个信号都没这条，实测 19% 触发日距前高≤3%（违反自身规则），
+         且靠近前高本就是 D1 突破领地：回踩角色不越界，两者触发日基本互斥 */
+      if(P.hi20[i]>0 && c >= P.hi20[i]*0.97) return false;
       /* D5渊：20日线为主线，10日线为辅 */
       const ma20_5ago=i>=5?P.ma20[i-5]:ma20;
       const ma20Up=ma20>ma20_5ago;
@@ -10567,6 +10672,12 @@ function buySignal(role,P,i){
       return false;
     }
     case"D6":{
+      /* v0268：D6 条件放宽——旧版十条件全满足，实测 70 只样本 150 天触发 0 次
+         （涨停基因日本身稀少+缩量+站上MA20+收阳+RSI40-65+不破低点+无恐慌+回调3-18%+均量<1.3 全叠）。
+         改为「核心四条件+两个排除」，保留风控骨头： */
+      /* v0268 round3：全球过滤豁免后由角色自身设上限——近5日涨幅≤35%（反包路更严≤30%），
+         防止买在二次拉升末端；这是 D6 对「豁免 ret5>20」的对等风控义务 */
+      if(i>=5&&(c/P.closes[i-5]-1)*100>35)return false;
       /* 妖股通行证·反包涨停：前一日阴线+今日涨停反包前高 → 极强势（增加趋势确认，避免下跌趋势追高） */
       const prev=P.days[i-1];
       if(prev&&prev.close<prev.open&&chg>=9.5&&c>prev.high&&v>=1.5){
@@ -10574,7 +10685,7 @@ function buySignal(role,P,i){
         const ret5D6=i>=5?(c/P.closes[i-5]-1)*100:0;
         if(ma20UpD6&&c>=ma20&&ret5D6<30)return true; /* MA20向上+站上MA20+短期未翻倍才追 */
       }
-      /* 涨停回调·洗盘缩量站稳：参考实战策略（趋势回踩+触及MA20+重新转强+缩量洗盘） */
+      /* 涨停回调·洗盘缩量站稳（v0268 放宽版） */
       if(P.ztLow[i]==null||c<=P.ztLow[i])return false;
       if(chg>=9.5)return false; /* 当天涨停不算回调 */
       /* 找到最近涨停日，要求涨停后1-10天（超过10天涨停效应衰减） */
@@ -10584,38 +10695,52 @@ function buySignal(role,P,i){
       const ztClose=P.days[ztIdx].close;
       const ztLow=P.days[ztIdx].low;
       if(c>=ztClose)return false; /* 收盘价必须低于涨停价，才是真正回调 */
-      /* ① 洗盘缩量：量比<1.0（回调期间成交量萎缩，放宽到1.0增加交易机会） */
-      if(v>=1.0)return false;
-      /* ② 站稳MA20：收盘价不低于MA20且偏离不超过5%（不追高） */
-      if(!ma20||c<ma20||(c-ma20)/ma20>0.05)return false;
-      /* ③ 重新转强：当天收阳且收盘价>前一天收盘价（触及MA20后反弹） */
+      /* 核心①洗盘缩量：量比<1.2（回调期间成交量萎缩） */
+      if(v>=1.2)return false;
+      /* 核心②站稳MA20：偏离不超过5%（不追高）；下界容忍刺破2%以内——回踩MA20的瞬间可能
+         略微刺破即收回，只要当日收阳转强+缩量仍算企稳（原恒要求 c>=ma20 过严，实测站稳MA20
+         一关砍掉 3/4 候选，是 D6=0 的最大自身门禁瓶颈） */
+      if(!ma20||c<ma20*0.98||(c-ma20)/ma20>0.05)return false;
+      /* 核心③重新转强：当天收阳且收盘价>前一天收盘价（触及MA20后反弹） */
       if(chg<=0||(i>=1&&c<=P.closes[i-1]))return false;
-      /* ④ 中期趋势必须向上：MA20向上倾斜（下跌趋势中的涨停回调不做） */
+      /* 核心④中期趋势向上：MA20向上倾斜（下跌趋势中的涨停回调不做） */
       const ma20Up=i>=5&&ma20>P.ma20[i-5];
       if(!ma20Up)return false;
-      /* ⑤ RSI健康区间：40-65，不超买不超卖 */
-      const rsi=P.rsi[i]||50;
-      if(rsi<40||rsi>65)return false;
-      /* ⑥ 涨停低点支撑有效：涨停后没有跌破涨停当天最低价 */
+      /* 排除①涨停低点支撑必须有效：涨停后没有跌破涨停当天最低价 */
       let brokeLow=false;
       for(let j=ztIdx+1;j<i;j++){if(P.days[j].low<ztLow){brokeLow=true;break;}}
       if(brokeLow)return false;
-      /* ⑦ 回调期间没有放量下跌：没有单日跌幅>3%且量比>1.5的恐慌盘 */
+      /* 排除②回调期间没有放量下跌：没有单日跌幅>3%且量比>1.5的恐慌盘 */
       let panicSell=false;
       for(let j=ztIdx+1;j<i;j++){if((P.chg[j]||0)<-3&&(P.volR[j]||1)>1.5){panicSell=true;break;}}
       if(panicSell)return false;
-      /* ⑧ 距涨停低点≤10%（离低点太远不是真正回踩，放宽到10%） */
-      const nearLow=(c-P.ztLow[i])/P.ztLow[i]*100;
-      if(nearLow>10)return false;
-      /* ⑨ 回调幅度：从涨停后高点回落3%-18%（洗盘充分但不破位，放宽范围） */
+      /* 辅助①回调幅度：从涨停后高点回落2%-25%（洗盘充分但不破位；原3%-18%过严） */
       let hh=0;for(let j=ztIdx+1;j<i;j++)hh=Math.max(hh,P.days[j].high);
       if(hh<=0)hh=ztClose;
       const pullback=(hh-c)/hh*100;
-      if(pullback<3||pullback>18)return false;
-      /* ⑩ 回调期间缩量确认：涨停后到前一天的平均量比<1.3（洗盘特征） */
+      if(pullback<2||pullback>25)return false;
+      /* 辅助②距涨停低点≤12%（离低点太远不是真正回踩；原10%略紧） */
+      const nearLow=(c-P.ztLow[i])/P.ztLow[i]*100;
+      if(nearLow>12)return false;
+      /* 辅助③回调期间均量比<1.6（洗盘特征；原1.3过严） */
       let avgVol=0,cnt=0;
       for(let j=ztIdx+1;j<i;j++){if(P.volR[j]!==undefined){avgVol+=P.volR[j];cnt++;}}
-      if(cnt>0&&avgVol/cnt>=1.3)return false;
+      if(cnt>0&&avgVol/cnt>=1.6)return false;
+      return true;
+    }
+    case"D7":{
+      /* v0268：D7 回测路径落地——原 buySignal 无 D7 case，回测两条路径都永远空仓，
+         只有实盘 tick 靠 weeklyKD 缓存有信号（回测/实测长期割裂）。口径与实盘一致：
+         周线聚合 HLC3 KD(14,5)−50 读数≤−40 且拐头向上 */
+      const byDay=weeklySeriesFor(P);
+      const w=byDay?byDay[i]:null;
+      if(!w||w.kd>-40||!w.turnUp)return false;
+      /* 持续超卖：本周与上周读数都≤−40（单周碰线不算深跌，防弱势股周线低位反复假拐头） */
+      if(w.kdPrev>-40)return false;
+      /* 独立选股空间：近5日有涨停 = D6「涨停回调」专属领地；D7 只做无涨停基因的阴跌超卖。
+         旧版无此界——实测 D7 触发的股票 100% 也被 D6 触发（选股空间被完全包含） */
+      if(P.ztLow[i]!==null&&P.ztLow[i]!==undefined)return false;
+      if(chg<=0)return false; /* 拐头收阳确认，不接落刀 */
       return true;
     }
   }
@@ -12780,6 +12905,66 @@ const ROLE_PERSONAS = {
 /* v0267：三大思维框架统一注入七角色 system prompt（ROLE_PERSONAS 只在此处定义一次，注入不重复） */
 Object.keys(ROLE_PERSONAS).forEach(k=>{ try{ ROLE_PERSONAS[k].system += AGENT_MINDSET; }catch(e){} });
 
+/* ==================== v0268 三框架日常运用 ==================== */
+/* 1) 角色-框架分工镜头：每个角色有自己的主框架视角，与交易风格对齐（不是七个角色用同一副眼镜） */
+const ROLE_FRAMEWORK_LENS={
+  D1:"【你的框架镜头·缠论三买+周期】你是趋势突破猎手：突破类买点一律按缠论「三买确认」——离开中枢后回抽不跌回中枢（止损=ZG）；先看周期位置，只在朱格拉回升/库存补库的做多窗口重仓，周期顶部突破一律降档。",
+  D2:"【你的框架镜头·芒格三筐】你是投票 consensus 守护者：每个子Agent的一票先过三筐分类——Yes(确信)/No(确信不做)/Too Hard(太难放弃)，票数不足或关键数据缺失一律进 Too Hard 筐=空仓观望；不决策也是决策。",
+  D3:"【你的框架镜头·芒格逆向】你是多空辩论主持人：开场先让空头写「什么情况下这笔一定亏」+1条反面证据（达尔文协议），多头必须逐条有效反驳才开仓；人人看多+踏空恐惧共振时（Lollapalooza）恰恰降档。",
+  D4:"【你的框架镜头·周期+艾略特】你是量价突破手：突破只分两种——推动浪突破（不背驰、量能确认，做多窗口内重仓）与反弹浪突破（3波不过前高=下跌未结束，不碰）；无量突破一律判定假突破。",
+  D5:"【你的框架镜头·缠论二买】你是回调低吸手：回踩类买点按缠论「二买」——不破一买低点，止损=一买点；只在上升趋势（MA5>MA20>MA60）的回踩中介入，下跌趋势中的反弹不是二买。",
+  D6:"【你的框架镜头·情绪周期+结构支撑】你是涨停回调手：先定板块情绪温度（炸板率/龙头状态=短周期位置），退潮期一律空仓；个股以涨停当日最低点为核心结构支撑，跌破即离场，不抱幻想。",
+  D7:"【你的框架镜头·背驰一买+周期底部】你是周线反转手：反转类买点按缠论「背驰一买」——创新低+力度衰竭（看MACD面积不看柱高），止损=背驰段起点；只在周期底部特征共振（估值极低+无人谈论+政策托底）时出手，小级别背驰只配小仓位。"
+};
+Object.keys(ROLE_FRAMEWORK_LENS).forEach(k=>{ try{ ROLE_PERSONAS[k].system += "\n\n"+ROLE_FRAMEWORK_LENS[k]; }catch(e){} });
+
+/* 2) 决策输出结构化规范：每次决策必须输出三框架运用小节（追加在用户 prompt 末尾，LLM 不可见 system 已含框架知识） */
+const DECISION_FRAMEWORK_SPEC=
+  "\n\n【必须输出的三框架运用】在你的JSON中增加三个字段（缺一不可）：\n"+
+  '"chanlun":{"level":"本次结论的级别(日线/周线)","structure":"盘整或趋势(有无中枢/几个中枢)","buyPoint":"一买/二买/三买/无(本次买点属于哪类，不适用写无)","stopRef":"止损口径来源(如背驰段起点/一买点/ZG/涨停低点)"},\n'+
+  '"munger":{"counter":"什么情况下这笔一定亏+1条反面证据(达尔文协议，列不出写看不懂)","basket":"Yes/No/Too Hard(三筐判定)"},\n'+
+  '"cycle":{"phase":"周期位置判断(做多窗口/防守/周期顶部/周期底部等)","wave":"波浪位置或节奏(如推动浪5浪/反弹3波/调整未结束)"}\n'+
+  "三个字段必须与你上方交易风格一致，不是走过场；数据不足以判断的字段写「数据不足」并降低 confidence。";
+
+/* 3) 渲染辅助：三框架小节 HTML（对缺失字段健壮——LLM 没返回时不渲染该节，不报错） */
+function frameworkSectionHtml(r){
+  if(!r) return "";
+  let h="";
+  const cl=r.chanlun;
+  if(cl&&typeof cl==="object"){
+    const items=[["级别",cl.level],["结构",cl.structure],["买点",cl.buyPoint],["止损口径",cl.stopRef]];
+    h+=`<div style="margin-top:8px;padding:8px 10px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:4px">📐 缠论 · 定位置</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--text-dim)">${items.map(([k,v])=>v?`${k}：${escHtml(String(v))}`:"").filter(Boolean).join("　·　")||"未提供"}</div>
+    </div>`;
+  }
+  const mg=r.munger;
+  if(mg&&typeof mg==="object"){
+    const basketColor=mg.basket==="Yes"?"#22c55e":mg.basket==="No"?"#ef4444":"#fbbf24";
+    h+=`<div style="margin-top:6px;padding:8px 10px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.22);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;color:#4ade80;margin-bottom:4px">🧠 芒格 · 定纪律 ${mg.basket?`<span style="color:${basketColor}">[${escHtml(String(mg.basket))}]</span>`:""}</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--text-dim)">${mg.counter?escHtml(String(mg.counter)):"未提供"}</div>
+    </div>`;
+  }
+  const cy=r.cycle;
+  if(cy&&typeof cy==="object"){
+    h+=`<div style="margin-top:6px;padding:8px 10px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.22);border-radius:6px">
+      <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:4px">🌊 涛动周期 · 定方向</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--text-dim)">${[cy.phase?`周期位置：${escHtml(String(cy.phase))}`:"",cy.wave?`波浪节奏：${escHtml(String(cy.wave))}`:""].filter(Boolean).join("　·　")||"未提供"}</div>
+    </div>`;
+  }
+  return h;
+}
+/* 框架摘要一行（combat 日志用） */
+function frameworkOneLine(r){
+  if(!r) return "";
+  const parts=[];
+  if(r.chanlun&&r.chanlun.buyPoint)parts.push(`缠论:${r.chanlun.buyPoint}`);
+  if(r.munger&&r.munger.basket)parts.push(`三筐:${r.munger.basket}`);
+  if(r.cycle&&r.cycle.phase)parts.push(`周期:${String(r.cycle.phase).slice(0,12)}`);
+  return parts.length?`（${parts.join(" | ")}）`:"";
+}
+
 function formatStockDataForLLM(code, P){
   if(!P || !P.closes || !P.closes.length) return "无数据";
   const i = P.N - 1;
@@ -12842,7 +13027,7 @@ async function llmRoleDecision(role, code, P){
   const stockData = formatStockDataForLLM(code, P);
   const result = await callDeepSeek([
     {role:"system", content: persona.system},
-    {role:"user", content: stockData + "\n\n请根据以上数据，做出你的交易决策。"}
+    {role:"user", content: stockData + "\n\n请根据以上数据，做出你的交易决策。" + DECISION_FRAMEWORK_SPEC}
   ], 0.8);
   
   /* 解析JSON */
@@ -12933,6 +13118,7 @@ async function startLLMRoleDecision(){
           <div style="font-weight:700;color:${decisionColor};font-size:16px">${decisionIcon} ${r.decision} <span style="font-size:12px;color:#8b949e">（${r.confidence}置信）</span></div>
         </div>
         <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${escHtml(r.reason)}</div>
+        ${frameworkSectionHtml(r)}
       `;
       contentEl.appendChild(card);
     });
@@ -13040,6 +13226,7 @@ async function llmRoleWithMemory(role, code, P, otherViews){
   }else{
     userContent += "\n\n这是第一轮发言，请给出你的初始观点。";
   }
+  userContent += DECISION_FRAMEWORK_SPEC;
   
   const result = await callDeepSeek([
     {role:"system", content: persona.system},
@@ -13192,6 +13379,7 @@ async function startLLMDebate(){
           改变原因：听取了其他角色的意见后重新判断
         </div>` : ''}
         <div style="font-size:13px;line-height:1.7;color:var(--text-dim)">💭 ${escHtml(r.reason)}</div>
+        ${frameworkSectionHtml(r)}
       `;
       contentEl.appendChild(card);
     });
@@ -13258,7 +13446,7 @@ async function startLLMCombat(){
             showAIProgress(`🔴 ${escHtml(persona.name)}建议卖出：${escHtml(hold.name)}（${pnl.toFixed(1)}%）\n\n执行卖出中...`);
             doSell(p, hold, st, now, "LLM建议："+llmResult.reason, 1);
             totalSells++;
-            logLines.push(`  🔴 卖出 ${escHtml(hold.name)} ${hold.qty}股（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.reason.slice(0,50)}`);
+            logLines.push(`  🔴 卖出 ${escHtml(hold.name)} ${hold.qty}股（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.reason.slice(0,50)}${frameworkOneLine(llmResult)}`);
           }else{
             logLines.push(`  ⚪ 持有 ${escHtml(hold.name)}（${pnl>=0?"+":""}${pnl.toFixed(1)}%）- ${llmResult.decision}`);
           }
@@ -13289,7 +13477,7 @@ async function startLLMCombat(){
             showAIProgress(`🟢 ${escHtml(persona.name)}建议买入：${escHtml(target.name)}\n\n执行买入中...`);
             doBuy(p, target, now, 1);
             totalBuys++;
-            logLines.push(`  🟢 买入 ${escHtml(target.name)} - ${llmResult.reason.slice(0,50)}`);
+            logLines.push(`  🟢 买入 ${escHtml(target.name)} - ${llmResult.reason.slice(0,50)}${frameworkOneLine(llmResult)}`);
           }else{
             logLines.push(`  ⚪ 放弃 ${escHtml(target.name)} - ${llmResult.decision}`);
           }
