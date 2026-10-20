@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r19</title>
+<title>Orion-X AI量化投研面板 · v20260910-r20</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r19";
+<script>window.APP_VERSION="20260910-r20";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2680,7 +2680,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r19</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r20</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -2885,7 +2885,7 @@ function getBoard(code){
   code=String(code);
   if(code.startsWith("68")) return "star";
   if(code.startsWith("30")) return "gem";
-  if(code.startsWith("8")||code.startsWith("4")) return "bse";
+  if(code.startsWith("8")||code.startsWith("4")||code.startsWith("92")) return "bse"; /* 920段为北交所新代码段 */
   return "main";
 }
 /* 检查角色是否有板块交易权限（未开通的板块一律拦截；已开通的还需资金达到门槛） */
