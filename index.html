@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r22</title>
+<title>Orion-X AI量化投研面板 · v20260910-r23</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r22";
+<script>window.APP_VERSION="20260910-r23";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2251,6 +2251,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <label class="sim-opt"><input type="checkbox" id="simRuleLearn" checked> 群聊防守纪律</label>
         <button class="gmk-btn" onclick="runSim()">开始回测</button>
         <button class="gmk-btn" onclick="runSim()">🎲 换一批随机样本</button>
+        <button class="gmk-btn" onclick="clearSimTune()" title="七角色止损/止盈回到源码默认值，并清除三份持久化：回测调参(btTuneV1)、AI参数修正(autoRevTuneV1)、AI结构条款(autoRevRulesV1)">↩️ 恢复出厂参数</button>
         <span id="simSrc" class="gmk-src" style="margin-left:auto">—</span>
       </div>
       <div id="simSampleInfo" class="sim-sample-info">点击「开始回测」：随机抽样市场候选股 + 随机时间段（真实日K，不编造）</div>
@@ -2696,7 +2697,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r22</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r23</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -11089,8 +11090,9 @@ function renderSimTune(res){
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
     <button class="gmk-btn" onclick="applySimTune()">✅ 应用到实盘</button>
     <button class="gmk-btn" onclick="copyBtTune()">📋 复制 bt_tune.json</button>
-    <button class="gmk-btn" onclick="clearSimTune()">↩️ 恢复出厂参数</button>
+    <button class="gmk-btn" onclick="clearSimTune()">↩️ 恢复出厂参数（含AI修正）</button>
   </div>`;
+  h+=`<div style="margin-top:6px;font-size:11px;color:var(--text-faint)">恢复出厂 = 七角色止损/止盈回到源码默认值，并清除三份持久化：回测调参(btTuneV1)、AI参数修正(autoRevTuneV1)、AI结构条款(autoRevRulesV1)；刷新页面后完全重置。</div>`;
   h+=`<textarea id="btTuneJson" class="sim-tune-json" readonly>${escHtml(btTuneJson())}</textarea>`;
   box.innerHTML=h;
 }
@@ -11134,13 +11136,36 @@ function copyBtTune(){
   btLog("已复制 bt_tune.json：粘贴到仓库根目录 bt_tune.json，后台引擎下次运行即生效");
 }
 function clearSimTune(){
+  /* v0266：恢复范围扩展到全部三个持久化来源。
+     旧实现只清 btTuneV1（回测调参），但启动加载链是
+     loadSimTune() → loadAutoRevTune()（AI 值后加载、优先级更高，见 9462 行注释）。
+     参数若被 AI 修正（v0264）改过，只清回测调参后一刷新，
+     loadAutoRevTune 会把 AI 值重新盖回 ROLE_PARAMS →「恢复出厂」静默失效。
+     现在三份持久化全清 + 修正记录状态同步作废，恢复行为真正可预期。 */
   Object.keys(ROLE_PARAMS).forEach(r=>{
     if(ROLE_PARAMS_DEFAULT[r]){ROLE_PARAMS[r].sl=ROLE_PARAMS_DEFAULT[r].sl;ROLE_PARAMS[r].tp=ROLE_PARAMS_DEFAULT[r].tp;}
   });
   SIM_TUNE=null;window._lastSimTune=null;
-  try{localStorage.removeItem(BT_TUNE_KEY);}catch(e){}
+  let hadAI=false;
+  try{
+    if(localStorage.getItem(AUTO_REV_TUNE_KEY)||localStorage.getItem(AUTO_REV_RULES_KEY))hadAI=true;
+    localStorage.removeItem(BT_TUNE_KEY);
+    localStorage.removeItem(AUTO_REV_TUNE_KEY);      /* v0266：AI 参数修正持久化 */
+    localStorage.removeItem(AUTO_REV_RULES_KEY);     /* v0266：AI 结构条款持久化 */
+  }catch(e){}
+  /* 修正记录里"已生效"的条目同步作废：避免记录显示应用了、参数却回了出厂的认知割裂 */
+  try{
+    if(Array.isArray(revisions)){
+      revisions.forEach(rec=>(rec.changes||[]).forEach(c=>{
+        if(c.status==="auto_applied"||c.status==="applied")c.status="rolled_back";
+      }));
+      saveRevisions();renderRevisions();
+    }
+  }catch(e){}
   const box=document.getElementById("simTuneBox");if(box)box.innerHTML="";
-  btLog("↩️ 已恢复出厂止损/止盈参数（回测调参清除）");
+  btLog(hadAI
+    ?"↩️ 已恢复出厂参数：回测调参 + AI 参数修正 + AI 结构条款三份持久化全部清除；刷新页面后 AI 结构条款从源码态完全重置"
+    :"↩️ 已恢复出厂止损/止盈参数（回测调参清除）");
 }
 function genAdvice(res,have){
   const box=document.getElementById("simAdvice"),sorted=[...res].sort((a,b)=>b.total-a.total),best=sorted[0],worst=sorted[sorted.length-1];
