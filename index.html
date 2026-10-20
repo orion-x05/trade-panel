@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r20</title>
+<title>Orion-X AI量化投研面板 · v20260910-r21</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r20";
+<script>window.APP_VERSION="20260910-r21";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -382,6 +382,22 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .idx-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:4px 10px; border-radius:14px; background:var(--bg-panel); border:1px solid var(--border-soft); margin:2px 4px 2px 0; }
   .reason-list { margin-top:8px; }
   .reason-item { font-size:12px; color:var(--text-dim); padding:6px 0; border-bottom:1px dashed var(--border-soft); line-height:1.55; }
+  .rev-item .rev-head { margin-bottom:2px; }
+  .rev-change { margin:4px 0 4px 8px; padding:5px 8px; background:var(--bg-soft,rgba(255,255,255,.03)); border-radius:6px; font-size:12px; line-height:1.6; }
+  .rev-tag { display:inline-block; padding:0 6px; border-radius:4px; font-size:11px; margin-right:6px; }
+  .tag-param { background:rgba(64,158,255,.15); color:#409eff; }
+  .tag-struct { background:rgba(230,162,60,.15); color:#e6a23c; }
+  .rev-badge { display:inline-block; padding:0 6px; border-radius:4px; font-size:11px; margin-left:6px; vertical-align:middle; }
+  .b-auto_applied,.b-applied { background:rgba(103,194,58,.18); color:#67c23a; }
+  .b-pending,.b-ok { background:rgba(230,162,60,.18); color:#e6a23c; }
+  .b-rejected,.b-ignored { background:rgba(144,147,153,.18); color:#909399; }
+  .b-rolled_back { background:rgba(64,158,255,.15); color:#409eff; }
+  .b-src { background:rgba(64,158,255,.12); color:#409eff; }
+  .b-st { background:rgba(144,147,153,.12); color:#909399; }
+  .rev-reason { font-size:11px; color:#f56c6c; margin-top:2px; }
+  .rev-btn { margin-left:8px; padding:2px 10px; font-size:12px; border:1px solid var(--border,#444); border-radius:5px; background:transparent; color:var(--text,#eee); cursor:pointer; }
+  .rev-btn:hover { border-color:#409eff; color:#409eff; }
+  .rev-btn-ghost { opacity:.7; }
   .reason-item b { color:var(--text); }
   .reason-item .up { color:var(--up); }
   .reason-item .down { color:var(--down); }
@@ -2145,7 +2161,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <div class="panel collapsible" id="panel-review-revisions" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-review-revisions')">
       <span class="panel-title">策略自适应修正记录</span>
-      <span class="panel-tip">引擎依据走势持续评估各策略表现，表现弱于组合的策略自动下发修正建议</span>
+      <span class="panel-tip">AI 基于真实成交数据生成修正提案：参数微调自动应用，结构条件待你确认</span>
     </div>
     <div class="panel-body" id="reviewRevisions">
       <div class="review-note">尚无修正记录：引擎将持续评估 D1-D7 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>
@@ -2680,7 +2696,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r20</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r21</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -6366,6 +6382,234 @@ const REVISION_SUGGEST={
   D6:"板块退潮风险：建议加设板块指数过滤，板块指数跌破 MA20 时暂停开仓",
   D7:"周线超卖反转低频：建议在周线读数≤−40且拐头向上后再叠加日线企稳确认，减少深跌中继的误接"
 };
+
+/* ==================== AI 策略修正提案（v0264）====================
+   取代早期「REVISION_SUGGEST 固定文案模板 + p.revised 终身一条」：
+   ① 触发：日终评估角色表现弱（当日收益<组合均值-0.25pp，或卖出≥2笔且胜率<40%）
+   ② 冷却：同角色上一条提案仍有待办(open) → 14 个自然日（≈10个交易日）内不重复生成；
+      上一条已走完流程(closed) → 冷却立即解除，允许新根因再次触发（不再"只给一次机会"）
+   ③ 提案：AI 基于该角色近 20 笔真实成交 + 当前参数/规则 + 市场环境输出结构化 JSON
+   ④ 分级应用（用户 2026-10-20 确认：参数白名单自动 + 结构条件人工）：
+      A 级 param（target∈{sl,tp}，边界 sl3-12/tp5-25，与引擎 SL/TP_MIN/MAX 对齐，步长≤2pp）
+        → 自动应用 ROLE_PARAMS + localStorage 持久化 + 可一键回滚
+      B 级 structure（rulePatch 追加到角色 rules 末尾，标注优先级）→ 待人工确认后应用
+      越界/非法 change → status=rejected 内联展示原因，绝不应用
+   ⑤ AI 调用失败/解析失败 → 降级固定模板文案（记录不丢），保证 pageerror 为 0 */
+const AUTO_REV_TUNE_KEY="autoRevTuneV1";
+const AUTO_REV_RULES_KEY="autoRevRulesV1";
+const AUTO_PARAM_RANGE={sl:[3,12],tp:[5,25]};  /* 与 trade_engine.py SL_MIN/MAX、TP_MIN/MAX 对齐 */
+const AUTO_PARAM_MAX_STEP=2;                   /* 单次修正步长上限（百分点） */
+const REV_COOLDOWN_DAYS=14;                    /* ≈10 个交易日 */
+const revBusy=new Set();                        /* 角色级并发闸：防日终评估重复触发 */
+function revDaysSince(dateStr){
+  const t=new Date(dateStr+"T00:00:00").getTime();
+  return (Date.now()-t)/864e5;
+}
+function revCooldownLeft(role){
+  const last=[...revisions].reverse().find(r=>r.role===role);
+  if(!last)return 0;
+  if(last.status==="closed")return 0;           /* 上一条已终态处理 → 允许再次触发 */
+  return Math.max(0,REV_COOLDOWN_DAYS-revDaysSince(last.date));
+}
+function revNormalizeChange(c,role){
+  const rationale=String((c&&c.rationale)||"").slice(0,120);
+  if(c&&c.type==="structure"){
+    const patch=String(c.rulePatch||"").trim();
+    if(patch.length<8)return{type:"structure",status:"rejected",reason:"rulePatch 为空或过短，无法形成可执行条款"};
+    return{type:"structure",status:"pending",rulePatch:patch.slice(0,300),rationale};
+  }
+  const target=String((c&&c.target)||"");
+  const cur=ROLE_PARAMS[role]?ROLE_PARAMS[role][target]:undefined;
+  if(!AUTO_PARAM_RANGE[target])return{type:"param",target,current:cur,status:"rejected",reason:`target 必须是 sl/tp（收到 ${target||"空"}）`,rationale};
+  const proposed=Number(c.proposed);
+  if(!isFinite(proposed))return{type:"param",target,current:cur,status:"rejected",reason:"proposed 不是有效数字",rationale};
+  const [lo,hi]=AUTO_PARAM_RANGE[target];
+  if(proposed<lo||proposed>hi)return{type:"param",target,current:cur,proposed,status:"rejected",reason:`越界：${target} 允许 ${lo}-${hi}（收到 ${proposed}）`,rationale};
+  if(typeof cur==="number"&&Math.abs(proposed-cur)>AUTO_PARAM_MAX_STEP)
+    return{type:"param",target,current:cur,proposed,status:"rejected",reason:`步长超限：单次最多 ${AUTO_PARAM_MAX_STEP}pp（${cur}→${proposed}）`,rationale};
+  return{type:"param",target,current:cur,proposed,status:"ok",rationale};
+}
+/* A 级：参数自动应用（内存 ROLE_PARAMS + localStorage 持久化） */
+function revApplyAutoParam(role,target,value){
+  if(!ROLE_PARAMS[role]||!AUTO_PARAM_RANGE[target])return false;
+  const [lo,hi]=AUTO_PARAM_RANGE[target];
+  if(!isFinite(value)||value<lo||value>hi)return false;
+  ROLE_PARAMS[role][target]=value;
+  try{
+    const raw=JSON.parse(localStorage.getItem(AUTO_REV_TUNE_KEY)||"null");
+    const store=(raw&&raw.roles)?raw:{ts:Date.now(),roles:{}};
+    store.roles[role]=store.roles[role]||{};
+    store.roles[role][target]=value;
+    store.ts=Date.now();
+    localStorage.setItem(AUTO_REV_TUNE_KEY,JSON.stringify(store));
+  }catch(e){}
+  return true;
+}
+/* 启动时恢复 AI 自动应用的参数（在回测调参 loadSimTune 之后调用：AI 修正基于最新实盘，覆盖回测值） */
+function loadAutoRevTune(){
+  try{
+    const store=JSON.parse(localStorage.getItem(AUTO_REV_TUNE_KEY)||"null");
+    if(!store||!store.roles)return null;
+    Object.keys(store.roles).forEach(r=>{
+      if(!ROLE_PARAMS[r])return;
+      const v=store.roles[r];
+      if(typeof v.sl==="number"&&v.sl>=AUTO_PARAM_RANGE.sl[0]&&v.sl<=AUTO_PARAM_RANGE.sl[1])ROLE_PARAMS[r].sl=v.sl;
+      if(typeof v.tp==="number"&&v.tp>=AUTO_PARAM_RANGE.tp[0]&&v.tp<=AUTO_PARAM_RANGE.tp[1])ROLE_PARAMS[r].tp=v.tp;
+    });
+    return store;
+  }catch(e){return null;}
+}
+function revRulesPatchKey(date,role,idx){return `${date}_${role}_${idx}`;}
+function revRuleBlock(date,patch){return `【AI修正·${date}】${patch}（来源：AI策略评审提案，优先级高于前述冲突条款）`;}
+/* 结构条款追加到角色 rules 末尾（幂等：已含相同 block 不重复追加） */
+function revAppendRule(role,date,idx,patch){
+  const key=revRulesPatchKey(date,role,idx);
+  const block=revRuleBlock(date,patch);
+  const d=AGENT_DETAILS[role];
+  if(!d)return key;
+  if(d.rules.indexOf(block)<0)d.rules=d.rules+block;
+  try{
+    const raw=JSON.parse(localStorage.getItem(AUTO_REV_RULES_KEY)||"null");
+    const store=(raw&&raw.roles)?raw:{roles:{}};
+    (store.roles[role]=store.roles[role]||[]).push({key,date,rulePatch:patch});
+    localStorage.setItem(AUTO_REV_RULES_KEY,JSON.stringify(store));
+  }catch(e){}
+  return key;
+}
+/* 启动时恢复已应用的结构条款（刷新后 rules 回到源码文本，需重新追加） */
+function loadAutoRevRules(){
+  try{
+    const store=JSON.parse(localStorage.getItem(AUTO_REV_RULES_KEY)||"null");
+    if(!store||!store.roles)return 0;
+    let n=0;
+    Object.keys(store.roles).forEach(role=>{
+      const d=AGENT_DETAILS[role];
+      if(!d)return;
+      store.roles[role].forEach(item=>{
+        const block=revRuleBlock(item.date,item.rulePatch);
+        if(d.rules.indexOf(block)<0){d.rules=d.rules+block;n++;}
+      });
+    });
+    return n;
+  }catch(e){return 0;}
+}
+function revStatusText(st){
+  return{ok:"待应用",pending:"待确认",auto_applied:"已自动应用",applied:"已应用",
+    ignored:"已忽略",rolled_back:"已回滚",rejected:"未应用"}[st]||st;
+}
+/* AI 生成差异化修正提案（异步 fire-and-forget；冷却/并发/降级在函数内部把关） */
+async function genRevisionProposal(p,avgRet){
+  const role=p&&p.id;
+  if(!role||!AGENT_DETAILS[role]||!ROLE_PARAMS[role])return null;
+  if(revBusy.has(role))return null;
+  if(revCooldownLeft(role)>0)return null;
+  revBusy.add(role);
+  try{
+    const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
+    const sells=p.trades.filter(t=>t.type==="sell");
+    const recent=p.trades.slice(-20).map(t=>
+      `${(t.time||t.date||"").slice(0,10)} ${t.type} ${t.code} ${t.qty}股@${t.price}`+
+      (t.profit!==undefined?` 盈亏${Number(t.profit).toFixed(1)}`:"")+` 原因:${t.reason||""}`);
+    const sys="你是量化策略评审官。基于给出的角色真实交易数据诊断策略缺陷，输出可执行的修正提案。只输出JSON，禁止任何解释文字。";
+    const prompt=`角色：${role} ${p.name}\n风格定位：${AGENT_DETAILS[role].desc}\n`+
+      `当前参数：止损sl=${ROLE_PARAMS[role].sl}% 止盈tp=${ROLE_PARAMS[role].tp}%\n`+
+      `当前规则（节选）：${AGENT_DETAILS[role].rules.slice(0,500)}\n`+
+      `当日收益 ${ret.toFixed(2)}%（组合均值 ${avgRet.toFixed(2)}%）；累计卖出 ${sells.length} 笔，胜率 ${sells.length?(sells.filter(t=>t.profit>0).length/sells.length*100).toFixed(0):"--"}%\n`+
+      `近期成交（最多20笔）：\n${recent.join("\n")||"（无成交记录）"}\n\n`+
+      `只输出如下结构的JSON：\n`+
+      `{"category":"英文蛇形根因标签(如 trend_too_strict)","diagnosis":"100字内中文诊断，必须引用上面给出的真实数据","confidence":"0-100整数",`+
+      `"changes":[{"type":"param","target":"sl或tp","current":当前数值,"proposed":建议数值,"rationale":"一句中文"},`+
+      `{"type":"structure","rulePatch":"一条具体可执行的中文规则条款，将追加到角色规则末尾","rationale":"一句中文"}]}\n`+
+      `约束：param 的 target 只能是 sl 或 tp；proposed 与 current 差值不超过 ${AUTO_PARAM_MAX_STEP}；changes 共 1-3 条；除 JSON 外不输出任何字符。`;
+    let reply=null;
+    try{reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],800,1);}catch(e){reply=null;}
+    let rec=null;
+    if(reply){
+      try{
+        const m=String(reply).match(/\{[\s\S]*\}/);
+        const obj=m?JSON.parse(m[0]):null;
+        if(obj&&obj.diagnosis&&Array.isArray(obj.changes)&&obj.changes.length){
+          rec={date:todayStr(new Date()),role,strategy:p.name,
+            issue:`${role} 当日收益 ${ret.toFixed(2)}%（组合均值 ${avgRet.toFixed(2)}%）`,
+            action:obj.diagnosis,category:String(obj.category||"unspecified").slice(0,40),
+            diagnosis:String(obj.diagnosis).slice(0,200),confidence:Number(obj.confidence)||0,source:"ai",
+            changes:obj.changes.slice(0,3).map(c=>revNormalizeChange(c,role)),status:"open"};
+        }
+      }catch(e){}
+    }
+    if(!rec){ /* 降级：AI 不可用/解析失败 → 固定模板，记录不丢 */
+      rec={date:todayStr(new Date()),role,strategy:p.name,
+        issue:`${role} 当日收益 ${ret.toFixed(2)}%（组合均值 ${avgRet.toFixed(2)}%）`,
+        action:REVISION_SUGGEST[role]||"建议人工复盘该角色近期交易",category:"template_fallback",
+        source:"template",changes:[],status:"closed"};
+    }
+    /* A 级参数自动应用（越界项已在内联校验阶段 rejected） */
+    let autoApplied=0;
+    (rec.changes||[]).forEach(c=>{
+      if(c.type==="param"&&c.status==="ok"){
+        const before=ROLE_PARAMS[role][c.target];
+        if(revApplyAutoParam(role,c.target,c.proposed)){c.status="auto_applied";c.previous=before;autoApplied++;}
+        else{c.status="rejected";c.reason="应用失败（边界校验未过）";}
+      }
+    });
+    if(!rec.changes.some(c=>c.status==="pending"))rec.status="closed";
+    revisions.push(rec);saveRevisions();
+    log(autoApplied?"info":"warn",`策略修正提案[${rec.source}]：${role} → ${rec.diagnosis||rec.action}`);
+    if(typeof renderRevisions==="function")renderRevisions();
+    if(rec.source==="ai"&&autoApplied>0)
+      sendWechat(`🧠 ${role} 参数微调已自动应用`,`角色 ${role} 基于近期战绩自动微调参数 ${autoApplied} 项：\n`+
+        rec.changes.filter(c=>c.status==="auto_applied").map(c=>`${c.target} ${c.current}%→${c.proposed}%（${c.rationale}）`).join("\n")+
+        `\n诊断：${rec.diagnosis}\n时间：${new Date().toLocaleString("zh-CN")}`);
+    else if(rec.source==="ai")
+      sendWechat(`🧠 ${role} 策略修正提案待确认`,`角色 ${role} 收到结构条件修正提案，请在面板「策略自适应修正记录」中确认：\n${rec.diagnosis}`);
+    return rec;
+  }finally{revBusy.delete(role);}
+}
+/* B 级：人工确认应用结构条款（追加 rules + 持久化 + 留痕） */
+function revRecById(id){
+  const parts=id.split("_");
+  const role=parts[parts.length-2],date=parts[0],idx=Number(parts[parts.length-1]);
+  const rec=revisions.find(r=>r.date===date&&r.role===role);
+  return rec&&rec.changes&&rec.changes[idx]?{rec,c:rec.changes[idx],idx}:null;
+}
+function revCloseIfDone(rec){
+  if(!rec.changes.some(x=>x.status==="pending"))rec.status="closed";
+}
+function applyRevChange(id){
+  const hit=revRecById(id);
+  if(!hit)return;
+  const {rec,c,idx}=hit;
+  if(c.type!=="structure"||c.status!=="pending")return;
+  revAppendRule(rec.role,rec.date,idx,c.rulePatch);
+  c.status="applied";
+  revCloseIfDone(rec);
+  saveRevisions();log("info",`结构条件修正已应用：${rec.role} → ${c.rulePatch}`);
+  renderRevisions();
+}
+function ignoreRevChange(id){
+  const hit=revRecById(id);
+  if(!hit)return;
+  const {rec,c}=hit;
+  if(c.status!=="pending")return;
+  c.status="ignored";
+  revCloseIfDone(rec);
+  saveRevisions();renderRevisions();
+}
+/* A 级回滚：恢复应用前参数值（内存 + 持久化同步） */
+function rollbackRevChange(id){
+  const hit=revRecById(id);
+  if(!hit)return;
+  const {rec,c}=hit;
+  if(c.status!=="auto_applied")return;
+  if(ROLE_PARAMS[rec.role]&&c.previous!==undefined)ROLE_PARAMS[rec.role][c.target]=c.previous;
+  c.status="rolled_back";
+  try{
+    const store=JSON.parse(localStorage.getItem(AUTO_REV_TUNE_KEY)||"null");
+    if(store&&store.roles&&store.roles[rec.role]){store.roles[rec.role][c.target]=c.previous;store.ts=Date.now();localStorage.setItem(AUTO_REV_TUNE_KEY,JSON.stringify(store));}
+  }catch(e){}
+  saveRevisions();log("info",`参数微调已回滚：${rec.role} ${c.target} 恢复至 ${c.previous}%`);
+  renderRevisions();
+}
 const HOLD_REASONS={
   D1:"趋势结构完好，仍站稳中期均线上方，按突破持仓逻辑继续持有",
   D2:"多Agent 共识尚未破裂，风控未触发，继续持有观察",
@@ -6447,19 +6691,15 @@ function buildDailySummary(){
       :env.score>=30?"次日谨慎：大盘偏空、资金流出，降低仓位，只做确定性机会，避免追高。"
       :"次日防御：大盘极弱、盘面复杂，建议空仓或极轻仓等待企稳，不逆势开仓。")+
     (crossCnt?(" 持仓中 "+crossCnt+" 只现 MACD 空头，注意高位死叉个股逢高减仓。"):"");
-  const newRev=[];
+  /* v0264：表现弱的角色 → AI 生成差异化修正提案（异步；冷却/去重/降级在函数内部把关）。
+     已废除 p.revised 终身一条：改为「上一条待办未结则14日(≈10个交易日)冷却，结案即可再触发」。 */
   simData.players.forEach(p=>{
     const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
     const winRate=p.winRate||0;
     const weak=ret<avgRet-0.25||(p.trades.filter(t=>t.type==="sell").length>=2&&winRate<0.4);
-    if(weak&&!p.revised&&!revisions.some(r=>r.role===p.id&&r.date===date)){
-      newRev.push({date,role:p.id,strategy:p.name,issue:`${p.id} 当日收益 ${ret.toFixed(2)}%（组合均值 ${avgRet.toFixed(2)}%）`,action:REVISION_SUGGEST[p.id]});
-      p.revised=true;
-    }
+    if(weak)genRevisionProposal(p,avgRet);
   });
-  newRev.forEach(r=>{revisions.push(r);log("warn",`策略修正：${r.role} ${r.strategy} → ${r.action}`);});
-  if(newRev.length)saveRevisions(); /* 持久化：刷新/重开不丢失（用户要求一直保留） */
-  return{date,indices,holds,revisions:newRev.length,shAnalysis,pastVsNow,nextDayExpect};
+  return{date,indices,holds,revisions:revisions.filter(r=>r.date===date).length,shAnalysis,pastVsNow,nextDayExpect};
 }
 function checkCloseSummaries(){
   const now=new Date();
@@ -7911,6 +8151,30 @@ function renderDailyPlan(){
   genDailyPlan();
 }
 
+function renderRevisions(){
+  const revBox=$("reviewRevisions");
+  if(revisions.length){
+    revBox.innerHTML=revisions.slice().reverse().map(r=>{
+      const srcBadge=r.source==="ai"?"AI提案":"模板建议";
+      const stBadge=r.status==="closed"?"已处理":"待处理";
+      const chgs=(r.changes||[]).map((c,i)=>{
+        const id=r.date+"_"+r.role+"_"+i;
+        if(c.type==="param"){
+          const btns=c.status==="auto_applied"?`<button class="rev-btn" onclick="rollbackRevChange('${id}')">回滚</button>`:"";
+          const rej=c.status==="rejected"?`<div class="rev-reason">未应用：${escHtml(c.reason||"")}</div>`:"";
+          return `<div class="rev-change"><span class="rev-tag tag-param">参数</span> ${escHtml(c.target)}：${c.current}% → <b>${c.proposed}%</b> <span class="rev-badge b-${c.status}">${revStatusText(c.status)}</span>${btns}${rej}</div>`;
+        }
+        const btns=c.status==="pending"?`<button class="rev-btn" onclick="applyRevChange('${id}')">应用</button><button class="rev-btn rev-btn-ghost" onclick="ignoreRevChange('${id}')">忽略</button>`:"";
+        return `<div class="rev-change"><span class="rev-tag tag-struct">结构</span> ${escHtml(c.rulePatch||"")} <span class="rev-badge b-${c.status}">${revStatusText(c.status)}</span>${btns}</div>`;
+      }).join("");
+      return `<div class="reason-item rev-item"><div class="rev-head"><b>${escHtml(r.date)}</b> ${escHtml(r.role)} ${escHtml(r.strategy)} <span class="rev-badge b-src">${srcBadge}</span> <span class="rev-badge b-st">${stBadge}</span></div>`+
+        `<div>问题：${escHtml(r.issue)}</div><div>${r.source==="ai"?"诊断":"建议"}：${escHtml(r.diagnosis||r.action)}</div>${chgs}</div>`;
+    }).join("");
+  }else{
+    revBox.innerHTML=`<div class="review-note">尚无修正记录：AI 将持续评估 D1-D7 策略表现，表现弱时基于真实成交数据生成修正提案（参数微调自动应用，结构条件待确认）。</div>`;
+  }
+}
+
 function renderReview(){
   renderReviewSentiment();
   try{renderDailyPlan();}catch(e){}
@@ -7966,13 +8230,7 @@ function renderReview(){
     <h4>月总结 <span class="tag ${summaries.month&&summaries.month.key===mk?"":"pending"}">${summaries.month&&summaries.month.key===mk?"已生成":"本月至今"}</span></h4>
     <div class="review-meta">${mk} · 每月末最后交易日 15:00 收盘后自动生成正式月总结</div>
     ${retRowsHtml(monthRows)}`;
-  const revBox=$("reviewRevisions");
-  if(revisions.length){
-    revBox.innerHTML=revisions.slice().reverse().map(r=>`
-      <div class="reason-item"><b>${escHtml(r.date)}</b> ${escHtml(r.role)} ${escHtml(r.strategy)}<br>问题：${escHtml(r.issue)}<br>修正：${escHtml(r.action)}</div>`).join("");
-  }else{
-    revBox.innerHTML=`<div class="review-note">尚无修正记录：引擎将持续评估 D1-D7 策略表现，胜率与回撤偏离组合均值时自动修正参数。</div>`;
-  }
+  renderRevisions();
 }
 
 function renderMarketBar(){
@@ -9201,6 +9459,12 @@ window.addEventListener("DOMContentLoaded",()=>{
     btLog(`⚙️ 已载入回测调参（${new Date(__bt.ts).toLocaleString("zh-CN")}）：`+
       Object.keys(__bt.roles).map(r=>`${r} 止损${__bt.roles[r].sl}%/止盈${__bt.roles[r].tp}%`).join("、"));
   }
+  /* 恢复 AI 修正（v0264）：自动应用的参数 + 已确认的结构条款（AI 修正基于最新实盘，覆盖回测值） */
+  const __art=loadAutoRevTune();
+  if(__art)btLog(`🧠 已载入 AI 参数修正（${new Date(__art.ts).toLocaleString("zh-CN")}）：`+
+    Object.keys(__art.roles).map(r=>`${r} 止损${__art.roles[r].sl}%/止盈${__art.roles[r].tp}%`).join("、"));
+  const __arn=loadAutoRevRules();
+  if(__arn)btLog(`🧠 已恢复 AI 结构条款 ${__arn} 条`);
   
   /* 【自动同步】每隔30秒自动检查后台交易引擎更新，面板和微信消息完全同步 */
   let lastRemoteUpdate="";
