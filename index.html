@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r16</title>
+<title>Orion-X AI量化投研面板 · v20260910-r17</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r16";
+<script>window.APP_VERSION="20260910-r17";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -756,6 +756,9 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .learn-item b.learn-key { color:var(--cyan); display:block; margin-bottom:2px; }
   .learn-item span { color:var(--text-dim); }
   .learn-item.lb { border-left-color:var(--up); }
+  /* 知识库条目边界说明 + 互链（2026-10-20 去重划界）：提示本条目不收录什么、相关内容在哪个条目 */
+  .kb-scope { background:rgba(245,158,11,.07); border:1px dashed rgba(245,158,11,.35); border-radius:8px; padding:7px 11px; font-size:11.5px; line-height:1.6; color:var(--amber); margin-bottom:8px; }
+  .kb-scope b { color:var(--amber); }
   .learn-item.lb b.learn-key { color:var(--up); }
   .learn-item.ls { border-left-color:var(--down); }
   .learn-item.ls b.learn-key { color:var(--down); }
@@ -2268,6 +2271,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="tech-fold-body" style="display:none">
       <div class="chat-learn">
         <div class="learn-group">🔬 低位放量试盘突破 · D4/D5体系（长期打底→试盘→洗盘→二次突破）</div>
+        <div class="kb-scope" style="margin:0 0 8px">🔗 同一「突破→洗盘→二次突破」框架在涨停股上的版本，见「⚡ 涨停回踩突破战法（N字结构）」。</div>
         <div class="learn-item lb"><b class="learn-key">① 打底确认</b><span>长期低位横盘（高点回撤≥40%、横盘≥30日、均线收敛、持续缩量），筹码低位集中——只在此池中找标的</span></div>
         <div class="learn-item lb"><b class="learn-key">② 初次放量突破</b><span>单日量≥前日2倍的放量阳线、突破横盘箱体上沿＝主力第一次试盘（第一信号K，多数不是主升起点，容易马上洗盘）</span></div>
         <div class="learn-item lb"><b class="learn-key">③ 缩量洗盘过滤</b><span>放量K后回落震荡，但价格保持在放量K区间内、不有效跌破其最低点；跌破＝试盘失败，直接剔除</span></div>
@@ -2277,6 +2281,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <div class="learn-item ls"><b class="learn-key">⑦ 两档止盈</b><span>冲高放量长上影/资金大幅流出 → 分批兑现一半；趋势止盈：跌破MA10十日线 → 全部离场</span></div>
         <div class="learn-item ls"><b class="learn-key">⑧ 大盘过滤</b><span>大盘单边下跌：降低D4低吸仓位、优先只做D5突破确认；环境很差时放弃D4</span></div>
         <div class="learn-group">📈 看多 / 进场确认（实战案例：顺钠、株冶、中国稀土）</div>
+        <div class="kb-scope" style="margin:0 0 8px">📎 此处为群聊信号要点速览；完整案例结构（信号共振/数据佐证/多Agent协同）见「📈 实战案例复盘」。</div>
         <div class="learn-item lb"><b class="learn-key">① 突破关键位才看多</b><span>有效突破前高/箱体上沿且放量收盘确认才进场，未突破不追</span></div>
         <div class="learn-item lb"><b class="learn-key">② 强势确认模型</b><span>跳空大阳 + 放量分歧 + 缩量转一致（回踩不破再放量上攻）＝强势确认</span></div>
         <div class="learn-item lb"><b class="learn-key">③ 回踩支撑低吸</b><span>第二防守位/前低附近放量企稳进场</span></div>
@@ -2377,6 +2382,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           <span>直升机形态+缩量企稳+金银上涨周期 · 历史胜率90% · 过去5次平均收益25%-35% · 置信度：高</span>
         </div>
         <div class="learn-group">🥈 案例二：长春高新 · 扭亏为盈</div>
+        <div class="kb-scope">🔗 两个案例是「🤖 AI量化交易系统方法论」的实盘演示：案例一=形态模块（pattern_analyzer 直升机形态）+ 量价验证；案例二=形态+狙击手资金模块+多Agent信息协同的完整链路。</div>
         <div class="learn-item lb">
           <b class="learn-key">多Agent协同</b>
           <span>生命科技新闻Agent（扫描全球创新药进展）+ 美股掘金系统（监控生物科技板块异动）+ A股量化系统（K线+资金+板块）</span>
@@ -2402,7 +2408,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="chat-learn">
         <div class="learn-item lb">
           <b class="learn-key">第一条线：全市场扫描</b>
-          <span>每天收盘后扫描整个A股市场，把所有出现异常信号的股票挑出来。形态、资金、板块、成交量全部过一遍。价值：不放过任何一个潜在板块性机会。</span>
+          <span>每天收盘后扫描整个A股市场，把所有出现异常信号的股票挑出来。形态、资金、板块、成交量全部过一遍（即「🤖 AI量化交易系统方法论」的四维共振）。价值：不放过任何一个潜在板块性机会。</span>
         </div>
         <div class="learn-item lb">
           <b class="learn-key">第二条线：自选股池深度盯盘</b>
@@ -2430,6 +2436,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       </span>
     </div>
     <div class="tech-fold-body" style="display:none">
+      <div class="kb-scope">📐 <b>收录边界：</b>本图谱收<b>组合形态与关键反转结构</b>（底部反转信号，位置比形态本身更重要）；单根K线基础形态速查见下方「📊 25种常见K线形态速查」，两者不重复收录。</div>
       <div class="kpattern-grid">
         <div class="kpattern-card">
           <div class="kp-name">早晨之星</div>
@@ -2497,6 +2504,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="panel-tip">单根K线基础形态 · 位置决定性质 ▼</span>
     </div>
     <div class="panel-body">
+      <div class="kb-scope">📐 <b>收录边界：</b>本表只收<b>单根</b>K线基础形态；双根/多根组合（早晨之星、旭日东升、曙光初现、阳包阴、三阳开泰等）不在此表，见上方「🕯️ 经典反转K线形态图谱」。</div>
       <div class="kpattern-grid">
         <div class="kpattern-card bull"><div class="kp-num">1</div><div class="kp-name">大阳线</div><div class="kp-desc">多头强势上涨，买盘强劲，短线看涨信号</div></div>
         <div class="kpattern-card bear"><div class="kp-num">2</div><div class="kp-name">大阴线</div><div class="kp-desc">空头全面压制，抛压沉重，行情走弱</div></div>
@@ -2518,11 +2526,11 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <div class="kpattern-card"><div class="kp-num">18</div><div class="kp-name">阴纺锤线</div><div class="kp-desc">弱势震荡，空头蓄力，短期偏弱运行</div></div>
         <div class="kpattern-card bull"><div class="kp-num">19</div><div class="kp-name">一字涨停</div><div class="kp-desc">资金封板，极致强势，多头完全控盘</div></div>
         <div class="kpattern-card bear"><div class="kp-num">20</div><div class="kp-name">一字跌停</div><div class="kp-desc">全盘抛压，极度弱势，空头垄断行情</div></div>
-        <div class="kpattern-card bull"><div class="kp-num">21</div><div class="kp-name">旭日东升</div><div class="kp-desc">下跌后阳吞阴，低位反转看涨信号</div></div>
+        <div class="kpattern-card bull"><div class="kp-num">21</div><div class="kp-name">T字线</div><div class="kp-desc">开盘=收盘=最高价，长下影，低位反转信号（锤子线家族）</div></div>
         <div class="kpattern-card bear"><div class="kp-num">22</div><div class="kp-name">乌云盖顶</div><div class="kp-desc">高位阳后大跌，多头乏力见顶回落</div></div>
-        <div class="kpattern-card bull"><div class="kp-num">23</div><div class="kp-name">曙光初现</div><div class="kp-desc">低位探底反弹，多头入场企稳回升</div></div>
+        <div class="kpattern-card bear"><div class="kp-num">23</div><div class="kp-name">倒T字线</div><div class="kp-desc">开盘=收盘=最低价，长上影，高位见顶回落信号</div></div>
         <div class="kpattern-card bear"><div class="kp-num">24</div><div class="kp-name">倾盆大雨</div><div class="kp-desc">高位破位下跌，空头发力行情走弱</div></div>
-        <div class="kpattern-card bull"><div class="kp-num">25</div><div class="kp-name">阳包阴</div><div class="kp-desc">大阳包裹小阴，多头反攻强势反转</div></div>
+        <div class="kpattern-card"><div class="kp-num">25</div><div class="kp-name">一字线</div><div class="kp-desc">四价合一，常见于一字涨跌停或极度冷清，方向由位置决定</div></div>
       </div>
     </div>
   </div>
@@ -2533,6 +2541,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="panel-tip">主力建仓 → 洗盘 → 二次拉升 · K线结构像一个N字 ▼</span>
     </div>
     <div class="panel-body">
+      <div class="kb-scope">🔗 <b>与「策略学习 · D4/D5低位放量体系」的关系：</b>两者共用同一套「放量突破 → 缩量洗盘 → 二次突破」框架，区别只在触发场景——本战法针对<b>涨停板</b>后的回踩再突破；D4/D5 针对<b>低位平台</b>放量试盘。逻辑不重复，场景各看各。</div>
       <div class="chat-learn">
         <div class="learn-group">💡 为什么这个战法有效？（5个逻辑）</div>
         <div class="learn-item lb">
@@ -2597,7 +2606,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="chat-learn">
         <div class="learn-item">
           <b class="learn-key">① 系统帮找机会，人做决策</b>
-          <span>系统只是给了你"值得下注"的信号，最后按下买入键的，是你自己。这种事儿绝对不可能信别人，只能信自己的判断。</span>
+          <span>系统只给"值得下注"的信号，最后按下买入键的永远是你自己——这种事只能信自己的判断。（体系论证见「🤖 AI量化交易系统方法论 · 关键认知」）</span>
         </div>
         <div class="learn-item">
           <b class="learn-key">② 从"人找股票"到"股票找人"</b>
@@ -2605,7 +2614,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div class="learn-item">
           <b class="learn-key">③ 概率思维，不追求预测</b>
-          <span>没有人能准确知道明天哪只股票一定涨。但你可以知道：今天市场发生了什么、哪些股票开始异常、哪些板块开始变化、哪些形态过去出现过、资金有没有配合、这个信号以前的结果怎么样。然后在一堆不确定性里，挑一个相对更值得下注的东西。</span>
+          <span>落到操作上就是逐项核对：今天市场发生了什么、哪些股票开始异常、哪些板块在变化、哪些形态过去出现过、资金有没有配合、这个信号以前的结果怎么样——然后在一堆不确定性里，挑一个相对更值得下注的。（为什么"历史胜率≠未来胜率"见「🤖 AI量化交易系统方法论 · 概率思维」）</span>
         </div>
         <div class="learn-item">
           <b class="learn-key">④ 把交易方法变成系统</b>
@@ -2671,7 +2680,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r16</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r17</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
