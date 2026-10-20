@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r23</title>
+<title>Orion-X AI量化投研面板 · v20260910-r24</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r23";
+<script>window.APP_VERSION="20260910-r24";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -1451,6 +1451,54 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="m-sub" id="vTempSub">等待数据…</div>
     </div>
   </div>
+  <!-- ===== v0267 大盘情绪面板：由「个股研究」tab 融合迁入，与上方指标卡合并为一处；
+       涨跌家数/温度/成交额等快照指标已在指标卡展示，此处只放过程与细节（不重复）；
+       默认折叠与总览其余面板约定一致（initPanelFolds 会认 data-collapsed），展开时 refreshFoldedCharts 初始化图表 ===== -->
+  <div class="panel collapsible" id="panel-sentiment" data-collapsed style="margin-top:16px">
+    <div class="panel-head" onclick="togglePanel('panel-sentiment')">
+      <span class="panel-title">📊 大盘情绪 · 走势过程与辅助参考</span>
+      <span class="panel-tip">涨跌家数/温度快照见上方指标卡 · 此处：K线过程 / 国家队 / 多周期 / 恐惧贪婪 / 辅助情绪</span>
+    </div>
+    <div class="panel-body">
+      <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
+      <div class="ms-process">
+        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
+        <div class="kline-grid">
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
+          <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
+        </div>
+        <div class="kline-grid" style="margin-top:12px">
+          <div class="kline-cell"><div class="kline-cap">🧭 多周期共振（日/周/月方向 + 置信度 GATE）</div><div id="mpBody" class="mp-body"><div class="ms-loading">诊断中…</div></div></div>
+          <div class="kline-cell"><div class="kline-cap">😨🤑 恐惧贪婪指数（市场情绪综合评级）</div><div id="cGauge" class="ech" style="height:200px"></div></div>
+        </div>
+      </div>
+      <!-- 国家队资金动向（最高优先级：先人一步探测资金异动，猜测意图并验证） -->
+      <div class="ms-process" style="border-top:1px dashed var(--border-soft)">
+        <div class="ms-sect-title">🛡️ 国家队资金动向<span class="ms-prio">最高优先级</span><span style="font-size:10px;color:var(--text-faint);font-weight:400">（宽基ETF异动 · 尾盘异动 · 沪深300/中证2000强弱 · 意图猜测+验证）</span></div>
+        <div id="ntBody" class="nt-body"><div class="ms-loading">探测中…</div></div>
+      </div>
+      <div class="ext-aux-label" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
+      <div class="tech-fold-body" id="extBody" style="display:none">
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（辅助） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
+          <div id="momBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪（辅助） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
+          <div id="vixBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（辅助） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
+          <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（辅助） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
+          <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- ===== 角色总览：组合汇总指标 + 7 角色卡片（融合为一个可折叠 panel） ===== -->
   <div class="panel collapsible" id="panel-role-summary" data-collapsed style="margin-bottom:12px;margin-top:16px">
     <div class="panel-head" onclick="togglePanel('panel-role-summary')">
@@ -1942,55 +1990,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 
 <!-- ===== Tab3 个股研究（候选行情池+研究评分合并） ===== -->
 <section class="tab-view" id="view-research">
-  <!-- ===== 外部监控（放在五行日历上方） ===== -->
-  <div class="panel collapsible" id="panel-sentiment" data-collapsed>
-    <div class="panel-head" onclick="togglePanel('panel-sentiment')">
-      <span class="panel-title">📊 情绪监控 · 主参考：大盘情绪</span>
-      <span class="panel-tip">宝妈 / 美股估值 / 龙虎 / 北向 为辅助情绪</span>
-    </div>
-    <div class="panel-body">
-      <!-- 大盘情绪主参考（始终可见，作为一切情绪判断的首要依据） -->
-      <div class="ms-main" id="msMainBody"><div class="ms-loading">等待行情刷新…</div></div>
-      <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
-      <div class="ms-process">
-        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
-        <div class="kline-grid">
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
-          <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
-        </div>
-        <div class="kline-grid" style="margin-top:12px">
-          <div class="kline-cell"><div class="kline-cap">🧭 多周期共振（日/周/月方向 + 置信度 GATE）</div><div id="mpBody" class="mp-body"><div class="ms-loading">诊断中…</div></div></div>
-          <div class="kline-cell"><div class="kline-cap">😨🤑 恐惧贪婪指数（市场情绪综合评级）</div><div id="cGauge" class="ech" style="height:200px"></div></div>
-        </div>
-      </div>
-      <!-- 国家队资金动向（最高优先级：先人一步探测资金异动，猜测意图并验证） -->
-      <div class="ms-process" style="border-top:1px dashed var(--border-soft)">
-        <div class="ms-sect-title">🛡️ 国家队资金动向<span class="ms-prio">最高优先级</span><span style="font-size:10px;color:var(--text-faint);font-weight:400">（宽基ETF异动 · 尾盘异动 · 沪深300/中证2000强弱 · 意图猜测+验证）</span></div>
-        <div id="ntBody" class="nt-body"><div class="ms-loading">探测中…</div></div>
-      </div>
-      <div class="ext-aux-label" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
-      <div class="tech-fold-body" id="extBody" style="display:none">
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（辅助） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
-          <div id="momBody" style="display:none"></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪（辅助） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
-          <div id="vixBody" style="display:none"></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（辅助） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
-          <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（辅助） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
-          <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== 底部探测器：政策底 + 技术底（消息面判断核心模块） ===== -->
+  <!-- ===== 底部探测器：政策底 + 技术底（消息面判断核心模块）===== -->
   <div class="panel collapsible" id="panel-bottom" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-bottom')">
       <span class="panel-title">🔭 底部探测器 · 政策底 / 技术底</span>
@@ -2112,8 +2112,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   </div>
   <div class="panel collapsible" id="panel-review-sentiment" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-review-sentiment')">
-      <span class="panel-title">市场情绪与广度</span>
-      <span class="panel-tip">基于候选池实时行情统计 · 涨跌家数 / 红盘率 / 涨跌停 / 板块强弱 ▼</span>
+      <span class="panel-title">市场状态 · 行业强弱榜</span>
+      <span class="panel-tip">市场状态定性 + 行业强弱排序（涨跌家数快照已移至运行总览指标卡，不重复）▼</span>
     </div>
     <div class="panel-body" id="reviewSentiment"></div>
   </div>
@@ -2251,7 +2251,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <label class="sim-opt"><input type="checkbox" id="simRuleLearn" checked> 群聊防守纪律</label>
         <button class="gmk-btn" onclick="runSim()">开始回测</button>
         <button class="gmk-btn" onclick="runSim()">🎲 换一批随机样本</button>
-        <button class="gmk-btn" onclick="clearSimTune()" title="七角色止损/止盈回到源码默认值，并清除三份持久化：回测调参(btTuneV1)、AI参数修正(autoRevTuneV1)、AI结构条款(autoRevRulesV1)">↩️ 恢复出厂参数</button>
+        <button class="gmk-btn" id="paramUndoBtn" onclick="undoParamChange()" disabled title="暂无可撤回的参数变更">↩️ 撤回上一步</button>
+        <span id="paramUndoLabel" class="gmk-src"></span>
         <span id="simSrc" class="gmk-src" style="margin-left:auto">—</span>
       </div>
       <div id="simSampleInfo" class="sim-sample-info">点击「开始回测」：随机抽样市场候选股 + 随机时间段（真实日K，不编造）</div>
@@ -2697,7 +2698,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r23</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r24</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -3546,24 +3547,8 @@ function renderMarketView(){
     else desc="情绪冰点 · 恐慌性抛售";
     $("vTempSub").textContent=desc;
   }
-  /* --- 大盘情绪主参考（主锚）：置顶展示，供外部监控面板调用 --- */
-  if($("msMainBody")){
-    const shChg=iq["sh000001"]&&isFinite(iq["sh000001"].chg)?iq["sh000001"].chg:null;
-    const red=st.n?Math.round(st.up/st.n*100):null;
-    const m5=nS?Math.round(aboveMA5/nS*100):null;
-    const m20=nS?Math.round(aboveMA20/nS*100):null;
-    const cls=temp>=20?"ms-hot":temp>=10?"ms-warm":temp>=3?"ms-neutral":temp>-3?"ms-neutral":temp>-10?"ms-cold":"ms-ice";
-    const lvl=!hasData?"等待数据…":temp>=20?"情绪高涨 · 注意过热":temp>=10?"情绪偏暖 · 谨慎做多":temp>=3?"情绪温和 · 可逢低布局":temp>-3?"情绪中性 · 观望为主":temp>-10?"情绪偏冷 · 控制仓位":temp>-20?"情绪低迷 · 等待企稳":"情绪冰点 · 恐慌性抛售";
-    $("msMainBody").innerHTML=`<div class="ms-head"><span class="ms-tag">大盘情绪 · 主参考</span><span class="ms-temp ${cls}">${hasData?temp:"--"}<span class="ms-deg">℃</span></span><span class="ms-level">${lvl}</span></div>`+
-      `<div class="ms-comps">`+
-      `<div class="ms-comp"><span>上证涨跌</span><b style="color:${shChg===null?'inherit':shChg>=0?'var(--up)':'var(--down)'}">${shChg!==null?mkPct(shChg):'--'}</b></div>`+
-      `<div class="ms-comp"><span>红盘率</span><b>${red!==null?red+'%':'--'}</b></div>`+
-      `<div class="ms-comp"><span>涨停/跌停</span><b>${st.lu}/${st.ld}</b></div>`+
-      `<div class="ms-comp"><span>站上MA5</span><b>${m5!==null?m5+'%':'--'}</b></div>`+
-      `<div class="ms-comp"><span>站上MA20</span><b>${m20!==null?m20+'%':'--'}</b></div>`+
-      `</div>`+
-      `<div class="ms-comps" style="margin-top:4px"><div class="ms-comp"><span>统计口径</span><b style="font-weight:600">${srcTxt}${B?" · 沪深北":""}</b></div><div class="ms-comp"><span>全场成交</span><b>${B?B.amt.toFixed(0)+" 亿":"--"}</b></div></div>`;
-  }
+  /* v0267：大盘情绪主参考块（msMainBody）已随 panel-sentiment 迁入运行总览并与上方指标卡合并——
+     涨跌家数/温度/成交额等快照指标由指标卡承担，此处不再渲染，去重 */
   /* --- 图表：分布/雷达/强弱分层用全场（若有），广度图仅有样本MA数据故标注样本 --- */
   mkCardTitle("cDist",B?"涨跌分布 · 全场":"涨跌分布 · 样本");
   mkCardTitle("cRadar",B?"情绪雷达 · 全场":"情绪雷达 · 样本");
@@ -5785,6 +5770,56 @@ const ROLE_PARAMS={
 /* 出厂默认值快照：回测调参出错/清除时用它回滚（ROLE_PARAMS 会被调参改写） */
 const ROLE_PARAMS_DEFAULT=JSON.parse(JSON.stringify(ROLE_PARAMS));
 
+/* ==================== 参数撤回栈（v0267：撤回上一步）====================
+   所有会改写 ROLE_PARAMS 的外部动作（回测应用 / AI 自动调 / 恢复出厂 / 单条回滚），
+   改写前 push 一份全角色快照；「撤回上一步」弹栈恢复，并同步回写
+   btTuneV1 / autoRevTuneV1 两份持久化，保证刷新后不被旧值盖回。
+   启动加载（loadSimTune/loadAutoRevTune）是恢复持久化而非用户动作，不入栈。 */
+const PARAM_UNDO_MAX=20;
+let paramUndoStack=[]; /* {ts,tag,params:{D1:{sl,tp},...}} */
+function snapshotRoleParams(){
+  const o={};
+  Object.keys(ROLE_PARAMS).forEach(r=>{o[r]={sl:ROLE_PARAMS[r].sl,tp:ROLE_PARAMS[r].tp};});
+  return o;
+}
+function pushParamUndo(tag){
+  try{
+    paramUndoStack.push({ts:Date.now(),tag,params:snapshotRoleParams()});
+    if(paramUndoStack.length>PARAM_UNDO_MAX)paramUndoStack.shift();
+    renderParamUndoBtn();
+  }catch(e){}
+}
+function undoParamChange(){
+  if(!paramUndoStack.length)return;
+  const snap=paramUndoStack.pop();
+  Object.keys(snap.params).forEach(r=>{
+    if(!ROLE_PARAMS[r])return;
+    ROLE_PARAMS[r].sl=snap.params[r].sl;ROLE_PARAMS[r].tp=snap.params[r].tp;
+  });
+  /* 同步回写持久化：刷新后 loadSimTune/loadAutoRevTune 载入的即是撤回后的值 */
+  try{
+    const bt=JSON.parse(localStorage.getItem(BT_TUNE_KEY)||"null");
+    if(bt&&bt.roles){Object.keys(bt.roles).forEach(r=>{if(snap.params[r]){bt.roles[r].sl=snap.params[r].sl;bt.roles[r].tp=snap.params[r].tp;}});localStorage.setItem(BT_TUNE_KEY,JSON.stringify(bt));}
+  }catch(e){}
+  try{
+    const ar=JSON.parse(localStorage.getItem(AUTO_REV_TUNE_KEY)||"null");
+    if(ar&&ar.roles){Object.keys(ar.roles).forEach(r=>{if(snap.params[r]){ar.roles[r].sl=snap.params[r].sl;ar.roles[r].tp=snap.params[r].tp;}});localStorage.setItem(AUTO_REV_TUNE_KEY,JSON.stringify(ar));}
+  }catch(e){}
+  if(typeof renderSimTune==="function")renderSimTune(null);
+  btLog(`↩️ 已撤回上一步：${snap.tag}（${new Date(snap.ts).toLocaleTimeString("zh-CN")}）`);
+  renderParamUndoBtn();
+}
+function renderParamUndoBtn(){
+  const top=paramUndoStack[paramUndoStack.length-1];
+  const btn=document.getElementById("paramUndoBtn");
+  if(btn){
+    btn.disabled=!top;
+    btn.title=top?`撤回：${top.tag}（${new Date(top.ts).toLocaleTimeString("zh-CN")}）· 栈深 ${paramUndoStack.length}`:"暂无可撤回的参数变更";
+  }
+  const lab=document.getElementById("paramUndoLabel");
+  if(lab)lab.textContent=top?`可撤回：${top.tag}`:"";
+}
+
 /* ==================== 回测调参 → 实盘闭环（BT_TUNE） ====================
    历史回测跑完后，「自主优化建议」不再只是一段文字：buildSimTune() 把每角色
    的回撤/盈亏比/胜率换算成可执行的 {止损, 止盈, 单笔仓位上限, 仓位系数, 开关}，
@@ -6435,6 +6470,7 @@ function revApplyAutoParam(role,target,value){
   if(!ROLE_PARAMS[role]||!AUTO_PARAM_RANGE[target])return false;
   const [lo,hi]=AUTO_PARAM_RANGE[target];
   if(!isFinite(value)||value<lo||value>hi)return false;
+  pushParamUndo(`AI参数修正 ${role}.${target}`); /* v0267：AI 自动调参也可撤回 */
   ROLE_PARAMS[role][target]=value;
   try{
     const raw=JSON.parse(localStorage.getItem(AUTO_REV_TUNE_KEY)||"null");
@@ -6511,7 +6547,7 @@ async function genRevisionProposal(p,avgRet){
     const recent=p.trades.slice(-20).map(t=>
       `${(t.time||t.date||"").slice(0,10)} ${t.type} ${t.code} ${t.qty}股@${t.price}`+
       (t.profit!==undefined?` 盈亏${Number(t.profit).toFixed(1)}`:"")+` 原因:${t.reason||""}`);
-    const sys="你是量化策略评审官。基于给出的角色真实交易数据诊断策略缺陷，输出可执行的修正提案。只输出JSON，禁止任何解释文字。";
+    const sys="你是量化策略评审官。基于给出的角色真实交易数据诊断策略缺陷，输出可执行的修正提案。只输出JSON，禁止任何解释文字。"+AGENT_MINDSET;
     const prompt=`角色：${role} ${p.name}\n风格定位：${AGENT_DETAILS[role].desc}\n`+
       `当前参数：止损sl=${ROLE_PARAMS[role].sl}% 止盈tp=${ROLE_PARAMS[role].tp}%\n`+
       `当前规则（节选）：${AGENT_DETAILS[role].rules.slice(0,500)}\n`+
@@ -6602,6 +6638,7 @@ function rollbackRevChange(id){
   if(!hit)return;
   const {rec,c}=hit;
   if(c.status!=="auto_applied")return;
+  pushParamUndo(`回滚 ${rec.role}.${c.target}`); /* v0267：回滚本身也可再撤回 */
   if(ROLE_PARAMS[rec.role]&&c.previous!==undefined)ROLE_PARAMS[rec.role][c.target]=c.previous;
   c.status="rolled_back";
   try{
@@ -7877,29 +7914,8 @@ function renderReviewSentiment(){
     name,avg:s.sumChg/s.total,up:s.up,total:s.total
   })).sort((a,b)=>b.avg-a.avg);
   const topSec=secList.slice(0,6);
-  /* 广度条 */
-  const breadthHtml=`
-    <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin:8px 0">
-      <div style="width:${redRate}%;background:var(--up)"></div>
-      <div style="width:${flat/total*100}%;background:#6b7280"></div>
-      <div style="width:${down/total*100}%;background:var(--down)"></div>
-    </div>`;
-  /* 情绪卡片 */
-  const cards=[
-    {label:"上涨",val:up,cls:"up"},
-    {label:"下跌",val:down,cls:"down"},
-    {label:"平盘",val:flat,cls:"flat"},
-    {label:"涨停",val:limitUp,cls:"up"},
-    {label:"跌停",val:limitDown,cls:"down"},
-    {label:"红盘率",val:redRate.toFixed(0)+"%",cls:redRate>=50?"up":"down"},
-    {label:"涨跌比",val:ratio.toFixed(2),cls:ratio>=1?"up":"down"},
-    {label:"平均涨幅",val:(avgChg>=0?"+":"")+avgChg.toFixed(2)+"%",cls:avgChg>=0?"up":"down"}
-  ];
-  const cardsHtml=cards.map(c=>`
-    <div style="flex:1;min-width:70px;text-align:center;padding:10px 6px;background:var(--bg-soft);border-radius:8px">
-      <div style="font-size:20px;font-weight:700;color:var(--${c.cls==="flat"?"text-main":c.cls})">${c.val}</div>
-      <div style="font-size:11px;color:var(--text-faint);margin-top:2px">${c.label}</div>
-    </div>`).join("");
+  /* v0267 去重：涨跌家数/红盘率/涨跌停/平均涨幅卡片已移至「运行总览·大盘情绪指标卡」，
+     本面板只保留市场状态定性 + 行业强弱榜（别处没有的内容） */
   /* 板块强弱榜 */
   const secHtml=topSec.map(s=>{
     const secRed=s.up/s.total;
@@ -7918,14 +7934,10 @@ function renderReviewSentiment(){
   box.innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
       <span class="intent-tag ${stateCls==="up"?"intent-bull":stateCls==="down"?"intent-bear":"intent-flat"}" style="font-size:14px;padding:5px 12px">${stateText}</span>
-      <span style="font-size:12px;color:var(--text-faint)">样本 ${total} 只 · 候选池实时统计</span>
+      <span style="font-size:12px;color:var(--text-faint)">样本 ${total} 只 · 红盘率 ${redRate.toFixed(0)}% · 涨跌比 ${ratio.toFixed(2)}</span>
+      <span style="font-size:11px;color:var(--text-faint)">涨跌家数快照见「运行总览 · 大盘情绪」指标卡</span>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">${cardsHtml}</div>
-    ${breadthHtml}
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-bottom:12px">
-      <span style="color:var(--up)">红 ${up}</span><span>平 ${flat}</span><span style="color:var(--down)">绿 ${down}</span>
-    </div>
-    <h4 style="margin:14px 0 6px;font-size:14px">行业强弱榜（按平均涨幅）</h4>
+    <h4 style="margin:6px 0 6px;font-size:14px">行业强弱榜（按平均涨幅）</h4>
     ${secHtml}`;
   try{renderReviewIdxCompare();renderReviewDirections();renderReviewEffect();}catch(e){console.warn("复盘增强渲染失败",e);}
 }
@@ -9466,6 +9478,7 @@ window.addEventListener("DOMContentLoaded",()=>{
     Object.keys(__art.roles).map(r=>`${r} 止损${__art.roles[r].sl}%/止盈${__art.roles[r].tp}%`).join("、"));
   const __arn=loadAutoRevRules();
   if(__arn)btLog(`🧠 已恢复 AI 结构条款 ${__arn} 条`);
+  if(typeof renderParamUndoBtn==="function")renderParamUndoBtn(); /* v0267：撤回按钮初始态（启动加载不入栈，应为禁用） */
   
   /* 【自动同步】每隔30秒自动检查后台交易引擎更新，面板和微信消息完全同步 */
   let lastRemoteUpdate="";
@@ -11090,10 +11103,11 @@ function renderSimTune(res){
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
     <button class="gmk-btn" onclick="applySimTune()">✅ 应用到实盘</button>
     <button class="gmk-btn" onclick="copyBtTune()">📋 复制 bt_tune.json</button>
-    <button class="gmk-btn" onclick="clearSimTune()">↩️ 恢复出厂参数（含AI修正）</button>
+    <button class="gmk-btn" onclick="undoParamChange()" ${paramUndoStack.length?"":"disabled"} title="${paramUndoStack.length?'撤回：'+paramUndoStack[paramUndoStack.length-1].tag:'暂无可撤回的参数变更'}">↩️ 撤回上一步</button>
+    <button class="gmk-btn" onclick="toggleBtTuneJson()">查看 JSON</button>
   </div>`;
-  h+=`<div style="margin-top:6px;font-size:11px;color:var(--text-faint)">恢复出厂 = 七角色止损/止盈回到源码默认值，并清除三份持久化：回测调参(btTuneV1)、AI参数修正(autoRevTuneV1)、AI结构条款(autoRevRulesV1)；刷新页面后完全重置。</div>`;
-  h+=`<textarea id="btTuneJson" class="sim-tune-json" readonly>${escHtml(btTuneJson())}</textarea>`;
+  h+=`<div style="margin-top:6px;font-size:11px;color:var(--text-faint)">「撤回上一步」可撤销最近一次参数变更（回测应用 / AI 自动调参 / 恢复出厂 / 单条回滚），并同步回写持久化，刷新不丢；bt_tune.json 源码默认收起，点「查看 JSON」展开。</div>`;
+  h+=`<textarea id="btTuneJson" class="sim-tune-json" readonly style="display:none">${escHtml(btTuneJson())}</textarea>`;
   box.innerHTML=h;
 }
 function btTuneJson(){
@@ -11109,6 +11123,7 @@ function btLog(msg){try{if(typeof log==="function")log("info",msg);else console.
 function applySimTune(){
   const t=window._lastSimTune;
   if(!t){alert("请先跑一次回测再应用调参");return;}
+  pushParamUndo("回测调参应用到实盘"); /* v0267：改写前留快照，可撤回 */
   SIM_TUNE=JSON.parse(JSON.stringify(t));
   Object.keys(SIM_TUNE.roles).forEach(r=>{
     if(!ROLE_PARAMS[r])return;
@@ -11131,9 +11146,22 @@ function copyBtTune(){
   const txt=btTuneJson();
   if(!txt){alert("请先跑一次回测");return;}
   const ta=document.getElementById("btTuneJson");
-  if(ta){ta.removeAttribute("readonly");ta.select();try{document.execCommand("copy");}catch(e){}ta.setAttribute("readonly","readonly");}
+  if(ta){
+    /* v0267：JSON 默认收起（display:none 无法 select），复制前临时展开、用完恢复 */
+    const wasHidden=ta.style.display==="none";
+    if(wasHidden)ta.style.display="block";
+    ta.removeAttribute("readonly");ta.select();try{document.execCommand("copy");}catch(e){}
+    ta.setAttribute("readonly","readonly");
+    if(wasHidden)ta.style.display="none";
+  }
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).catch(()=>{});
   btLog("已复制 bt_tune.json：粘贴到仓库根目录 bt_tune.json，后台引擎下次运行即生效");
+}
+/* v0267：bt_tune.json 源码区默认收起，手动展开/收起（修「回测下面代码漏出来」） */
+function toggleBtTuneJson(){
+  const ta=document.getElementById("btTuneJson");
+  if(!ta)return;
+  ta.style.display=(ta.style.display==="none")?"block":"none";
 }
 function clearSimTune(){
   /* v0266：恢复范围扩展到全部三个持久化来源。
@@ -11142,6 +11170,7 @@ function clearSimTune(){
      参数若被 AI 修正（v0264）改过，只清回测调参后一刷新，
      loadAutoRevTune 会把 AI 值重新盖回 ROLE_PARAMS →「恢复出厂」静默失效。
      现在三份持久化全清 + 修正记录状态同步作废，恢复行为真正可预期。 */
+  pushParamUndo("恢复出厂参数"); /* v0267：手滑也能撤回 */
   Object.keys(ROLE_PARAMS).forEach(r=>{
     if(ROLE_PARAMS_DEFAULT[r]){ROLE_PARAMS[r].sl=ROLE_PARAMS_DEFAULT[r].sl;ROLE_PARAMS[r].tp=ROLE_PARAMS_DEFAULT[r].tp;}
   });
@@ -12529,6 +12558,33 @@ setInterval(fetchNews,60000);
 /* ---------- 龙虎榜 ---------- */
 /* ---------- 北向资金 ---------- */
 /* ---------- 宝妈指数 ---------- */
+/* ==================== v0267 三大思维框架（缠论 + 芒格思维 + 涛动周期论）====================
+   七角色 system prompt 与 AI 评审官/修正提案 prompt 统一注入。
+   三者分工：周期定方向（做不做）→ 芒格定纪律（敢不敢做）→ 缠论定位置（在哪下手）。 */
+const AGENT_MINDSET=`【三大思维框架 · 每一次决策都必须内化】
+
+一、缠论（价格几何结构学：只说结构在哪，不预测幅度）
+1. 分解：分型→笔→线段→中枢；走势类型只有盘整（一个中枢）与趋势（≥2个依次同向且不重叠的中枢），中枢有重叠=扩展，仍不是趋势。
+2. 背驰=创新极值+力度衰竭两个条件同时满足（看MACD面积不看柱高）；没有中枢时的"背驰"不成立。
+3. 三类买点：一买在中枢下方、靠力度确认，止损=背驰段起点；二买不破一买低点，止损=一买点；三买只在中枢上方、回抽不跌回中枢，止损=ZG。定义即止损，最干净。
+4. 铁律：任何结论必须标注级别（日线/周线），不标级别的结论无效；小级别背驰只配小仓位；多级别共振（日线+周线同向）才可靠；见分型就交易是蠢行；数据不足200根K线不给结论。
+5. 落地：突破类买点按"三买确认"（离开中枢回抽不跌回）；回踩类按"二买不破前低"；反转类按"背驰一买+力度衰竭"。
+
+二、芒格思维（避免愚蠢比追求聪明重要）
+1. 逆向思考+达尔文协议：下单前必须写"什么情况下这笔一定亏"并列出1条反面证据；列不出=没研究透，进 Too Hard 筐，不交易。
+2. 三筐分类：Yes（确信）/No（确信不做）/Too Hard（太难放弃）。大部分机会属于第三筐——不决策也是决策。
+3. Lollapalooza 警惕：社会认同（人人看多）+过度乐观（只涨不跌）+踏空恐惧同时出现时恰恰最危险——降档或离场，而不是加仓。
+4. 能力圈：结构不完整、关键数据缺失、看不懂的票一律不碰；宁可错过，不可做错。
+5. 激励机制思维：想清楚当前这个位置上谁在赚钱、谁在接盘——你的对手盘比你笨还是比你聪明？
+
+三、涛动周期论（周期位置决定仓位大方向）
+1. 四周期嵌套：康波（60年·技术革命，定资产大类方向）→库兹涅茨（20年·房地产）→朱格拉（9-10年·设备投资，定多空大周期）→库存周期（3-4年，定买卖时点）。
+2. 用法：先判周期位置——朱格拉回升+库存补库=做多窗口，顺势策略优先；朱格拉回落+库存去库=防守，只做超跌反转；康波萧条期不碰杠杆与高位品种。
+3. 纪律：不在周期顶部加仓、不在周期底部割肉；周期底部特征（估值极低+无人谈论+政策托底共振）出现时，反转类策略优先出手。
+4. 价格节奏参考艾略特波浪：5升3降；推动浪不背驰，调整浪走3波；反弹3波不过前高=下跌未结束，不抄底。
+
+三框架合用：周期定方向，芒格定纪律，缠论定位置。`;
+
 const ROLE_PERSONAS = {
   D1: {
     name: "锋",
@@ -12720,6 +12776,9 @@ const ROLE_PERSONAS = {
 {"decision":"买入/卖出/持有","confidence":"高/中/低","reason":"你的决策理由，用你自己的说话风格，50字以内"}`
   }
 };
+
+/* v0267：三大思维框架统一注入七角色 system prompt（ROLE_PERSONAS 只在此处定义一次，注入不重复） */
+Object.keys(ROLE_PERSONAS).forEach(k=>{ try{ ROLE_PERSONAS[k].system += AGENT_MINDSET; }catch(e){} });
 
 function formatStockDataForLLM(code, P){
   if(!P || !P.closes || !P.closes.length) return "无数据";
