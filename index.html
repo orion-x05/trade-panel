@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r21</title>
+<title>Orion-X AI量化投研面板 · v20260910-r22</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r21";
+<script>window.APP_VERSION="20260910-r22";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2696,7 +2696,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r21</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r22</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -3625,7 +3625,7 @@ async function txVolKline(code,count){
     const hosts=["https://web.ifzq.gtimg.cn","https://ifzq.gtimg.cn"];
     for(const h of hosts){
       try{
-        const j=await (await fetch(`${h}/appstock/app/fqkline/get?param=${code},day,,,${count},qfq`,{signal:(new AbortController()).signal})).json();
+        const j=await (await fetch(`${h}/appstock/app/kline/kline?param=${code},day,,,${count}`,{signal:(new AbortController()).signal})).json();
         const k=j.data[code];
         const arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day))||[];
         if(arr&&arr.length){ out=arr.map(x=>({date:x[0],vol:(+x[5]||0)/1e8})); break; } // 手→亿手
@@ -9951,7 +9951,12 @@ async function txKline(code,period,count){
         const ctrl=new AbortController();
         const to=setTimeout(()=>ctrl.abort(),10000);
         try{
-          const r=await fetch(`${h}/appstock/app/fqkline/get?param=${code},${period},,,${count},qfq`,{signal:ctrl.signal});
+          /* 2026-10-20 修复：原 fqkline/get 对浏览器跨域已失效（服务端 501 且无 CORS 头，
+           日K/周K/月K/成交量全灭，用户侧表现为"行情数据源暂不可达"）→ 改用 kline/kline
+           （同为腾讯 appstock 系，实测 200 + access-control-allow-origin:*）。
+           代价：kline/kline 不支持 qfq 复权参数（传了返回 bad params），指数无感，
+           个股遇除权会有历史跳空——以可用性优先，复权需求后续由 data.json 预烘补齐。 */
+        const r=await fetch(`${h}/appstock/app/kline/kline?param=${code},${period},,,${count}`,{signal:ctrl.signal});
           const j=await r.json();const k=j.data[code];
           let arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day||k.qfqweek||k.week||k.qfqmonth||k.month))||[];
           if(arr&&arr.length){out=arr.map(x=>{const v=Array.isArray(x)?x:String(x).split(" ");return {date:v[0],open:+v[1],close:+v[2],high:+v[3],low:+v[4],vol:+v[5]||0};});break;}
@@ -10039,7 +10044,9 @@ async function txKlineRange(code,start,count){
     try{
       const ctrl=new AbortController();
       const to=setTimeout(()=>ctrl.abort(),10000);
-      const r=await fetch(`${h}/appstock/app/fqkline/get?param=${code},day,${start},,${count},qfq`,{signal:ctrl.signal});
+      /* 同 txKline：fqkline 已对浏览器失效 → kline/kline（start 参数语义兼容：
+         param=code,day,start,,count 从 start 起取 count 根；本地再按 start 过滤兜底） */
+      const r=await fetch(`${h}/appstock/app/kline/kline?param=${code},day,${start},,${count}`,{signal:ctrl.signal});
       clearTimeout(to);
       const j=await r.json();const k=j.data[code];
       const arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day))||[];
