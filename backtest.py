@@ -15,10 +15,22 @@ backtest.py —— 基于实盘日志的六角色参数 walk-forward 评估（�
 
 由 .github/workflows/trade.yml 的 backtest job 每周定时运行并提交 bt_tune.json，
 把"面板回测→人工落盘"的半自动闭环升级为全自动。
+
+T5 增强（亏损归因闭环）：
+- 引擎在每笔亏损卖出时记录 loss_reason（追高/破位/黑天鹅/其他）。
+- 本脚本聚合每个角色的亏损归因分布，找出主导亏损原因，做【二阶参数修正】：
+    · 追高为主  → 收紧单笔仓位（克制追涨，不靠技术止损解决纪律问题）
+    · 破位为主  → 收紧止损 sl（技术破位确实该更早砍）
+    · 黑天鹅为主 → 收紧仓位（尾部风险无法用 sl/tp 消除，只能降暴露）
+    · 其他/分散 → 略降权重（归因不清，先削弱存在感）
+- 同时在 bt_tune.json 写入 attribution 分布与 tune_note，供前端心理看板展示「这角色为什么亏」。
 """
 
 import json
 import os
+
+# 亏损归因类别（与 trade_engine.py do_sell 中 loss_reason 取值保持一致）
+LOSS_REASONS = ["追高", "破位", "黑天鹅", "其他"]
 
 # 与 trade_engine.py 保持一致的出厂基准（防止单独运行缺常量）
 ROLES_BASE = {
@@ -95,6 +107,46 @@ def best_params(sells, base_sl, base_tp):
     return best
 
 
+def attribution(sells):
+    """聚合某角色亏损笔的归因分布（仅亏损单计入）。返回 (计数dict, 亏损总笔数)。"""
+    cnt = {r: 0 for r in LOSS_REASONS}
+    losses = [s for s in sells if (s.get("profit") or 0) < 0]
+    for s in losses:
+        lr = s.get("loss_reason") or "其他"
+        cnt[lr if lr in cnt else "其他"] += 1
+    return cnt, len(losses)
+
+
+def dominant_reason(cnt, nloss):
+    """返回 (主导亏损原因, 占比)；无亏损样本时返回 (None, 0.0)。"""
+    if not nloss:
+        return None, 0.0
+    top = max(cnt, key=cnt.get)
+    return top, cnt[top] / nloss
+
+
+def apply_attribution(rec, cnt, nloss):
+    """根据亏损归因做二阶参数修正，并写 tune_note / attribution。原地修改 rec。"""
+    top, share = dominant_reason(cnt, nloss)
+    rec["attribution"] = cnt
+    rec["tune_note"] = ""
+    if not top:
+        return rec
+    if top == "追高" and share >= 0.4:
+        rec["pos_cap"] = int(max(10, rec["pos_cap"] - 5))   # 百分比口径，降 5 个百分点
+        rec["tune_note"] = f"亏损以追高为主({share:.0%})，回测收紧单笔仓位抑制追涨"
+    elif top == "破位" and share >= 0.4:
+        rec["sl"] = round(max(SL_MIN, rec["sl"] - 1.0), 1)
+        rec["tune_note"] = f"亏损以破位为主({share:.0%})，回测收紧止损"
+    elif top == "黑天鹅" and share >= 0.4:
+        rec["pos_cap"] = int(max(10, rec["pos_cap"] - 5))
+        rec["tune_note"] = f"亏损以黑天鹅为主({share:.0%})，回测降低仓位应对尾部风险"
+    elif top == "其他" and share >= 0.5:
+        rec["weight"] = 0.9
+        rec["tune_note"] = f"亏损归因分散({share:.0%}为其他)，回测略降权重"
+    return rec
+
+
 def main():
     data = load_data()
     if not data:
@@ -123,13 +175,18 @@ def main():
         best = best_params(sells, base["sl"], base["tp"])
         if not best:
             continue
-        cap = 0.25 if best["wr"] > 0.55 else 0.20 if best["wr"] > 0.45 else 0.15
+        # pos_cap 用【百分比整数】写出，与前端 btTuneJson()、引擎 load_bt_tune() 约定一致
+        cap = 25 if best["wr"] > 0.55 else 20 if best["wr"] > 0.45 else 15
         rec = {"sl": best["sl"], "tp": best["tp"], "pos_cap": cap}
+        # 【T5 归因二阶修正】先读出现有 attribution 再覆盖
+        cnt, nloss = attribution(sells)
+        apply_attribution(rec, cnt, nloss)
         if rid in existing and existing[rid].get("enabled") is False:
             rec["enabled"] = False   # 尊重手动暂停
         roles_out[rid] = rec
-        print(f"  ✅ {rid} 回测推荐 sl={best['sl']}% tp={best['tp']}% cap={int(cap*100)}% "
-              f"(样本{best['n']} 胜率{best['wr']:.0%} 假设净盈亏{best['tot']:.0f})")
+        note = f"｜{rec['tune_note']}" if rec.get("tune_note") else ""
+        print(f"  ✅ {rid} 回测推荐 sl={best['sl']}% tp={best['tp']}% cap={rec['pos_cap']}% "
+              f"(样本{best['n']} 胜率{best['wr']:.0%} 假设净盈亏{best['tot']:.0f}){note}")
 
     if not roles_out:
         print("  ℹ️  无角色达到回测样本阈值，未生成 bt_tune.json")
