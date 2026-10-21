@@ -193,7 +193,8 @@ def load_data():
         ensure_trade_profit(data)
         return data
     data = {"players": [], "last_update": cn_now().isoformat(),
-            "consecutive_losses": {}, "market_trend": "neutral"}
+            "consecutive_losses": {}, "market_trend": "neutral",
+            "role_stats": {}, "role_trend_stats": {}, "tuned_weights": {}}
     for role_id, role in ROLES.items():
         data["players"].append({
             "id": role_id, "name": role["name"],
@@ -962,6 +963,64 @@ def adaptive_tune(data):
     data["tuned_roles"] = {r: {"sl": ROLES[r]["sl"], "tp": ROLES[r]["tp"]} for r in ROLES}
     return notes
 
+
+# ==================== 角色表现记忆 + 在线自适应 ====================
+# 运行时动态权重与市况表现统计（由 update_role_stats 填充，consensus_score / role_pick_score 读取）
+_DYN_WEIGHT = {}
+_ROLE_TREND_STATS = {}
+_ROLE_STATS_MIN_SAMPLES = 8       # 角色整体样本下限，低于则用出厂基准权重
+_TREND_STATS_MIN_SAMPLES = 5      # 市况×角色样本下限，低于则回退写死倍率
+
+def update_role_stats(data):
+    """【角色表现记忆】从各角色 trades 历史重算两类统计：
+    - role_stats: 每角色近期净盈亏/样本/胜率（驱动「权重在线化」）
+    - role_trend_stats: 角色×市况 的净盈亏/样本/胜率（驱动「状态自适应阈值」）
+    结果写回 data（持久化跨运行）并填充模块级全局供打分函数实时读取。
+    无网络/无外部历史K线依赖，完全基于实盘已发生交易。"""
+    role_stats, trend_stats = {}, {}
+    for p in data["players"]:
+        rid = p.get("id")
+        if rid not in ROLES:
+            continue
+        for t in p.get("trades", []):
+            if t.get("type") != "sell" or "profit" not in t:
+                continue
+            profit = t.get("profit", 0) or 0
+            win = 1 if profit > 0 else 0
+            s = role_stats.setdefault(rid, {"net_pnl": 0.0, "n": 0, "wins": 0})
+            s["net_pnl"] += profit; s["n"] += 1; s["wins"] += win
+            tr = t.get("trend", "neutral")
+            ts = trend_stats.setdefault(rid, {}).setdefault(tr, {"pnl": 0.0, "n": 0, "wins": 0})
+            ts["pnl"] += profit; ts["n"] += 1; ts["wins"] += win
+    data["role_stats"] = {
+        r: {"net_pnl": round(v["net_pnl"], 2), "n": v["n"],
+            "win_rate": round(v["wins"] / v["n"], 3) if v["n"] else 0.5}
+        for r, v in role_stats.items()
+    }
+    data["role_trend_stats"] = {
+        r: {tr: {"pnl": round(v["pnl"], 2), "n": v["n"],
+                 "win_rate": round(v["wins"] / v["n"], 3) if v["n"] else 0.5}
+             for tr, v in trs.items()}
+        for r, trs in trend_stats.items()
+    }
+    # 【动态权重】基于角色近期单笔净盈亏，向基准回归、带 ±40% 边界、防震荡
+    tuned = {}
+    for rid in ROLES:
+        base = ROLES[rid]["weight"]
+        st = role_stats.get(rid)
+        if st and st["n"] >= _ROLE_STATS_MIN_SAMPLES:
+            per = st["net_pnl"] / st["n"]
+            norm = max(-1.0, min(1.0, per / (INIT_CASH * 0.005)))
+            w = base * (1 + 0.3 * norm)
+            w = max(base * 0.6, min(base * 1.4, w))
+        else:
+            w = base
+        tuned[rid] = round(w, 3)
+    data["tuned_weights"] = tuned
+    _DYN_WEIGHT.clear(); _DYN_WEIGHT.update(tuned)
+    _ROLE_TREND_STATS.clear(); _ROLE_TREND_STATS.update(data["role_trend_stats"])
+    return tuned
+
 def current_params_line():
     return "、".join(f"{r}{ROLES[r]['name']}(止损{ROLES[r]['sl']}%/止盈{ROLES[r]['tp']}%)" for r in ROLES)
 
@@ -1486,12 +1545,19 @@ def role_pick_score(role_id, st, market_trend="neutral"):
             if 40 <= rsi <= 65: score += 5
         else:
             return 0, []
-    # 【市场感知】顺势角色(D1/D4)随市况升降、逆势防守角色(D5/D7)反向；硬门槛(返回0)不受影响
-    mult = 1.0
-    if role_id in ("D1", "D4"):
-        mult = 1.1 if market_trend == "bull" else 0.85 if market_trend == "bear" else 1.0
-    elif role_id in ("D5", "D7"):
-        mult = 0.95 if market_trend == "bull" else 1.15 if market_trend == "bear" else 1.0
+    # 【状态自适应阈值】优先用该角色在此市况下的真实历史胜率算倍率；
+    # 样本不足(<5)回退写死出厂倍率（顺势 D1/D4 牛升熊降，逆势 D5/D7 反向）
+    ts = _ROLE_TREND_STATS.get(role_id, {}).get(market_trend)
+    if ts and ts["n"] >= _TREND_STATS_MIN_SAMPLES:
+        # 胜率 0.4→0.85, 0.5→1.0, 0.6→1.15（线性映射），带边界防极端
+        mult = 0.85 + (ts["win_rate"] - 0.4) / 0.2 * 0.3
+        mult = max(0.8, min(1.25, mult))
+    else:
+        mult = 1.0
+        if role_id in ("D1", "D4"):
+            mult = 1.1 if market_trend == "bull" else 0.85 if market_trend == "bear" else 1.0
+        elif role_id in ("D5", "D7"):
+            mult = 0.95 if market_trend == "bull" else 1.15 if market_trend == "bear" else 1.0
     score = max(0, min(100, int(round(score * mult))))
     return score, why
 
@@ -1514,11 +1580,11 @@ def consensus_score(code, all_codes_data, market_trend="neutral"):
             sc, _ = role_pick_score(rid, st, market_trend)
             if sc < 55:
                 continue
-        wsum += sc * ROLES[rid]["weight"]
+        wsum += sc * _DYN_WEIGHT.get(rid, ROLES[rid]["weight"])
         roles_hit.append(rid)
     if not roles_hit:
         return 0, 0, []
-    w_total = sum(ROLES[r]["weight"] for r in roles_hit)
+    w_total = sum(_DYN_WEIGHT.get(r, ROLES[r]["weight"]) for r in roles_hit)
     fused = wsum / w_total if w_total else 0
     return round(min(100, fused), 1), len(roles_hit), roles_hit
 
@@ -1646,7 +1712,7 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
     candidates.sort(key=lambda x: (x[2], x[3]), reverse=True)
     return candidates[0][:4]
 
-def do_buy(player, code, st, score, reason, ntf=1.0):
+def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral"):
     """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
     # 【仓位动态调整】根据历史胜率调整单笔仓位比例
     trades = player.get("trades", [])
@@ -1691,7 +1757,8 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
     player["trades"].append({
         "type": "buy", "code": code, "name": st["name"],
         "qty": qty, "price": st["price"], "fee": fee,
-        "time": cn_now().isoformat(), "reason": reason
+        "time": cn_now().isoformat(), "reason": reason,
+        "trend": trend
     })
     # 【每笔买入都推送】去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
     # 只要真实成交就推；统一走 push_report（仅 WxPusher），消息含时间+原因
@@ -1749,6 +1816,7 @@ def main():
     
     data = load_data()
     bt_notes = load_bt_tune()   # 回测调参（bt_tune.json）优先于出厂值，adaptive_tune 再在其基础上微调
+    update_role_stats(data)     # 角色表现记忆 → 动态权重 + 市况自适应倍率
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
@@ -1837,7 +1905,7 @@ def main():
                                         all_players=data["players"])
         if buy_signal:
             code, st, score, reason = buy_signal
-            do_buy(player, code, st, score, reason, ntf)
+            do_buy(player, code, st, score, reason, ntf, market_trend)
     
     print(f"\n💰 更新资产...")
     # 资产曲线口径：每个交易日只记一条（与前端「每日收盘记录一次」及后台收盘分支一致）。
