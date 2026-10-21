@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r27</title>
+<title>Orion-X AI量化投研面板 · v20260910-r28</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r27";
+<script>window.APP_VERSION="20260910-r28";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2698,7 +2698,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r27</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r28</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -4528,7 +4528,12 @@ function ensurePlayerD7(){
       buyPrice||cost 兼容层，但现金校准/复盘等直接读 buyPrice 的路径会算出 NaN）
    2) 旧版卖出记录补 profit：旧引擎不写 profit 字段，导致「已清仓」卡片盈亏显示 +0
       （误导"不亏不赚"）；后端胜率统计也把盈利卖出计为非盈利（D4 单笔仓位系数被压低）。
-      用同角色同 code 的买入记录反算：profit=(卖价-买价)*数量-手续费。 */
+      用同角色同 code 的买入记录反算：profit=(卖价-买价)*数量-手续费。
+   3) 旧持仓补 lots：内嵌演示快照/用户旧快照里的持仓可能完全没有 lots 数组（旧引擎
+      还没有分批建仓概念，如 embeddedSimData 里 D4 的 cost/buyDate 老字段持仓）。
+      doBuy 加仓分支直接读 exist.lots.length，缺 lots 会抛 TypeError 把引擎整个 tick
+      打爆（表现为偶发 pageerror：Cannot read properties of undefined (reading 'length')）。
+      自愈：按持仓自身字段合成一笔等价 lot（与 ?fixholdings=1 种子同口径）。 */
 function ensureTradeProfit(){
   if(!simData||!simData.players)return;
   simData.players.forEach(p=>{
@@ -4536,6 +4541,9 @@ function ensureTradeProfit(){
       if(h&&h.code){
         if((h.buyPrice==null||h.buyPrice<=0)&&h.cost>0)h.buyPrice=h.cost;
         if(!h.buyTime&&h.buyDate)h.buyTime=h.buyDate;
+        if(h.buyPrice>0&&(!h.lots||!h.lots.length)){
+          h.lots=[{price:h.buyPrice,qty:h.qty||0,time:h.buyTime||new Date().toISOString(),reason:h.reason||h.buyReason||"历史持仓"}];
+        }
       }
     });
     const trades=p.trades||[];
@@ -6000,8 +6008,9 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
       return false;
     }
   }
-  /* ③ 加仓限制：每只股票最多 MAX_LOTS 批 */
-  if(exist&&exist.lots.length>=MAX_LOTS){
+  /* ③ 加仓限制：每只股票最多 MAX_LOTS 批（lots 缺失按已达上限处理，防御旧快照/
+     内嵌种子缺 lots 的持仓——正常路径已由 ensureTradeProfit 自愈补 lots） */
+  if(exist&&(!exist.lots||exist.lots.length>=MAX_LOTS)){
     log("warn",`【${p.id}】跳过加仓：${escHtml(target.name)}已达${MAX_LOTS}批上限`);
     return false;
   }
