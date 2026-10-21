@@ -45,14 +45,15 @@ SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
 BT_TUNE_FILE = "bt_tune.json"
 
 ROLES = {
-    "D1": {"name": "锋", "sl": 7, "tp": 12},
-    "D2": {"name": "衡", "sl": 6, "tp": 8},
-    "D3": {"name": "镜", "sl": 5, "tp": 6},
-    "D4": {"name": "啸", "sl": 7, "tp": 10},
-    "D5": {"name": "渊", "sl": 6, "tp": 9},
-    "D6": {"name": "焰", "sl": 8, "tp": 15},
+    # weight：融合层投票权重（角色可信度/波动稳健度）；高波动的 D6 降权，趋势共振的 D1/D4 升权
+    "D1": {"name": "锋", "sl": 7, "tp": 12, "weight": 1.2},
+    "D2": {"name": "衡", "sl": 6, "tp": 8, "weight": 1.0},
+    "D3": {"name": "镜", "sl": 5, "tp": 6, "weight": 0.9},
+    "D4": {"name": "啸", "sl": 7, "tp": 10, "weight": 1.1},
+    "D5": {"name": "渊", "sl": 6, "tp": 9, "weight": 1.0},
+    "D6": {"name": "焰", "sl": 8, "tp": 15, "weight": 0.8},
     # D7 周线超卖反转（与前端 ROLE_PARAMS 对齐：sl10/tp25，atrParamsMap sl1.5/tp3）
-    "D7": {"name": "沉", "sl": 10, "tp": 25},
+    "D7": {"name": "沉", "sl": 10, "tp": 25, "weight": 0.9},
 }
 
 STOCK_POOL = [
@@ -1309,18 +1310,9 @@ def check_buy_d7(player, all_codes_data, market_trend, all_players=None):
         return None
     shortlist = []
     for code, st in all_codes_data.items():
-        if any(h["code"] == code for h in player["holdings"]):
-            continue
-        if st["chg"] >= 9.8 or st["chg"] <= -9.8:
-            continue
-        if "ST" in st.get("name", ""):
-            continue
-        if all_players:
-            overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
-            if overlap >= MAX_OVERLAP:
-                continue
-        guard_ok, _why = global_guard(st)
-        if not guard_ok:
+        # 基础过滤+风控闸与 check_buy_signals 去重共用
+        ok, _ = _pass_basic_filter(code, st, player, all_players)
+        if not ok:
             continue
         rsi = st.get("rsi6", 50)
         price = st["price"]
@@ -1391,14 +1383,23 @@ def check_sell_signals(player, stock_data):
                 continue
         bp = hold.get("buyPrice") or hold.get("cost") or 0
         chg = (st["price"] - bp) / bp * 100
-        if chg <= -role["sl"]: signals.append((hold, f"止损-{abs(chg):.1f}%", 1.0)); continue
+        # 【移动止损·锁利】记录历史最大浮盈；曾达目标一半则硬止损线上抬到成本+2%，永久锁利
+        max_chg = hold.get("maxChg", 0)
+        if chg > max_chg:
+            max_chg = chg
+            hold["maxChg"] = round(chg, 2)
+        if max_chg >= role["tp"] * 0.5:
+            if st["price"] <= bp * 0.98:   # 浮盈曾达目标一半→跌破成本2%锁利（比价避免浮点边界漏判）
+                signals.append((hold, f"移动止损锁利{chg:+.1f}%", 1.0)); continue
+        elif chg <= -role["sl"]:
+            signals.append((hold, f"止损-{abs(chg):.1f}%", 1.0)); continue
         if chg >= role["tp"]: signals.append((hold, f"止盈+{chg:.1f}%", 1.0)); continue
         if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]: signals.append((hold, "跌破MA20+均线走弱", 1.0)); continue
         if st["kdj_k"] < st["kdj_d"] and st["kdj_k"] > 70: signals.append((hold, "KDJ高位死叉", 1.0)); continue
         if st["vol_ratio"] > 1.5 and st["chg"] < -2: signals.append((hold, "放量下跌主力出逃", 1.0)); continue
     return signals
 
-def role_pick_score(role_id, st):
+def role_pick_score(role_id, st, market_trend="neutral"):
     """【v2策略升级】各角色核心逻辑打分（0-100，与前端实时引擎对齐）→ (score, reasons)"""
     price = st["price"]
     chg = st.get("chg", 0)
@@ -1485,9 +1486,63 @@ def role_pick_score(role_id, st):
             if 40 <= rsi <= 65: score += 5
         else:
             return 0, []
+    # 【市场感知】顺势角色(D1/D4)随市况升降、逆势防守角色(D5/D7)反向；硬门槛(返回0)不受影响
+    mult = 1.0
+    if role_id in ("D1", "D4"):
+        mult = 1.1 if market_trend == "bull" else 0.85 if market_trend == "bear" else 1.0
+    elif role_id in ("D5", "D7"):
+        mult = 0.95 if market_trend == "bull" else 1.15 if market_trend == "bear" else 1.0
+    score = max(0, min(100, int(round(score * mult))))
     return score, why
 
-def global_guard(st):
+
+def consensus_score(code, all_codes_data, market_trend="neutral"):
+    """【角色权重融合】对某只股票汇总七角色 role_pick_score，按 ROLES[rid]['weight'] 加权融合；
+    返回 (融合分0-100, 同向角色数, 角色列表)。D7 用周线KD闸门替代日线打分。
+    用于 check_buy_signals 的共识共振加成与跨角色排序。"""
+    st = all_codes_data.get(code)
+    if not st:
+        return 0, 0, []
+    roles_hit, wsum = [], 0.0
+    for rid in ROLES:
+        if rid == "D7":
+            w = get_weekly_kd(code)
+            if not w or w["kd"] > -40 or not w["turnUp"]:
+                continue
+            sc = 80
+        else:
+            sc, _ = role_pick_score(rid, st, market_trend)
+            if sc < 55:
+                continue
+        wsum += sc * ROLES[rid]["weight"]
+        roles_hit.append(rid)
+    if not roles_hit:
+        return 0, 0, []
+    w_total = sum(ROLES[r]["weight"] for r in roles_hit)
+    fused = wsum / w_total if w_total else 0
+    return round(min(100, fused), 1), len(roles_hit), roles_hit
+
+
+def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
+    """基础过滤+风控闸（与 D7 分支去重）：持仓/涨跌停/ST/跨角色重合/全局风控闸。
+    返回 (是否通过, 原因)；D5 回踩可放行'下跌中继'拦截。"""
+    if any(h["code"] == code for h in player["holdings"]):
+        return False, "已持有"
+    if st["chg"] >= 9.8 or st["chg"] <= -9.8:
+        return False, "涨跌停"
+    if "ST" in st.get("name", ""):
+        return False, "ST"
+    if all_players:
+        overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
+        if overlap >= MAX_OVERLAP:
+            return False, "跨角色重合超限"
+    guard_ok, guard_why = global_guard(st, allow_pullback=allow_pullback)
+    if not guard_ok:
+        return False, f"风控闸:{guard_why}"
+    return True, ""
+
+
+def global_guard(st, allow_pullback=False):
     """全局风控闸（与前端 liveGlobalGuard / 回测 buySignal 同口径）：
     ① 近5日涨幅>20% ② 近10日>25% ③ 较20日低点反弹>30% ④ 连涨≥3天
     ⑤ 偏离MA5>4% ⑥ 高位放量长上影 ⑦ 高位放量十字星/双长影 ⑧ 高位放量大阳
@@ -1534,7 +1589,8 @@ def global_guard(st):
         return False, "高位放量大阳·不追高"
     is_deep_drop = (hi20 > 0 and (hi20 - price) / hi20 * 100 > 15) or \
                    (c5 > 0 and (price / c5 - 1) * 100 < -12)
-    if is_deep_drop and not (is_low and is_doji and v < 1.3) and day_low > 0:
+    # 回踩低吸(D5)本就在回调中买，放行下跌中继拦截，避免误杀正常买点
+    if is_deep_drop and not allow_pullback and not (is_low and is_doji and v < 1.3) and day_low > 0:
         is_stabilize = v < 0.8 and (lower > body * 2 or is_doji)
         if not is_stabilize:
             return False, "下跌中继反抽·需企稳K线（缩量+长下影）才买"
@@ -1556,69 +1612,39 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
     if role_id == "D7":
         return check_buy_d7(player, all_codes_data, market_trend, all_players)
 
-    # 【多Agent共识预计算】D2的开仓依据：其他角色各自的最高分候选，汇总共识度
-    consensus = {}
-    if role_id == "D2":
-        for rid in ["D1", "D3", "D4", "D5", "D6", "D7"]:
-            if rid == "D7":
-                # D7 的最优候选来自周线KD闸门（含网络，10分钟缓存兜底）
-                d7p = next((p for p in (all_players or []) if p.get("id") == "D7"), None)
-                if d7p:
-                    best_d7 = check_buy_d7(d7p, all_codes_data, market_trend, all_players)
-                    if best_d7:
-                        consensus[best_d7[0]] = consensus.get(best_d7[0], 0) + 1
-                continue
-            best = None
-            for code, st in all_codes_data.items():
-                if any(h["code"] == code for h in player["holdings"]): continue
-                if "ST" in st.get("name", ""): continue
-                sc, _ = role_pick_score(rid, st)
-                if sc >= 60 and (best is None or sc > best[1]):
-                    best = (code, sc)
-            if best:
-                consensus[best[0]] = consensus.get(best[0], 0) + 1
-
     candidates = []
     for code, st in all_codes_data.items():
-        if any(h["code"] == code for h in player["holdings"]): continue
-        if st["chg"] >= 9.8 or st["chg"] <= -9.8: continue
-        if "ST" in st["name"]: continue
-        # 【同板块持仓】放开硬性同行业数量限制（用户要求），仅保留轻量提示；
-        # 角色间防重复由 MAX_OVERLAP（同一只股票最多 2 个角色持有）负责
+        # 【基础过滤+风控闸】与 D7 分支去重；D5 回踩放行下跌中继拦截，避免误杀正常买点
+        ok, why = _pass_basic_filter(code, st, player, all_players, allow_pullback=(role_id == "D5"))
+        if not ok:
+            if why.startswith("风控闸"):
+                print(f"  🛡️  {role_id} 风控闸拦截 {st['name']}({code})：{why[4:]}")
+            continue
+        # 【同板块持仓】放开硬性同行业数量限制（用户要求），仅保留轻量提示
         industry = STOCK_INDUSTRY.get(code, "其他")
         same_count = sum(1 for h in player["holdings"] if STOCK_INDUSTRY.get(h["code"], "其他") == industry)
         if same_count >= 3:
             print(f"  ℹ️  {role_id} {industry}板块已持{same_count}只，注意行业集中度")
-        # 【跨角色重合限制】同一只股票最多 MAX_OVERLAP 个角色持有，避免六角色持仓大幅重复
-        if all_players:
-            overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
-            if overlap >= MAX_OVERLAP:
-                continue
-
-        score, reason_parts = role_pick_score(role_id, st)
+        score, reason_parts = role_pick_score(role_id, st, market_trend)
         reason_parts = list(reason_parts)
-        # 【全局风控闸】与回测/前端同口径：追高/连涨/高位变盘/下跌中继一律拦截
-        guard_ok, guard_why = global_guard(st)
-        if not guard_ok:
-            print(f"  🛡️  {role_id} 风控闸拦截 {st['name']}({code})：{guard_why}")
-            continue
         # 【板块轮动】强势板块加分（前5名强势板块+10分）
         if industry in strong_sectors:
             score += 10
             reason_parts.append(f"{industry}板块强势")
-        # 【多Agent共识】D2专属：其他角色≥3个指向同一只 → 共识加成
-        if role_id == "D2" and consensus.get(code, 0) >= 3:
-            score += 30
-            reason_parts.append(f"多Agent共识{consensus[code]}/6")
-        elif role_id == "D2" and consensus.get(code, 0) >= 2:
-            score += 10
-            reason_parts.append(f"部分共识{consensus[code]}/6")
+        # 【多角色权重融合·共识共振】汇总七角色加权打分：≥3 角色同向给共振加成；
+        # 衡(D2)作为共识聚合角色额外加权，其余角色共振亦加分（落实"角色权重与融合"）
+        fused, n_roles, _roles = consensus_score(code, all_codes_data, market_trend)
+        if n_roles >= 3:
+            bonus = 30 if role_id == "D2" else 15
+            score += bonus
+            reason_parts.append(f"多角色共振{n_roles}/7")
         if score >= 60:
-            candidates.append((code, st, score, " + ".join(reason_parts) or "综合评分达标"))
+            candidates.append((code, st, score, fused, " + ".join(reason_parts) or "综合评分达标"))
 
     if not candidates: return None
-    candidates.sort(key=lambda x: x[2], reverse=True)
-    return candidates[0]
+    # 排序：①自身评分 ②七角色融合分（权重加权共识度），同分由融合度决出
+    candidates.sort(key=lambda x: (x[2], x[3]), reverse=True)
+    return candidates[0][:4]
 
 def do_buy(player, code, st, score, reason, ntf=1.0):
     """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
@@ -1643,6 +1669,10 @@ def do_buy(player, code, st, score, reason, ntf=1.0):
         position_ratio = 0.15
     else:
         position_ratio = 0.20
+    # 【信号强度仓位】评分越高仓位越重（弱信号降仓控回撤）；回测调参 cap 优先时不叠加
+    if cap is None:
+        sig_k = 1.0 if score >= 80 else 0.7 if score >= 60 else 0.5
+        position_ratio = position_ratio * sig_k
     # 【国家队领先指标】明确进场适度领先加仓(×1.15)，未见动作略偏防御(×0.9)
     budget = player["cash"] * position_ratio * ntf
     qty = int(budget / st["price"] / 100) * 100
