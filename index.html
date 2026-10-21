@@ -2110,6 +2110,12 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <div class="dp-card"><h5>✅ 触发条件 <button class="dp-edit-btn" onclick="dpEdit('dpTrig')">✏️</button></h5><div class="dp-view" id="dpTrigView">—</div><textarea id="dpTrigEdit" class="dp-edit" style="display:none"></textarea></div>
         <div class="dp-card"><h5>🚫 放弃条件 <button class="dp-edit-btn" onclick="dpEdit('dpGive')">✏️</button></h5><div class="dp-view" id="dpGiveView">—</div><textarea id="dpGiveEdit" class="dp-edit" style="display:none"></textarea></div>
       </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">📊 今日收盘小结 <span style="font-size:11px;font-weight:400;color:var(--text-faint)">每日 15:00 收盘后自动生成 · 含持仓个股复盘与四大指数对比</span></div>
+        <div id="reviewDaily">
+          <div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。</div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="panel collapsible" id="panel-review-sentiment" data-collapsed>
@@ -2132,15 +2138,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div id="reviewDirections" style="margin-bottom:20px"></div>
       <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">💰 赚钱 / 亏钱效应</div>
       <div id="reviewEffect"></div>
-    </div>
-  </div>
-  <div class="panel collapsible" id="panel-review-daily" data-collapsed>
-    <div class="panel-head" onclick="togglePanel('panel-review-daily')">
-      <span class="panel-title">每日收盘小结</span>
-      <span class="panel-tip">每个交易日 15:00 收盘后自动生成 · 含持仓个股、板块与四大指数对比</span>
-    </div>
-    <div class="panel-body" id="reviewDaily">
-      <div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。</div>
     </div>
   </div>
   <div class="panel collapsible" id="panel-review-weekmonth" data-collapsed>
@@ -2760,6 +2757,18 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   </div>
 </section>
 
+<section class="tab-view" id="view-psyche">
+  <div class="panel" style="margin-bottom:14px">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">🧠 真实角色心理 · 后端实盘画像</span>
+      <span class="panel-tip" id="psycheMeta">读取 data.json 中 role_psychology（由 trade_engine.py 每轮运行生成）</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="psycheGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px"></div>
+      <div id="psycheAttr" style="margin-top:18px"></div>
+    </div>
+  </div>
+</section>
 </main>
 
 <!-- 移动端底部导航（方向①：现代仪表盘，仅 ≤768px 显示） -->
@@ -6890,7 +6899,7 @@ function switchTab(name){
   document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
   document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+name));
   /* 更新头部页面名 */
-  const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置"};
+  const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置",psyche:"真实角色心理"};
   const tp=document.getElementById("topbarPage"); if(tp) tp.textContent=tabNames[name]||"";
   /* 六部门禁与实时日志仅在运行总览显示 */
   const showGlobal = (name==="overview");
@@ -14624,18 +14633,6 @@ const SERVER_CHAN_KEY = localStorage.getItem("serverChanKey") || "";
 </script>
 <script type="application/json" id="embeddedSimData">{"players":[{"id":"D1","name":"锋","cash":68763.0,"holdings":[{"code":"600887","name":"伊利股份","qty":600,"buyPrice":27.828333333333333,"buyTime":"2026-10-15T13:59:36.327964","reason":"MA20>MA60且向上 + MA5>MA20 + 站稳MA20不追高 + 突破/贴近前20日高点","score":75},{"code":"601519","name":"大智慧","qty":1500,"buyPrice":9.693333333333333,"buyTime":"2026-10-15T14:37:33.300117","reason":"MA20>MA60且向上 + MA5>MA20 + 突破/贴近前20日高点 + 放量确认·量比1.4","score":75}],"trades":[{"type":"buy","code":"600887","name":"伊利股份","qty":600,"price":27.82,"fee":5,"time":"2026-10-15T13:59:36.327979","reason":"MA20>MA60且向上 + MA5>MA20 + 站稳MA20不追高 + 突破/贴近前20日高点"},{"type":"buy","code":"601519","name":"大智慧","qty":1500,"price":9.69,"fee":5,"time":"2026-10-15T14:37:33.300126","reason":"MA20>MA60且向上 + MA5>MA20 + 突破/贴近前20日高点 + 放量确认·量比1.4"}],"assetHistory":[100000,100000,99995.0,100176.0,99660.0,99561.0],"asset":99903.0,"asset_history":[100000,100000,99995.0,100176.0,99660.0,99561.0]},{"id":"D2","name":"衡","cash":78758.0,"holdings":[{"code":"600276","name":"恒瑞医药","qty":200,"buyPrice":46.115,"buyTime":"2026-10-15T13:59:37.087502","reason":"量能适中 + 均线多头 + 涨幅适中 + 收在MA5上方 + 医药板块强势","score":65},{"code":"600809","name":"山西汾酒","qty":100,"buyPrice":116.03,"buyTime":"2026-10-15T14:37:34.273558","reason":"量能适中 + RSI健康 + 均线多头 + 涨幅适中 + 收在MA5上方 + 白酒板块强势","score":73}],"trades":[{"date":"2026-09-21","type":"buy","code":"603439","name":"三力制药","price":15.17,"qty":1300,"reason":"打板买入，突破前高"},{"date":"2026-09-22","type":"sell","code":"603439","name":"三力制药","price":14.85,"qty":1300,"reason":"止损卖出，跌破MA20"},{"type":"buy","code":"600276","name":"恒瑞医药","qty":200,"price":46.09,"fee":5,"time":"2026-10-15T13:59:37.087515","reason":"量能适中 + 均线多头 + 涨幅适中 + 收在MA5上方 + 医药板块强势"},{"type":"buy","code":"600809","name":"山西汾酒","qty":100,"price":115.98,"fee":5,"time":"2026-10-15T14:37:34.273568","reason":"量能适中 + RSI健康 + 均线多头 + 涨幅适中 + 收在MA5上方 + 白酒板块强势"}],"assetHistory":[100000,99584,99579.0,99652.0,99580.0,99441.0],"asset":99754.0,"asset_history":[100000,99584,99579.0,99652.0,99580.0,99441.0]},{"id":"D3","name":"镜","cash":70986.0,"holdings":[{"code":"601519","name":"大智慧","qty":1800,"buyPrice":9.672777777777778,"buyTime":"2026-10-15T13:59:37.755941","reason":"大资金放量流入 + 多空5比1","score":63},{"code":"600809","name":"山西汾酒","qty":100,"buyPrice":116.03,"buyTime":"2026-10-15T14:37:35.255108","reason":"大资金放量流入 + 多空6比0 + 白酒板块强势","score":100}],"trades":[{"type":"buy","code":"601519","name":"大智慧","qty":1800,"price":9.67,"fee":5,"time":"2026-10-15T13:59:37.755956","reason":"大资金放量流入 + 多空5比1"},{"type":"buy","code":"600809","name":"山西汾酒","qty":100,"price":115.98,"fee":5,"time":"2026-10-15T14:37:35.255117","reason":"大资金放量流入 + 多空6比0 + 白酒板块强势"}],"assetHistory":[100000,100000,99995.0,100026.0,99572.0,99431.0],"asset":99720.0,"asset_history":[100000,100000,99995.0,100026.0,99572.0,99431.0]},{"id":"D4","name":"啸","cash":82603.19,"holdings":[{"code":"600030","name":"中信证券","qty":500,"cost":26.99,"buyDate":"2026-09-22","buyReason":"量价共振：放量突破平台，主升启动"},{"code":"000858","name":"五粮液","qty":100,"cost":70.63,"buyDate":"2026-09-22","buyReason":"量价共振：放量突破平台，主升启动"}],"trades":[{"date":"2026-09-20","type":"buy","code":"001225","name":"和泰机电","price":43.53,"qty":700,"reason":"量价共振突破"},{"date":"2026-09-22","type":"sell","code":"001225","name":"和泰机电","price":50.07,"qty":700,"reason":"盈利止盈，量价背离"},{"date":"2026-09-22","type":"buy","code":"600030","name":"中信证券","price":26.99,"qty":500,"reason":"量价共振，主升启动"},{"date":"2026-09-22","type":"buy","code":"000858","name":"五粮液","price":70.63,"qty":100,"reason":"量价共振，主升启动"}],"assetHistory":[100000,103161.19,103161.19,102659.19,102791.19,102667.19,102629.19],"asset":102870.19,"asset_history":[100000,103161.19,103161.19,102659.19,102791.19,102667.19,102629.19]},{"id":"D5","name":"渊","cash":69202.0,"holdings":[{"code":"600036","name":"招商银行","qty":400,"buyPrice":42.1325,"buyTime":"2026-10-16T14:18:58.580130","reason":"MA20>MA60趋势向上 + 回踩MA20 + 缩量·量比0.8 + 银行板块强势","score":80},{"code":"600887","name":"伊利股份","qty":500,"buyPrice":27.89,"buyTime":"2026-10-16T14:43:31.413318","reason":"MA20>MA60趋势向上 + 回踩MA10企稳 + 缩量·量比0.8 + 食品板块强势","score":85}],"trades":[{"type":"buy","code":"600036","name":"招商银行","qty":400,"price":42.12,"fee":5,"time":"2026-10-16T14:18:58.580135","reason":"MA20>MA60趋势向上 + 回踩MA20 + 缩量·量比0.8 + 银行板块强势"},{"type":"buy","code":"600887","name":"伊利股份","qty":500,"price":27.88,"fee":5,"time":"2026-10-16T14:43:31.413327","reason":"MA20>MA60趋势向上 + 回踩MA10企稳 + 缩量·量比0.8 + 食品板块强势"}],"assetHistory":[100000,100000,100000,100000,99995.0,100030.0],"asset":100282.0,"asset_history":[100000,100000,100000,100000,99995.0,100030.0]},{"id":"D6","name":"焰","cash":100000,"holdings":[],"trades":[],"assetHistory":[100000,100000,100000,100000,100000,100000],"asset":100000,"asset_history":[100000,100000,100000,100000,100000,100000]},{"id":"D7","name":"沉","cash":100000,"holdings":[],"trades":[],"asset_history":[100000],"asset":100000,"assetHistory":[100000]}],"pricePool":{},"sectors":{},"tickCount":0,"lastCloseDate":"","lastDayStr":"2026-10-19","simDate":"2026-10-19","dayLabels":["10-09","10-12","10-13","10-14","10-15","10-16"],"lastRecordKey":"","version":12,"last_update":"2026-10-17T15:57:13.712668"}</script>
 <script type="application/json" id="embeddedSumData">{"daily": {"date": "2026-09-23", "indices": [{"name": "上证指数", "chg": 0.45}, {"name": "深证成指", "chg": 0.62}, {"name": "创业板指", "chg": 0.38}, {"name": "科创50", "chg": 0.71}], "holds": [{"role": "D4", "name": "云南白药", "code": "000538", "qty": 300, "chg": 1.12, "sector": "医药", "industry": "中药", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D4", "name": "山西汾酒", "code": "600809", "qty": 100, "chg": 0.95, "sector": "食品饮料", "industry": "白酒", "reason": "量价共振：放量突破平台，主升启动"}, {"role": "D6", "name": "通用电梯", "code": "300931", "qty": 900, "chg": 2.34, "sector": "机械设备", "industry": "通用设备", "reason": "涨停回调洗盘缩量站稳"}], "revisions": 0, "shAnalysis": "上证指数+0.45% · 大盘中性偏多(58) · 资金净流入 · 医药消费板块领涨。", "pastVsNow": "今日组合均值 0.34%，较昨日 0.37% 微降。当前持仓 3 只。", "nextDayExpect": "次日中性偏多：精选资金流入板块个股，控制仓位。"}, "week": {"key": "2026-W39", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}, "month": {"key": "2026-09", "rows": [{"role": "D4", "strategy": "量价共振", "ret": 2.98, "pnl": 2976, "trades": 8, "winRate": "33", "draw": 0.14}, {"role": "D1", "strategy": "趋势突破", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D3", "strategy": "多空辩论", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D5", "strategy": "趋势回踩", "ret": 0.0, "pnl": 0, "trades": 0, "winRate": "--", "draw": 0}, {"role": "D6", "strategy": "涨停回踩", "ret": 0.0, "pnl": 0, "trades": 1, "winRate": "--", "draw": 0}, {"role": "D2", "strategy": "多Agent共识", "ret": -0.95, "pnl": -947, "trades": 2, "winRate": "0", "draw": 0.95}]}}</script>
-<section class="tab-view" id="view-psyche">
-  <div class="panel" style="margin-bottom:14px">
-    <div class="panel-head" style="cursor:default">
-      <span class="panel-title">🧠 真实角色心理 · 后端实盘画像</span>
-      <span class="panel-tip" id="psycheMeta">读取 data.json 中 role_psychology（由 trade_engine.py 每轮运行生成）</span>
-    </div>
-    <div class="panel-body" style="padding:14px">
-      <div id="psycheGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px"></div>
-      <div id="psycheAttr" style="margin-top:18px"></div>
-    </div>
-  </div>
-</section>
 <script>
 const PSYCHE_COLORS={D1:"#ef4444",D2:"#10b981",D3:"#f59e0b",D4:"#3b82f6",D5:"#8b5cf6",D6:"#ec4899",D7:"#ff6b35"};
 const PSYCHE_NAMES={D1:"锋",D2:"衡",D3:"镜",D4:"啸",D5:"渊",D6:"焰",D7:"沉"};
