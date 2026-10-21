@@ -1382,7 +1382,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <button class="tab" data-tab="settings"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
   </div>
   <div class="sidenav-footer">
-    <span class="sidenav-dot"></span>行情已连接 · 腾讯
+    <span class="sidenav-foot-text"><span class="sidenav-dot"></span>行情已连接 · 腾讯</span>
+    <button class="sidenav-collapse-btn" id="sidenavCollapseBtn" onclick="toggleSidenavCollapse()" title="收起 / 展开侧栏" aria-label="收起侧栏">«</button>
   </div>
 </nav>
 <div class="sidenav-mask" id="sidenavMask" onclick="toggleSidenav(false)"></div>
@@ -4903,9 +4904,9 @@ function exportData(){
     a.click();
     URL.revokeObjectURL(url);
     log('info','数据已导出，包含所有持仓、自选股、参数设置');
-    alert('✅ 数据导出成功！\n\n已保存为JSON文件，包含所有持仓、自选股、参数设置\n换设备/换链接/清缓存后，点「导入数据」选这个文件即可全部恢复');
+    if(window.showToast)showToast('数据已导出（JSON 备份文件）','ok'); else alert('✅ 数据导出成功！');
   }catch(e){
-    alert('❌ 导出失败：'+e.message);
+    if(window.showToast)showToast('导出失败：'+e.message,'err'); else alert('❌ 导出失败：'+e.message);
   }
 }
 function importData(event){
@@ -4917,7 +4918,7 @@ function importData(event){
       try{
         const data = JSON.parse(e.target.result);
         if(typeof data !== 'object' || data === null){
-          alert('❌ 文件格式错误，请选择导出的JSON备份文件');
+          if(window.showToast)showToast('文件格式错误，请选择导出的 JSON 备份','err'); else alert('❌ 文件格式错误，请选择导出的JSON备份文件');
           return;
         }
         if(!confirm('⚠️ 导入数据会覆盖当前所有持仓、自选股、参数设置，确定继续吗？\n\n建议先导出当前数据做备份')){
@@ -4929,17 +4930,17 @@ function importData(event){
           localStorage.setItem(key, data[key]);
         }
         log('info','数据导入成功，页面即将刷新');
-        alert('✅ 数据导入成功！\n\n所有持仓、自选股、参数设置已恢复\n页面即将自动刷新');
+        if(window.showToast)showToast('数据导入成功，即将自动刷新…','ok'); else alert('✅ 数据导入成功！');
         setTimeout(()=>location.reload(), 1000);
       }catch(err){
-        alert('❌ 导入失败：文件格式错误');
+        if(window.showToast)showToast('导入失败：文件格式错误','err'); else alert('❌ 导入失败：文件格式错误');
       }
     };
     reader.readAsText(file);
     // 清空input，允许重复导入同一个文件
     event.target.value = '';
   }catch(e){
-    alert('❌ 导入失败：'+e.message);
+    if(window.showToast)showToast('导入失败：'+e.message,'err'); else alert('❌ 导入失败：'+e.message);
   }
 }
 function toggleForce(){
@@ -14703,6 +14704,116 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
 setInterval(function(){ var v=document.getElementById("view-psyche"); if(v&&v.classList.contains("active")) renderPsyche(); }, 15000);
 </script>
 
+
+
+<!-- ===== UI 增强：交互 / 反馈 / 导航（简洁化） ===== -->
+<style id="ui-enhance">
+  .modern{scroll-behavior:smooth}
+  /* 切换淡入上移 */
+  .modern .tab-view.active{animation:tabIn .32s cubic-bezier(.22,1,.36,1)}
+  @keyframes tabIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  /* 卡片悬停微交互 */
+  .modern .mk-metric,.modern .mk-card,.modern .stat-card{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+  .modern .mk-metric:hover,.modern .mk-card:hover,.modern .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.28)}
+  /* Toast 轻提示 */
+  .ui-toast-wrap{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none}
+  .ui-toast{background:rgba(18,24,33,.96);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:12px;font-size:13px;line-height:1.45;box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease;max-width:84vw;backdrop-filter:blur(8px);white-space:pre-line}
+  .ui-toast.show{opacity:1;transform:none}
+  .ui-toast.ok{border-left:3px solid var(--green)} .ui-toast.err{border-left:3px solid var(--red)} .ui-toast.info{border-left:3px solid var(--cyan)}
+  /* 侧栏收起为图标轨 */
+  .sidenav{transition:width .26s cubic-bezier(.4,0,.2,1),flex-basis .26s cubic-bezier(.4,0,.2,1)}
+  .sidenav.collapsed{flex-basis:64px;width:64px}
+  .sidenav.collapsed .sidenav-brand>div:last-child{display:none}
+  .sidenav.collapsed .sidenav-group{font-size:0;height:12px;padding:10px 0 0}
+  .sidenav.collapsed .sidenav .tab{justify-content:center;padding:11px 0;font-size:0;gap:0}
+  .sidenav.collapsed .sidenav .tab-ico{font-size:initial}
+  .sidenav.collapsed .sidenav-footer{justify-content:center;padding:12px 0}
+  .sidenav.collapsed .sidenav-foot-text{display:none}
+  .sidenav-collapse-btn{margin-left:auto;width:22px;height:22px;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex:0 0 auto}
+  .sidenav-collapse-btn:hover{color:var(--text);border-color:var(--text-dim);background:var(--bg-hover)}
+  /* 回到顶部 */
+  .ui-top{position:fixed;right:22px;bottom:24px;width:44px;height:44px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .25s,transform .25s,color .2s,border-color .2s;z-index:9000;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .ui-top.show{opacity:1;visibility:visible;transform:none}
+  .ui-top:hover{color:var(--green);border-color:var(--green)}
+  /* 焦点可见 */
+  .modern a:focus-visible,.modern button:focus-visible,.modern .tab:focus-visible,.modern input:focus-visible,.modern select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  /* 滚动条 */
+  .modern ::-webkit-scrollbar{width:9px;height:9px}
+  .modern ::-webkit-scrollbar-track{background:transparent}
+  .modern ::-webkit-scrollbar-thumb{background:rgba(125,140,160,.22);border-radius:5px}
+  .modern ::-webkit-scrollbar-thumb:hover{background:rgba(125,140,160,.4)}
+  /* 组合快照条（消费后端 dashboard_summary） */
+  .ds-snapshot{display:flex;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;overflow:hidden;margin-bottom:12px}
+  .dss-item{flex:1 1 0;min-width:118px;padding:11px 16px;display:flex;flex-direction:column;gap:3px;border-right:1px solid var(--border-soft)}
+  .dss-item:last-child{border-right:none}
+  .dss-item .dss-label{font-size:11px;color:var(--text-faint)}
+  .dss-item .dss-val{font-size:16px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px}
+  @media (max-width:768px){.ds-snapshot{display:grid;grid-template-columns:repeat(2,1fr)}.dss-item{border-right:none;border-bottom:1px solid var(--border-soft)}.dss-item:nth-last-child(-n+2){border-bottom:none}}
+</style>
+<script id="ui-enhance-js">
+(function(){
+  /* —— Toast 轻提示 —— */
+  var toastWrap=document.createElement('div');toastWrap.className='ui-toast-wrap';document.body.appendChild(toastWrap);
+  window.showToast=function(msg,type){
+    type=type||'info';
+    var t=document.createElement('div');t.className='ui-toast '+type;t.textContent=msg;
+    toastWrap.appendChild(t);
+    requestAnimationFrame(function(){t.classList.add('show');});
+    setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);
+  };
+  /* —— 侧栏收起 —— */
+  function applySidenavCollapsed(c){var n=document.getElementById('tabNav');if(!n)return;n.classList.toggle('collapsed',!!c);try{localStorage.setItem('sidenavCollapsed',c?'1':'0');}catch(e){}var b=document.getElementById('sidenavCollapseBtn');if(b)b.textContent=c?'»':'«';}
+  window.toggleSidenavCollapse=function(){var n=document.getElementById('tabNav');if(n)applySidenavCollapsed(!n.classList.contains('collapsed'));};
+  try{applySidenavCollapsed(localStorage.getItem('sidenavCollapsed')==='1');}catch(e){}
+  /* —— 回到顶部 —— */
+  var topBtn=document.createElement('button');topBtn.className='ui-top';topBtn.innerHTML='↑';topBtn.title='回到顶部';topBtn.setAttribute('aria-label','回到顶部');
+  topBtn.onclick=function(){window.scrollTo({top:0,behavior:'smooth'});};document.body.appendChild(topBtn);
+  window.addEventListener('scroll',function(){topBtn.classList.toggle('show',window.scrollY>420);},{passive:true});
+  /* —— 组合快照（消费后端 dashboard_summary，免前端重算） —— */
+  var SNAP_ID='dsSnapshot';
+  function loadDashboardSnapshot(){
+    var hero=document.querySelector('#view-overview .hero-summary');
+    var strip=document.getElementById(SNAP_ID);
+    if(!hero)return;
+    if(!strip){strip=document.createElement('div');strip.id=SNAP_ID;strip.className='ds-snapshot';strip.style.display='none';hero.insertAdjacentElement('afterend',strip);}
+    fetch('./data.json?'+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d||!d.dashboard_summary){strip.style.display='none';return;}
+      var s=d.dashboard_summary;
+      var pct=(s.total_pnl_pct!=null)?(s.total_pnl_pct*100):0;
+      var pnlCls=s.total_pnl>=0?'var(--up)':'var(--down)';
+      var best=s.best_role,bestTxt=best?(best.id+' '+best.name+' '+(best.recent_pnl>=0?'+':'')+Math.round(best.recent_pnl)):'—';
+      var worst=s.worst_role,worstTxt=worst?(worst.id+' '+worst.name+' '+Math.round(worst.recent_pnl)):'—';
+      var upd=s.last_update?String(s.last_update).replace('T',' ').slice(0,16):'—';
+      strip.style.display='flex';
+      strip.innerHTML=
+        '<div class="dss-item"><span class="dss-label">总资产</span><span class="dss-val">¥'+Number(s.total_assets||0).toLocaleString('zh-CN',{maximumFractionDigits:0})+'</span></div>'+
+        '<div class="dss-item"><span class="dss-label">总盈亏</span><span class="dss-val" style="color:'+pnlCls+'">'+(s.total_pnl>=0?'+':'')+Number(s.total_pnl||0).toLocaleString('zh-CN',{maximumFractionDigits:0})+' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)</span></div>'+
+        '<div class="dss-item"><span class="dss-label">最佳角色</span><span class="dss-val" style="color:var(--up)">'+bestTxt+'</span></div>'+
+        '<div class="dss-item"><span class="dss-label">最差角色</span><span class="dss-val" style="color:var(--down)">'+worstTxt+'</span></div>'+
+        '<div class="dss-item"><span class="dss-label">持仓角色</span><span class="dss-val">'+(s.active_roles||0)+' / '+(s.roles_count||0)+'</span></div>'+
+        '<div class="dss-item"><span class="dss-label">数据更新</span><span class="dss-val" style="font-size:13px">'+upd+'</span></div>';
+    }).catch(function(){if(strip)strip.style.display='none';});
+  }
+  /* 切到「运行总览」时刷新快照（用 MutationObserver，不改动原 switchTab） */
+  var ov=document.getElementById('view-overview');
+  if(ov){
+    var _was=ov.classList.contains('active');
+    new MutationObserver(function(){var now=ov.classList.contains('active');if(now&&!_was)loadDashboardSnapshot();_was=now;})
+      .observe(ov,{attributes:true,attributeFilter:['class']});
+    if(_was)loadDashboardSnapshot();
+  }
+  /* —— 键盘导航：1-9 切 tab / ←→ 切换 / Esc 关闭弹层 —— */
+  var NAV=['overview','rank','airesearch','global','review','knowledge','research','psyche','sim','settings'];
+  function navIdx(){var a=document.querySelector('.tab.active');if(!a||!a.dataset.tab)return 0;var i=NAV.indexOf(a.dataset.tab);return i<0?0:i;}
+  window.addEventListener('keydown',function(e){
+    var tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable))return;
+    if(e.key==='Escape'){try{closeSidePanel();}catch(_){}var mm=document.getElementById('modalMask');if(mm)mm.style.display='none';return;}
+    if(/^[1-9]$/.test(e.key)){var i=parseInt(e.key,10)-1;if(i<NAV.length){switchTab(NAV[i]);e.preventDefault();}}
+    else if(e.key==='ArrowRight'){var a=navIdx();switchTab(NAV[(a+1)%NAV.length]);e.preventDefault();}
+    else if(e.key==='ArrowLeft'){var b=navIdx();switchTab(NAV[(b-1+NAV.length)%NAV.length]);e.preventDefault();}
+  });
+})();
+</script>
 
 </body>
 </html>
