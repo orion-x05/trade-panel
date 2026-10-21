@@ -1114,7 +1114,44 @@ def update_role_stats(data):
             "monologue": mono,
         }
     data["role_psychology"] = psycho
+    build_dashboard_summary(data)
+    data["data_version"] = 3
     return tuned
+
+
+def build_dashboard_summary(data):
+    """【仪表盘快照】预计算组合层面聚合指标写回 data['dashboard_summary']，
+    供前端「总览」直接消费，避免浏览器端重复重算（更简洁、更快）。
+    纯基于 data 内已落盘字段，无网络/K线依赖。"""
+    players = data.get("players", [])
+    total_assets = sum(float(p.get("asset") or INIT_CASH) for p in players)
+    total_cost = len(players) * INIT_CASH
+    total_pnl = total_assets - total_cost
+    total_pnl_pct = (total_pnl / total_cost) if total_cost else 0.0
+    psy = data.get("role_psychology", {})
+    ranked = sorted(
+        [r for r in psy.values() if (r.get("samples") or 0) > 0],
+        key=lambda r: (r.get("recent_pnl") or 0), reverse=True,
+    )
+    best = ranked[0] if ranked else None
+    worst = ranked[-1] if ranked else None
+    active = sum(1 for p in players if (p.get("holdings") or []))
+    n_trades = sum(r.get("samples", 0) for r in psy.values())
+    data["dashboard_summary"] = {
+        "total_assets": round(total_assets, 2),
+        "total_pnl": round(total_pnl, 2),
+        "total_pnl_pct": round(total_pnl_pct, 4),
+        "best_role": ({"id": best["id"], "name": best["name"],
+                       "recent_pnl": best.get("recent_pnl")} if best else None),
+        "worst_role": ({"id": worst["id"], "name": worst["name"],
+                        "recent_pnl": worst.get("recent_pnl")} if worst else None),
+        "active_roles": active,
+        "total_trades": n_trades,
+        "roles_count": len(players),
+        "last_update": data.get("last_update"),
+    }
+    return data["dashboard_summary"]
+
 
 def current_params_line():
     return "、".join(f"{r}{ROLES[r]['name']}(止损{ROLES[r]['sl']}%/止盈{ROLES[r]['tp']}%)" for r in ROLES)
