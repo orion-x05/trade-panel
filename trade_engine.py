@@ -235,10 +235,17 @@ def load_bt_tune():
             role["tp"] = round(min(max(float(v["tp"]), TP_MIN), TP_MAX), 1)
         if isinstance(v.get("pos_cap"), (int, float)):
             role["pos_cap"] = round(min(max(float(v["pos_cap"]), 5.0), 30.0), 1) / 100.0
+        if isinstance(v.get("weight"), (int, float)):   # 【T5 归因】回测略降权重抑制杂项亏损
+            role["weight"] = round(min(max(float(v["weight"]), 0.3), 1.5), 2)
         if "enabled" in v:
             role["enabled"] = bool(v["enabled"])
-        notes.append(f"{rid}{role['name']} 止损{role['sl']}% / 止盈{role['tp']}% / 单笔≤{int((role.get('pos_cap') or 0.2)*100)}%"
-                     + ("" if role.get("enabled", True) else "（暂停开仓）"))
+        parts = [f"{rid}{role['name']} 止损{role['sl']}% / 止盈{role['tp']}% / 单笔≤{int((role.get('pos_cap') or 0.2)*100)}%"]
+        if isinstance(v.get("weight"), (int, float)):
+            parts.append(f"权重{role['weight']}")
+        if v.get("tune_note"):
+            parts.append(v["tune_note"])
+        parts.append("" if role.get("enabled", True) else "（暂停开仓）")
+        notes.append(" ".join(p for p in parts if p))
     if notes:
         print("  ⚙️  回测调参已生效（bt_tune.json）：" + "；".join(notes))
     return notes
@@ -976,6 +983,7 @@ _ROLE_MOOD = {}          # 角色情绪值 -1.0(恐惧) .. +1.0(亢奋)，带均
 _ROLE_DRAWDOWN = {}      # 角色近期最大回撤比例 0.0..1.0（本金保护本能）
 _ROLE_REFLECT = {}       # 角色反思记忆：{"bad_sectors":{板块}, "bad_trends":{市况}}
 _DRAWDOWN_GUARD = 0.12   # 角色近期回撤超 12% → 触发本金保护砍半仓
+_GLOBAL_CONTAGION = 0.0    # 群体情绪传染系数 0-1（团队连亏恐慌在角色间传染），由 compute_sentiment_factor 填充，do_buy 读取
 
 def update_role_stats(data):
     """【角色表现记忆】从各角色 trades 历史重算两类统计：
@@ -1053,17 +1061,21 @@ def update_role_stats(data):
             if peak > 0:
                 max_dd = max(max_dd, (peak - v) / peak)
         drawdown[rid] = round(max_dd, 3)
-        # —— 反思记忆：记得自己在哪些板块/市况反复栽过（≥2次才记仇，避免单次过度回避）——
-        bad_sectors, bad_trends = {}, {}
+        # —— 反思记忆：记得自己在哪些板块/市况/亏损原因反复栽过（≥2次才记仇，避免单次过度回避）——
+        bad_sectors, bad_trends, bad_reasons = {}, {}, {}
         for t in sells:
             if (t.get("profit") or 0) < 0:
                 sec = STOCK_INDUSTRY.get(t.get("code", ""), "其他")
                 bad_sectors[sec] = bad_sectors.get(sec, 0) + 1
                 tr = t.get("trend", "neutral")
                 bad_trends[tr] = bad_trends.get(tr, 0) + 1
+                lr = t.get("loss_reason") or "其他"
+                bad_reasons[lr] = bad_reasons.get(lr, 0) + 1
+        # 用 list 而非 set（set 不可被 json.dump 序列化，曾是导致 data.json 回写失败的隐患）
         reflect[rid] = {
-            "bad_sectors": {s for s, c in bad_sectors.items() if c >= 2},
-            "bad_trends": {t_ for t_, c in bad_trends.items() if c >= 2},
+            "bad_sectors": sorted(s for s, c in bad_sectors.items() if c >= 2),
+            "bad_trends": sorted(t_ for t_, c in bad_trends.items() if c >= 2),
+            "bad_reasons": sorted(r for r, c in bad_reasons.items() if c >= 2),
         }
     data["role_mood"] = mood
     data["role_drawdown"] = drawdown
@@ -1074,6 +1086,34 @@ def update_role_stats(data):
     data["tuned_weights"] = tuned
     _DYN_WEIGHT.clear(); _DYN_WEIGHT.update(tuned)
     _ROLE_TREND_STATS.clear(); _ROLE_TREND_STATS.update(data["role_trend_stats"])
+    # ============ 【拟人化·对外心理画像】供前端直接渲染（无需再算） ============
+    psycho = {}
+    for rid in ROLES:
+        cfg = ROLES[rid]
+        stt = role_stats.get(rid)
+        rs = reflect.get(rid, {})
+        m = mood.get(rid, 0); dd = drawdown.get(rid, 0)
+        # 心理独白：融合情绪/回撤/反思/信念，生成真人化自述
+        bits = []
+        if m > 0.3: bits.append("最近手风顺，胆子大些")
+        elif m < -0.3: bits.append("连亏几笔，今天收着点、少出手")
+        if dd >= _DRAWDOWN_GUARD: bits.append(f"回撤{dd*100:.0f}%有点大，先保本金砍半仓")
+        if rs.get("bad_sectors"): bits.append("在" + "、".join(rs["bad_sectors"][:2]) + "栽过，绕着走")
+        if rs.get("bad_reasons"): bits.append("吃过" + "、".join(rs["bad_reasons"][:2]) + "的亏")
+        if cfg.get("conviction", 1) >= 1.2: bits.append("风格不变，坚持自己的打法")
+        mono = "；".join(bits) if bits else "状态平稳，按纪律执行"
+        psycho[rid] = {
+            "id": rid, "name": cfg["name"], "temperament": cfg.get("temperament", ""),
+            "conviction": cfg.get("conviction", 1.0), "patience": cfg.get("patience", 1.0),
+            "mood": m, "drawdown": dd, "reflect": rs,
+            "tuned_weight": tuned.get(rid, cfg["weight"]),
+            "base_weight": cfg["weight"],
+            "recent_pnl": round(stt["net_pnl"], 2) if stt else 0.0,
+            "win_rate": round(stt["wins"] / stt["n"], 3) if (stt and stt["n"]) else None,
+            "samples": stt["n"] if stt else 0,
+            "monologue": mono,
+        }
+    data["role_psychology"] = psycho
     return tuned
 
 def current_params_line():
@@ -1645,10 +1685,12 @@ def consensus_score(code, all_codes_data, market_trend="neutral"):
         wsum += sc * _DYN_WEIGHT.get(rid, ROLES[rid]["weight"])
         roles_hit.append(rid)
     if not roles_hit:
-        return 0, 0, []
+        return 0, 0, [], 0.0
     w_total = sum(_DYN_WEIGHT.get(r, ROLES[r]["weight"]) for r in roles_hit)
     fused = wsum / w_total if w_total else 0
-    return round(min(100, fused), 1), len(roles_hit), roles_hit
+    # 分歧度：看多角色占比越接近一半(多空势均力敌)越高(0-1)，体现"激烈辩论"；一边倒则分歧低
+    divergence = 1.0 - abs(len(roles_hit) / len(ROLES) - 0.5) * 2
+    return round(min(100, fused), 1), len(roles_hit), roles_hit, round(divergence, 2)
 
 
 def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
@@ -1780,9 +1822,14 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
             reason_parts.append(f"该角色{market_trend}市况常亏·减分")
         # 【多角色权重融合·共识共振】汇总七角色加权打分：≥3 角色同向给共振加成；
         # 衡(D2)作为共识聚合角色额外加权，其余角色共振亦加分（落实"角色权重与融合"）
-        fused, n_roles, _roles = consensus_score(code, all_codes_data, market_trend)
+        fused, n_roles, _roles, divergence = consensus_score(code, all_codes_data, market_trend)
         if n_roles >= 3:
             bonus = 30 if role_id == "D2" else 15
+            # 【角色间辩论】多空势均力敌(分歧激烈)时，辩证角色D3作为仲裁者额外加分
+            # （群体智慧：让最擅长在分歧中找真相的人定调，而非盲目跟多数）
+            if divergence >= 0.6 and role_id == "D3":
+                bonus += 10
+                reason_parts.append("多空辩论·镜仲裁")
             score += bonus
             reason_parts.append(f"多角色共振{n_roles}/7")
         if score >= 60:
@@ -1829,6 +1876,14 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     dd = _ROLE_DRAWDOWN.get(rid, 0.0)
     if dd >= _DRAWDOWN_GUARD:
         position_ratio *= 0.5
+    # 【群体情绪传染】团队连亏恐慌在角色间传染：激进型(焰)与高信念谨慎型(渊/沉)在传染强时进一步收手
+    if _GLOBAL_CONTAGION > 0.3:
+        conv = ROLES.get(rid, {}).get("conviction", 1.0)
+        pat = ROLES.get(rid, {}).get("patience", 1.0)
+        if conv < 1.0 or pat < 0.8:
+            position_ratio *= (1 - 0.3 * _GLOBAL_CONTAGION)
+        elif conv >= 1.2:
+            position_ratio *= (1 - 0.15 * _GLOBAL_CONTAGION)
         print(f"  🛡️ {rid} 近期回撤{dd*100:.0f}%·本金保护砍半仓")
     # 【自主否决】override 风控闸 → 强制减半仓（敢赌但只敢小注）
     if override:
@@ -1873,10 +1928,24 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     player["cash"] += money - total_fee
     bp = hold.get("buyPrice") or hold.get("cost") or 0
     profit = money - bp * sell_qty - total_fee
+    # 【亏损归因】记录这笔亏损为什么发生（供反思记忆与回测归因使用；只针对亏损单）
+    loss_reason = ""
+    if profit < 0:
+        day_chg = st.get("chg", 0) or 0
+        chg = (st["price"] - bp) / bp * 100 if bp > 0 else 0
+        if day_chg <= -7:
+            loss_reason = "黑天鹅"     # 个股突发暴跌，非技术面可控
+        elif day_chg <= -3:
+            loss_reason = "破位"       # 当日领跌，技术破位
+        elif chg <= -6:
+            loss_reason = "追高"       # 高位回落站岗（非当日暴跌，疑似追高）
+        else:
+            loss_reason = "其他"
     player["trades"].append({
         "type": "sell", "code": hold["code"], "name": hold["name"],
         "qty": sell_qty, "price": st["price"], "fee": total_fee,
-        "profit": profit, "time": cn_now().isoformat(), "reason": reason
+        "profit": profit, "time": cn_now().isoformat(), "reason": reason,
+        "loss_reason": loss_reason
     })
     # 【连续亏损熔断】更新计数
     if profit < 0:
@@ -1904,7 +1973,8 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
 
 # ==================== 主函数 ====================
 def compute_sentiment_factor(all_stock_data, data):
-    """【分歧感知】全市场涨跌宽度 + 角色悲观度 → 全局仓位收敛系数（看不清就少做）。"""
+    """【分歧感知 + 群体情绪传染】全市场涨跌宽度 + 角色悲观度 → 全局仓位收敛系数（看不清就少做）；
+    并统计团队连亏恐慌传染系数，供 do_buy 在激进/谨慎角色上做二次收手。"""
     ups = sum(1 for s in all_stock_data.values() if s.get("chg", 0) > 0)
     dns = sum(1 for s in all_stock_data.values() if s.get("chg", 0) < 0)
     tot = len(all_stock_data)
@@ -1913,11 +1983,19 @@ def compute_sentiment_factor(all_stock_data, data):
     losing_roles = sum(1 for p in data["players"]
                        if data.get("consecutive_losses", {}).get(p["id"], 0) >= 2)
     pessimism = losing_roles / len(data["players"]) if data["players"] else 0
+    # 【群体情绪传染】有角色当天单笔亏损(连亏≥1)的比例 → 恐慌在团队内传染（0-1）
+    bleeding = sum(1 for p in data["players"]
+                   if data.get("consecutive_losses", {}).get(p["id"], 0) >= 1)
+    contagion = min(1.0, bleeding / len(data["players"])) if data["players"] else 0.0
+    global _GLOBAL_CONTAGION
+    _GLOBAL_CONTAGION = contagion
     data["market_sentiment"] = {"breadth": round(breadth, 2),
-                               "divergent": divergent, "pessimism": round(pessimism, 2)}
-    # 宽度低(多数下跌)或分歧大(看不清)→收敛；多数角色近期连亏→进一步收敛
+                               "divergent": divergent, "pessimism": round(pessimism, 2),
+                               "contagion": round(contagion, 2)}
+    # 宽度低(多数下跌)或分歧大(看不清)→收敛；多数角色近期连亏→进一步收敛；团队传染→再收敛
     factor = 0.7 if divergent else (0.8 if breadth < 0.4 else 1.0)
     factor *= (0.8 if pessimism >= 0.5 else 1.0)
+    factor *= (1 - 0.25 * contagion)                           # 传染越强，全局越收手
     return factor
 
 
