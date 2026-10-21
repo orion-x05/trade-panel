@@ -541,5 +541,267 @@
     "10-16",
     "10-19",
     "10-20"
-  ]
+  ],
+  "role_mood": {
+    "D1": -0.423,
+    "D2": -0.125,
+    "D3": -0.356,
+    "D4": 0.517,
+    "D5": 0.0,
+    "D6": 0.0,
+    "D7": 0.0
+  },
+  "role_drawdown": {
+    "D1": 0.014,
+    "D2": 0.007,
+    "D3": 0.017,
+    "D4": 0.008,
+    "D5": 0.004,
+    "D6": 0.0,
+    "D7": 0.0
+  },
+  "role_reflect": {
+    "D1": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D2": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D3": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D4": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D5": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D6": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    },
+    "D7": {
+      "bad_sectors": [],
+      "bad_trends": [],
+      "bad_reasons": []
+    }
+  },
+  "market_sentiment": {
+    "breadth": 0.5,
+    "divergent": false
+  },
+  "role_stats": {
+    "D1": {
+      "net_pnl": -1133.43,
+      "n": 1,
+      "win_rate": 0.0
+    },
+    "D2": {
+      "net_pnl": -416.0,
+      "n": 1,
+      "win_rate": 0.0
+    },
+    "D3": {
+      "net_pnl": -908.52,
+      "n": 1,
+      "win_rate": 0.0
+    },
+    "D4": {
+      "net_pnl": 3570.49,
+      "n": 2,
+      "win_rate": 0.5
+    }
+  },
+  "role_trend_stats": {
+    "D1": {
+      "neutral": {
+        "pnl": -1133.43,
+        "n": 1,
+        "win_rate": 0.0
+      }
+    },
+    "D2": {
+      "neutral": {
+        "pnl": -416.0,
+        "n": 1,
+        "win_rate": 0.0
+      }
+    },
+    "D3": {
+      "neutral": {
+        "pnl": -908.52,
+        "n": 1,
+        "win_rate": 0.0
+      }
+    },
+    "D4": {
+      "neutral": {
+        "pnl": 3570.49,
+        "n": 2,
+        "win_rate": 0.5
+      }
+    }
+  },
+  "tuned_weights": {
+    "D1": 1.2,
+    "D2": 1.0,
+    "D3": 0.9,
+    "D4": 1.1,
+    "D5": 1.0,
+    "D6": 0.8,
+    "D7": 0.9
+  },
+  "role_psychology": {
+    "D1": {
+      "id": "D1",
+      "name": "锋",
+      "temperament": "锐意进取",
+      "conviction": 1.0,
+      "patience": 0.8,
+      "mood": -0.423,
+      "drawdown": 0.014,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 1.2,
+      "base_weight": 1.2,
+      "recent_pnl": -1133.43,
+      "win_rate": 0.0,
+      "samples": 1,
+      "monologue": "连亏几笔，今天收着点、少出手"
+    },
+    "D2": {
+      "id": "D2",
+      "name": "衡",
+      "temperament": "均衡稳健",
+      "conviction": 1.0,
+      "patience": 1.0,
+      "mood": -0.125,
+      "drawdown": 0.007,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 1.0,
+      "base_weight": 1.0,
+      "recent_pnl": -416.0,
+      "win_rate": 0.0,
+      "samples": 1,
+      "monologue": "状态平稳，按纪律执行"
+    },
+    "D3": {
+      "id": "D3",
+      "name": "镜",
+      "temperament": "辩证中立",
+      "conviction": 0.9,
+      "patience": 1.1,
+      "mood": -0.356,
+      "drawdown": 0.017,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 0.9,
+      "base_weight": 0.9,
+      "recent_pnl": -908.52,
+      "win_rate": 0.0,
+      "samples": 1,
+      "monologue": "连亏几笔，今天收着点、少出手"
+    },
+    "D4": {
+      "id": "D4",
+      "name": "啸",
+      "temperament": "趋势跟随",
+      "conviction": 1.0,
+      "patience": 0.9,
+      "mood": 0.517,
+      "drawdown": 0.008,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 1.1,
+      "base_weight": 1.1,
+      "recent_pnl": 3570.49,
+      "win_rate": 0.5,
+      "samples": 2,
+      "monologue": "最近手风顺，胆子大些"
+    },
+    "D5": {
+      "id": "D5",
+      "name": "渊",
+      "temperament": "逆向耐心",
+      "conviction": 1.3,
+      "patience": 1.4,
+      "mood": 0.0,
+      "drawdown": 0.004,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 1.0,
+      "base_weight": 1.0,
+      "recent_pnl": 0.0,
+      "win_rate": null,
+      "samples": 0,
+      "monologue": "风格不变，坚持自己的打法"
+    },
+    "D6": {
+      "id": "D6",
+      "name": "焰",
+      "temperament": "激进搏杀",
+      "conviction": 0.7,
+      "patience": 0.5,
+      "mood": 0.0,
+      "drawdown": 0.0,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 0.8,
+      "base_weight": 0.8,
+      "recent_pnl": 0.0,
+      "win_rate": null,
+      "samples": 0,
+      "monologue": "状态平稳，按纪律执行"
+    },
+    "D7": {
+      "id": "D7",
+      "name": "沉",
+      "temperament": "长线逆向",
+      "conviction": 1.4,
+      "patience": 1.5,
+      "mood": 0.0,
+      "drawdown": 0.0,
+      "reflect": {
+        "bad_sectors": [],
+        "bad_trends": [],
+        "bad_reasons": []
+      },
+      "tuned_weight": 0.9,
+      "base_weight": 0.9,
+      "recent_pnl": 0.0,
+      "win_rate": null,
+      "samples": 0,
+      "monologue": "风格不变，坚持自己的打法"
+    }
+  }
 }
