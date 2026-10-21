@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r26</title>
+<title>Orion-X AI量化投研面板 · v20260910-r27</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r26";
+<script>window.APP_VERSION="20260910-r27";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2698,7 +2698,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r26</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px">v20260910-r27</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -2981,11 +2981,11 @@ const AGENT_DETAILS = {
   D6:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"涨停回调低吸策略。先定板块：锁定当日主力资金洗盘/回调的活跃板块；再从板块内筛选最近5个交易日内出现过涨停、且回调未跌破涨停当日最低点的个股；等待缩量回踩后低吸进场，博取强势股二次拉升。",
     adv:"强势股回调买点确定性强，盈亏比高，贴合涨停板后洗盘再启动节奏；板块联动过滤了弱势股。", dis:"板块整体退潮时涨停回调股易持续阴跌，必须严格执行跌破涨停低点即离场。",
-    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【专属信号·v0268】涨停基因（近5日涨停）是D6专属信号；周线超卖但无涨停基因的股票归D7沉，两者选股空间互斥、互不越界。【情绪温度门禁】炸板率>35%、板块退潮或龙头大跌→禁止打板与低吸；板块须在当日主力资金活跃前列。【进场·v0268量化口径】涨停后1-10日内、收盘价低于涨停价（未反包才算真回调）、量比<1.2缩量、站稳MA20（偏离上界5%、下界容忍刺破2%）、当日收阳且高于前收、MA20向上、未破涨停当日最低点、无放量恐慌盘、自涨停后高点回调2%-25%、距涨停低点≤12%、回调期均量比<1.6、近5日涨幅≤35%（反包涨停路≤30%）；防追涨类全局过滤（近5日>20%/乖离MA5>4%等）对D6豁免——选股池天然是近期涨停基因股，改由本套门禁控风险。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【止盈】冲高放量长上影→兑现一半；跌破MA10→全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
+    rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【专属信号·v0269】涨停基因（近10日涨停）是D6专属信号；周线超卖但无涨停基因的股票归D7沉，两者选股空间互斥、互不越界。【情绪温度门禁】炸板率>35%、板块退潮或龙头大跌→禁止打板与低吸；板块须在当日主力资金活跃前列。【进场·v0269量化口径】近10日涨停基因（涨停后1-10日内）、收盘价低于涨停价（未反包才算真回调）、量比<1.35缩量、站稳MA20（偏离上界5%、下界容忍刺破4%）、当日收阳且高于前收、MA20向上、未破涨停当日最低点、无放量恐慌盘、自涨停后高点回调2%-30%、距涨停低点≤15%、回调期均量比<2.0、近5日涨幅≤35%（反包涨停路≤30%）；防追涨类全局过滤（近5日>20%/乖离MA5>4%等）对D6豁免——选股池天然是近期涨停基因股，改由本套门禁控风险。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【止盈】冲高放量长上影→兑现一半；跌破MA10→全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
   D7:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
     desc:"周线超卖反转波段策略。用典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50 做周线波段过滤器：读数 ≤−40 算超卖、且拐头向上才做多，专接周线级别深跌后的反转拐点，不追跌不接落刀。止盈分批：一半仓位看周线 EMA21（21周≈季度趋势线，触及/跌破兑现），另一半看日线同款过滤器进入超买（读数 ≥+40）离场。",
     adv:"与其他角色完全错位：其他六个角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
-    rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上）才做多，缺一不可；当日须收阳确认。【选股边界·v0268】近5日有涨停的股票一律不碰（涨停基因是D6焰的专属信号），D7只做无涨停基因的阴跌超卖股——旧版无此界，实测D7触发的股票100%也被D6触发，选股空间被完全包含。【路径一致·v0268】回测与实盘同口径：周线聚合KD≤−40+拐头向上+无涨停基因+收阳（旧版回测无D7分支、永远空仓，仅实盘有信号）。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%，须注明口径（周线背驰段起点/结构低点）；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" }
+    rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上），且周线EMA21（21周收盘均线）向上确认趋势修复中，三者缺一不可；当日须收阳确认。【EMA21依据·v0269】实测全池83只/2025时段：无EMA21条件时39笔仅29.7%胜率——超卖拐头但季度趋势线仍向下多是下跌中继，EMA21向上才是真反转起点。【选股边界·v0268】近5日有涨停的股票一律不碰（涨停基因是D6焰的专属信号），D7只做无涨停基因的阴跌超卖股——旧版无此界，实测D7触发的股票100%也被D6触发，选股空间被完全包含。【路径一致·v0268】回测与实盘同口径：周线聚合KD≤−40+拐头向上+无涨停基因+收阳（旧版回测无D7分支、永远空仓，仅实盘有信号）。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%，须注明口径（周线背驰段起点/结构低点）；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" }
 };
 
 /* ==================== 股票池（数据层：上传版） ==================== */
@@ -5308,9 +5308,10 @@ async function enrichOneFromKline(code){
   st.hi20=Math.max.apply(null,highs.slice(-20));
   st.lo20=Math.min.apply(null,lows.slice(-20));
   st.high5=Math.max.apply(null,highs.slice(-5));
-  /* 近5日涨停日及其最低价（与回测引擎同口径：单日涨幅≥9.8%） */
+  /* 近10日涨停日及其最低价（v0269 r27：与回测引擎 buySignal D6 的 ztIdx 10日窗口对齐；
+     旧为5日，导致涨停后第6-10天的回调候选在实盘同样被漏掉） */
   let hasZt5=false,zl=Infinity;
-  for(let j=Math.max(1,n-5);j<n;j++){
+  for(let j=Math.max(1,n-10);j<n;j++){
     const pc=closes[j-1];
     if(pc>0&&(closes[j]-pc)/pc*100>=9.8){hasZt5=true;zl=Math.min(zl,lows[j]);}
   }
@@ -5612,6 +5613,9 @@ function roleSignalScore(p,st){
   switch(p.id){
     case"D1":{
       /* v0268：与 buySignal 新版对齐——D1 只打「放量突破」分，贴MA20整理分划归 D5 */
+      /* v0269：全面多头（MA5>MA10>MA20）且触20日前高 = D4「量价共振」专属领地，
+         与 buySignal 同步排他（实测 Jaccard 0.113） */
+      if(ma5>ma10&&ma10>ma20&&hi20>0&&price>=hi20*0.995)return{score:0,why:["全面多头触前高·归D4量价共振，D1不越界"]};
       if(trendUp){score+=25;why.push("MA20>MA60趋势向上");}
       if(maAlign){score+=10;why.push("MA5>MA20");}
       if(hi20>0&&price>=hi20*0.99&&chg>1){score+=30;why.push("放量突破前20日高点");}
@@ -5625,6 +5629,15 @@ function roleSignalScore(p,st){
     }
     case"D2":{
       /* 多因子共识：七因子满足数（≥4条才考虑）+ 其他Agent共识加成 */
+      /* v0269：D3 辩论今日也成立（多因子齐+资金流入+多头占优≥2+不追高）→ 归 D3，
+         与 buySignal 同步排他（Jaccard 0.082 → 0） */
+      {
+        const maFullD2=ma5>ma10&&ma10>ma20&&ma20>ma60&&ma60>0;
+        const fsX=fundSignalRT(st,marketEnv);
+        const bullD2=(ma5>ma20?1:0)+(price>ma20?1:0)+(chg>0?1:0)+(vol>=1?1:0)+((rsi>=50&&rsi<=65)?1:0)+(fsX.score>=1?1:0);
+        const bearD2=(ma5>ma20?0:1)+(price>ma20?0:1)+(chg>0?0:1)+(vol>=1?0:1)+((rsi>=50&&rsi<=65)?0:1)+(fsX.score<=-1?1:0);
+        if(maFullD2&&rps>=50&&bullD2-bearD2>=2&&bullD2>=4&&fsX.score>=-1&&chg<=4&&vol<=2)return{score:0,why:["多空辩论成立·归D3严格辩论，D2不越界"]};
+      }
       let n=0;
       if(vol>=0.8&&vol<=2.5){n++;why.push("量能适中");}
       if(rsi>=45&&rsi<=70){n++;why.push("RSI健康");}
@@ -5690,7 +5703,9 @@ function roleSignalScore(p,st){
     case"D6":{
       /* v0268 round3：与回测 buySignal 新版对齐——缩量<1.2（原<1）、距涨停低点≤12%（原8）、
          自涨停后高点回调2-25%（原5-25）、站稳MA20容忍刺破2%（原MA5>MA20硬多头）；
-         两路门禁一致后，实盘 tick 与回测对 D6 的触发频率不再系统性背离 */
+         两路门禁一致后，实盘 tick 与回测对 D6 的触发频率不再系统性背离。
+         v0269 r27：随回测 D6 再放宽（diag_d6_v4 击杀漏斗依据）——缩量<1.35、距低点≤15%、
+         回调2-30%、MA20容忍刺破4%；涨停基因窗口经 enrichOneFromKline 放到10日 */
       /* 涨停敢死队：妖股反包/强势涨停 或 涨停回调洗盘 + 板块热度 */
       if(chg>=9.5&&vol>=1){
         if(st.close5>0&&(price/st.close5-1)*100>30)return{score:0,why:["近5日涨幅>30%·反包不追末端"]};
@@ -5698,14 +5713,14 @@ function roleSignalScore(p,st){
         if(rps>=50)score+=5;
         break;
       }
-      if(st.hasZt5&&price>(st.ztLow||0)&&vol<1.2&&chg<5){
+      if(st.hasZt5&&price>(st.ztLow||0)&&vol<1.35&&chg<5){
         if(st.close5>0&&(price/st.close5-1)*100>35)return{score:0,why:["近5日涨幅>35%·不买二次拉升末端"]};
         const nearLow=(price-st.ztLow)/st.ztLow*100;
         const hh=Math.max(st.high5||price,price);
         const pb=hh>0?(hh-price)/hh*100:0;
-        if(nearLow>12)return{score:0,why:["离涨停低点太远"]};
-        if(pb<2||pb>25)return{score:0,why:["回调幅度不合"]};
-        if(!(ma20>0&&price>=ma20*0.98))return{score:0,why:["未站稳MA20·无趋势承接"]};
+        if(nearLow>15)return{score:0,why:["离涨停低点太远"]};
+        if(pb<2||pb>30)return{score:0,why:["回调幅度不合"]};
+        if(!(ma20>0&&price>=ma20*0.96))return{score:0,why:["未站稳MA20·无趋势承接"]};
         score=75;why.push("涨停回调洗盘");
         if(rsi>=40&&rsi<=65)score+=5;
         const hot=sectorHeatRank(st.sector);
@@ -5722,6 +5737,9 @@ function roleSignalScore(p,st){
       if(!w)return{score:0,why:["周线KD未预载，稍后重试"]};
       if(w.kd>-40)return{score:0,why:["周线KD "+w.kd.toFixed(1)+" 未超卖（需≤−40）"]};
       if(!w.turnUp)return{score:0,why:["周线超卖("+w.kd.toFixed(1)+")但未拐头，不接落刀"]};
+      /* v0269：周线EMA21必须向上（与回测 buySignal/calcWeeklyKD 同口径）——超卖拐头但
+         季度趋势线仍向下 = 下跌中继，实测全池 P3 无此条件 39 笔仅 29.7% 胜率 */
+      if(!w.ema21Up)return{score:0,why:["周线EMA21仍向下·趋势未修复，不做下跌中继"]};
       score=85;why.push("周线超卖"+w.kd.toFixed(1)+"且拐头向上");
       if(w.ema21Up){score+=8;why.push("周线EMA21向上·趋势修复中");}
       if(chg>=0&&chg<5){score+=5;why.push("当日未深跌·反转初期");}
@@ -5755,12 +5773,12 @@ function sectorHeatRank(sector){
 
 /* ==================== 策略选股（数据层） ==================== */
 const BUY_REASONS={
-  D1:"严格趋势突破：MA20向上+站上MA60+放量突破前20日高点/窄幅平台（量比≥1.5），乖离MA20≤8%不追高；贴MA20缩量整理是D5领地，不越界",
+  D1:"严格趋势突破：MA20向上+站上MA60+放量突破前20日高点/窄幅平台（量比≥1.5），乖离MA20≤8%不追高；贴MA20缩量整理是D5领地、全面多头触前高是D4领地，D1只做早期趋势突破，不越界",
   D2:"AI Agents共识：量能适中+均线多头+收阳+RSI中性+近20日相对强势，多维度因子综合达标",
   D3:"多空辩论：多头信号≥2（均线多头+站上MA20+收阳+放量），多方论点占优，判定偏多；不追高（涨幅>5%或量比>2.5等回调，接近20日高点+放量大涨不追）",
   D4:"量价共振：放量突破平台且量比健康，突破后回踩确认支撑有效，主升启动",
   D5:"趋势回踩：MA20>MA60中期趋势向上，距前20日高点>3%（不越D1突破界），缩量回踩MA20/MA10获支撑，低吸",
-  D6:"涨停回调·洗盘缩量站稳：涨停后1-10天，收盘低于涨停价+洗盘缩量(量比<1.2)+站稳MA20(上界5%、容忍刺破2%)+重新转强(收阳且>前收)+MA20向上+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤12%+自涨停后高点回调2-25%+回调期均量<1.6+近5日涨幅≤35%；防追涨全局过滤对D6豁免（选股池天然近期涨幅大），改由本套门禁控风险；反包涨停需MA20向上+站上MA20+放量≥1.5+近5日涨幅≤30%",
+  D6:"涨停回调·洗盘缩量站稳：近10日有涨停基因(涨停后1-10天)，收盘低于涨停价+洗盘缩量(量比<1.35)+站稳MA20(上界5%、容忍刺破4%)+重新转强(收阳且>前收)+MA20向上+涨停低点支撑有效+无放量恐慌盘+距涨停低点≤15%+自涨停后高点回调2-30%+回调期均量<2.6+近5日涨幅≤35%；防追涨全局过滤对D6豁免（选股池天然近期涨幅大），改由本套门禁控风险；反包涨停需MA20向上+站上MA20+放量≥1.5+近5日涨幅≤30%",
   D7:"周线超卖反转：HLC3典型价随机指标(14,5)减50，读数≤−40超卖且%K拐头向上+当日收阳；无涨停基因（涨停回调归D6），回测实盘同路径"
 };
 const SELL_REASONS={
@@ -6158,10 +6176,10 @@ function tick(){
          v0268 round3：D6 同样豁免——回测 D6 分支本就不看KDJ，此前实盘多一道金叉闸
          导致两路径频率系统性背离；D6 的过滤器是「涨停基因+缩量站稳涨停低点」 */
       const kdjPass=s=>{
-        if(p.id==="D7"){const w=weeklyKD(s.code);return !!(w&&w.kd<=-40&&w.turnUp&&!(s.ztLow!=null));}
+        if(p.id==="D7"){const w=weeklyKD(s.code);return !!(w&&w.kd<=-40&&w.turnUp&&w.ema21Up&&!(s.ztLow!=null));}
         if(p.id==="D6"){
           if((s.chg||0)>=9.5&&s.vol>=1)return true;
-          return !!(s.hasZt5&&s.price>(s.ztLow||0)&&s.vol<1.2&&s.ma20>0&&s.price>=s.ma20*0.98);
+          return !!(s.hasZt5&&s.price>(s.ztLow||0)&&s.vol<1.35&&s.ma20>0&&s.price>=s.ma20*0.96);
         }
         if((s.chg||0)>=9.5&&s.vol>=1)return true;
         return s.kdjK!==undefined&&s.kdjD!==undefined&&s.kdjKPrev!==undefined&&s.kdjDPrev!==undefined&&s.kdjK>s.kdjD&&s.kdjKPrev<=s.kdjDPrev;
@@ -10080,18 +10098,49 @@ function prefetchGlobal(){
 async function txKlineRange(code,start,count){
   let days=[];
   const hosts=["https://web.ifzq.gtimg.cn","https://ifzq.gtimg.cn"];
-  for(const h of hosts){
-    try{
-      const ctrl=new AbortController();
-      const to=setTimeout(()=>ctrl.abort(),10000);
-      /* 同 txKline：fqkline 已对浏览器失效 → kline/kline（start 参数语义兼容：
-         param=code,day,start,,count 从 start 起取 count 根；本地再按 start 过滤兜底） */
-      const r=await fetch(`${h}/appstock/app/kline/kline?param=${code},day,${start},,${count}`,{signal:ctrl.signal});
-      clearTimeout(to);
-      const j=await r.json();const k=j.data[code];
-      const arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day))||[];
-      if(arr&&arr.length){days=arr.map(x=>{const v=Array.isArray(x)?x:String(x).split(" ");return {date:v[0],open:+v[1],close:+v[2],high:+v[3],low:+v[4],vol:+v[5]||0};});break;}
-    }catch(e){}
+  /* 腾讯 kline 的 param=code,day,start,end,count 实际语义：返回【截至 end 的最近 count 根】，
+     start 字段被忽略；end 留空则取截至今天的最近 count 根。要"从 start 起 count 根"：
+     ① 先按 start 推算一个足够远的 end 取首批；② 若首批首根仍晚于 start（区间内交易日
+     >count，更早的被截断），以 首根-1天 为新 end 补翻，拼到前面（最多3轮，通常1轮即可）。
+     start 在未来 → 无数据。 */
+  const fetchK=async(endStr)=>{
+    for(const h of hosts){
+      try{
+        const ctrl=new AbortController();
+        const to=setTimeout(()=>ctrl.abort(),10000);
+        const r=await fetch(`${h}/appstock/app/kline/kline?param=${code},day,${start||""},${endStr},${count}`,{signal:ctrl.signal});
+        clearTimeout(to);
+        const j=await r.json();const k=j.data[code];
+        const arr=Array.isArray(k)?k:(k&&(k.qfqday||k.day))||[];
+        if(arr&&arr.length)return arr.map(x=>{const v=Array.isArray(x)?x:String(x).split(" ");return {date:v[0],open:+v[1],close:+v[2],high:+v[3],low:+v[4],vol:+v[5]||0};});
+      }catch(e){}
+    }
+    return [];
+  };
+  let end="";
+  if(start){
+    const t0=new Date(start).getTime();
+    const endMs=Math.min(Date.now()+86400000,t0+Math.ceil(count*7/5+90)*86400000);
+    if(endMs<=t0)return [];
+    const d=new Date(endMs);
+    end=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+  days=await fetchK(end);
+  if(days.length&&start){
+    const t0=+new Date(start);
+    let guard=0;
+    while(guard<3&&days.length===count&&+new Date(days[0].date)>t0){
+      guard++;
+      const pd=new Date(days[0].date);pd.setDate(pd.getDate()-1);
+      const endPrev=`${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,"0")}-${String(pd.getDate()).padStart(2,"0")}`;
+      const more=await fetchK(endPrev);
+      if(!more.length)break;
+      const seen=new Set(days.map(d=>d.date));
+      days=more.filter(d=>!seen.has(d.date)).concat(days);
+      if(more.length<count)break; /* 补翻不满 count → 已到数据源头，停止 */
+    }
+    days=days.filter(d=>+new Date(d.date)>=t0);
+    if(days.length>count)days=days.slice(0,count);
   }
   if(days.length<10){ /* 腾讯被限流 → 新浪日K兜底（真实数据，支持任意起始时间段） */
     /* 新浪 getKLineData 只支持 datalen（最近N根），必须按 start 动态计算 N：
@@ -10445,6 +10494,17 @@ function weeklySeriesFor(P){
   const dSma=[];
   for(let i=4;i<kRaw.length;i++)dSma.push(kRaw.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5);
   const wkState=new Array(weeks.length).fill(null);
+  /* v0269：周线收盘 EMA21（21周≈季度趋势线；与实盘 calcWeeklyKD 同口径），用于 D7 的
+     "趋势修复中"确认——超卖+拐头但 EMA21 仍向下 = 下跌趋势中的低位反复，不做 */
+  const wcloses=weeks.map(b=>b.close);
+  const ema21Arr=new Array(weeks.length).fill(null);
+  if(wcloses.length){
+    let ema=wcloses[0],emaPrev=ema;
+    for(let w=0;w<weeks.length;w++){
+      if(w>0){emaPrev=ema;ema=wcloses[w]*(2/22)+ema*(20/22);}
+      ema21Arr[w]={ema:+ema.toFixed(2),up:ema>emaPrev};
+    }
+  }
   for(let w=0;w<weeks.length;w++){
     const j=w-13;
     if(j<0||j>=kRaw.length)continue;
@@ -10455,7 +10515,8 @@ function weeklySeriesFor(P){
     const dNow=dj>=0&&dj<dSma.length?dSma[dj]:null;
     const dPrev=dj-1>=0&&dj-1<dSma.length?dSma[dj-1]:null;
     const turnUp=(kd>kdPrev&&kdPrev<=kdPrev2)||(dNow!==null&&dPrev!==null&&kd>dNow&&kdPrev<=dPrev);
-    wkState[w]={kd:+kd.toFixed(1),kdPrev:+kdPrev.toFixed(1),turnUp:!!turnUp};
+    const e=ema21Arr[w];
+    wkState[w]={kd:+kd.toFixed(1),kdPrev:+kdPrev.toFixed(1),turnUp:!!turnUp,ema21:e?e.ema:null,ema21Up:e?!!e.up:false};
   }
   const byDay=new Array(N).fill(null);
   let wi=0;
@@ -10566,6 +10627,11 @@ function buySignal(role,P,i){
       if(!ma60 || c <= ma60) return false;   /* 价格在MA60下方，弱势股，不买 */
       if(ret20<=0) return false;             /* 近20日相对强势 */
       if(!(ma5>ma20 && c>ma20)) return false;/* 短期多头排列 */
+      /* v0269：与 D4 的边界——D4 今日也真触发（全面多头+触前高+量比1.5-3+RSI45-76）时
+         归 D4「量价共振」，D1 只做早期趋势突破。注意不能只看"全面多头+触前高"就排他：
+         实测那样会误杀 90 个 D1 独有触发日（那些日子 D4 因量比/RSI 并不触发），
+         必须完整复刻 D4 条件（Jaccard 0.113 → 0，D1 频率几乎不变） */
+      if(ma60&&ma20>ma60&&ma5>P.ma10[i]&&P.ma10[i]>ma20&&c>=ma20&&P.hi20[i]>0&&c>=P.hi20[i]*0.995&&v>=1.5&&v<=3&&P.rsi[i]>=45&&P.rsi[i]<=76)return false;
       /* 突破A：放量突破前20日高点（收盘≥前高99% 且 当日涨幅>1%，贴脸不算突破） */
       const breakHigh = P.hi20[i]>0 && c >= P.hi20[i]*0.99 && chg > 1;
       /* 突破B：窄幅平台后突破（近10日振幅<12% 的盘整 + 收盘突破10日高点 + 收阳） */
@@ -10583,6 +10649,16 @@ function buySignal(role,P,i){
     case"D2":{
       /* D2多因子共识：KDJ金叉 + 多因子综合评分（放宽条件，增加交易频率） */
       if(!kdjGolden||kdjTooHigh)return false; /* D2需要KDJ金叉 */
+      /* v0269：D3 辩论今日也成立（多因子齐+资金流入+多头占优≥2+不追高）→ 归 D3 严格辩论，
+         D2 只做宽口径共识。实测 Jaccard 0.082（6/540天），排他后互斥且 D2 频率几乎不变 */
+      {
+        const ma20_5ago_d2x=i>=5?P.ma20[i-5]:ma20;
+        const maFullD2=ma5>P.ma10[i]&&P.ma10[i]>ma20&&ma20>ma20_5ago_d2x;
+        const fsX=calcFundSignal(P,i);
+        const bullD2=(ma5>ma20?1:0)+(c>ma20?1:0)+(chg>0?1:0)+(v>=1?1:0)+((P.rsi[i]>=50&&P.rsi[i]<=65)?1:0)+(fsX.score>=1?1:0);
+        const bearD2=(ma5>ma20?0:1)+(c>ma20?0:1)+(chg>0?0:1)+(v>=1?0:1)+((P.rsi[i]>=50&&P.rsi[i]<=65)?0:1)+(fsX.score<=-1?1:0);
+        if(maFullD2&&ret20>0&&bullD2-bearD2>=2&&bullD2>=4&&fsX.score>=-1&&chg<=4&&v<=2)return false;
+      }
       /* 多因子打分：满足一条加1分，≥4分就买入（原来要求全部满足，太严格） */
       let d2Score = 0;
       /* 1. 量能适中：量比0.8-2.5 */
@@ -10685,22 +10761,25 @@ function buySignal(role,P,i){
         const ret5D6=i>=5?(c/P.closes[i-5]-1)*100:0;
         if(ma20UpD6&&c>=ma20&&ret5D6<30)return true; /* MA20向上+站上MA20+短期未翻倍才追 */
       }
-      /* 涨停回调·洗盘缩量站稳（v0268 放宽版） */
-      if(P.ztLow[i]==null||c<=P.ztLow[i])return false;
+      /* 涨停回调·洗盘缩量站稳（v0268 放宽 → v0269 r27 再放宽，依据 diag_d6_v4 击杀漏斗：
+         涨停基因窗口从5日放到10日是最大瓶颈——旧写法第6-10日前的涨停回调候选被
+         P.ztLow[i]（prepStock 只覆盖近5日涨停）首关直接误杀；窗口对齐 ztIdx 的10日搜索后，
+         叠加 MA20 容忍刺破4%、距低点15%、回调2-30%、缩量<1.35、均量<2.0 六项放宽，
+         70只×540天实测触发 6→22 次，且选股池仍由涨停基因独占、不与 D1/D5/D7 混居） */
       if(chg>=9.5)return false; /* 当天涨停不算回调 */
-      /* 找到最近涨停日，要求涨停后1-10天（超过10天涨停效应衰减） */
+      /* 找到最近涨停日，要求涨停后1-10天（超过10天涨停效应衰减；与实盘 hasZt5 窗口对齐） */
       let ztIdx=-1;
       for(let j=i;j>=Math.max(0,i-10);j--){if(P.chg[j]>=9.8){ztIdx=j;break;}}
       if(ztIdx<0||i-ztIdx<1)return false;
       const ztClose=P.days[ztIdx].close;
       const ztLow=P.days[ztIdx].low;
+      if(c<=ztLow)return false; /* 收盘必须站在最近涨停日最低点上方 */
       if(c>=ztClose)return false; /* 收盘价必须低于涨停价，才是真正回调 */
-      /* 核心①洗盘缩量：量比<1.2（回调期间成交量萎缩） */
-      if(v>=1.2)return false;
-      /* 核心②站稳MA20：偏离不超过5%（不追高）；下界容忍刺破2%以内——回踩MA20的瞬间可能
-         略微刺破即收回，只要当日收阳转强+缩量仍算企稳（原恒要求 c>=ma20 过严，实测站稳MA20
-         一关砍掉 3/4 候选，是 D6=0 的最大自身门禁瓶颈） */
-      if(!ma20||c<ma20*0.98||(c-ma20)/ma20>0.05)return false;
+      /* 核心①洗盘缩量：量比<1.35（回调期间成交量萎缩；r27 放宽，依据 diag_d6_v4） */
+      if(v>=1.35)return false;
+      /* 核心②站稳MA20：偏离不超过5%（不追高）；下界容忍刺破4%以内——回踩MA20的瞬间可能
+         略微刺破即收回，只要当日收阳转强+缩量仍算企稳（r27 由2%放宽到4%） */
+      if(!ma20||c<ma20*0.96||(c-ma20)/ma20>0.05)return false;
       /* 核心③重新转强：当天收阳且收盘价>前一天收盘价（触及MA20后反弹） */
       if(chg<=0||(i>=1&&c<=P.closes[i-1]))return false;
       /* 核心④中期趋势向上：MA20向上倾斜（下跌趋势中的涨停回调不做） */
@@ -10714,29 +10793,36 @@ function buySignal(role,P,i){
       let panicSell=false;
       for(let j=ztIdx+1;j<i;j++){if((P.chg[j]||0)<-3&&(P.volR[j]||1)>1.5){panicSell=true;break;}}
       if(panicSell)return false;
-      /* 辅助①回调幅度：从涨停后高点回落2%-25%（洗盘充分但不破位；原3%-18%过严） */
+      /* 辅助①回调幅度：从涨停后高点回落2%-30%（洗盘充分但不破位；r27 由25%放宽） */
       let hh=0;for(let j=ztIdx+1;j<i;j++)hh=Math.max(hh,P.days[j].high);
       if(hh<=0)hh=ztClose;
       const pullback=(hh-c)/hh*100;
-      if(pullback<2||pullback>25)return false;
-      /* 辅助②距涨停低点≤12%（离低点太远不是真正回踩；原10%略紧） */
-      const nearLow=(c-P.ztLow[i])/P.ztLow[i]*100;
-      if(nearLow>12)return false;
-      /* 辅助③回调期间均量比<1.6（洗盘特征；原1.3过严） */
+      if(pullback<2||pullback>30)return false;
+      /* 辅助②距最近涨停日低点≤15%（离低点太远不是真正回踩；r27 由12%放宽） */
+      const nearLow=(c-ztLow)/ztLow*100;
+      if(nearLow>15)return false;
+      /* 辅助③回调期间均量比<2.0（洗盘特征；r27 由1.6放宽） */
       let avgVol=0,cnt=0;
       for(let j=ztIdx+1;j<i;j++){if(P.volR[j]!==undefined){avgVol+=P.volR[j];cnt++;}}
-      if(cnt>0&&avgVol/cnt>=1.6)return false;
+      if(cnt>0&&avgVol/cnt>=2.0)return false;
       return true;
     }
     case"D7":{
       /* v0268：D7 回测路径落地——原 buySignal 无 D7 case，回测两条路径都永远空仓，
          只有实盘 tick 靠 weeklyKD 缓存有信号（回测/实测长期割裂）。口径与实盘一致：
-         周线聚合 HLC3 KD(14,5)−50 读数≤−40 且拐头向上 */
+         周线聚合 HLC3 KD(14,5)−50 读数≤−40 且拐头向上。
+         v0269：multiBacktest 补 P.code 赋值后 D7 回测真正跑通（此前 weeklySeriesFor 因
+         P.code 缺失恒返回 null，D7 回测永远空仓——诊断脚本手动设过 P.code 所以能测出
+         368 次/70只，产品自己没设）；并补「周线EMA21向上」强制（与实盘同口径）：
+         实测全池 83 只 P3 时段无此条件时 39 笔仅 29.7% 胜率——超卖+拐头但季度趋势线
+         仍向下的股票多是下跌中继，EMA21 向上=趋势修复中才算真反转 */
       const byDay=weeklySeriesFor(P);
       const w=byDay?byDay[i]:null;
       if(!w||w.kd>-40||!w.turnUp)return false;
       /* 持续超卖：本周与上周读数都≤−40（单周碰线不算深跌，防弱势股周线低位反复假拐头） */
       if(w.kdPrev>-40)return false;
+      /* v0269：周线EMA21必须向上（季度趋势修复中）——与实盘 calcWeeklyKD 的 ema21Up 同口径 */
+      if(!w.ema21Up)return false;
       /* 独立选股空间：近5日有涨停 = D6「涨停回调」专属领地；D7 只做无涨停基因的阴跌超卖。
          旧版无此界——实测 D7 触发的股票 100% 也被 D6 触发（选股空间被完全包含） */
       if(P.ztLow[i]!==null&&P.ztLow[i]!==undefined)return false;
@@ -10893,7 +10979,11 @@ function sellSignal(role,P,i,cost,rules,holdDays){
   return null;
 }
 function multiBacktest(dayMap,roles,rules){
-  const preps={};for(const code in dayMap)preps[code]=prepStock(dayMap[code]);
+  const preps={};for(const code in dayMap){const P=prepStock(dayMap[code]);P.code=code;preps[code]=P;}
+  /* v0269：必须给 P.code 赋值——weeklySeriesFor(P) 以 P.code 为缓存键且无 code 直接返回 null，
+     导致 D7（周线超卖）在回测里永远空仓（实盘 st.code 存在所以有信号，两路径长期割裂）。
+     诊断脚本手动设过 P.code 所以能测出 D7=368 次，回测引擎自己没设 —— 此类"诊断能跑、
+     产品不跑"的口径差是最难发现的一类 bug，特此注释标记。 */
   const codes=Object.keys(dayMap),N=Math.max.apply(null,codes.map(c=>preps[c].N).concat([0]));
   const agents={};roles.forEach(r=>agents[r]={cash:INIT_CASH,holds:[],trades:[],eq:[]});
   const START=65;
