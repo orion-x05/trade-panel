@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orion-X 交易面板 · 会话汇总</title>
+<style>
+  :root{--bg:#0f1117;--card:#1a1d27;--text:#e5e7eb;--dim:#9ca3af;--faint:#6b7280;--line:#2a2e3a;--acc:#3ecf8e;--red:#ef4444;--blue:#3b82f6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:24px;margin:0 0 6px;border-bottom:2px solid var(--line);padding-bottom:14px}
+  h2{font-size:19px;margin:34px 0 12px;color:#fff;border-left:4px solid var(--acc);padding-left:10px}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--acc)}
+  p{margin:10px 0}
+  a{color:var(--blue);word-break:break-all}
+  code{background:#232733;padding:2px 6px;border-radius:5px;font-size:13px;color:#fbbf24;font-family:ui-monospace,Menlo,Consolas,monospace}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#232733;color:#fff;font-weight:600}
+  tr:nth-child(even) td{background:#161923}
+  blockquote{margin:14px 0;padding:10px 14px;border-left:4px solid var(--blue);background:rgba(59,130,246,.08);border-radius:0 8px 8px 0;color:var(--dim)}
+  blockquote p{margin:4px 0}
+  hr{border:0;border-top:1px solid var(--line);margin:30px 0}
+  ul,ol{padding-left:22px;margin:10px 0}
+  li{margin:5px 0}
+  strong{color:#fff}
+  .meta{color:var(--faint);font-size:13px;margin-bottom:20px}
+  @media(max-width:520px){.wrap{padding:20px 14px 50px}h1{font-size:21px}h2{font-size:17px}body{font-size:14.5px}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Orion-X 交易面板 · 会话工作汇总</h1>
+<blockquote>
+<p>生成时间：2026-10-22 · 仓库：<code>orion-x05/trade-panel</code> · 线上：https://orion-x05.github.io/trade-panel/</p>
+</blockquote>
+<hr />
+<h2>一、本次会话概览</h2>
+<p>本轮围绕三件事：<strong>D1/D2 策略胜率优化</strong>、<strong>前端界面修复</strong>、<strong>后端心理画像看板</strong>。全部改动已部署到 GitHub Pages，定时工作流会在下次运行时自动生效。</p>
+<hr />
+<h2>二、D1 / D2 胜率优化（trade_engine.py）</h2>
+<h3>诊断：胜率低的 3 个结构性问题</h3>
+<ol>
+<li><strong>固定百分比止损，对波动率失明（主因）</strong>——日波动 4% 的票，正常抖动就打到 6-7% 止损，却难走到 8-12% 止盈；更致命的是"半止盈锁利"：高波动票常靠噪声冲到 +6%，随后一个正常回撤到 -2% 就把盈利单"锁"成亏损。</li>
+<li><strong>D2 选股太松</strong>——4/6 因子就给 55 分地板，再叠共识 +30，几乎必进。</li>
+<li><strong>D1 买在尖上</strong>——贴近 20 日高点就买，突破失败率高。</li>
+</ol>
+<h3>改动</h3>
+<table>
+<thead>
+<tr>
+<th>优化</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ATR 自适应止损/止盈</strong></td>
+<td><code>sl_eff = max(出厂sl, ATR%×2)</code>，<code>tp_eff = sl_eff × 固定盈亏比</code>。低波动蓝筹走出厂值（地板防跳空），高波动标的止损止盈同步放大；"锁利 arm 阈值"也随 tp_eff 缩放，不再被噪声误锁</td>
+</tr>
+<tr>
+<td><strong>D1 防追尖</strong></td>
+<td>冲过前高 &gt;5%、量比 &gt;3.5、RSI&gt;80 均扣分；干净突破带（前高±3%）才给满分</td>
+</tr>
+<tr>
+<td><strong>D2 选股质量闸门</strong></td>
+<td>≥5 因子共振才给像样分；自身 setup &lt;55 时共识再强也不盲跟；惩罚"日内已大涨才追"</td>
+</tr>
+</tbody>
+</table>
+<h3>蒙特卡洛验证（同源路径、同入场，仅换退出规则）</h3>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>波动</th>
+<th>旧固定胜率</th>
+<th>新 ATR 胜率</th>
+<th>均盈亏变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1 锋</td>
+<td>高(~4%)</td>
+<td>25.2%</td>
+<td><strong>31.2%</strong> (+6.0pt)</td>
+<td>-0.72% → <strong>+0.56%</strong></td>
+</tr>
+<tr>
+<td>D2 衡</td>
+<td>高(~4%)</td>
+<td>20.5%</td>
+<td><strong>28.1%</strong> (+7.6pt)</td>
+<td>-1.50% → -1.07%</td>
+</tr>
+<tr>
+<td>D1/D2</td>
+<td>低(~1.6%)</td>
+<td>~54%</td>
+<td>~54%（不变）</td>
+<td>基本持平</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>高波动票正是被固定止损坑的重灾区，ATR 缩放后胜率与期望双双改善，且不牺牲低波动票。</p>
+</blockquote>
+<h3>测试与部署</h3>
+<ul>
+<li>新增 <code>test_d1d2.py</code>（5 项全绿）；<code>test_enhance.py</code>、<code>test_persona.py</code> 回归全绿。</li>
+<li>已推 <code>trade_engine.py</code>（commit <code>84a886fa</code>），线上核验含全部新逻辑。</li>
+</ul>
+<hr />
+<h2>三、前端界面修复（index.html）</h2>
+<h3>Bug 1 · "真实角色心理"跑到导航栏下面</h3>
+<ul>
+<li><strong>根因</strong>：注入的 <code>#view-psyche</code> section 落在 <code>&lt;/main&gt;</code> 之外，脱离主容器，激活时渲染到页面底部。</li>
+<li><strong>修复</strong>：搬回 <code>&lt;main&gt;</code> 内成为正常 tab；<code>switchTab</code> 的页面名映射补 <code>psyche</code>，顶栏标题立即正确。</li>
+</ul>
+<h3>Bug 2 · 复盘总结里两个"每日总结"</h3>
+<ul>
+<li><strong>根因</strong>：<code>view-review</code> 同时有"每日复盘·结构化"（可编辑计划）和"每日收盘小结"（自动复盘）两个日报面板，主题重叠。</li>
+<li><strong>修复</strong>：合并为一个面板——"今日收盘小结"作为子区块并进"每日复盘·结构化"，删掉独立面板。复盘页现在只有一个统一日报。</li>
+</ul>
+<h3>部署</h3>
+<ul>
+<li>commit <code>e63111d2</code>，大小 1980512 与本地逐字节一致，Pages 构建 <code>built</code> 无错误。</li>
+<li>原文件备份：<code>/tmp/index.backup.html</code>。</li>
+</ul>
+<hr />
+<h2>四、交付物清单</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trade_engine.py</code></td>
+<td>后端引擎：ATR 自适应止损 + D1 防追尖 + D2 选股闸门 + 角色心理画像</td>
+</tr>
+<tr>
+<td><code>index.html</code></td>
+<td>前端面板：交互增强 + 真实角色心理看板 + 界面修复</td>
+</tr>
+<tr>
+<td><code>backtest.py</code></td>
+<td>回测脚本：亏损归因二阶调参</td>
+</tr>
+<tr>
+<td><code>sim_d1d2.py</code></td>
+<td>蒙特卡洛胜率验证脚本</td>
+</tr>
+<tr>
+<td><code>test_d1d2.py</code></td>
+<td>D1/D2 优化专项测试</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>五、怎么看</h2>
+<p>打开 <strong>https://orion-x05.github.io/trade-panel/</strong>（手机浏览器直接可用，响应式布局）：
+- <strong>运行总览</strong>：组合快照条（总资产/总盈亏/最佳最差角色/持仓角色数）
+- <strong>真实角色心理</strong>：后端实盘心理画像（情绪/信念/耐心/回撤/独白/反思记忆）+ 回测亏损归因
+- <strong>复盘总结</strong>：统一的每日复盘（计划 + 收盘小结）
+- 快捷键：<code>1-9</code> 直达 tab，<code>←/→</code> 切换，<code>Esc</code> 关闭弹层；左下 « 收起侧栏</p>
+<hr />
+<h2>六、安全提醒</h2>
+<p>部署用的 token <code>ghp_A5ug…</code> 已多次暴露，GitHub 可能随时自动吊销。建议用完后到 <strong>Settings → Developer settings → Personal access tokens</strong> 撤销，并改用更安全的方式（本地 <code>gh</code> CLI 或仓库 Deploy Key）。</p>
+</div></body></html>
