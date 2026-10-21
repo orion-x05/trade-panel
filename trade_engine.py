@@ -748,6 +748,19 @@ def get_stock_info(code):
         hi20 = max(highs20) if highs20 else price                          # 前20日高点→突破确认
         lows20 = [float(k[4]) for k in klines[-20:]]
         lo20 = min(lows20) if lows20 else price                           # 前20日低点→反弹幅度/低位判断
+        # ===== 波动率(ATR14) → 自适应止损止盈 =====
+        # 固定百分比止损会被个股正常波动频繁触发、胜率被噪声吃掉；
+        # ATR 反映真实波动幅度，sl_eff=max(出厂sl, atr_pct*2) 让止损落在噪声之外、盈亏比恒定。
+        atr_pct = 0.0
+        if len(klines) >= 15:
+            trs = []
+            for i in range(-14, 0):
+                c0 = float(klines[i - 1][2]) if (i - 1) >= -len(klines) else (closes[i] if 0 <= i < len(closes) else price)
+                hi = float(klines[i][3]); lo = float(klines[i][4]); cl = float(klines[i][2])
+                tr = max(hi - lo, abs(hi - c0), abs(lo - c0))
+                trs.append(tr)
+            atr = sum(trs) / len(trs) if trs else 0
+            atr_pct = atr / price * 100 if price else 0.0
         # 全局风控闸历史基准（与前端 liveGlobalGuard 同口径）
         close5 = closes[-6] if len(closes) >= 6 else 0                    # 5日前收盘→追涨拦截
         close10 = closes[-11] if len(closes) >= 11 else 0                 # 10日前收盘→追涨拦截
@@ -790,13 +803,13 @@ def get_stock_info(code):
                      "ma60": ma60, "ma20_prev": ma20_prev, "hi20": hi20, "lo20": lo20,
                      "close5": close5, "close10": close10, "up_days": up_days,
                      "has_zt5": has_zt5, "zt_low": zt_low, "high5": high5,
-                     "rsi6": rsi6, "kdj_k": k, "kdj_d": d, "kdj_j": j})
+                     "rsi6": rsi6, "kdj_k": k, "kdj_d": d, "kdj_j": j, "atr_pct": round(atr_pct, 3)})
     except:
         info.update({"ma5": info["price"], "ma10": info["price"], "ma20": info["price"],
                      "ma60": info["price"], "ma20_prev": info["price"], "hi20": info["price"],
                      "lo20": info["price"], "close5": 0, "close10": 0, "up_days": 0,
                      "has_zt5": False, "zt_low": 0.0, "high5": info["price"],
-                     "rsi6": 50, "kdj_k": 50, "kdj_d": 50, "kdj_j": 50})
+                     "rsi6": 50, "kdj_k": 50, "kdj_d": 50, "kdj_j": 50, "atr_pct": 0.0})
     return info
 
 # ==================== 推送通道：WxPusher（唯一通道，Server酱已移除）====================
@@ -1557,6 +1570,21 @@ def d7_sell_signal(hold, st):
             return (hold, "周线超卖反转·第二止盈（日线超买加深/周线反转）清仓剩余", 1.0, False)
     return None
 
+def effective_sl_tp(role_id, st):
+    """【波动率自适应止损止盈】固定百分比止损会被个股正常波动频繁触发→胜率被噪声吃掉。
+    改为 sl_eff = max(出厂sl, atr_pct*2)，tp_eff = sl_eff * RR（RR=出厂tp/sl 恒定），
+    使止损落在噪声之外、盈亏比不变：低波动蓝筹走出厂值(地板)，高波动标的止损/止盈同步放大。
+    返回 (sl_eff, tp_eff, rr)。"""
+    role = ROLES.get(role_id, {})
+    base_sl = role.get("sl", 7)
+    base_tp = role.get("tp", 12)
+    rr = (base_tp / base_sl) if base_sl else 1.5
+    atr_pct = st.get("atr_pct") or 0.0
+    sl_eff = max(float(base_sl), atr_pct * 2.0)
+    tp_eff = sl_eff * rr
+    return round(sl_eff, 2), round(tp_eff, 2), round(rr, 2)
+
+
 def check_sell_signals(player, stock_data):
     signals = []
     role = ROLES[player["id"]]
@@ -1574,17 +1602,21 @@ def check_sell_signals(player, stock_data):
                 continue
         bp = hold.get("buyPrice") or hold.get("cost") or 0
         chg = (st["price"] - bp) / bp * 100
-        # 【移动止损·锁利】记录历史最大浮盈；曾达目标一半则硬止损线上抬到成本+2%，永久锁利
+        # 【波动率自适应】止损/止盈随个股真实波动放大，避免被噪声止损；盈亏比恒定
+        sl_eff, tp_eff, rr = effective_sl_tp(player["id"], st)
+        # 【移动止损·锁利】记录历史最大浮盈；曾达(自适应)目标一半则硬止损线上抬到成本-2%，永久锁利。
+        # 关键：arm 阈值随 tp_eff 同步放大→高波动票不会被噪声冲到"半目标"就误锁，
+        # 只有真正走出一段才 arm，正常回撤不再把盈利单锁成亏损（这是此前胜率被吃的主因）。
         max_chg = hold.get("maxChg", 0)
         if chg > max_chg:
             max_chg = chg
             hold["maxChg"] = round(chg, 2)
-        if max_chg >= role["tp"] * 0.5:
-            if st["price"] <= bp * 0.98:   # 浮盈曾达目标一半→跌破成本2%锁利（比价避免浮点边界漏判）
+        if max_chg >= tp_eff * 0.5:
+            if st["price"] <= bp * 0.98:   # 浮盈曾达半目标→跌破成本2%锁利（比价避免浮点边界漏判）
                 signals.append((hold, f"移动止损锁利{chg:+.1f}%", 1.0)); continue
-        elif chg <= -role["sl"]:
-            signals.append((hold, f"止损-{abs(chg):.1f}%", 1.0)); continue
-        if chg >= role["tp"]: signals.append((hold, f"止盈+{chg:.1f}%", 1.0)); continue
+        elif chg <= -sl_eff:
+            signals.append((hold, f"止损-{abs(chg):.1f}%(自适应·ATR)", 1.0)); continue
+        if chg >= tp_eff: signals.append((hold, f"止盈+{chg:.1f}%(自适应·ATR)", 1.0)); continue
         if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]: signals.append((hold, "跌破MA20+均线走弱", 1.0)); continue
         if st["kdj_k"] < st["kdj_d"] and st["kdj_k"] > 70: signals.append((hold, "KDJ高位死叉", 1.0)); continue
         if st["vol_ratio"] > 1.5 and st["chg"] < -2: signals.append((hold, "放量下跌主力出逃", 1.0)); continue
@@ -1610,9 +1642,16 @@ def role_pick_score(role_id, st, market_trend="neutral"):
         if trend_up: score += 25; why.append("MA20>MA60且向上")
         if ma_align: score += 10; why.append("MA5>MA20")
         if price >= ma20 and (price - ma20) / ma20 <= 0.03: score += 15; why.append("站稳MA20不追高")
-        if hi20 > 0 and price >= hi20 * 0.97: score += 20; why.append("突破/贴近前20日高点")
+        if hi20 > 0:
+            # 干净突破带(前高±3%)给满分；冲过前高太多(>5%)是"追尖"，扣分而非加分
+            if hi20 * 0.97 <= price <= hi20 * 1.03:
+                score += 20; why.append("突破/贴近前20日高点")
+            elif price > hi20 * 1.05:
+                score -= 8; why.append("已远超前高·追涨风险")
         if 1.2 <= vol <= 3: score += 20; why.append("放量确认·量比%.1f" % vol)
+        if vol > 3.5: score -= 6; why.append("量比过大·疑似出货")   # 暴量不接
         if 50 <= rsi <= 75: score += 5
+        if rsi > 80: score -= 8; why.append("RSI超买·等回调")
     elif role_id == "D2":
         # 多因子共识：六因子满足数（≥4条才考虑）
         n = 0
@@ -1622,7 +1661,13 @@ def role_pick_score(role_id, st, market_trend="neutral"):
         if trend_up: n += 1; why.append("MA20向上")
         if 0.5 <= chg <= 5: n += 1; why.append("涨幅适中")
         if price > ma5: n += 1; why.append("收在MA5上方")
-        score = 55 + (n - 4) * 8 if n >= 4 else n * 10
+        # 【提升选股质量】至少5因子共振才给像样分；4因子仅弱分(需靠共识拉抬才进场)，
+        # 并惩罚"日内已大涨才追"(追在行情尾巴)与弱势日接飞刀
+        if n >= 5: score = 58 + (n - 5) * 8
+        elif n == 4: score = 38
+        else: score = n * 7
+        if chg > 4: score -= 10; why.append("日内已大涨·不追尾巴")
+        if chg < -1: score -= 5; why.append("弱势日·谨慎")
     elif role_id == "D3":
         # 多空辩论：逐条计票，多方须≥空方+2；大资金（放量方向）流出一票否决；追高不辩
         bull = bear = 0
@@ -1858,10 +1903,11 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
             score -= 12
             reason_parts.append(f"该角色{market_trend}市况常亏·减分")
         # 【多角色权重融合·共识共振】汇总七角色加权打分：≥3 角色同向给共振加成；
-        # 衡(D2)作为共识聚合角色额外加权，其余角色共振亦加分（落实"角色权重与融合"）
+        # 衡(D2)作为共识聚合角色轻度加权(20，不再30)，其余角色共振亦加分（落实"角色权重与融合"）
+        own_score = score   # 共识加成前的自身评分（用于 D2 选股质量闸门）
         fused, n_roles, _roles, divergence = consensus_score(code, all_codes_data, market_trend)
         if n_roles >= 3:
-            bonus = 30 if role_id == "D2" else 15
+            bonus = 20 if role_id == "D2" else 15
             # 【角色间辩论】多空势均力敌(分歧激烈)时，辩证角色D3作为仲裁者额外加分
             # （群体智慧：让最擅长在分歧中找真相的人定调，而非盲目跟多数）
             if divergence >= 0.6 and role_id == "D3":
@@ -1869,6 +1915,9 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
                 reason_parts.append("多空辩论·镜仲裁")
             score += bonus
             reason_parts.append(f"多角色共振{n_roles}/7")
+        # 【D2 选股质量闸门】共识再强，自身 setup 也要像样(≥55)才进，避免"别人看多我就盲跟"
+        if role_id == "D2" and own_score < 55:
+            continue
         if score >= 60:
             candidates.append((code, st, score, fused, " + ".join(reason_parts) or "综合评分达标", override))
 
