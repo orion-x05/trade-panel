@@ -403,6 +403,226 @@ def get_northbound_flow():
         print(f"  北向资金获取失败: {e}")
         return "neutral"
 
+# ==================== 涨跌解读 / 题材雷达 / 机构研报（东财多源采集） ====================
+
+EM_API_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    "Referer": "https://data.eastmoney.com/",
+}
+
+def _em_json(url, params=None, timeout=15):
+    """东财 JSON GET，统一异常保护，失败返回 None"""
+    try:
+        r = requests.get(url, params=params, timeout=timeout, headers=EM_API_HEADERS)
+        return r.json()
+    except Exception as e:
+        print(f"  [warn] 东财接口失败: {e}")
+        return None
+
+def _fetch_pools_one_day(date_str, pagesize):
+    """抓某一天涨停/跌停池（date_str=YYYYMMDD）"""
+    out = {"ok": False, "date": date_str, "zt": [], "dt": [], "zt_tc": 0, "dt_tc": 0}
+    j = _em_json("https://push2ex.eastmoney.com/getTopicZTPool", params={
+        "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
+        "Pageindex": 0, "pagesize": pagesize, "sort": "fbt:asc", "date": date_str})
+    if j and j.get("data"):
+        d = j["data"]
+        out["date"] = str(d.get("qdate", date_str))
+        out["zt_tc"] = int(d.get("tc") or 0)
+        for p in d.get("pool", []) or []:
+            fbt = p.get("fbt") or 0
+            out["zt"].append({
+                "code": p.get("c", ""), "name": p.get("n", ""),
+                "zdp": round(float(p.get("zdp") or 0), 2),
+                "lbc": int(p.get("lbc") or 0),                              # 连板数
+                "fund": round(float(p.get("fund") or 0) / 1e8, 2),          # 封单额(亿)
+                "hs": round(float(p.get("hs") or 0), 1),                    # 换手率%
+                "zbc": int(p.get("zbc") or 0),                              # 炸板次数
+                "hybk": p.get("hybk") or "其他",
+                "fbt": "%02d:%02d" % (fbt // 10000, (fbt // 100) % 100) if fbt else "--",
+                "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),          # 流通市值(亿)
+            })
+    j2 = _em_json("https://push2ex.eastmoney.com/getTopicDTPool", params={
+        "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
+        "Pageindex": 0, "pagesize": pagesize, "sort": "fund:asc", "date": date_str})
+    if j2 and j2.get("data"):
+        d2 = j2["data"]
+        out["dt_tc"] = int(d2.get("tc") or 0)
+        for p in d2.get("pool", []) or []:
+            out["dt"].append({
+                "code": p.get("c", ""), "name": p.get("n", ""),
+                "zdp": round(float(p.get("zdp") or 0), 2),
+                "days": int(p.get("days") or 0),                            # 连续跌停天数
+                "hs": round(float(p.get("hs") or 0), 1),
+                "hybk": p.get("hybk") or "其他",
+                "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),
+            })
+    out["ok"] = bool(out["zt"] or out["dt"])
+    return out
+
+def get_limit_pools(pagesize=80):
+    """【涨跌解读】涨停/跌停池。当天无数据（节假日/盘后未生成）自动向前回退最多5天。"""
+    last = {"ok": False, "zt": [], "dt": []}
+    for k in range(6):
+        ds = (cn_now() - timedelta(days=k)).strftime("%Y%m%d")
+        last = _fetch_pools_one_day(ds, pagesize)
+        if last["ok"]:
+            return last
+    return last
+
+def build_theme_radar(zt, dt=None, prev_snap=None):
+    """【题材雷达·周期表】涨停池按行业板块聚合成题材：连板梯队/封板资金/阶段判断。
+    stage: 启动🌱(新出现) 发酵🚀(家数/高度升) 高潮🔥(高度3+或家数6+) 退潮🌊(家数/高度降) 持续▶️
+    prev_snap: data['theme_history'] 里最近一个交易日的 {题材: {n, max_lb}}，用于环比定阶段。
+    """
+    themes = {}
+    for s in zt:
+        name = s["hybk"]
+        t = themes.setdefault(name, {"name": name, "n": 0, "max_lb": 0, "lb_sum": 0,
+                                     "seal": 0.0, "boom": 0, "stocks": []})
+        t["n"] += 1
+        t["max_lb"] = max(t["max_lb"], s["lbc"])
+        t["lb_sum"] += s["lbc"]
+        t["seal"] = round(t["seal"] + s["fund"], 2)
+        t["boom"] += s["zbc"]
+        t["stocks"].append({"name": s["name"], "code": s["code"], "lbc": s["lbc"], "fund": s["fund"]})
+    rows = []
+    for t in themes.values():
+        n, max_lb = t["n"], t["max_lb"]
+        avg_lb = t["lb_sum"] / n if n else 0
+        prev = (prev_snap or {}).get(t["name"]) or {}
+        p_n, p_max = prev.get("n", 0), prev.get("max_lb", 0)
+        if max_lb >= 4 or (max_lb >= 3 and n >= 6):
+            stage, emoji = "高潮", "🔥"
+        elif max_lb >= 2 and n >= p_n and max_lb >= p_max:
+            stage, emoji = "发酵", "🚀"
+        elif p_n == 0 and n <= 3 and max_lb <= 1:
+            stage, emoji = "启动", "🌱"
+        elif n < p_n or max_lb < p_max:
+            stage, emoji = "退潮", "🌊"
+        else:
+            stage, emoji = "持续", "▶️"
+        rows.append({**t, "avg_lb": round(avg_lb, 1), "stage": stage, "emoji": emoji,
+                     "p_n": p_n, "delta_n": n - p_n,
+                     "stocks": sorted(t["stocks"], key=lambda x: -x["lbc"])[:6]})
+    rows.sort(key=lambda r: (-r["max_lb"], -r["n"], -r["seal"]))
+    ladder = {"lb4": [], "lb3": [], "lb2": [], "lb1": []}
+    for s in zt:
+        lb = s["lbc"]
+        key = "lb4" if lb >= 4 else ("lb3" if lb == 3 else ("lb2" if lb == 2 else "lb1"))
+        ladder[key].append({"name": s["name"], "code": s["code"], "lbc": lb,
+                            "hybk": s["hybk"], "fund": s["fund"]})
+    return {"ok": bool(rows), "themes": rows[:14], "ladder": ladder,
+            "zt_count": len(zt), "dt_count": len(dt or [])}
+
+def _limit_decode_text(s):
+    """单只涨停股异动归因（模板化，基于连板/封板时间/炸板/封单/换手）"""
+    bits = []
+    if s["lbc"] >= 4:
+        bits.append(f"{s['hybk']}方向总龙头，{s['lbc']}连板，市场最高标，资金抱团+情绪标杆")
+    elif s["lbc"] == 3:
+        bits.append(f"{s['hybk']}方向3板高标，题材已进入主升，持股者盛宴、追高风险剧增")
+    elif s["lbc"] == 2:
+        bits.append(f"{s['hybk']}方向2板，题材发酵中段，明日是3进4的关键验证")
+    else:
+        bits.append(f"{s['hybk']}方向首板，题材扩散或新方向试探，关注次日能否连板确认")
+    if s["fbt"] <= "09:35":
+        bits.append("早盘快速封板，资金抢筹坚决，隔日溢价概率高")
+    elif s["fbt"] >= "14:30":
+        bits.append("尾盘偷袭封板，封板质量偏弱，谨防次日高开低走")
+    if s["zbc"] >= 3:
+        bits.append(f"盘中炸板{s['zbc']}次，多空分歧巨大，封板不牢")
+    if s["fund"] >= 2:
+        bits.append(f"封单{s['fund']}亿，封板结实")
+    if s["hs"] >= 15:
+        bits.append(f"换手率{s['hs']}%，筹码剧烈交换")
+    return "；".join(bits) + "。"
+
+def build_limit_decoded(zt, dt):
+    """【涨跌解读】涨停明细+归因、统计摘要、跌停统计"""
+    n_zt, n_dt = len(zt), len(dt)
+    boom = sum(s["zbc"] for s in zt)
+    max_lb = max([s["lbc"] for s in zt], default=0)
+    early = sum(1 for s in zt if s["fbt"] <= "09:35")
+    seal_sum = round(sum(s["fund"] for s in zt), 1)
+    zt_rows = []
+    for s in zt:
+        zt_rows.append({**s, "decode": _limit_decode_text(s)})
+    zt_rows.sort(key=lambda s: (-s["lbc"], s["fbt"]))
+    dt_rows = sorted(dt, key=lambda s: (-s["days"], s["name"]))
+    # 市场情绪定性
+    if n_zt >= 80 and max_lb >= 5:
+        mood, mood_emoji = "亢奋", "🔥"
+    elif n_zt >= 50 and max_lb >= 3:
+        mood, mood_emoji = "活跃", "📈"
+    elif n_zt >= 30:
+        mood, mood_emoji = "温和", "🌤"
+    else:
+        mood, mood_emoji = "低迷", "🧊"
+    return {"ok": bool(zt or dt), "zt_rows": zt_rows[:80], "dt_rows": dt_rows[:30],
+            "zt_count": n_zt, "dt_count": n_dt, "boom": boom, "max_lb": max_lb,
+            "early": early, "seal_sum": seal_sum, "mood": mood, "mood_emoji": mood_emoji}
+
+def get_research_reports(days=7, pagesize=60):
+    """【机构研报】东财研报中心个股研报流（标题/机构/评级/目标价/预测PE）"""
+    end = cn_now().strftime("%Y-%m-%d")
+    begin = (cn_now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    j = _em_json("https://reportapi.eastmoney.com/report/list", params={
+        "pageSize": pagesize, "industry": "*", "rating": "", "ratingChange": "",
+        "beginTime": begin, "endTime": end, "pageNo": 1, "qType": 0})
+    rows = []
+    for r in (j or {}).get("data", []) or []:
+        aim = r.get("indvAimPriceT")
+        pe = r.get("predictThisYearPe")
+        rows.append({
+            "title": r.get("title", ""), "code": r.get("stockCode", ""),
+            "name": r.get("stockName", ""), "org": r.get("orgSName", ""),
+            "rating": r.get("emRatingName", ""),
+            "aim": round(float(aim), 2) if aim else None,
+            "pe": round(float(pe), 1) if pe else None,
+            "industry": r.get("industryName", ""),
+            "date": (r.get("publishDate") or "")[:10],
+            "url": f"https://data.eastmoney.com/report/zw_stock.jshtml?infocode={r.get('infoCode', '')}",
+        })
+    return rows
+
+def get_org_surveys(days=3, pagesize=40):
+    """【机构调研】东财机构调研动态（近期接受调研的股票+机构数）"""
+    begin = (cn_now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    j = _em_json("https://datacenter-web.eastmoney.com/api/data/v1/get", params={
+        "sortColumns": "NOTICE_DATE,SECURITY_CODE", "sortTypes": "-1,1",
+        "pageSize": pagesize, "pageNumber": 1, "reportName": "RPT_ORG_SURVEYNEW",
+        "columns": "SECURITY_CODE,SECURITY_NAME_ABBR,NOTICE_DATE,RECEIVE_START_DATE,RECEIVE_OBJECT,RECEIVE_WAY_EXPLAIN,NUM,SUM"})
+    rows = []
+    for r in ((j or {}).get("result") or {}).get("data", []) or []:
+        rows.append({
+            "code": r.get("SECURITY_CODE", ""), "name": r.get("SECURITY_NAME_ABBR", ""),
+            "date": (r.get("RECEIVE_START_DATE") or r.get("NOTICE_DATE") or "")[:10],
+            "orgs": r.get("RECEIVE_OBJECT", ""),
+            "num": int(r.get("NUM") or 0),          # 本期调研机构家数
+            "sum": int(r.get("SUM") or 0),          # 年内累计调研次数
+            "way": r.get("RECEIVE_WAY_EXPLAIN", ""),
+        })
+    return rows
+
+def build_research_block(reports, surveys):
+    """【机构研报板块】研报流 + 高频共识雷达（多机构同期覆盖）+ 调研动态"""
+    cons = {}
+    for r in reports:
+        c = cons.setdefault(r["code"], {"code": r["code"], "name": r["name"],
+                                        "orgs": [], "n": 0, "rating": r["rating"],
+                                        "aim": r.get("aim"), "pe": r.get("pe"),
+                                        "industry": r.get("industry", ""), "date": r["date"]})
+        if r["org"] and r["org"] not in c["orgs"]:
+            c["orgs"].append(r["org"])
+        c["n"] += 1
+        if r.get("aim") and not c.get("aim"):
+            c["aim"] = r["aim"]
+    cons_rows = [c for c in cons.values() if len(c["orgs"]) >= 2]
+    cons_rows.sort(key=lambda c: (-len(c["orgs"]), -c["n"]))
+    return {"ok": bool(reports or surveys), "reports": reports[:40],
+            "consensus": cons_rows[:12], "surveys": surveys[:25]}
+
 def get_index_kline(index_code="sh000001", count=60):
     """【大盘K线走势】抓取指数日K（开收高低），用于判断趋势/形态，不只看收盘"""
     try:
@@ -2256,6 +2476,35 @@ def main():
         push_report(f"🟢 融资杠杆提醒 · {msig['title']}", msig["advice"])
     elif msig.get("level") not in ("na", None):
         print(f"  💰 融资杠杆：占流通市值 {msig.get('rzyezb')}%（{msig.get('pct_zb')}分位）· {msig.get('title')}")
+
+    # ---- 涨跌解读 / 题材雷达 / 机构研报（东财多源采集，复盘类页面的数据底座） ----
+    try:
+        pools = get_limit_pools()
+        zt, dt = pools.get("zt", []), pools.get("dt", [])
+        today_key = cn_now().strftime("%Y-%m-%d")
+        hist = data.setdefault("theme_history", {})
+        prev_snap = None
+        for k in sorted(hist.keys()):
+            if k < today_key:
+                prev_snap = hist[k]  # 最近一个历史交易日快照，用于题材阶段环比
+        if zt:
+            radar = build_theme_radar(zt, dt, prev_snap)
+            data["theme_radar"] = radar
+            hist[today_key] = {t["name"]: {"n": t["n"], "max_lb": t["max_lb"]} for t in radar["themes"]}
+            for k in sorted(hist.keys())[:-30]:  # 只保留最近30个交易日快照
+                hist.pop(k, None)
+            top = radar["themes"][0] if radar["themes"] else None
+            if top:
+                print(f"  🛰 题材雷达：{top['emoji']} {top['name']}（{top['n']}家涨停/最高{top['max_lb']}板/{top['stage']}）")
+        decoded = build_limit_decoded(zt, dt)
+        data["limit_decoded"] = decoded
+        print(f"  📈 涨跌解读：涨停 {decoded['zt_count']} 家 · 跌停 {decoded['dt_count']} 家 · 最高 {decoded['max_lb']} 连板 · 情绪{decoded['mood']}")
+        reports = get_research_reports(days=7)
+        surveys = get_org_surveys(days=3)
+        data["research_feed"] = build_research_block(reports, surveys)
+        print(f"  📚 机构研报：近7日 {len(reports)} 篇 · 共识标的 {len(data['research_feed']['consensus'])} 只 · 调研 {len(surveys)} 条")
+    except Exception as e:
+        print(f"  [warn] 涨跌解读/题材雷达/机构研报生成失败: {e}")
 
     for player in data["players"]:
         rid = player["id"]
