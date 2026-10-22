@@ -2118,6 +2118,19 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       </div>
     </div>
   </div>
+  <!-- ===== 融资杠杆 · 风险/抄底信号（两市融资余额温度计，实时 + 近90日历史分位） ===== -->
+  <div class="panel" id="panel-margin" style="margin-bottom:12px">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">💰 融资杠杆 · 风险 / 抄底信号</span>
+      <span class="panel-tip">两市融资余额温度计（东方财富实时）· 结合近90日历史分位：过热→注意风险，出清→或可抄底</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="marginBanner"><div style="color:var(--text-faint);font-size:13px">正在读取两市融资融券数据…</div></div>
+      <div id="marginMetrics" style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0"></div>
+      <div id="marginChart" style="width:100%;height:260px"></div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:6px">数据源：东方财富 · 两市融资融券余额；分位基于近90个交易日。占流通市值比是判断杠杆过热 / 出清的核心刻度。</div>
+    </div>
+  </div>
   <div class="panel collapsible" id="panel-review-sentiment" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-review-sentiment')">
       <span class="panel-title">市场状态 · 行业强弱榜</span>
@@ -2125,15 +2138,13 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
     <div class="panel-body" id="reviewSentiment"></div>
   </div>
-  <!-- ===== 市场结构（指数对比 + 强弱方向 + 赚钱亏钱效应 三合一可折叠） ===== -->
+  <!-- ===== 市场结构（强弱方向 + 赚钱亏钱效应；指数走势已统一保留在"运行总览·大盘走势"，此处不重复） ===== -->
   <div class="panel collapsible" id="panel-market-structure" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-market-structure')">
       <span class="panel-title">🧭 市场结构</span>
-      <span class="panel-tip">指数对比 / 强弱方向 / 赚钱亏钱效应 · 三合一 ▼</span>
+      <span class="panel-tip">强势 / 弱势方向 · 赚钱亏钱效应 ▼</span>
     </div>
     <div class="panel-body">
-      <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">📈 指数行情对比</div>
-      <div id="reviewIdxCompare" style="margin-bottom:20px"></div>
       <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">🧭 强势 / 弱势方向</div>
       <div id="reviewDirections" style="margin-bottom:20px"></div>
       <div style="font-size:13px;font-weight:600;margin:2px 0 8px;color:var(--text)">💰 赚钱 / 亏钱效应</div>
@@ -14699,6 +14710,75 @@ async function renderPsyche(){
 // 进入该 tab 时渲染；该 tab 激活态每 15s 自动刷新（仅激活时）
 document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click",function(){ if(b.dataset.tab==="psyche") setTimeout(renderPsyche,60); });});
 setInterval(function(){ var v=document.getElementById("view-psyche"); if(v&&v.classList.contains("active")) renderPsyche(); }, 15000);
+</script>
+<script>
+/* ===== 融资杠杆 · 风险/抄底信号（复盘页，实时拉东财两融 + 近90日分位） ===== */
+var marginChartInst=null;
+async function renderMargin(){
+  var banner=document.getElementById("marginBanner"),metrics=document.getElementById("marginMetrics"),chartEl=document.getElementById("marginChart");
+  if(!banner)return;
+  banner.innerHTML='<div style="color:var(--text-faint);font-size:13px">正在读取两市融资融券数据…</div>';
+  var rows=[];
+  try{
+    var url="https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPTA_RZRQ_LSHJ&columns=ALL&source=WEB&sortColumns=dim_date&sortTypes=-1&pageNumber=1&pageSize=90";
+    var r=await fetch(url); if(!r.ok)throw new Error("HTTP "+r.status); var j=await r.json();
+    var raw=(j.result&&j.result.data)||[];
+    rows=raw.map(function(x){return {date:(x.DIM_DATE||"").slice(0,10),rzye:(x.RZYE||0)/1e12,rzyezb:x.RZYEZB||0,rjme:(x.RZJME||0)/1e8};}).reverse();
+  }catch(e){
+    banner.innerHTML='<div style="color:var(--down);font-size:13px">无法读取融资融券数据：'+(e&&e.message||e)+'</div>'; return;
+  }
+  if(rows.length<20){banner.innerHTML='<div style="color:var(--text-faint);font-size:13px">数据不足，暂无法计算历史分位。</div>';return;}
+  var n=rows.length,latest=rows[n-1],zb=latest.rzyezb;
+  var below=rows.filter(function(r){return r.rzyezb<=zb;}).length;
+  var pct=below/n*100;
+  var t5=rows.slice(-5).reduce(function(s,r){return s+r.rjme;},0);
+  var t10=rows.slice(-10).reduce(function(s,r){return s+r.rjme;},0);
+  var zmax=Math.max.apply(null,rows.map(function(r){return r.rzye;}));
+  var dd=(latest.rzye/zmax-1)*100;
+  var emo,title,advice,color;
+  if(pct>=75||(t10>400&&zb>=2.5)){emo="🔴";title="杠杆过热 · 注意风险";color="#ef4444";
+    advice="融资余额占流通市值 "+zb.toFixed(2)+"% （近"+n+"日 "+pct.toFixed(0)+"% 分位），近10日融资净买入 "+t10.toFixed(0)+" 亿。杠杆快速堆积，一旦回调容易踩踏，建议降低仓位、不追高、收紧止损。";}
+  else if(pct<=30&&t10<0){emo="🟢";title="杠杆出清 · 或可分批抄底";color="#10b981";
+    advice="融资余额占流通市值 "+zb.toFixed(2)+"% （近"+n+"日 "+pct.toFixed(0)+"% 分位），近10日融资净偿还 "+Math.abs(t10).toFixed(0)+" 亿，较阶段高点回落 "+Math.abs(dd).toFixed(1)+"%。杠杆去化充分、恐慌盘出清后往往是阶段底部，可小仓分批低吸。";}
+  else if(pct>=60||pct<=40){emo="🟡";title="杠杆中性 · 留意方向";color="#f59e0b";
+    advice="融资余额占流通市值 "+zb.toFixed(2)+"% （"+pct.toFixed(0)+"% 分位），近10日净买入 "+t10.toFixed(0)+" 亿。方向不明，轻仓观察。";}
+  else{emo="⚪";title="杠杆平稳";color="#9ca3af";
+    advice="融资余额占流通市值 "+zb.toFixed(2)+"% （"+pct.toFixed(0)+"% 分位），近10日净买入 "+t10.toFixed(0)+" 亿，杠杆水平中性。";}
+  banner.innerHTML='<div style="border-left:4px solid '+color+';background:rgba(148,163,184,.08);border-radius:0 10px 10px 0;padding:12px 14px">'
+    +'<div style="font-size:17px;font-weight:700;color:'+color+'">'+emo+' '+title+'</div>'
+    +'<div style="font-size:12.5px;color:var(--text-dim);margin-top:6px;line-height:1.6">'+advice+'</div></div>';
+  var chip=function(label,val,sub,c){return '<div style="flex:1;min-width:118px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px">'
+    +'<div style="font-size:11px;color:var(--text-faint)">'+label+'</div>'
+    +'<div style="font-size:18px;font-weight:700;color:'+(c||"var(--text)")+';margin:2px 0">'+val+'</div>'
+    +'<div style="font-size:11px;color:var(--text-faint)">'+sub+'</div></div>';};
+  metrics.innerHTML=chip("融资余额",latest.rzye.toFixed(2)+" 万亿","更新于 "+latest.date)
+    +chip("占流通市值比",zb.toFixed(2)+"%","近"+n+"日 "+pct.toFixed(0)+"% 分位",pct>=75?"#ef4444":(pct<=30?"#10b981":"var(--text)"))
+    +chip("近5日净买入",(t5>=0?"+":"")+t5.toFixed(0)+" 亿","近10日 "+(t10>=0?"+":"")+t10.toFixed(0)+" 亿",t10>=0?"#ef4444":"#10b981")
+    +chip("距阶段高点",dd.toFixed(1)+"%","阶段高点 "+zmax.toFixed(2)+" 万亿");
+  if(typeof echarts!=="undefined"&&chartEl){
+    try{
+      if(marginChartInst){marginChartInst.dispose();}
+      marginChartInst=echarts.init(chartEl);
+      var dates=rows.map(function(r){return r.date.slice(5);});
+      marginChartInst.setOption({
+        backgroundColor:"transparent",
+        tooltip:{trigger:"axis"},
+        legend:{data:["融资余额(万亿)","占流通市值比(%)"],textStyle:{color:"#9ca3af",fontSize:11},top:0},
+        grid:{left:46,right:48,top:34,bottom:24},
+        xAxis:{type:"category",data:dates,axisLabel:{color:"#6b7280",fontSize:10},axisLine:{lineStyle:{color:"#2a2e3a"}}},
+        yAxis:[
+          {type:"value",scale:true,name:"万亿",nameTextStyle:{color:"#6b7280",fontSize:10},axisLabel:{color:"#6b7280",fontSize:10},splitLine:{lineStyle:{color:"#232733"}}},
+          {type:"value",scale:true,name:"占比%",nameTextStyle:{color:"#6b7280",fontSize:10},axisLabel:{color:"#6b7280",fontSize:10,formatter:"{value}%"},splitLine:{show:false}}
+        ],
+        series:[
+          {name:"融资余额(万亿)",type:"line",data:rows.map(function(r){return +r.rzye.toFixed(3);}),smooth:true,showSymbol:false,lineStyle:{width:2,color:"#3b82f6"},areaStyle:{color:"rgba(59,130,246,.12)"}},
+          {name:"占流通市值比(%)",type:"line",yAxisIndex:1,data:rows.map(function(r){return r.rzyezb;}),smooth:true,showSymbol:false,lineStyle:{width:2,color:"#f59e0b"}}
+        ]
+      });
+    }catch(e){}
+  }
+}
+document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click",function(){ if(b.dataset.tab==="review") setTimeout(renderMargin,80); });});
 </script>
 
 
