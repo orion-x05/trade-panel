@@ -315,6 +315,74 @@ def get_sector_strength(all_stock_data):
     sorted_sectors = sorted(sector_avg.items(), key=lambda x: x[1], reverse=True)
     return [s[0] for s in sorted_sectors[:5]]
 
+def get_margin_data(days=90):
+    """【融资杠杆】抓取两市融资融券历史（东方财富），返回 {ok, rows, latest}。
+    rows: [{date, rzye(万亿), rzyezb(占流通市值%), rjme(当日融资净买入亿)}...] 按日期升序。
+    融资余额/占流通市值比是市场"杠杆温度计"：过高→杠杆过热(注意风险)，持续去化→恐慌出清(或可抄底)。"""
+    try:
+        url = ("https://datacenter-web.eastmoney.com/api/data/v1/get?"
+               "reportName=RPTA_RZRQ_LSHJ&columns=ALL&source=WEB"
+               f"&sortColumns=dim_date&sortTypes=-1&pageNumber=1&pageSize={days}")
+        resp = requests.get(url, timeout=12, headers={"User-Agent": "Mozilla/5.0"})
+        result = resp.json().get("result") or {}
+        raw = result.get("data") or []
+        rows = []
+        for r in raw:
+            date = (r.get("DIM_DATE") or "")[:10]
+            rzye = r.get("RZYE") or 0          # 融资余额(元)
+            rzyezb = r.get("RZYEZB") or 0      # 占流通市值比(%)
+            rjme = r.get("RZJME") or 0         # 当日融资净买入(元)
+            if date:
+                rows.append({"date": date,
+                             "rzye": round(rzye / 1e12, 4),     # 万亿
+                             "rzyezb": round(rzyezb, 3),        # %
+                             "rjme": round(rjme / 1e8, 2)})     # 亿
+        rows.reverse()   # 升序(旧→新)
+        if len(rows) < 20:
+            return {"ok": False}
+        return {"ok": True, "rows": rows, "latest": rows[-1]}
+    except Exception as e:
+        print(f"  融资杠杆数据获取失败: {e}")
+        return {"ok": False}
+
+def margin_risk_signal(margin):
+    """【融资杠杆信号】结合历史分位 + 杠杆去化/堆积趋势，给出风险/抄底提示。
+    返回 dict: {level, emoji, title, advice, rzye, rzyezb, pct_zb, trend5, trend10, dd_from_peak}
+      level: overheat(过热·注意风险)/watch(关注)/neutral(观望)/bottom(杠杆出清·或可抄底)/na"""
+    if not margin or not margin.get("ok"):
+        return {"level": "na"}
+    rows = margin["rows"]
+    latest = rows[-1]
+    zb = latest["rzyezb"]                       # 当前占流通市值比(%)
+    zb_hist = [r["rzyezb"] for r in rows]
+    n = len(zb_hist)
+    pct = sum(1 for v in zb_hist if v <= zb) / n * 100   # 历史分位 0-100
+    trend5 = sum(r["rjme"] for r in rows[-5:])           # 近5日融资净买入(亿)
+    trend10 = sum(r["rjme"] for r in rows[-10:])         # 近10日(亿)
+    zmax = max(r["rzye"] for r in rows)
+    dd_from_peak = (latest["rzye"] / zmax - 1) * 100 if zmax else 0
+    sig = {"level": "neutral", "rzye": latest["rzye"], "rzyezb": zb,
+           "pct_zb": round(pct), "trend5": round(trend5), "trend10": round(trend10),
+           "dd_from_peak": round(dd_from_peak, 1), "window": n}
+    # ①过热：占流通比历史高分位(≥75%) 或 杠杆快速堆积(10日大额净买入且绝对水平偏高)
+    if pct >= 75 or (trend10 > 400 and zb >= 2.5):
+        sig.update({"level": "overheat", "emoji": "🔴", "title": "杠杆过热 · 注意风险",
+                    "advice": f"融资余额占流通市值 {zb:.2f}%（近{n}日 {pct:.0f}% 分位），近10日融资净买入 {trend10:+.0f} 亿。"
+                              f"杠杆快速堆积，一旦回调容易踩踏，建议降低仓位、不追高、收紧止损。"})
+    # ②抄底窗口：占流通比历史低分位(≤30%) 且 杠杆持续去化(净偿还)
+    elif pct <= 30 and trend10 < 0:
+        sig.update({"level": "bottom", "emoji": "🟢", "title": "杠杆出清 · 或可分批抄底",
+                    "advice": f"融资余额占流通市值 {zb:.2f}%（近{n}日 {pct:.0f}% 分位），近10日融资净偿还 {abs(trend10):.0f} 亿，"
+                              f"较阶段高点回落 {abs(dd_from_peak):.1f}%。杠杆去化充分、恐慌盘出清后往往是阶段底部，可小仓分批低吸。"})
+    # ③关注：接近两端
+    elif pct >= 60 or pct <= 40:
+        sig.update({"level": "watch", "emoji": "🟡", "title": "杠杆中性 · 留意方向",
+                    "advice": f"融资余额占流通市值 {zb:.2f}%（{pct:.0f}% 分位），近10日净买入 {trend10:+.0f} 亿。方向不明，轻仓观察。"})
+    else:
+        sig.update({"emoji": "⚪", "title": "杠杆平稳",
+                    "advice": f"融资余额占流通市值 {zb:.2f}%（{pct:.0f}% 分位），近10日净买入 {trend10:+.0f} 亿，杠杆水平中性。"})
+    return sig
+
 def get_northbound_flow():
     """【北向资金监控】获取北向资金净流入，返回：bull(大幅流入)/bear(大幅流出)/neutral"""
     try:
@@ -2175,7 +2243,20 @@ def main():
     ms = data.get("market_sentiment", {})
     print(f"  🧭 市场宽度{ms.get('breadth', 0.5)*100:.0f}% 分歧={ms.get('divergent')} "
           f"角色悲观度{ms.get('pessimism', 0)*100:.0f}% → 全局仓位×{sentiment_factor:.2f}")
-    
+
+    # 【融资杠杆】两市融资余额杠杆温度计 → 过热注意风险 / 出清或可抄底（结合历史分位）
+    margin = get_margin_data()
+    msig = margin_risk_signal(margin)
+    data["margin_leverage"] = {"signal": msig, "latest": margin.get("latest") if margin.get("ok") else None}
+    if msig.get("level") == "overheat":
+        print(f"  🔴 融资杠杆：{msig['title']}｜{msig['advice']}")
+        push_report(f"🔴 融资杠杆提醒 · {msig['title']}", msig["advice"])
+    elif msig.get("level") == "bottom":
+        print(f"  🟢 融资杠杆：{msig['title']}｜{msig['advice']}")
+        push_report(f"🟢 融资杠杆提醒 · {msig['title']}", msig["advice"])
+    elif msig.get("level") not in ("na", None):
+        print(f"  💰 融资杠杆：占流通市值 {msig.get('rzyezb')}%（{msig.get('pct_zb')}分位）· {msig.get('title')}")
+
     for player in data["players"]:
         rid = player["id"]
         print(f"\n🎯 {player['id']} {player['name']} (现金:{player['cash']:.0f} 持仓:{len(player['holdings'])})")
