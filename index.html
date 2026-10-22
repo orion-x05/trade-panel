@@ -1372,7 +1372,10 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <button class="tab" data-tab="rank"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></span>实时收益排名</button>
     <button class="tab" data-tab="airesearch"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></span>AI研究中心</button>
     <button class="tab" data-tab="global"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></span>全球市场</button>
-    <button class="tab" data-tab="review"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>复盘总结</button>
+    <button class="tab" data-tab="themeradar" onclick="switchTab('themeradar');setTimeout(renderThemeRadar,80)"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 12l6.4-6.4"/></svg></span>题材雷达</button>
+<button class="tab" data-tab="limitdecoded" onclick="switchTab('limitdecoded');setTimeout(renderLimitDecoded,80)"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 15l2-2.5 2 2 3-3.5"/></svg></span>涨跌解读</button>
+<button class="tab" data-tab="instresearch" onclick="switchTab('instresearch');setTimeout(renderInstResearch,80)"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M7 19v-6"/><path d="M12 19V8"/><path d="M17 19v-9"/><path d="M12 3l1.8 3.4 3.7.4-2.8 2.5.8 3.7-3.5-1.9-3.5 1.9.8-3.7L6.5 6.8l3.7-.4z"/></svg></span>机构研报</button>
+<button class="tab" data-tab="review"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>复盘总结</button>
     <button class="tab" data-tab="knowledge"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/><path d="M9 7h6"/></svg></span>交易知识库</button>
     <div class="sidenav-group">交易决策</div>
     <button class="tab" data-tab="research"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>个股研究·候选池</button>
@@ -2084,6 +2087,59 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 </section>
 
 <!-- ===== Tab5 复盘总结 ===== -->
+<section class="tab-view" id="view-themeradar">
+  <div class="panel">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">🛰 题材雷达 · 周期表</span>
+      <span class="panel-tip">涨停池按板块聚合 · 逻辑 / 梯队 / 阶段（启动→发酵→高潮→退潮）· 盘后自动更新</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="radarSummary"></div>
+      <div id="radarThemes" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px"></div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:10px">数据源：东方财富涨停池；阶段由连板高度、涨停家数及与前一日快照环比判定。</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">🪜 连板梯队</span>
+      <span class="panel-tip">按连板高度分组的涨停股全景 · 高度即情绪刻度</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="radarLadder" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
+    </div>
+  </div>
+</section>
+<section class="tab-view" id="view-limitdecoded">
+  <div class="panel">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">📈 涨跌解读 · 涨停异动</span>
+      <span class="panel-tip">每日涨停 / 跌停全景 + 逐只异动归因 · 盘后自动生成</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="limitStats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🔒 涨停明细与归因</div>
+      <div id="limitZtTable"></div>
+      <div style="font-size:13px;font-weight:600;margin:18px 0 8px;color:var(--text)">💥 跌停统计</div>
+      <div id="limitDtTable"></div>
+    </div>
+  </div>
+</section>
+<section class="tab-view" id="view-instresearch">
+  <div class="panel">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">📚 机构研报 · 金股共识</span>
+      <span class="panel-tip">多源采集：券商研报流 + 高频共识雷达 + 机构调研动态 · 每日自动脱水更新</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="researchConsensus"></div>
+      <div style="font-size:13px;font-weight:600;margin:18px 0 8px;color:var(--text)">📄 最新研报流</div>
+      <div id="researchReports"></div>
+      <div style="font-size:13px;font-weight:600;margin:18px 0 8px;color:var(--text)">🔍 机构调研动态</div>
+      <div id="researchSurveys"></div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:10px">数据源：东方财富研报中心 / 机构调研；共识=近7日被≥2家券商覆盖的标的。</div>
+    </div>
+  </div>
+</section>
 <section class="tab-view" id="view-review">
   <!-- ===== 每日复盘 · 结构化（图4模板：大盘环境/板块热度/资金观察/风险点 + 明日主线/触发/放弃） ===== -->
   <div class="panel">
@@ -6910,7 +6966,163 @@ function switchTab(name){
   document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
   document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+name));
   /* 更新头部页面名 */
-  const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置",psyche:"真实角色心理"};
+  /* ==================== 题材雷达 / 涨跌解读 / 机构研报 ==================== */
+var STAGE_STYLE={启动:["#3ecf8e","rgba(62,207,142,.14)"],发酵:["#f59e0b","rgba(245,158,11,.14)"],高潮:["#ef4444","rgba(239,68,68,.14)"],退潮:["#3b82f6","rgba(59,130,246,.14)"],持续:["#9ca3af","rgba(156,163,175,.14)"]};
+function stageBadge(t){
+  var st=STAGE_STYLE[t.stage]||STAGE_STYLE["持续"];
+  return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;color:'+st[0]+';background:'+st[1]+'">'+t.emoji+' '+t.stage+'</span>';
+}
+function radarChip(label,value,color){
+  return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:8px 12px;min-width:86px">'
+    +'<div style="font-size:11px;color:var(--text-faint)">'+label+'</div>'
+    +'<div style="font-size:16px;font-weight:700;color:'+(color||"var(--text)")+'">'+value+'</div></div>';
+}
+async function renderThemeRadar(){
+  var tp=document.getElementById("topbarPage"); if(tp)tp.textContent="题材雷达";
+  var box=document.getElementById("radarThemes"), sum=document.getElementById("radarSummary"), lad=document.getElementById("radarLadder");
+  if(!box)return;
+  box.innerHTML='<div style="color:var(--text-faint);padding:20px">正在读取 data.json …</div>';
+  var data;
+  try{ var r=await fetch("./data.json?"+Date.now()); if(!r.ok)throw new Error("HTTP "+r.status); data=await r.json(); }
+  catch(e){ box.innerHTML='<div style="color:var(--down);padding:20px">无法读取 data.json：'+escS(e.message)+'</div>'; return; }
+  var rd=data.theme_radar||{};
+  if(!rd.ok||!rd.themes||!rd.themes.length){ box.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无题材雷达数据（盘后由引擎自动生成，下一交易日刷新）。</div>'; if(lad)lad.innerHTML=''; if(sum)sum.innerHTML=''; return; }
+  var ladN={lb4:(rd.ladder.lb4||[]).length,lb3:(rd.ladder.lb3||[]).length,lb2:(rd.ladder.lb2||[]).length,lb1:(rd.ladder.lb1||[]).length};
+  if(sum) sum.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    +radarChip("涨停家数",rd.zt_count,"#ef4444")+radarChip("跌停家数",rd.dt_count,"#3b82f6")
+    +radarChip("4板+",ladN.lb4,"#f59e0b")+radarChip("3板",ladN.lb3,"#f59e0b")
+    +radarChip("2板",ladN.lb2)+radarChip("首板",ladN.lb1)+'</div>';
+  box.innerHTML=rd.themes.map(function(t){
+    var delta=t.delta_n>0?('<span style="font-size:11px;color:#3ecf8e">↑'+t.delta_n+'</span>'):(t.delta_n<0?('<span style="font-size:11px;color:#ef4444">↓'+(-t.delta_n)+'</span>'):'<span style="font-size:11px;color:var(--text-faint)">→0</span>');
+    var stocks=t.stocks.map(function(s){
+      return '<span style="font-size:11px;background:rgba(148,163,184,.1);border-radius:6px;padding:2px 7px;color:var(--text-dim)">'+escS(s.name)
+        +(s.lbc>=2?('<b style="color:#f59e0b">'+s.lbc+'板</b>'):'')+'</span>';
+    }).join("");
+    return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:14px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<span style="font-size:14px;font-weight:700;color:var(--text)">'+escS(t.name)+'</span>'+stageBadge(t)+'</div>'
+      +'<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin-bottom:8px">'
+      +'<span>涨停 <b style="color:#ef4444">'+t.n+'</b> 家 '+delta+'</span>'
+      +'<span>最高 <b style="color:#f59e0b">'+t.max_lb+'</b> 板</span>'
+      +'<span>均 <b>'+t.avg_lb+'</b> 板</span>'
+      +'<span>封单 <b>'+t.seal+'</b> 亿</span>'
+      +(t.boom?('<span style="color:#ef4444">炸板 '+t.boom+'</span>'):'')+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+stocks+'</div></div>';
+  }).join("");
+  if(lad){
+    var ladDefs=[["lb4","🔥 4板及以上 · 总龙头",4],["lb3","🚀 3板 · 高标",3],["lb2","📈 2板 · 发酵中段",2],["lb1","🌱 首板 · 扩散/新方向",1]];
+    lad.innerHTML=ladDefs.map(function(d){
+      var arr=rd.ladder[d[0]]||[];
+      var items=arr.length?arr.map(function(s){
+        return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--border-soft)">'
+          +'<span style="color:var(--text)">'+escS(s.name)+'</span>'
+          +'<span style="color:var(--text-faint)">'+escS(s.hybk)+' · 封单'+s.fund+'亿</span></div>';
+      }).join(""):'<div style="font-size:12px;color:var(--text-faint);padding:8px 0">无</div>';
+      return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">'+d[1]+' <span style="color:var(--text-faint);font-weight:400">('+arr.length+')</span></div>'+items+'</div>';
+    }).join("");
+  }
+}
+async function renderLimitDecoded(){
+  var tp=document.getElementById("topbarPage"); if(tp)tp.textContent="涨跌解读";
+  var st=document.getElementById("limitStats"), zt=document.getElementById("limitZtTable"), dt=document.getElementById("limitDtTable");
+  if(!zt)return;
+  zt.innerHTML='<div style="color:var(--text-faint);padding:20px">正在读取 data.json …</div>';
+  var data;
+  try{ var r=await fetch("./data.json?"+Date.now()); if(!r.ok)throw new Error("HTTP "+r.status); data=await r.json(); }
+  catch(e){ zt.innerHTML='<div style="color:var(--down);padding:20px">无法读取 data.json：'+escS(e.message)+'</div>'; return; }
+  var d=data.limit_decoded||{};
+  if(!d.ok){ zt.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无涨跌解读数据（盘后由引擎自动生成）。</div>'; if(st)st.innerHTML=''; if(dt)dt.innerHTML=''; return; }
+  if(st) st.innerHTML=radarChip("情绪 "+d.mood_emoji,d.mood,"#f59e0b")
+    +radarChip("涨停",d.zt_count,"#ef4444")+radarChip("跌停",d.dt_count,"#3b82f6")
+    +radarChip("最高连板",d.max_lb+" 板","#f59e0b")+radarChip("早盘封板(≤9:35)",d.early)
+    +radarChip("炸板总数",d.boom,"#ef4444")+radarChip("封单合计",d.seal_sum+" 亿");
+  function ztTable(rows){
+    if(!rows.length)return '<div style="font-size:12px;color:var(--text-faint)">无</div>';
+    var h='<table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="color:var(--text-faint);text-align:left"><th style="padding:6px 8px">股票</th><th style="padding:6px 8px">连板</th><th style="padding:6px 8px">首封</th><th style="padding:6px 8px">封单</th><th style="padding:6px 8px">换手</th><th style="padding:6px 8px">板块</th><th style="padding:6px 8px">异动归因</th></tr></thead><tbody>';
+    rows.forEach(function(s,i){
+      var bg=i%2?'background:rgba(148,163,184,.05);':'';
+      h+='<tr style="'+bg+'border-top:1px solid var(--border-soft)">'
+        +'<td style="padding:7px 8px"><b style="color:var(--text)">'+escS(s.name)+'</b> <span style="color:var(--text-faint)">'+s.code+'</span></td>'
+        +'<td style="padding:7px 8px"><b style="color:'+(s.lbc>=3?"#ef4444":(s.lbc===2?"#f59e0b":"#9ca3af"))+'">'+s.lbc+'板</b></td>'
+        +'<td style="padding:7px 8px;color:var(--text-dim)">'+s.fbt+'</td>'
+        +'<td style="padding:7px 8px;color:var(--text-dim)">'+s.fund+'亿</td>'
+        +'<td style="padding:7px 8px;color:var(--text-dim)">'+s.hs+'%</td>'
+        +'<td style="padding:7px 8px;color:var(--text-dim)">'+escS(s.hybk)+'</td>'
+        +'<td style="padding:7px 8px;color:var(--text-dim);line-height:1.5">'+escS(s.decode)+'</td></tr>';
+    });
+    return h+'</tbody></table>';
+  }
+  zt.innerHTML=ztTable(d.zt_rows||[]);
+  if(dt){
+    var drows=d.dt_rows||[];
+    if(!drows.length){ dt.innerHTML='<div style="font-size:12px;color:var(--text-faint)">今日无跌停</div>'; }
+    else{
+      dt.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap">'+drows.map(function(s){
+        return '<span style="font-size:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:4px 10px;color:var(--text-dim)">'
+          +'<b style="color:var(--text)">'+escS(s.name)+'</b> '+escS(s.hybk)
+          +(s.days>=2?(' <b style="color:#3b82f6">'+s.days+'连跌停</b>'):'')+' 换手'+s.hs+'%</span>';
+      }).join("")+'</div>';
+    }
+  }
+}
+async function renderInstResearch(){
+  var tp=document.getElementById("topbarPage"); if(tp)tp.textContent="机构研报";
+  var cb=document.getElementById("researchConsensus"), rp=document.getElementById("researchReports"), sv=document.getElementById("researchSurveys");
+  if(!rp)return;
+  rp.innerHTML='<div style="color:var(--text-faint);padding:20px">正在读取 data.json …</div>';
+  var data;
+  try{ var r=await fetch("./data.json?"+Date.now()); if(!r.ok)throw new Error("HTTP "+r.status); data=await r.json(); }
+  catch(e){ rp.innerHTML='<div style="color:var(--down);padding:20px">无法读取 data.json：'+escS(e.message)+'</div>'; return; }
+  var b=data.research_feed||{};
+  if(!b.ok){ rp.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无机构研报数据（每日由引擎自动采集）。</div>'; if(cb)cb.innerHTML=''; if(sv)sv.innerHTML=''; return; }
+  function ratingBadge(rt){
+    var c=rt==="买入"?"#ef4444":(rt==="增持"?"#f59e0b":(rt==="中性"?"#9ca3af":"#3b82f6"));
+    return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;color:'+c+';background:'+c+'22">'+escS(rt||"—")+'</span>';
+  }
+  var cons=b.consensus||[];
+  if(cb){
+    if(!cons.length) cb.innerHTML='<div style="font-size:12px;color:var(--text-faint)">近7日暂无≥2家机构覆盖的共识标的。</div>';
+    else cb.innerHTML='<div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🎯 高频共识雷达 <span style="font-size:11px;font-weight:400;color:var(--text-faint)">近7日被多家券商同时覆盖 = 机构共识方向</span></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">'
+      +cons.map(function(c){
+        return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +'<span style="font-size:14px;font-weight:700;color:var(--text)">'+escS(c.name)+'</span>'+ratingBadge(c.rating)+'</div>'
+          +'<div style="font-size:12px;color:var(--text-dim);line-height:1.7">'
+          +'<b style="color:#ef4444">'+c.orgs.length+'</b> 家机构覆盖（'+c.n+'篇）<br>'
+          +(c.aim?('目标价 <b style="color:#f59e0b">'+c.aim+'</b> · '):'')+(c.pe?('预测PE <b>'+c.pe+'</b>'):'')+'<br>'
+          +'<span style="color:var(--text-faint)">'+escS(c.industry||"")+' · '+escS(c.date||"")+'</span></div></div>';
+      }).join("")+'</div>';
+  }
+  var reports=b.reports||[];
+  rp.innerHTML=reports.length?('<div style="max-height:520px;overflow-y:auto">'+reports.map(function(x){
+    return '<div style="padding:10px 0;border-bottom:1px dashed var(--border-soft)">'
+      +'<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">'
+      +'<span style="font-size:11px;color:var(--text-faint);min-width:52px">'+escS(x.date||"")+'</span>'
+      +'<span style="font-size:12px;color:var(--text-faint);min-width:52px">'+escS(x.code||"")+'</span>'
+      +'<a href="'+escS(x.url||"#")+'" target="_blank" style="font-size:13px;color:var(--text);font-weight:600;text-decoration:none">'+escS(x.title||"")+'</a></div>'
+      +'<div style="font-size:11px;color:var(--text-faint);margin-top:3px;padding-left:110px">'
+      +escS(x.name||"")+' · '+escS(x.org||"")+' · '+escS(x.industry||"")+(x.pe?(' · 预测PE '+x.pe):'')+(x.aim?(' · 目标价 '+x.aim):'')+'</div></div>';
+  }).join("")+'</div>'):'<div style="font-size:12px;color:var(--text-faint)">暂无研报</div>';
+  var surveys=b.surveys||[];
+  if(sv){
+    if(!surveys.length) sv.innerHTML='<div style="font-size:12px;color:var(--text-faint)">近3日暂无机构调研记录。</div>';
+    else{
+      var byCode={};
+      surveys.forEach(function(s){ if(!byCode[s.code]||s.num>byCode[s.code].num) byCode[s.code]=s; });
+      sv.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap">'+Object.keys(byCode).map(function(k){
+        var s=byCode[k];
+        return '<span style="font-size:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:8px;padding:4px 10px;color:var(--text-dim)">'
+          +'<b style="color:var(--text)">'+escS(s.name)+'</b> · '+s.num+'家机构 · 年内'+s.sum+'次'
+          +' <span style="color:var(--text-faint)">'+escS(s.way||"")+'</span></span>';
+      }).join("")+'</div>';
+    }
+  }
+}
+
+const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置",psyche:"真实角色心理",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报"};
   const tp=document.getElementById("topbarPage"); if(tp) tp.textContent=tabNames[name]||"";
   /* 六部门禁与实时日志仅在运行总览显示 */
   const showGlobal = (name==="overview");
