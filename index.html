@@ -7033,7 +7033,8 @@ async function renderThemeRadar(){
   var rd=data.theme_radar||{};
   if(!rd.ok||!rd.themes||!rd.themes.length){ box.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无题材雷达数据（盘后由引擎自动生成，下一交易日刷新）。</div>'; if(lad)lad.innerHTML=''; if(sum)sum.innerHTML=''; return; }
   var ladN={lb4:(rd.ladder.lb4||[]).length,lb3:(rd.ladder.lb3||[]).length,lb2:(rd.ladder.lb2||[]).length,lb1:(rd.ladder.lb1||[]).length};
-  if(sum) sum.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'
+  if(sum) sum.innerHTML='<div style="font-size:11px;color:var(--text-faint);margin-bottom:8px">📅 数据截至 '+(rd.asof||'—')+' · 盘中实时变动，盘后自动定稿</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
     +radarChip("涨停家数",rd.zt_count,"#ef4444")+radarChip("跌停家数",rd.dt_count,"#3b82f6")
     +radarChip("4板+",ladN.lb4,"#f59e0b")+radarChip("3板",ladN.lb3,"#f59e0b")
     +radarChip("2板",ladN.lb2)+radarChip("首板",ladN.lb1)+'</div>';
@@ -7078,7 +7079,8 @@ async function renderLimitDecoded(){
   catch(e){ zt.innerHTML='<div style="color:var(--down);padding:20px">无法读取 data.json：'+escS(e.message)+'</div>'; return; }
   var d=data.limit_decoded||{};
   if(!d.ok){ zt.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无涨跌解读数据（盘后由引擎自动生成）。</div>'; if(st)st.innerHTML=''; if(dt)dt.innerHTML=''; return; }
-  if(st) st.innerHTML=radarChip("情绪 "+d.mood_emoji,d.mood,"#f59e0b")
+  if(st) st.innerHTML='<div style="width:100%;font-size:11px;color:var(--text-faint);margin-bottom:2px">📅 数据截至 '+(d.asof||'—')+' · 盘中实时变动，盘后自动定稿 · 表格可左右滑动查看「异动归因」列</div>'
+    +radarChip("情绪 "+d.mood_emoji,d.mood,"#f59e0b")
     +radarChip("涨停",d.zt_count,"#ef4444")+radarChip("跌停",d.dt_count,"#3b82f6")
     +radarChip("最高连板",d.max_lb+" 板","#f59e0b")+radarChip("早盘封板(≤9:35)",d.early)
     +radarChip("炸板总数",d.boom,"#ef4444")+radarChip("封单合计",d.seal_sum+" 亿");
@@ -7128,8 +7130,9 @@ async function renderInstResearch(){
   }
   var cons=b.consensus||[];
   if(cb){
-    if(!cons.length) cb.innerHTML='<div style="font-size:12px;color:var(--text-faint)">近7日暂无≥2家机构覆盖的共识标的。</div>';
-    else cb.innerHTML='<div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🎯 高频共识雷达 <span style="font-size:11px;font-weight:400;color:var(--text-faint)">近7日被多家券商同时覆盖 = 机构共识方向</span></div>'
+    var asofHtml='<div style="font-size:11px;color:var(--text-faint);margin-bottom:8px">📅 数据截至 '+(b.asof||'—')+'</div>';
+    if(!cons.length) cb.innerHTML=asofHtml+'<div style="font-size:12px;color:var(--text-faint)">近7日暂无≥2家机构覆盖的共识标的。</div>';
+    else cb.innerHTML=asofHtml+'<div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🎯 高频共识雷达 <span style="font-size:11px;font-weight:400;color:var(--text-faint)">近7日被多家券商同时覆盖 = 机构共识方向</span></div>'
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">'
       +cons.map(function(c){
         return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px">'
