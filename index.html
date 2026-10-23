@@ -7,7 +7,7 @@
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20260910-r28";
+<script>window.APP_VERSION="20261024-r29-orion";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -1407,6 +1407,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="hs-chips">
       <span class="hs-chip"><span class="hs-dot" id="heroDot"></span><span id="heroApi">行情接口 –</span></span>
       <span class="hs-chip" id="heroRun">运行角色 –</span>
+      <span class="hs-chip" id="heroRegime" title="市场状态（ADX+均线判定，连续2日确认切换）">市场状态 –</span>
     </div>
   </div>
   <!-- ===== 系统总览状态条（组合状态 + 市场行情 + LIVE + AUTO REFRESH） ===== -->
@@ -1623,9 +1624,14 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <section class="panel collapsible" id="panel-event-log" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-event-log')">
       <span class="panel-title">📝 实时事件日志</span>
-      <span class="panel-tip">成交 / 告警 / 提示 · 最多保留 300 条 ▼</span>
+      <span class="panel-tip">成交 / 告警 / 提示 · 落盘持久化（刷新不丢）· 最多保留 300 条 ▼</span>
     </div>
     <div class="panel-body">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <span id="snapCount" style="font-size:11px;color:var(--text-faint)">决策快照 0 条</span>
+        <button onclick="exportSnapshots()" style="padding:3px 12px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,.12);color:#3b82f6;cursor:pointer" title="导出全部决策快照（JSONL）：数据状态+regime+指标+门禁轨迹+最终动作">⬇️ 导出决策快照</button>
+        <button onclick="runExplainLoss()" style="padding:3px 12px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:rgba(251,191,36,.1);color:#fbbf24;cursor:pointer" title="逐笔亏损回溯决策时快照：区分数据问题/环境问题/策略问题">🔍 亏损归因</button>
+      </div>
       <div class="log-box" id="logBox"></div>
     </div>
   </section>
@@ -2052,6 +2058,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           oninput="filterResearchTable()">
         <span id="poolSearchCount" style="color:var(--text-faint)"></span>
         <span id="pickStatus" style="color:var(--text-dim)">待扫描全市场…</span>
+        <span id="poolSrcBadge" style="display:none;color:#fbbf24;font-weight:600;font-size:11px;padding:1px 8px;border:1px solid rgba(251,191,36,.4);border-radius:10px;background:rgba(251,191,36,.08)" title="全市场扫描从未成功，当前为写死的静态默认池（非真实扫描结果），所有评分/结论基于静态样本，不可作为实盘依据">⚠️ 模拟池·非扫描结果</span>
         <button onclick="pickFromFullMarket(true)" style="padding:3px 10px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:rgba(16,185,129,.12);color:var(--down);cursor:pointer">🔄 全市场选股</button>
       </span>
     </div>
@@ -2333,6 +2340,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div id="simTuneBox" class="sim-advice"></div>
       <div id="simStockDetail" class="sim-advice"></div>
       <div id="simQualityAnalysis" class="sim-advice"></div>
+      <div id="simRegimeStats" class="sim-advice"></div>
       <div class="sim-fold-bar">
         <button class="gmk-btn" style="padding:4px 12px;font-size:12px" onclick="simFoldAll(true)">📂 全部展开</button>
         <button class="gmk-btn" style="padding:4px 12px;font-size:12px" onclick="simFoldAll(false)">📁 全部折叠</button>
@@ -2967,7 +2975,7 @@ window.addEventListener("unhandledrejection",function(e){
 });
 
 /* ---------- 常量（数据层） ---------- */
-const INIT_CASH = 100000, BUY_LIMIT = 0.30, MAX_POS = 5; /* 单笔≤30%仓位，单票总仓位≤30%，每角色最多持仓5只 */
+const INIT_CASH = 100000, BUY_LIMIT = 0.25, MAX_POS = 5; /* 单笔≤25%仓位（与六步门禁第6步/需求书max_single_pct对齐，旧值0.30与文档不符），单票总仓位≤30%，每角色最多持仓5只 */
 /* A股各板块交易规则 */
 const BOARD_RULES = {
   main: { name:"主板", minBuy:100, priceLimit:0.10, minAsset:0, desc:"沪市60/深市00开头，100股起，±10%涨跌幅" },
@@ -3252,6 +3260,250 @@ const FIRE_POOL=[
 const SIM_POOL_SIZE=20; /* 每次回测从市场候选池随机抽样的股票数（减少并发压力，手机端友好） */
 let lastFetchReal=0;
 let quotesReady=false;
+/* ===== 数据新鲜度硬失败（2026-10-24）=====
+   旧缺陷：三源全挂时 quotesReady 一旦为 true 永真，面板指标停留在占位默认值
+   （RSI≈50/评分60），门禁却照样输出"可关注/4/5观察"——等于用假数据跑真判断，
+   是用户点名的最危险问题。现在：追踪最后一次成功拉取的时间，超过 N 分钟未更新
+   即判定断流——交易时段内冻结一切买卖，UI 明示"数据无效"，不再输出任何观察结论。 */
+let lastQuoteOkAt=0;
+let quoteStaleLogged=false;
+let quoteStaleStatusDone=false;
+const QUOTE_STALE_MS=5*60*1000; /* 5 分钟未拉到真实行情即断流 */
+function quoteDataFresh(){return lastQuoteOkAt>0&&Date.now()-lastQuoteOkAt<QUOTE_STALE_MS;}
+function markQuoteStaleUI(){
+  /* 断流期间把顶部行情状态与候选池状态位改成明确的红色告警 */
+  try{
+    const api=$("statApi");if(api){api.textContent="数据断流";api.className="stat-value down";}
+    const ha=$("heroApi");if(ha)ha.textContent="行情接口 数据断流";
+    const hd=$("heroDot");if(hd)hd.className="hs-dot";
+    if(typeof setPickStatus==="function")setPickStatus("⚠️ 实时行情断流（数据无效）· 交易已冻结，禁止任何买卖","err");
+  }catch(e){}
+}
+/* ==================== Orion-X 改造（2026-10-24 · 按《改造需求书》移植 orion_x 三件套） ====================
+   对应工作区 orion_x/：data_integrity.py（数据三态+占位探测+决策快照）、regime.py（市场状态+路由表）、
+   router.py（三合一入口+Limits）。单文件落地，配置集中，可整体回退：
+   - ORION_CFG.gatesOn:false  → 无数据门禁/无金额门槛（快照仍记录）
+   - ORION_CFG.regimeOn:false → 七角色全部放行（路由表不生效）
+   上线顺序（需求书）：快照冷跑 → 校准ADX → 开拦截；快照纯记录不拦截，可先开。 */
+const ORION_CFG={
+  gatesOn:true,       /* 数据三态门禁：OK=允许开仓 / STALE=只读 / MISSING=全冻结 */
+  regimeOn:true,      /* regime 角色路由 + 仓位缩放 */
+  minAmount:10000,    /* 最小单笔金额（元）：佣金最低5元+印花税0.1%双边，小单摩擦占比>0.18%，直接拦 */
+  maxSinglePct:0.25,  /* 单票仓位硬顶（与六步门禁第6步"单笔≤25%"文字对齐） */
+  confirmDays:2,      /* regime 防抖：连续N日同向才切换 */
+  snapOn:true,        /* 决策快照落盘（append-only JSONL，纯记录不拦截） */
+  snapMax:400         /* 快照环形缓冲上限 */
+};
+/* ---------- ① 数据健康三态（门禁第0步） ----------
+   旧缺陷：三源全挂时 quotesReady 一旦为 true 永真，指标停留在占位默认值（RSI≈50/评分60），
+   门禁却照样输出"可关注/4/5观察"——用假数据跑真判断，是需求书点名的最危险问题。
+   三态语义：OK=数据新鲜可开仓 / STALE=超时只读禁开仓 / MISSING=无数据全冻结。 */
+function dataState(){
+  if(!quotesReady)return"MISSING";
+  if(lastQuoteOkAt>0&&Date.now()-lastQuoteOkAt<QUOTE_STALE_MS)return"OK";
+  return"STALE";
+}
+const DATA_STATE_TEXT={OK:"数据正常",STALE:"数据过期·只读",MISSING:"数据缺失·冻结"};
+function tradingAllowed(){return dataState()==="OK";}
+/* ---------- ② 市场状态 regime ----------
+   两层判定：ADX(14)定趋势有无（≥25有趋势/＜20无趋势），均线排列定方向；均线缠绕→CHOP；
+   深跌加速日→PANIC。连续 confirmDays 日同向才切换（防抖，防一日游行情误切）。
+   纯函数 classifyRegime(highs,lows,closes,todayChg) 可喂合成数据单测（需求书验收标准3）。 */
+const REGIME_ROUTES={
+  TREND_UP:{D1:1.0,D2:0.8,D3:0.6,D5:0.9,D6:0.6},  /* D4/D7 关闭 */
+  RANGE:{D3:0.5,D4:1.0,D5:0.6,D7:0.8},             /* D1/D2/D6 关闭 */
+  TREND_DOWN:{D7:0.3},                             /* 仅 D7 */
+  CHOP:{D3:0.3,D4:0.5,D7:0.5},
+  PANIC:{}                                         /* 全关 */
+};
+const REGIME_TEXT={TREND_UP:"趋势上行",RANGE:"震荡",TREND_DOWN:"趋势下行",CHOP:"缠绕无方向",PANIC:"恐慌下跌"};
+function smaArr(arr,n){if(!arr||arr.length<n)return null;let s=0;for(let i=arr.length-n;i<arr.length;i++)s+=arr[i];return s/n;}
+/* Wilder ADX(period)：输入升序日K H/L/C 数组；数据不足返回 null */
+function adxWilder(highs,lows,closes,period){
+  period=period||14;
+  const n=closes?closes.length:0;
+  if(!highs||!lows||n<period*3)return null;
+  let tr=0,pdm=0,ndm=0;
+  for(let i=1;i<=period;i++){
+    const h=highs[i],l=lows[i],ph=highs[i-1],pl=lows[i-1],pc=closes[i-1];
+    tr+=Math.max(h-l,Math.abs(h-pc),Math.abs(l-pc));
+    const up=h-ph,dn=pl-l;
+    if(up>dn&&up>0)pdm+=up;else if(dn>up&&dn>0)ndm+=dn;
+  }
+  let atr=tr/period,apdm=pdm/period,anadm=ndm/period;
+  const dxs=[];
+  for(let i=period+1;i<n;i++){
+    const h=highs[i],l=lows[i],ph=highs[i-1],pl=lows[i-1],pc=closes[i-1];
+    const t=Math.max(h-l,Math.abs(h-pc),Math.abs(l-pc));
+    atr=(atr*(period-1)+t)/period;
+    const up=h-ph,dn=pl-l;
+    const p=(up>dn&&up>0)?up:0,d=(dn>up&&dn>0)?dn:0;
+    apdm=(apdm*(period-1)+p)/period;
+    anadm=(anadm*(period-1)+d)/period;
+    const pdi=atr>0?apdm/atr*100:0,ndi=atr>0?anadm/atr*100:0;
+    dxs.push((pdi+ndi)>0?Math.abs(pdi-ndi)/(pdi+ndi)*100:0);
+  }
+  if(dxs.length<period)return null;
+  let adx=dxs.slice(0,period).reduce((a,b)=>a+b,0)/period;  /* 首个ADX=前period个DX均值 */
+  for(let i=period;i<dxs.length;i++)adx=(adx*(period-1)+dxs[i])/period;
+  return +adx.toFixed(2);
+}
+function classifyRegime(highs,lows,closes,todayChg){
+  const n=closes?closes.length:0;
+  if(n<60)return null;
+  const adx=adxWilder(highs,lows,closes,14);
+  const ma20=smaArr(closes,20),ma60=smaArr(closes,60);
+  if(adx==null||ma20==null||ma60==null)return null;
+  const c=closes[n-1];
+  const spread=Math.abs(ma20-ma60)/ma60;
+  const alignedUp=c>ma20&&ma20>ma60*1.002;
+  const alignedDown=c<ma20&&ma20<ma60*0.998;
+  const crashDay=(todayChg!=null&&todayChg<=-3);   /* 单日重挫=恐慌 */
+  if(adx>=25){                                     /* 有趋势：均线定方向 */
+    if(alignedUp)return"TREND_UP";
+    if(alignedDown)return crashDay?"PANIC":"TREND_DOWN";
+    return"CHOP";                                  /* 有趋势强度但均线未排列 */
+  }
+  if(spread<0.005)return"CHOP";                    /* 均线缠绕：无方向 */
+  if(alignedDown&&c<ma60*0.95)return"TREND_DOWN";  /* 深度破位，ADX低也按下行处理 */
+  return"RANGE";
+}
+/* ---------- ③ 回测按 regime 分层（P2-⑦：勿随机混采） ----------
+   历史交易按「成交当日指数的市场状态」分桶，验证各角色在自己放行 regime 下的表现，
+   避免把震荡市的亏损记到趋势策略头上。idxBars=上证日K（升序，date 为 "YYYY-MM-DD"），
+   取 dateStr 当日及此前共 60 根喂 classifyRegime；早于 60 根之前 → null。 */
+function regimeAtDate(idxBars,dateStr){
+  if(!idxBars||!dateStr)return null;
+  let end=-1;
+  for(let i=0;i<idxBars.length;i++){if(idxBars[i].date<=dateStr)end=i;else break;}
+  if(end<59)return null;                           /* 需要至少60根才能算ADX+均线 */
+  const seg=idxBars.slice(end-59,end+1);
+  const chg=seg.length>1?(seg[seg.length-1].close/seg[seg.length-2].close-1)*100:null;
+  return classifyRegime(seg.map(b=>b.high),seg.map(b=>b.low),seg.map(b=>b.close),chg);
+}
+function getRegimeState(){
+  if(!simData.regime)simData.regime={state:"RANGE",cand:"",days:0,day:"",adx:null,updatedAt:0};
+  return simData.regime;
+}
+function regimeScale(role){
+  const t=REGIME_ROUTES[getRegimeState().state];
+  return (t&&t[role])||0;
+}
+let regimePanicDay="";const regimeBlockDay={};
+/* 每日判定一次（2日防抖）：取上证日K分类，写入 simData.regime 并持久化 */
+async function updateRegime(){
+  try{
+    const rg=getRegimeState();
+    const dayKey=todayStr(new Date());
+    if(rg.day===dayKey)return;                     /* 每天只判定一次 */
+    const bars=await txDay("sh000001",80);         /* 腾讯日K（内存缓存，prefetchGlobal 已预热） */
+    if(!bars||bars.length<60)return;
+    const highs=bars.map(b=>b.high),lows=bars.map(b=>b.low),closes=bars.map(b=>b.close);
+    const chg=(simData.index&&simData.index.shChg!=null)?simData.index.shChg:null;
+    const raw=classifyRegime(highs,lows,closes,chg);
+    if(!raw)return;
+    rg.day=dayKey;rg.adx=adxWilder(highs,lows,closes,14);rg.updatedAt=Date.now();
+    if(raw===rg.state){rg.cand="";rg.days=0;}
+    else{
+      if(rg.cand===raw)rg.days++;else{rg.cand=raw;rg.days=1;}
+      if(rg.days>=ORION_CFG.confirmDays){
+        log("warn",`【regime切换】${rg.state}(${REGIME_TEXT[rg.state]||""}) → ${raw}(${REGIME_TEXT[raw]||""})（连续${rg.days}日确认·ADX=${rg.adx}）· 放行角色：${Object.keys(REGIME_ROUTES[raw]||{}).map(r=>r+"×"+(REGIME_ROUTES[raw][r])).join("，")||"全部冻结"}`);
+        pushSnapshot({ts:new Date().toISOString(),dataState:dataState(),regime:raw,action:"regime_switch",reason:`${rg.state}→${raw} 连续${rg.days}日确认`});
+        rg.state=raw;rg.cand="";rg.days=0;
+      }else{
+        log("info",`【regime候选】${rg.state} → ${raw}（第${rg.days}/${ORION_CFG.confirmDays}日确认，未达防抖天数不切换）`);
+      }
+    }
+    save();
+  }catch(e){}
+}
+/* ---------- ③ 决策快照（append-only JSONL 落 localStorage） ----------
+   需求书P0-③：每次决策落一条 {数据状态, regime, 角色, 标的, 指标快照, 门禁逐步轨迹, 模型参数, 最终动作}；
+   验收标准4/5：load_snapshots 可回读完整门禁轨迹；explain_loss 区分数据问题与策略问题。 */
+const SNAP_KEY="orion_decision_snapshots";
+let _snapCountCache=-1; /* 快照计数缓存：避免每 tick 解析整个数组 */
+function pushSnapshot(rec){
+  if(!ORION_CFG.snapOn)return;
+  try{
+    const arr=JSON.parse(localStorage.getItem(SNAP_KEY)||"[]");
+    arr.push(rec);
+    if(arr.length>ORION_CFG.snapMax)arr.splice(0,arr.length-ORION_CFG.snapMax);
+    localStorage.setItem(SNAP_KEY,JSON.stringify(arr));
+    _snapCountCache=arr.length;
+  }catch(e){}
+}
+function loadSnapshots(){try{return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]")}catch(e){return[]}}
+function updateSnapCountUI(){
+  const el=document.getElementById("snapCount");if(!el)return;
+  if(_snapCountCache<0)_snapCountCache=loadSnapshots().length;
+  el.textContent="决策快照 "+_snapCountCache+" 条";
+}
+function snapIndicators(st){
+  if(!st)return null;
+  return {price:st.price,chg:st.chg,vol:st.vol,rsi6:st.rsi6,ma5:st.ma5,ma20:st.ma20,ma60:st.ma60,hi20:st.hi20,turnover:st.turnover};
+}
+function snapGate(st){
+  if(!st)return null;
+  const g=gateDecision(st);
+  return {liq:(st.vol||1)>=0.5,trend:(st.ma20||0)>(st.ma60||0)&&st.price>=(st.ma20||st.price),
+    vol:(st.vol||1)>=1.2&&(st.vol||1)<=5,rsi:(st.rsi6||50)<76,rps:(st.rps50||50)<80,pass:g.passCount,label:g.label};
+}
+/* 亏损归因（验收标准5）：逐笔亏损交易回溯决策时快照，区分数据问题/环境问题/策略问题 */
+function explainLoss(){
+  const snaps=loadSnapshots(),out=[];
+  (simData.players||[]).forEach(p=>{
+    p.trades.filter(t=>t.type==="sell"&&t.profit<0).slice(-8).forEach(t=>{
+      const s=snaps.filter(x=>x.role===p.id&&x.code===t.code&&x.action!=="skip").pop();
+      const _nm=(simData.pricePool&&simData.pricePool[t.code]&&simData.pricePool[t.code].name)||t.code;
+      let cause="策略问题（数据正常·regime匹配·门禁全过仍亏）";
+      if(s){
+        if(s.dataState&&s.dataState!=="OK")cause="数据问题（决策时"+DATA_STATE_TEXT[s.dataState]+"）";
+        else if(s.regime&&s.regime==="PANIC")cause="环境问题（决策时regime=PANIC恐慌期）";
+        else if(s.gate&&s.gate.pass<5)cause="门禁宽松（决策时仅过"+s.gate.pass+"/5道）";
+        else if(s.regime&&["TREND_DOWN","CHOP"].indexOf(s.regime)>=0&&["D1","D2","D4","D6"].indexOf(p.id)>=0)cause="环境问题（regime="+s.regime+"中做顺势，角色与市况错配）";
+      }else cause="无快照（改造前成交或快照被环形缓冲挤出，无法归因）";
+      out.push({role:p.id,code:t.code,name:_nm,profit:+t.profit.toFixed(2),time:t.time,cause,snap:s||null});
+    });
+  });
+  return out;
+}
+function exportSnapshots(){
+  const snaps=loadSnapshots();
+  if(!snaps.length){alert("暂无决策快照（改造后产生第一笔交易/拦截后开始记录）");return;}
+  const blob=new Blob([snaps.map(s=>JSON.stringify(s)).join("\n")],{type:"application/jsonl"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="decisions_"+new Date().toISOString().slice(0,10).replace(/-/g,"")+".jsonl";
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  log("info",`已导出 ${snaps.length} 条决策快照（JSONL）`);
+}
+/* 亏损归因面板入口：把 explainLoss 结果写进日志窗（区分数据问题/环境问题/策略问题） */
+function runExplainLoss(){
+  const out=explainLoss();
+  if(!out.length){log("info","【亏损归因】暂无亏损交易可归因");return;}
+  const dataIssue=out.filter(o=>o.cause.indexOf("数据问题")===0).length;
+  log("warn",`【亏损归因】近 ${out.length} 笔亏损：数据问题 ${dataIssue} 笔 / 其他 ${out.length-dataIssue} 笔`);
+  out.forEach(o=>{
+    log("warn",`【亏损归因】${o.role} ${o.code} 盈亏${o.profit}元 · ${o.time?new Date(o.time).toLocaleString("zh-CN"):""} → ${o.cause}`);
+  });
+  updateSnapCountUI();
+}
+/* ---------- ④ 角色差异化 temperature（P1-④：七角色全用同一模型同一温度必然同质） ----------
+   D3 多空辩论"唱反调"的角色给最高温度；严格执行型角色低温。 */
+const ROLE_TEMP={D1:0.5,D2:0.7,D3:0.9,D4:0.6,D5:0.7,D6:0.5,D7:0.8};
+function roleTemperature(role){return ROLE_TEMP[role]!=null?ROLE_TEMP[role]:0.7;}
+/* ---------- ⑤ 下单时点分散（P2-⑨） ----------
+   实测七角色决策集中在 14:31-14:44 同一分钟，同质化决策被同时放大。
+   尾盘窗口（14:00-15:00）内按角色哈希切 7 个槽位，每角色只在自己的 ~8.5 分钟槽内开新仓；
+   上午不限制（保留趋势突破的盘中机会）。加仓/卖出是风控动作，不受错峰限制。 */
+function roleBuySlotOK(role,now){
+  const hm=now.getHours()*60+now.getMinutes();
+  if(hm<840||hm>=900)return true;
+  let h=0;for(let i=0;i<role.length;i++)h=(h*31+role.charCodeAt(i))>>>0;
+  const slot=h%7;
+  const win=Math.floor((hm-840)/(60/7));
+  return win===slot;
+}
 function fetchRealQuotes(force){
   const now=Date.now();
   if(!force&&now-lastFetchReal<30000)return; /* 30秒刷新一次，减轻接口压力 */
@@ -3368,7 +3620,11 @@ function fetchRealQuotes(force){
           simData.index.shUpdate=Date.now();
         }
       });
-      if(okCount>0)quotesReady=true;
+      if(okCount>0){
+        quotesReady=true;
+        /* 数据新鲜度：任一次成功拉取即视为行情通路健康；断流恢复后自动解冻 */
+        lastQuoteOkAt=Date.now();quoteStaleLogged=false;quoteStaleStatusDone=false;
+      }
       /* 真实日K增强：补齐均线/前20日高点/涨停信息，喂给六Agent打分（内部3分钟节流） */
       try{enrichPoolFromKline();}catch(e){}
       /* 行业真实化：拉一次f100真实行业映射（内部1小时节流），持仓表行业/五行随之升级 */
@@ -4289,7 +4545,11 @@ function emFallback(){
       });
       const sh=diff.find(x=>x.f12==="000001");
       if(sh){const price=parseFloat(sh.f2),chg=parseFloat(sh.f3);if(price>0){simData.index.sh=price;simData.index.shChg=chg;simData.index.shUpdate=Date.now();simData.index.shPrev=simData.index.shPrev||price;}}
-      if(ok>10)quotesReady=true;
+      if(ok>10){
+        quotesReady=true;
+        /* 东财兜底通道同样视为行情通路健康，刷新新鲜度时间戳（断流恢复链路之一） */
+        lastQuoteOkAt=Date.now();quoteStaleLogged=false;quoteStaleStatusDone=false;
+      }
       log("info","行情备用源（东方财富）已接管实时行情");
     }catch(e){}
   };
@@ -5149,6 +5409,7 @@ async function sinaMarketList(){
     let batchGot=0,batchErr=0;
     res.forEach(r=>{if(!r.ok){batchErr++;return;}batchGot+=r.items.length;out.push(...r.items);});
     if(batchGot===0&&batchErr>0)break;   /* 整批失败：后续无望，中止 */
+    if(batchGot===0&&out.length>0)break; /* 已拿到数据后遇到空页=翻到底了（hs_a实际约56页），早停省请求 */
   }
   return out.length>=1000?out:null;
 }
@@ -5220,15 +5481,15 @@ async function pickFromFullMarket(manual){
   pickBusy=true;setPickStatus("正在扫描全市场…","busy");
   try{
     /* ① 东财 JSONP（双排序字段：成交额/量比，各自重试1次） */
-    let map=null,sinaMode=false;
+    let map=null,sinaMode=false,_emFail=false,_sinaFail=false;
     try{
       const [aAmount,aLb]=await Promise.all([fetchClistPage("f6",300),fetchClistPage("f10",200)]);
       if((aAmount&&aAmount.length)||(aLb&&aLb.length)){
         map=new Map();
         (aAmount||[]).forEach(it=>it&&it.f12&&map.set(it.f12,it));
         (aLb||[]).forEach(it=>it&&it.f12&&!map.has(it.f12)&&map.set(it.f12,it));
-      }
-    }catch(e){console.warn("东财clist通道异常：",e);}
+      }else _emFail=true;
+    }catch(e){_emFail=true;console.warn("东财clist通道异常：",e);}
     /* ② 东财不可达 → 新浪兜底（限并发分页，字段映射到f编码） */
     if(!map||map.size===0){
       try{
@@ -5238,14 +5499,15 @@ async function pickFromFullMarket(manual){
           sin.forEach(s=>{const it=sinaToF(s);if(it.f12)map.set(it.f12,it);});
           sinaMode=true;
           console.warn("东财clist不可达，已切换新浪备用源：",map.size,"只");
-        }
-      }catch(e){console.warn("新浪兜底通道异常：",e);}
+        }else _sinaFail=true;
+      }catch(e){_sinaFail=true;console.warn("新浪兜底通道异常：",e);}
     }
-    /* ③ 两个源都不可达：保留旧候选，状态注明上次成功时间 */
+    /* ③ 两个源都不可达：保留旧候选，状态注明上次成功时间 + 哪条源断了（失败可见化） */
     if(!map||map.size===0){
       pickFailAt=Date.now();
       const last=lastPickOkAt?new Date(lastPickOkAt).toTimeString().slice(0,5):"从未";
-      setPickStatus(`全市场扫描失败（东财+新浪均不可达）· 保留当前候选 · 上次成功 ${last}`,"err");
+      setPickStatus(`全市场扫描失败（东财${_emFail?"✗":"？"} · 新浪${_sinaFail?"✗":"？"}）· 保留当前候选 · 上次成功 ${last}${_sinaFail?" · 如装有广告拦截/净化插件，请对本站放行":""}`,"err");
+      log("warn",`【全市场扫描失败】东财${_emFail?"不可达":"未返回数据"}，新浪${_sinaFail?"不可达":"未返回数据"}——当前候选池为写死的静态默认池（非扫描结果），所有评分基于静态样本，仅供参考`);
       pickBusy=false;return;
     }
     const c=PICK_CFG,holdCodes=getHoldingCodes();
@@ -5333,6 +5595,13 @@ function setPickStatus(txt,kind){
   const el=document.getElementById("pickStatus");
   if(el){el.textContent=txt;el.style.color=kind==="ok"?"var(--down)":kind==="err"?"var(--up)":"var(--text-dim)";}
   try{log(kind==="err"?"warn":"info",txt);}catch(e){}
+}
+/* 静态池标记（需求书P0-①）：全市场扫描从未成功时，候选池就是写死的默认池，
+   必须在面板上显式标注"模拟池·非扫描结果"——不能把静态样本伪装成市场扫描结果。 */
+function updatePoolSrcBadge(){
+  const el=document.getElementById("poolSrcBadge");if(!el)return;
+  if(lastPickOkAt>0){el.style.display="none";}
+  else{el.style.display="";el.title="全市场扫描从未成功，当前为写死的静态默认池（非真实扫描结果），所有评分/结论基于静态样本，不可作为实盘依据";}
 }
 
 /* ==================== 行情更新（数据层） ==================== */
@@ -6114,7 +6383,9 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}今日已按该原因成交过一笔（同原因不重复买）`);
     return false;
   }
-  let budget=Math.min(p.cash*BUY_LIMIT*ratio,p.cash);
+  /* 单票仓位硬顶（需求书 max_single_pct=0.25，与六步门禁第6步文字对齐） */
+  const _singleCap=ORION_CFG.gatesOn?Math.min(BUY_LIMIT,ORION_CFG.maxSinglePct):BUY_LIMIT;
+  let budget=Math.min(p.cash*_singleCap*ratio,p.cash);
   /* 板块规则检查：最少买入股数 + 资金门槛权限 */
   const board=getBoard(target.code);
   const boardRule=BOARD_RULES[board];
@@ -6130,22 +6401,38 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   const qty=Math.floor(budget/target.price/minBuy)*minBuy;
   if(qty<minBuy)return false; /* 每次买入不得低于板块最低股数 */
   const amount=qty*target.price;
+  /* 最小单笔金额门槛（需求书P2-⑩）：佣金最低5元+印花税0.1%双边，单笔<1万时
+     费用占比>0.18%——200股@29.85=5970元双边成本约11元，赚了也被摩擦吃掉。
+     低于门槛直接拦，等资金充裕或加大仓位再成交（对应 router.py Limits.min_amount）。 */
+  if(ORION_CFG.gatesOn&&amount<ORION_CFG.minAmount){
+    log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}(${target.code})单笔仅${amount.toFixed(0)}元 < 最小门槛${ORION_CFG.minAmount}元（佣金+印花税占比过高，拒绝摩擦磨损）`);
+    pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:target.code,name:target.name,
+      action:"skip",reason:`单笔${amount.toFixed(0)}元 < 最小门槛${ORION_CFG.minAmount}元`,indicators:snapIndicators(st),gate:snapGate(st),params:{temperature:roleTemperature(p.id)}});
+    return false;
+  }
   const fee=Math.max(amount*0.000115,5);
   p.cash-=amount+fee;
   const costPerShare=(amount+fee)/qty;
+  /* 仓位率（需求书P1-⑥核查）：成交后持仓市值占权益比，日志留痕验证资金利用率是否落地 */
+  const _mv=p.holdings.reduce((a,h)=>a+((simData.pricePool[h.code]||{price:h.buyPrice}).price*h.qty),0)+((simData.pricePool[target.code]||{price:target.price}).price*qty);
+  const _posPct=((_mv+p.cash)>0?_mv/(_mv+p.cash)*100:0).toFixed(1);
   if(exist){
     /* 加仓：加权平均成本 */
     const totalQty=exist.qty+qty;
     exist.buyPrice=(exist.buyPrice*exist.qty+costPerShare*qty)/totalQty;
     exist.qty=totalQty;
     exist.lots.push({price:target.price,qty,time:now.toISOString(),reason:"加仓·"+buyReason,fee:fee});
-    log("trade",`【${p.id}】加仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，累计${totalQty}股，新成本${exist.buyPrice.toFixed(2)}，原因：加仓·${buyReason}`);
+    log("trade",`【${p.id}】加仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，累计${totalQty}股，新成本${exist.buyPrice.toFixed(2)}，仓率${_posPct}%，原因：加仓·${buyReason}`);
   }else{
     p.holdings.push({code:target.code,name:target.name,sector:target.sector,industry:target.industry,wx:target.wx,
       qty,buyPrice:costPerShare,buyTime:now.toISOString(),ztLow:target.ztLow,reason:buyReason,lots:[{price:target.price,qty,time:now.toISOString(),reason:buyReason,fee:fee}]});
-    log("trade",`【${p.id}】建仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，原因：${buyReason}`);
+    log("trade",`【${p.id}】建仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，仓率${_posPct}%，原因：${buyReason}`);
   }
   p.trades.push({type:"buy",code:target.code,qty,price:target.price,fee:fee,time:now.toISOString(),reason:exist?"加仓·"+buyReason:buyReason});
+  /* 决策快照（需求书P0-③）：成交即留档，含数据状态/regime/指标/门禁轨迹/模型参数 */
+  pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:target.code,name:target.name,
+    action:exist?"add":"buy",qty,price:target.price,amount:+amount.toFixed(2),fee:+fee.toFixed(2),
+    indicators:snapIndicators(st),gate:snapGate(st),reason:buyReason,params:{temperature:roleTemperature(p.id),ratio:+ratio.toFixed(2),maxSinglePct:_singleCap}});
   todayBuyMap[key]=todayStr(now);
   // 微信推送买入（AI已考虑T+1规则，当日买入次日才可卖）
   const profitHint = exist ? `加仓${qty}股，累计${exist.qty}股，新成本${exist.buyPrice.toFixed(2)}` : `建仓${qty}股，成本${costPerShare.toFixed(2)}`;
@@ -6170,6 +6457,10 @@ function doSell(p,hold,st,now,reason,ratio){
   const profit=money-hold.buyPrice*actualQty-totalFee;
   p.cash+=money-totalFee;
   p.trades.push({type:"sell",code:hold.code,qty:actualQty,price:st.price,fee:totalFee,time:now.toISOString(),reason,profit});
+  /* 决策快照：卖出同样留档（归因时买卖成对才完整） */
+  pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:hold.code,name:hold.name,
+    action:actualQty>=hold.qty?"sell":"partial_sell",qty:actualQty,price:st.price,profit:+profit.toFixed(2),
+    indicators:snapIndicators(st),reason,params:{temperature:roleTemperature(p.id)}});
   if(actualQty>=hold.qty){
     p.holdings=p.holdings.filter(h=>h!==hold);
     log("trade",`【${p.id}】清仓${escHtml(hold.name)}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
@@ -6200,8 +6491,16 @@ function calcMetrics(p){
   const avgWin=wins.length?wins.reduce((a,t)=>a+t.profit,0)/wins.length:0;
   const avgLoss=losses.length?Math.abs(losses.reduce((a,t)=>a+t.profit,0)/losses.length):0;
   const plRatio=avgLoss>0?avgWin/avgLoss:(avgWin>0?99:0);
-  const h=p.assetHistory;let maxDd=0,peak=h.length?h[0]:p.asset;
+  const h=p.assetHistory;
+  let maxDd=0,peak=h.length?h[0]:p.asset;
   h.forEach(v=>{peak=Math.max(peak,v);maxDd=Math.max(maxDd,(peak-v)/peak);});
+  /* 盘中实时回撤（2026-10-24 修复）：日终序列每天只有一个收盘点，日内回撤完全看不见，
+     七角色"最大回撤"长期显示 0.00%——回撤是风控命门，指标失灵比没有更危险。
+     peakAsset（历史最高资产）每笔交易/每 tick 实时更新并持久化，maxDd 取日终序列回撤
+     与盘中 running 回撤的较大值。 */
+  let peakAsset=Math.max(p.peakAsset||0, p.asset||0);
+  h.forEach(v=>{if(v>peakAsset)peakAsset=v;});
+  if(peakAsset>0)maxDd=Math.max(maxDd,(peakAsset-(p.asset||0))/peakAsset);
   let sharpe=0;
   if(h.length>2){
     const rets=[];for(let i=1;i<h.length;i++)rets.push(h[i]/h[i-1]-1);
@@ -6209,22 +6508,46 @@ function calcMetrics(p){
     const std=Math.sqrt(rets.reduce((s,r)=>s+(r-mean)**2,0)/rets.length);
     sharpe=std===0?0:mean/std*Math.sqrt(252);
   }
-  return{winRate,plRatio,sharpe,maxDd};
+  return{winRate,plRatio,sharpe,maxDd,peakAsset};
 }
 
 /* ==================== 日志（界面层：底部日志窗） ==================== */
 const MAX_LOG=300;
+const LOG_KEY="orion_event_log"; /* 事件日志持久化（需求书P2-⑧）：刷新不丢，复盘可回溯"上周三那笔为什么买" */
 function log(type,msg){
   const box=document.getElementById("logBox");
-  if(!box)return;
   const t=new Date().toTimeString().slice(0,8);
-  const tagMap={trade:"成交",warn:"告警",info:"提示",engine:"提示"};
-  const div=document.createElement("div");
-  div.className="log-line";
-  div.innerHTML=`<span class="log-time">${t}</span><span class="log-tag ${type==="trade"?"trade":type==="warn"?"warn":"info"}">${tagMap[type]||type}</span><span class="log-msg">${msg}</span>`;
-  box.appendChild(div);
-  while(box.children.length>MAX_LOG)box.removeChild(box.firstChild);
-  box.scrollTop=box.scrollHeight;
+  if(box){
+    const tagMap={trade:"成交",warn:"告警",info:"提示",engine:"提示"};
+    const div=document.createElement("div");
+    div.className="log-line";
+    div.innerHTML=`<span class="log-time">${t}</span><span class="log-tag ${type==="trade"?"trade":type==="warn"?"warn":"info"}">${tagMap[type]||type}</span><span class="log-msg">${msg}</span>`;
+    box.appendChild(div);
+    while(box.children.length>MAX_LOG)box.removeChild(box.firstChild);
+    box.scrollTop=box.scrollHeight;
+  }
+  /* 落盘（环形缓冲300条）：内存日志刷新即失，复盘需要历史 */
+  try{
+    const arr=JSON.parse(localStorage.getItem(LOG_KEY)||"[]");
+    arr.push({t,type,msg});
+    if(arr.length>300)arr.splice(0,arr.length-300);
+    localStorage.setItem(LOG_KEY,JSON.stringify(arr));
+  }catch(e){}
+}
+/* 启动时把历史日志灌回日志窗（只灌最近60条，避免一次刷屏） */
+function restoreEventLog(){
+  const box=document.getElementById("logBox");if(!box)return;
+  try{
+    const arr=JSON.parse(localStorage.getItem(LOG_KEY)||"[]");
+    const tagMap={trade:"成交",warn:"告警",info:"提示",engine:"提示"};
+    arr.slice(-60).forEach(r=>{
+      const div=document.createElement("div");
+      div.className="log-line";
+      div.innerHTML=`<span class="log-time">${r.t}</span><span class="log-tag ${r.type==="trade"?"trade":r.type==="warn"?"warn":"info"}">${tagMap[r.type]||r.type}</span><span class="log-msg">${r.msg}</span>`;
+      box.appendChild(div);
+    });
+    box.scrollTop=box.scrollHeight;
+  }catch(e){}
 }
 
 /* ==================== 主循环（数据层 + 收盘小结） ==================== */
@@ -6239,11 +6562,35 @@ function tick(){
   if(!quotesReady){render();return;} /* 等真实行情 */
   const trading=isTradeTime(now);
   const env=calcMarketEnv(); /* 大盘环境：按上证指数+资金流向驱动买入频率，盘面复杂/极弱时空仓 */
+  /* ===== 数据新鲜度硬失败（2026-10-24）=====
+     旧缺陷：三源全挂时 quotesReady 一旦为 true 永真，指标停留在占位默认值
+     （RSI≈50/评分60），门禁却照样输出"可关注/4/5观察"——等于用假数据跑真判断，
+     是用户点名的最危险缺陷。现在：交易时段内行情超过 5 分钟未更新即判定断流，
+     冻结一切买卖决策（数据无效≠观望，禁止任何交易），UI 同步红色告警；
+     行情恢复后自动解冻（quoteStaleLogged 复位）。 */
+  const _fresh=!trading||quoteDataFresh();
+  if(!_fresh&&!quoteStaleLogged){
+    quoteStaleLogged=true;
+    log("warn","【数据断流】实时行情超过5分钟未更新，已冻结全部交易决策（数据无效≠观望，禁止任何交易）");
+    markQuoteStaleUI();
+    pushSnapshot({ts:now.toISOString(),dataState:"STALE",regime:getRegimeState().state,action:"freeze",reason:"实时行情超5分钟未更新，全系统冻结"});
+  }
+  /* ===== 市场状态 regime（每日判定+2日防抖）=====
+     需求书P1-⑤：D1趋势突破4笔全亏 vs D4盈亏比4.54，同期面板自判"震荡"——
+     不是策略差，是震荡市里趋势突破天然打脸。加 regime 路由层后，
+     不在放行表的角色不开新仓（持仓风控/止盈止损不受影响，该跑跑）。 */
+  try{updateRegime();}catch(e){}
+  const _regime=ORION_CFG.regimeOn?getRegimeState().state:"TREND_UP";
+  if(ORION_CFG.regimeOn&&_regime==="PANIC"&&regimePanicDay!==todayStr(now)){
+    regimePanicDay=todayStr(now);
+    log("warn","【regime=PANIC】大盘恐慌（趋势下行+单日重挫），全部角色冻结开仓，仅保留持仓风控");
+    pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:"PANIC",action:"freeze",reason:"大盘恐慌，全角色冻结开仓"});
+  }
   if(trading&&env.riskOff&&marketEnvLogKey!==todayStr(now)){
     marketEnvLogKey=todayStr(now);
     log("warn",`【大盘风险规避】上证${env.shChg>=0?"+":""}${env.shChg}% · 环境${env.bias}(${env.score}) · 资金${env.flow} → 盘面复杂/大盘极弱，今日空仓等待，不新开仓`);
   }
-  if(trading&&!env.riskOff){
+  if(trading&&!env.riskOff&&_fresh){
     /* 第一遍：各角色按自身逻辑打分并过分数线，得到本轮真实候选快照。
        共识看板与 D2 的多Agent共识都以这份"过线名单"为准——
        若用粗筛名单算共识，七角色候选都等于全池，共识计数会恒为 6/6 而失去意义。 */
@@ -6265,6 +6612,15 @@ function tick(){
     simData.players.forEach(p=>{
       /* v2：候选已按角色核心逻辑打分排序（取代按当日涨幅排序） */
       const rawTargets=__rolePicks[p.id];
+      /* regime 路由（需求书P1-⑤）：不在放行表的角色不开新仓——开仓决策按市况分流，
+         持仓的止盈/止损/风控照常执行（下跌市里该跑跑，不能因为角色不上场就套牢）。 */
+      const _rs=ORION_CFG.regimeOn?regimeScale(p.id):1;
+      const _regimeBlocked=_rs<=0;
+      if(_regimeBlocked&&regimeBlockDay[p.id]!==todayStr(now)){
+        regimeBlockDay[p.id]=todayStr(now);
+        log("info",`【${p.id}】regime=${_regime}(${REGIME_TEXT[_regime]||_regime}) 不在放行表，今日不开新仓（放行：${Object.keys(REGIME_ROUTES[_regime]||{}).map(r=>r+"×"+(REGIME_ROUTES[_regime][r])).join("，")||"全部冻结"}）`);
+        pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:_regime,role:p.id,action:"skip",reason:"regime不在放行表，今日不开新仓"});
+      }
       /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买；
          D7 周线超卖反转角色用自己的过滤器（周线KD≤−40+拐头），不走日线KDJ金叉闸；
          v0268 round3：D6 同样豁免——回测 D6 分支本就不看KDJ，此前实盘多一道金叉闸
@@ -6292,13 +6648,13 @@ function tick(){
       const flowOK=(!t||env.score>=45)?true:((simData.sectors[t.sector]&&simData.sectors[t.sector].flow||0)>0);
       /* KDJ金叉条件放宽：80%需要金叉，20%直接买（趋势已成立不等金叉） */
       const kdjOK=!t||t.kdjK===undefined||(Math.random()<0.2)||(t.kdjK>t.kdjD&&t.kdjKPrev<=t.kdjDPrev);
-      if(canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance)doBuy(p,t,now,0.6); /* 首次建仓60%预算=15%仓位 */
+      if(!_regimeBlocked&&canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance&&roleBuySlotOK(p.id,now))doBuy(p,t,now,0.6*_rs); /* 首次建仓：60%预算×regime缩放；尾盘按角色哈希错峰 */
       p.holdings.slice().forEach(h=>{
         const st=simData.pricePool[h.code];if(!st)return;
         /* 加仓逻辑：已有1批、非今日买入、KDJ再次金叉、股价在MA20上方 */
         if(h.lots&&h.lots.length===1&&canSell(h,now)&&st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK>st.kdjD&&st.kdjKPrev<=st.kdjDPrev&&st.price>st.ma20){
           const addTarget={code:h.code,name:h.name,sector:h.sector,industry:h.industry,wx:h.wx,price:st.price,ztLow:h.ztLow};
-          if(canBuyNow(now))doBuy(p,addTarget,now,0.5);
+          if(!_regimeBlocked&&canBuyNow(now)&&roleBuySlotOK(p.id,now))doBuy(p,addTarget,now,0.5*_rs);
         }
         let signal=null;
         const rp=ROLE_PARAMS[p.id]||{sl:7,tp:8};
@@ -6450,6 +6806,7 @@ function tick(){
     const m=calcMetrics(p);
     p.winRate=+m.winRate.toFixed(3);p.plRatio=+m.plRatio.toFixed(2);
     p.sharpe=+m.sharpe.toFixed(2);p.maxDrawdown=+m.maxDd.toFixed(4);
+    p.peakAsset=m.peakAsset; /* 持久化历史峰值：盘中回撤跨 tick/跨会话连续，不因序列短而失灵 */
     // 回撤超过10%大事提醒
     if(p.maxDrawdown >= 0.1){
       pushBigEvent('drawdown', `${p.id} 回撤预警 ${(p.maxDrawdown*100).toFixed(1)}%`, 
@@ -7262,8 +7619,13 @@ function renderStats(){
   const avg=simData.players.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0)/simData.players.length;
   const leader=simData.players.slice().sort((a,b)=>b.asset-a.asset)[0];
   $("statRun").textContent=simData.players.length+"/"+simData.players.length;
-  $("statApi").textContent=quotesReady?"在线":"连接中";
-  $("statApi").className="stat-value "+(quotesReady?"ok":"flat");
+  /* 数据新鲜度：交易时段内行情超时未更新 → 状态位持续显示红色"数据断流"，
+     不因 render() 每 tick 重绘而被覆盖回"在线"（假数据在线比掉线更危险）。
+     盘后行情本就停止更新，陈旧是正常状态，不告警。 */
+  const _ds=isTradeTime(new Date())?dataState():"OK";
+  const _stale=_ds==="STALE";
+  $("statApi").textContent=_stale?"数据断流":(quotesReady?"在线":"连接中");
+  $("statApi").className="stat-value "+(_stale?"down":(quotesReady?"ok":"flat"));
   const el=$("statNet");
   el.textContent=fmtPct(avg);
   el.className="stat-value "+pctColor(avg);
@@ -7277,11 +7639,19 @@ function renderStats(){
   const _hl=$("heroLead");
   if(_hl) _hl.textContent="领先 "+leader.id+" "+fmtPct(lr)+" · "+leader.name;
   const _ha=$("heroApi");
-  if(_ha) _ha.textContent="行情接口 "+(quotesReady?"在线":"连接中");
+  if(_ha) _ha.textContent="行情接口 "+(_stale?"数据断流":(quotesReady?"在线":"连接中"));
   const _hd=$("heroDot");
-  if(_hd) _hd.className="hs-dot"+(quotesReady?" open":"");
+  if(_hd) _hd.className="hs-dot"+(_stale?"":(quotesReady?" open":""));
   const _hRun=$("heroRun");
   if(_hRun) _hRun.textContent="运行角色 "+simData.players.length+"/"+simData.players.length;
+  /* 市场状态 chip（需求书P1-⑤）：当前 regime + 放行角色，一眼看到今天谁上场 */
+  const _hRg=$("heroRegime");
+  if(_hRg){
+    const _rg=getRegimeState();
+    const _active=Object.keys(REGIME_ROUTES[_rg.state]||{}).join("/")||"全部冻结";
+    _hRg.textContent="市场状态 "+(REGIME_TEXT[_rg.state]||_rg.state)+" · 放行"+_active+(_rg.adx!=null?" · ADX"+_rg.adx:"");
+  }
+  updateSnapCountUI();
 }
 
 function renderRank(){
@@ -7366,8 +7736,8 @@ function renderRank(){
       <td class="r num">${trades}</td>
       <td class="r num">${sells.length?(winRate*100).toFixed(1)+'%':'--'}</td>
       <td class="r num">${sells.length?plRatio.toFixed(2):'--'}</td>
-      <td class="r num">${trades>=3?(p.sharpe||0).toFixed(2):'--'}</td>
-      <td class="r num ${maxDrawCls}">${trades>=3?((p.maxDrawdown||0)*100).toFixed(2)+'%':'--'}</td>
+      <td class="r num">${(trades>=3&&(p.assetHistory||[]).length>2)?(p.sharpe||0).toFixed(2):'--'}</td>
+      <td class="r num ${maxDrawCls}">${(trades>=3&&(p.assetHistory||[]).length>2)?((p.maxDrawdown||0)*100).toFixed(2)+'%':'--'}</td>
       <td style="color:var(--text-faint);font-size:12px">DeepSeek</td>
     </tr>`);
   });
@@ -7697,6 +8067,7 @@ function renderPool(){
   /* 防御：pricePool 未初始化（如冷启动 seeds 未跑）时按空池处理，
      不让整函数抛错——函数尾部还挂着六步门禁表格的填充逻辑 */
   if(!simData.pricePool)simData.pricePool={};
+  updatePoolSrcBadge(); /* 静态池标记：扫描从未成功 → 面板显式标注"模拟池·非扫描结果" */
   /* 注意：不再在这里清空 poolBody——表格改行级 diff 渲染（见下方），
      整表清空重建会把用户在表里的滚动位置打回开头 */
   const holdSec=new Set();
@@ -8448,7 +8819,7 @@ function renderDashModules(){
         <div class="dm-metric"><span>收益</span><b style="color:${ret>=0?'var(--up)':'var(--down)'}">${(ret>=0?"+":"")+ret.toFixed(2)}%</b></div>
         <div class="dm-metric"><span>胜率</span><b>${sells?((+p.winRate||0).toFixed(0)+"%"):"--"}</b></div>
         <div class="dm-metric"><span>交易</span><b>${p.trades.length}</b></div>
-        <div class="dm-metric"><span>回撤</span><b>${((p.maxDrawdown||0)*100).toFixed(1)}%</b></div>
+        <div class="dm-metric"><span>回撤</span><b>${((p.assetHistory||[]).length>2)?((p.maxDrawdown||0)*100).toFixed(1)+"%":"--"}</b></div>
       </div>
       <div class="dm-strength"><span>信号强度</span><span class="dm-bar"><i style="width:${st}%;background:${stCol}"></i></span><b style="color:${stCol}">${st}</b></div>
     </div>`;
@@ -10031,6 +10402,12 @@ window.addEventListener("DOMContentLoaded",()=>{
     });
     $("logBox").scrollTop=1e9;
   }
+  /* Orion-X 改造初始化：事件日志落盘恢复 + 静态池标记 + 快照计数 + 当日regime判定 */
+  try{restoreEventLog();}catch(e){}
+  try{updatePoolSrcBadge();}catch(e){}
+  try{updateSnapCountUI();}catch(e){}
+  try{updateRegime();}catch(e){}
+  log("info","Orion-X 数据层已接管：数据三态门禁（OK/STALE/MISSING）· regime角色路由（ADX+均线，2日防抖）· 单笔≥1万门槛 · 决策快照留档（可导出JSONL）· 事件日志落盘");
   /* 严格按照真实情况交易：强制关闭"跳过休市"，按 A 股真实交易时段（工作日 9:30-11:30 / 13:00-15:00）运行 */
   if(localStorage.getItem("forceTrade")==="1"){
     forceTrade=false;localStorage.setItem("forceTrade","0");
@@ -11441,6 +11818,15 @@ async function runSim(){
     const dayMap={};sample.forEach((c,i)=>{if(klines[i]&&klines[i].length>=60)dayMap[c]=klines[i];});
     const have=Object.keys(dayMap).length;
     if(have<3){if(srcBox)srcBox.textContent="本次随机样本有效K线不足("+have+"只)，点「换一批」重试（手机网络波动，建议多试1-2次）";return;}
+    /* P2-⑦ 回测按市场状态分层：提前 200 天取指数日K（覆盖 ADX/均线预热窗口 + 回测区间），
+       与个股K线同源同区间；失败不阻塞回测，仅分层区显示"暂无法分层" */
+    let idxBars=null;
+    try{
+      const stEarly=new Date(st);stEarly.setDate(stEarly.getDate()-200);
+      const earlyStr=`${stEarly.getFullYear()}-${String(stEarly.getMonth()+1).padStart(2,"0")}-${String(stEarly.getDate()).padStart(2,"0")}`;
+      idxBars=await txKlineRange("sh000001",earlyStr,count+260);
+    }catch(e){idxBars=null;}
+    window._simIdxBars=(idxBars&&idxBars.length>=60)?idxBars:null;
     const slEl=document.getElementById("simSlPct"),tpEl=document.getElementById("simTpPct");
     const rules={sl:document.getElementById("simRuleSL").checked,tp:document.getElementById("simRuleTP").checked,learn:document.getElementById("simRuleLearn").checked,slPct:slEl?parseFloat(slEl.value)||7:7,tpPct:tpEl?parseFloat(tpEl.value)||8:8};
     const res=multiBacktest(dayMap,want,rules);
@@ -11504,6 +11890,53 @@ function renderSim(res,have){
     });
     qHtml+=`<div style="margin-top:6px;font-size:11px;color:#8b949e">💡 规律：⭐⭐⭐完全符合的交易胜率和盈亏比通常显著高于⭐勉强符合的交易。如果某角色⭐交易占比高且亏损多，说明该角色的买入逻辑还需要优化。</div>`;
     qualityBox.innerHTML=qHtml;
+  }
+  /* P2-⑦ 回测按市场状态分层：每笔已实现卖出按「成交当日上证 regime」分桶，
+     验证各角色在自己放行的 regime 下是否赚钱（勿随机混采：混采会把震荡市的亏损
+     记到趋势策略头上）。指数K线缺失时不阻塞，仅提示暂无法分层。 */
+  const regimeBox=document.getElementById("simRegimeStats");
+  if(regimeBox){
+    const idxBars=window._simIdxBars;
+    if(!idxBars){
+      regimeBox.innerHTML=`<h4 style="margin:8px 0 6px;color:#c9d1d9">🧭 市场状态分层（按成交当日 regime 归类）</h4><div style="font-size:11px;color:#8b949e;padding:4px 0">指数K线获取失败，本次回测暂无法按市场状态分层（上方收益/质量统计不受影响）。</div>`;
+    }else{
+      const cache=new Map();
+      const rgOf=ds=>{if(!cache.has(ds))cache.set(ds,regimeAtDate(idxBars,ds));return cache.get(ds);};
+      const stats={},rgCount={};
+      res.forEach(r=>{
+        r.trades.forEach(t=>{
+          if((t.dir!=="卖"&&t.dir!=="部分止盈")||t.pnl===null||t.pnl===undefined)return;
+          const rg=rgOf(t.date);if(!rg)return;
+          rgCount[rg]=(rgCount[rg]||0)+1;
+          const s=stats[r.role]||(stats[r.role]={});
+          const g=s[rg]||(s[rg]={n:0,wins:0,pnl:0});
+          g.n++;if(t.pnl>=0)g.wins++;g.pnl+=t.pnl;
+        });
+      });
+      const order=["TREND_UP","RANGE","TREND_DOWN","CHOP","PANIC"];
+      const present=order.filter(x=>rgCount[x]);
+      let rgHtml=`<h4 style="margin:8px 0 6px;color:#c9d1d9">🧭 市场状态分层（每笔卖出按当日上证 regime 归类 · 避免把震荡市的亏损记到趋势策略头上）</h4>`;
+      if(!present.length){
+        rgHtml+=`<div style="font-size:11px;color:#8b949e;padding:4px 0">本次样本无已实现卖出交易，暂无分层数据。</div>`;
+      }else{
+        rgHtml+=`<div style="font-size:11px;color:#8b949e;margin-bottom:4px">区间 regime 分布：${present.map(x=>`${REGIME_TEXT[x]||x} ${rgCount[x]}笔`).join(" · ")}</div>`;
+        rgHtml+=`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="color:#8b949e;text-align:left"><th style="padding:3px 6px">角色</th>${present.map(x=>`<th style="padding:3px 6px">${REGIME_TEXT[x]||x}</th>`).join("")}</tr></thead><tbody>`;
+        res.forEach(r=>{
+          const s=stats[r.role];if(!s)return;
+          rgHtml+=`<tr style="border-top:1px solid rgba(255,255,255,.05)"><td style="padding:3px 6px;white-space:nowrap"><span class="role-badge"><span class="cb" style="background:${PLAYER_COLORS[r.role]}"></span>${r.role}</span></td>`;
+          present.forEach(x=>{
+            const g=s[x];
+            if(!g||g.n===0){rgHtml+=`<td style="padding:3px 6px;color:#8b949e">—</td>`;return;}
+            const wr=g.wins/g.n*100;
+            rgHtml+=`<td style="padding:3px 6px;white-space:nowrap"><span style="color:${wr>=50?"#ef4444":"#22c55e"}">${wr.toFixed(0)}%胜率</span> · <span style="color:${g.pnl>=0?"#ef4444":"#22c55e"}">${g.pnl>=0?"+":""}${g.pnl.toFixed(1)}%</span> <span style="color:#8b949e">(${g.n}笔)</span></td>`;
+          });
+          rgHtml+=`</tr>`;
+        });
+        rgHtml+=`</tbody></table>`;
+        rgHtml+=`<div style="margin-top:6px;font-size:11px;color:#8b949e">💡 对照实盘路由：${order.filter(x=>Object.keys(REGIME_ROUTES[x]||{}).length).map(x=>`${REGIME_TEXT[x]}放行 ${Object.keys(REGIME_ROUTES[x]).join("/")}`).join(" · ")}。若某角色仅在路由未放行的 regime 里赚钱，说明策略与市场状态错配——该调的是路由或角色逻辑，不是硬扛。</div>`;
+      }
+      regimeBox.innerHTML=rgHtml;
+    }
   }
   genAdvice(res,have);
   renderSimTune(res);
@@ -13456,10 +13889,12 @@ async function llmRoleDecision(role, code, P){
   const persona = ROLE_PERSONAS[role];
   if(!persona) throw new Error("未知角色："+role);
   const stockData = formatStockDataForLLM(code, P);
+  /* temperature 差异化（需求书P1-④）：七角色同一模型同一温度必然同质——
+     D3 多空辩论"唱反调"给最高温(0.9)，严格执行型角色低温(0.5)，见 ROLE_TEMP */
   const result = await callDeepSeek([
     {role:"system", content: persona.system},
     {role:"user", content: stockData + "\n\n请根据以上数据，做出你的交易决策。" + DECISION_FRAMEWORK_SPEC}
-  ], 0.8);
+  ], roleTemperature(role));
   
   /* 解析JSON */
   try{
@@ -13659,10 +14094,11 @@ async function llmRoleWithMemory(role, code, P, otherViews){
   }
   userContent += DECISION_FRAMEWORK_SPEC;
   
+  /* temperature 差异化（需求书P1-④）：辩论场里 D3 唱反调的需要更高温度探索反向证据 */
   const result = await callDeepSeek([
     {role:"system", content: persona.system},
     {role:"user", content: userContent}
-  ], 0.8);
+  ], roleTemperature(role));
   
   try{
     const jsonMatch = result.match(/\{[\s\S]*?\}/);
