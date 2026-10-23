@@ -7,7 +7,7 @@
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261024-r30-sentiment";
+<script>window.APP_VERSION="20261024-r31-tristate";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -34,8 +34,9 @@ function buildAgentContext(){
             const st=simData.pricePool&&simData.pricePool[h.code];
             /* 兼容两种持仓成本字段：新版用 cost，旧版用 buyPrice */
             const bp=(h.buyPrice!=null&&h.buyPrice)?h.buyPrice:((h.cost!=null&&h.cost)?h.cost:0);
-            const r=(st&&bp)?((st.price-bp)/bp*100):0;
-            return h.name+"("+h.code+")"+(r>=0?"+":"")+r.toFixed(1)+"%";
+            const lp=livePrice(h.code);
+            const r=(lp!=null&&bp)?((lp-bp)/bp*100):null;
+            return h.name+"("+h.code+")"+(r==null?" 行情未更新":(r>=0?"+":"")+r.toFixed(1)+"%");
           }).join("、");
           s+="  "+p.id+nm+"：收益"+(ret>=0?"+":"")+ret.toFixed(1)+"%，持仓"+((p.holdings||[]).length)+"只"+(hs?("："+hs):"（空仓）")+"\n";
         });
@@ -1400,7 +1401,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <!-- ===== Hero 摘要区（方向①：渐变主指标卡） ===== -->
   <div class="hero-summary">
     <div class="hs-main">
-      <div class="hs-label">组合平均收益率 · 本月</div>
+      <div class="hs-label">组合总收益率 · 本月（总资产口径）</div>
       <div class="hs-value" id="heroRet">–</div>
       <div class="hs-sub" id="heroLead">–</div>
     </div>
@@ -1418,7 +1419,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <span class="ds-sep"></span>
     <span class="ds-item"><span class="ds-label">多头/空头</span><b id="dsBullBear">--</b></span>
     <span class="ds-item"><span class="ds-label">活跃角色</span><b id="dsActive">--</b></span>
-    <span class="ds-item"><span class="ds-label">平均总盈亏</span><b id="dsPnl">--</b></span>
+    <span class="ds-item"><span class="ds-label">总盈亏</span><b id="dsPnl">--</b></span>
     <span class="ds-sep"></span>
     <span class="ds-item"><span class="ds-label">上证指数</span><b id="dsSh">--</b></span>
     <span class="ds-item"><span class="ds-label">两市成交</span><b id="dsAmt">--</b></span>
@@ -1528,9 +1529,9 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
           <div class="stat-sub">腾讯实时行情 · JSONP</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">组合平均收益率</div>
+          <div class="stat-label">组合总收益率</div>
           <div class="stat-value" id="statNet">–</div>
-          <div class="stat-sub">按同批盯市收益计算</div>
+          <div class="stat-sub" id="statNetSub">总资产口径 · 角色算术平均 --</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">领先角色</div>
@@ -1579,7 +1580,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="panel-body">
       <div style="display:flex;gap:30px;margin:6px 6px 10px;flex-wrap:wrap">
         <div><div style="font-size:13px;color:var(--text-dim)" id="monthPnlLabel">所选区间总收益(元)</div><div class="v up" id="monthPnl" style="font-size:22px;font-weight:700;color:var(--up)">+0.00</div></div>
-        <div><div style="font-size:13px;color:var(--text-dim)" id="monthRetLabel">所选区间收益率</div><div class="v up" id="monthRet" style="font-size:22px;font-weight:700;color:var(--up)">+0.00%</div></div>
+        <div><div style="font-size:13px;color:var(--text-dim)" id="monthRetLabel">所选区间收益率</div><div class="v" id="monthRet" style="font-size:22px;font-weight:700;color:var(--text-faint)">--</div></div>
         <div><div style="font-size:13px;color:var(--text-dim)">区间天数</div><div class="v" id="monthDays" style="font-size:22px;font-weight:700">0天</div></div>
       </div>
       <div class="chart-box" id="chartEq" style="height:320px"></div>
@@ -3015,8 +3016,8 @@ function hasBoardPermission(p, board){
   if(!rule||rule.minAsset<=0) return true;
   /* 计算角色总资产（现金+持仓市值） */
   const totalMv=p.holdings.reduce((s,h)=>{
-    const st=simData.pricePool[h.code];
-    return s+h.qty*(st?st.price:h.buyPrice);
+    const lp=livePrice(h.code);
+    return s+h.qty*(lp!=null?lp:h.buyPrice);
   },0);
   const totalAsset=p.cash+totalMv;
   return totalAsset>=rule.minAsset;
@@ -3032,19 +3033,21 @@ function purgeUnauthorizedHoldings(){
       const board=getBoard(h.code);
       if(BOARD_ENABLED[board]!==false)return true;
       const st=simData.pricePool[h.code];
-      const price=(st&&st.price>0)?st.price:(h.buyPrice||h.cost||0);
+      const lp=livePrice(h.code);
+      /* 三态：占位价/缺失时按成本价平仓（不用 mk 合成价，否则凭空制造亏损），reason 注明口径 */
+      const price=(lp!=null)?lp:(h.buyPrice||h.cost||0);
       const amount=h.qty*price, fee=Math.max(amount*0.000115,5);
       p.cash+=amount-fee;
       const cost=(h.cost||h.buyPrice||price);
       const profit=(price-cost)*h.qty-fee;
       (p.trades=p.trades||[]).push({type:"sell",code:h.code,name:h.name,qty:h.qty,price:price,fee:fee,
-        time:new Date().toISOString(),reason:"权限自愈·"+BOARD_RULES[board].name+"未开通，按市价平仓",profit:profit});
+        time:new Date().toISOString(),reason:"权限自愈·"+BOARD_RULES[board].name+"未开通，按"+(lp!=null?"市价":"成本价")+"平仓",profit:profit});
       try{log("warn",`【${p.id}】权限自愈：${h.name||h.code}(${h.code})属${BOARD_RULES[board].name}，账户未开通权限，已按${price.toFixed(2)}平仓${h.qty}股，资金退回`);}catch(e){}
       n++;
       return false;
     });
     /* 重算总资产（现金 + 剩余持仓市值） */
-    const mv=p.holdings.reduce((s,h)=>{const st=simData.pricePool[h.code];return s+h.qty*(st&&st.price>0?st.price:(h.buyPrice||h.cost||0));},0);
+    const mv=p.holdings.reduce((s,h)=>{const lp=livePrice(h.code);return s+h.qty*(lp!=null?lp:(h.buyPrice||h.cost||0));},0);
     p.asset=p.cash+mv;
   });
   if(n)try{save();}catch(e){}
@@ -3836,7 +3839,7 @@ function fetchRealQuotes(force){
       /* 行情更新后，不管模拟有没有运行，都重新计算资产和组合收益 */
       if(simData && simData.players){
         simData.players.forEach(p=>{
-          const mv=p.holdings.reduce((a,h)=>a+(simData.pricePool[h.code]?simData.pricePool[h.code].price*h.qty:0),0);
+          const mv=p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+(lp!=null?lp*h.qty:(h.buyPrice||h.cost||0)*h.qty);},0);
           p.asset=p.cash+mv;
         });
         if(typeof renderStats === 'function') renderStats();
@@ -6610,7 +6613,7 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   p.cash-=amount+fee;
   const costPerShare=(amount+fee)/qty;
   /* 仓位率（需求书P1-⑥核查）：成交后持仓市值占权益比，日志留痕验证资金利用率是否落地 */
-  const _mv=p.holdings.reduce((a,h)=>a+((simData.pricePool[h.code]||{price:h.buyPrice}).price*h.qty),0)+((simData.pricePool[target.code]||{price:target.price}).price*qty);
+  const _mv=p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+((lp!=null?lp:(h.buyPrice||h.cost||0))*h.qty);},0)+((livePrice(target.code)!=null?livePrice(target.code):target.price)*qty);
   const _posPct=((_mv+p.cash)>0?_mv/(_mv+p.cash)*100:0).toFixed(1);
   if(exist){
     /* 加仓：加权平均成本 */
@@ -7005,7 +7008,7 @@ function tick(){
   const day=advanceTradingDay();
   const needRecord=day.needRecord;
   simData.players.forEach(p=>{
-    const mv=p.holdings.reduce((a,h)=>a+(simData.pricePool[h.code]?simData.pricePool[h.code].price*h.qty:0),0);
+    const mv=p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+(lp!=null?lp*h.qty:(h.buyPrice||h.cost||0)*h.qty);},0);
     p.asset=p.cash+mv;
     if(needRecord){
       if(p.assetHistory.length)p.assetHistory[p.assetHistory.length-1]=+p.asset.toFixed(2); /* 覆盖今日槽位 */
@@ -7415,14 +7418,16 @@ function buildDailySummary(){
       holds.push({role:p.id,code:h.code,name:h.name,qty:h.qty,chg,sector:h.sector,industry:h.industry,reason:holdReason});
     });
   });
-  const avgRet=simData.players.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0)/simData.players.length;
-  /* 过去 vs 现在：对比昨日组合均值 */
+  /* 组合口径统一为加权（总资产）：弱角色识别与展示同口径，防算术平均(含0%席位)误导 */
+  const wRetAll=simData.players.length?((simData.players.reduce((s,p)=>s+(p.asset||0),0)-INIT_CASH*simData.players.length)/(INIT_CASH*simData.players.length)*100):0;
+  const avgRet=wRetAll;
+  /* 过去 vs 现在：对比昨日组合加权收益 */
   const prevHist=simData.players[0].assetHistory;
   const prevAvg=prevHist.length>=2?prevHist.slice(0,prevHist.length-1).reduce((s,v)=>s+v,0)/prevHist.length:INIT_CASH;
   const prevRet=(prevAvg-INIT_CASH)/INIT_CASH*100;
   const retDelta=avgRet-prevRet;
   const pastVsNow =
-    "今日组合均值 "+avgRet.toFixed(2)+"%，"+(retDelta>=0?"较昨日 "+prevRet.toFixed(2)+"% 改善":"较昨日 "+prevRet.toFixed(2)+"% 走弱")+"（"+retDelta.toFixed(2)+" 个百分点）。"+
+    "今日组合 "+avgRet.toFixed(2)+"%，"+(retDelta>=0?"较昨日 "+prevRet.toFixed(2)+"% 改善":"较昨日 "+prevRet.toFixed(2)+"% 走弱")+"（"+retDelta.toFixed(2)+" 个百分点）。"+
     (holds.length?("当前持仓 "+holds.length+" 只，分布于 "+[...new Set(holds.map(h=>h.sector))].join("/")+"。"):"当前无持仓（空仓等待）。");
   /* 次日预期：大盘环境 + 持仓技术信号 */
   const crossCnt=holds.filter(h=>{const s=simData.pricePool[h.code];return s&&s.dif<s.dea;}).length;
@@ -7879,8 +7884,8 @@ function renderStats(){
   /* 显示前重新计算每个角色的资产，确保用最新行情数据 */
   simData.players.forEach(p=>{
     const mv=p.holdings.reduce((a,h)=>{
-      const st=simData.pricePool[h.code];
-      return a+(st?st.price*h.qty:h.buyPrice*h.qty); /* 行情没加载时用成本价估算 */
+      const lp=livePrice(h.code);
+      return a+(lp!=null?lp*h.qty:h.buyPrice*h.qty); /* 无真实行情时用成本价估算（占位价禁入） */
     },0);
     p.asset=p.cash+mv;
     /* 自动把当前资产加到历史记录里，保持数据同步 */
@@ -7894,7 +7899,21 @@ function renderStats(){
       if(p.asset_history.length>365) p.asset_history.shift();
     }
   });
-  const avg=simData.players.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0)/simData.players.length;
+  /* 账不平校验（用户补丁③）：Σ(现金+持仓市值) vs Σp.asset。
+     p.asset 会被行情重算，若与数据源记录值差异>1元，说明数据链路不一致——显式告警不静默。 */
+  try{
+    const recomputed=simData.players.reduce((s,p)=>s+(p.cash||0)+p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+(h.qty||0)*(lp!=null?lp:(h.buyPrice||h.cost||0));},0),0);
+    const recorded=simData.players.reduce((s,p)=>s+(p.asset||0),0);
+    if(Math.abs(recomputed-recorded)>1)console.error("[账不平] Σ(现金+持仓市值)="+recomputed.toFixed(2)+" vs Σp.asset="+recorded.toFixed(2)+" diff="+(recomputed-recorded).toFixed(2));
+  }catch(e){}
+  /* 组合收益率双口径：加权（总资产口径 = Σ资产/Σ初始-1，用户真正关心的"70万赚了多少"）为主展示，
+     算术平均（七角色简单平均，含从未交易的 D6/D7 两个 0% 席位，会稀释/夸大）降为副指标参考。
+     历史教训：曾用算术平均展示 -5.81%（真实总资产口径 -0.20%，差 29 倍），误导人工判断。 */
+  const ps0=simData.players;
+  const avg=(ps0.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0))/(ps0.length||1);
+  const _wInit=INIT_CASH*(ps0.length||1);
+  const _wNow=ps0.reduce((s,p)=>s+(p.asset||0),0);
+  const wRet=_wInit>0?((_wNow-_wInit)/_wInit*100):0;
   const leader=simData.players.slice().sort((a,b)=>b.asset-a.asset)[0];
   $("statRun").textContent=simData.players.length+"/"+simData.players.length;
   /* 数据新鲜度：交易时段内行情超时未更新 → 状态位持续显示红色"数据断流"，
@@ -7905,15 +7924,17 @@ function renderStats(){
   $("statApi").textContent=_stale?"数据断流":(quotesReady?"在线":"连接中");
   $("statApi").className="stat-value "+(_stale?"down":(quotesReady?"ok":"flat"));
   const el=$("statNet");
-  el.textContent=fmtPct(avg);
-  el.className="stat-value "+pctColor(avg);
+  el.textContent=fmtPct(wRet);
+  el.className="stat-value "+pctColor(wRet);
+  const _sn=$("statNetSub");
+  if(_sn)_sn.textContent="总资产口径 · 角色算术平均 "+fmtPct(avg);
   $("statLead").textContent=leader.id;
   const lr=(leader.asset-INIT_CASH)/INIT_CASH*100;
   $("statLeadSub").textContent="收益率 "+fmtPct(lr);
   $("statLeadSub").className="stat-sub "+pctColor(lr);
-  /* Hero 摘要区（方向①）：复用上方已算好的 avg / leader / lr / quotesReady */
+  /* Hero 摘要区（方向①）：复用上方已算好的 wRet / leader / lr / quotesReady */
   const _hr=$("heroRet");
-  if(_hr){ _hr.textContent=fmtPct(avg); _hr.className="hs-value "+pctColor(avg); }
+  if(_hr){ _hr.textContent=fmtPct(wRet); _hr.className="hs-value "+pctColor(wRet); }
   const _hl=$("heroLead");
   if(_hl) _hl.textContent="领先 "+leader.id+" "+fmtPct(lr)+" · "+leader.name;
   const _ha=$("heroApi");
@@ -8073,6 +8094,18 @@ function setHoldTabC(el){
   el.classList.add("on");
   renderHoldCards();
 }
+/* 【数据三态·总闸】pricePool 条目三态：真实价（无 _ph 且 price>0）/ 占位价（_ph 标记，行情未灌入）/
+   缺失（不在池内或 price<=0）。占位价与缺失一律不参与盈亏、市值、预算计算——
+   防止行情拉取失败时（腾讯/东财通道挂掉），持仓卡拿 mk() 合成价或 price=0 占位条目
+   算出"看起来很真"的浮亏数字（曾因此展示出 -5.81% 假收益率污染人工判断）。
+   返回 null 表示无真实行情，调用方按三态降级（显示"--"或跳过累计），绝不用兜底价算钱。 */
+function livePrice(code){
+  try{
+    const p=simData.pricePool&&simData.pricePool[code];
+    if(!p||p._ph||!(p.price>0))return null;
+    return p.price;
+  }catch(e){return null;}
+}
 function renderHoldCards(){
   const ht=$("holdCards");
   if(!ht)return;
@@ -8087,7 +8120,7 @@ function renderHoldCards(){
   let rowIdx=0;
   const now=new Date();
   /* 汇总累计 */
-  let sumAsset=0,sumCost=0,sumRealized=0,sumFloat=0,sumToday=0,sumChgPct=0,sumPrevMv=0;
+  let sumAsset=0,sumCost=0,sumRealized=0,sumFloat=0,sumToday=0,sumChgPct=0,sumPrevMv=0,quoteMiss=0;
   simData.players.forEach(p=>{
     if(filter!=="all"&&p.id!==filter)return;
     /* 已实现盈亏：所有卖出交易 */
@@ -8157,7 +8190,7 @@ function renderHoldCards(){
             </div>
           </div>
           <div class="hc-metrics">
-            <div class="hc-metric">现价<b>${(st.price||0).toFixed(2)}</b></div>
+            <div class="hc-metric">现价<b>${(livePrice(h.code)!=null)?livePrice(h.code).toFixed(2):"--"}</b></div>
             <div class="hc-metric">卖出价<b>${(h.price||0).toFixed(2)}</b></div>
             <div class="hc-metric">数量<b>${h.qty||0}股</b></div>
             <div class="hc-metric">角色<b style="color:${PLAYER_COLORS[p.id]||'var(--text)'}">${p.id}</b></div>
@@ -8168,30 +8201,36 @@ function renderHoldCards(){
       return;
     }
     Object.values(mergedHoldings).forEach(h=>{
-      const st=simData.pricePool[h.code]||{price:h.buyPrice,chg:0,industry:h.industry};
-      const mv=(st.price||0)*(h.qty||0);
-      const floatPnl=((st.price||0)-(h.buyPrice||0))*(h.qty||0);
+      /* 数据三态：无真实行情时全部数字显示"--"，绝不用占位价/成本兜底算出"很像真"的浮亏 */
+      const lp=livePrice(h.code);
+      const hasLive=lp!=null;
+      const refPrice=hasLive?lp:(h.buyPrice||0);
+      const st=simData.pricePool[h.code]||null;
+      const mv=refPrice*(h.qty||0);
+      const floatPnl=hasLive?((refPrice-(h.buyPrice||0))*(h.qty||0)):null;
       const buyDate=new Date(h.buyTime).toDateString();
       const isToday=buyDate===now.toDateString();
       const hour=now.getHours(),minute=now.getMinutes();
       const isTradingTime=(hour===9&&minute>=30)||(hour>9&&hour<15)||(hour===15&&minute===0);
-      const dayPct=isToday?(((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100):(isTradingTime?(st.chg||0):0);
-      const totalPct=((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100;
+      const dayPct=(isToday&&hasLive)?(((refPrice-(h.buyPrice||0))/(h.buyPrice||1)*100)):(isTradingTime?(st&&!st._ph?(st.chg||0):null):null);
+      const totalPct=hasLive?(((refPrice-(h.buyPrice||0))/(h.buyPrice||1)*100)):null;
       /* 当日盈亏金额：用昨收估算（price/(1+chg)），当天新买按成本 */
       let todayPnl=0;
-      try{
-        const chg=st.chg||0;
-        if(chg>=-99&&isFinite(chg)){
-          const prev=chg!==0?(st.price||0)/(1+chg/100):(st.price||0);
-          todayPnl=((st.price||0)-prev)*(h.qty||0);
-        }
-        if(isToday)todayPnl=floatPnl;
-      }catch(e){todayPnl=0;}
+      if(hasLive){
+        try{
+          const chg=(st&&st.chg)||0;
+          if(chg>=-99&&isFinite(chg)){
+            const prev=chg!==0?(refPrice/(1+chg/100)):(refPrice);
+            todayPnl=(refPrice-prev)*(h.qty||0);
+          }
+          if(isToday)todayPnl=floatPnl;
+        }catch(e){todayPnl=0;}
+      }
       /* 占总仓位%：用现金+所有持仓市值计算总资金，更准确 */
       const totalHoldMv=(p.holdings||[]).reduce((s,hh)=>{
-        const sst=simData.pricePool[hh.code];
+        const sst=livePrice(hh.code);
         const bp=hh.buyPrice||hh.cost||0;
-        return s+(hh.qty||0)*(sst?sst.price:bp);
+        return s+(hh.qty||0)*(sst!=null?sst:bp);
       },0);
       const totalAsset=(p.cash||0)+totalHoldMv;
       const posPct=totalAsset>0?mv/totalAsset*100:0;
@@ -8217,12 +8256,11 @@ function renderHoldCards(){
       });
       if(tab==="today"&&!hasTodayTrade)return;
       if(search&&!(h.name||"").includes(search)&&!String(h.code).includes(search))return;
-      /* 汇总累计 */
+      /* 汇总累计：无真实行情的持仓不计入浮亏/当日盈亏（三态），仅记 quoteMiss */
       sumAsset+=mv;
       sumCost+=(h.buyPrice||0)*(h.qty||0);
-      sumFloat+=floatPnl;
-      sumToday+=todayPnl;
-      sumPrevMv+=mv-todayPnl;
+      if(hasLive){sumFloat+=floatPnl;sumToday+=todayPnl;sumPrevMv+=mv-todayPnl;}
+      else quoteMiss++;
       any=true;
       const pnlCls=floatPnl>=0?"up":"down";
       const pnlColor=floatPnl>=0?"var(--up)":"var(--down)";
@@ -8244,13 +8282,13 @@ function renderHoldCards(){
             </div>
           </div>
           <div class="hc-pnl">
-            <div class="hc-pnl-amt ${pnlCls}" style="color:${pnlColor}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</div>
-            <span class="hc-pnl-pct ${pnlCls}">${totalPct>=0?"+":""}${totalPct.toFixed(2)}%</span>
-            <div class="hc-pnl-day" style="color:${todayPnl>=0?"var(--up)":"var(--down)"}">当日 ${todayPnl>=0?"+":""}${todayPnl.toFixed(0)}</div>
+            <div class="hc-pnl-amt ${floatPnl==null?"":pnlCls}" style="color:${floatPnl==null?"var(--text-faint)":pnlColor}">${floatPnl==null?"--":(floatPnl>=0?"+":"")+floatPnl.toFixed(0)}</div>
+            <span class="hc-pnl-pct ${floatPnl==null?"":pnlCls}">${totalPct==null?"--":(totalPct>=0?"+":"")+totalPct.toFixed(2)+"%"}</span>
+            <div class="hc-pnl-day" style="color:${hasLive?(todayPnl>=0?"var(--up)":"var(--down)"):"var(--text-faint)"}">当日 ${hasLive?((todayPnl>=0?"+":"")+todayPnl.toFixed(0)):"--"}</div>
           </div>
         </div>
         <div class="hc-metrics">
-          <div class="hc-metric">现价<b>${(st.price||0).toFixed(2)}</b></div>
+          <div class="hc-metric">现价<b>${hasLive?refPrice.toFixed(2):"--"}</b></div>
           <div class="hc-metric">成本<b>${(h.buyPrice||0).toFixed(2)}</b></div>
           <div class="hc-metric">资产<b>${fmt(mv)}</b></div>
           <div class="hc-metric">股数<b>${h.qty||0}${avail&&avail!==h.qty?`<span style="color:var(--text-faint);font-size:9px"> 可用${avail}</span>`:""}</b></div>
@@ -8267,14 +8305,15 @@ function renderHoldCards(){
     const totalPnlPct=sumCost>0?totalPnl/sumCost*100:0;
     const todayPct=sumPrevMv>0?sumToday/sumPrevMv*100:0;
     const fmtAmt=v=>(v>=0?"+":"")+v.toFixed(2);
+    const missNote=quoteMiss>0?` <span style="font-size:10px;color:var(--text-faint)" title="行情接口未就绪，这些持仓的浮动盈亏未计入">(${quoteMiss}只行情未更新)</span>`:"";
     $("hsAssetC").textContent="¥"+totalAssetVal.toFixed(2);
     const te=$("hsTodayC");
-    te.textContent=(sumToday>=0?"+":"")+sumToday.toFixed(2)+" ("+(todayPct>=0?"+":"")+todayPct.toFixed(2)+"%)";
+    te.innerHTML=(sumToday>=0?"+":"")+sumToday.toFixed(2)+" ("+(todayPct>=0?"+":"")+todayPct.toFixed(2)+"%)"+missNote;
     te.style.color=sumToday>=0?"var(--up)":"var(--down)";
     $("hsCostC").textContent="¥"+sumCost.toFixed(2);
     const re=$("hsRealizedC");re.textContent=fmtAmt(sumRealized);re.style.color=sumRealized>=0?"var(--up)":"var(--down)";
-    const fl=$("hsFloatC");fl.textContent=fmtAmt(sumFloat);fl.style.color=sumFloat>=0?"var(--up)":"var(--down)";
-    const tt=$("hsTotalC");tt.textContent=fmtAmt(totalPnl)+" ("+(totalPnlPct>=0?"+":"")+totalPnlPct.toFixed(2)+"%)";tt.style.color=totalPnl>=0?"var(--up)":"var(--down)";
+    const fl=$("hsFloatC");fl.innerHTML=fmtAmt(sumFloat)+missNote;fl.style.color=sumFloat>=0?"var(--up)":"var(--down)";
+    const tt=$("hsTotalC");tt.innerHTML=fmtAmt(totalPnl)+" ("+(totalPnlPct>=0?"+":"")+totalPnlPct.toFixed(2)+"%)"+missNote;tt.style.color=totalPnl>=0?"var(--up)":"var(--down)";
     hs.style.display="block";
   }
   if(he)he.style.display=any?"none":"block";
@@ -8315,21 +8354,25 @@ function renderHold(){
       }
     });
     Object.values(mergedHoldings).forEach(h=>{
-      const st=simData.pricePool[h.code]||{price:h.buyPrice,chg:0,industry:h.industry};
+      /* 数据三态：无真实行情时显示"--"，不用占位价算盈亏 */
+      const lp=livePrice(h.code);
+      const hasLive=lp!=null;
+      const refPrice=hasLive?lp:(h.buyPrice||0);
+      const st=simData.pricePool[h.code]||null;
       any=true;
-      const mv=(st.price||0)*(h.qty||0);
-      const floatPnl=((st.price||0)-(h.buyPrice||0))*(h.qty||0);
+      const mv=refPrice*(h.qty||0);
+      const floatPnl=hasLive?((refPrice-(h.buyPrice||0))*(h.qty||0)):null;
       const buyDate=new Date(h.buyTime).toDateString();
       const isToday=buyDate===now.toDateString();
       const hour=now.getHours(),minute=now.getMinutes();
       const isTradingTime=(hour===9&&minute>=30)||(hour>9&&hour<15)||(hour===15&&minute===0);
-      const dayPct=isToday?(((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100):(isTradingTime?(st.chg||0):0);
-      const totalPct=((st.price||0)-(h.buyPrice||0))/(h.buyPrice||1)*100;
+      const dayPct=(isToday&&hasLive)?(((refPrice-(h.buyPrice||0))/(h.buyPrice||1)*100)):(isTradingTime?(st&&!st._ph?(st.chg||0):null):null);
+      const totalPct=hasLive?(((refPrice-(h.buyPrice||0))/(h.buyPrice||1)*100)):null;
       /* 占总仓位%：用现金+所有持仓市值计算总资金，更准确 */
       const totalHoldMv=(p.holdings||[]).reduce((s,hh)=>{
-        const sst=simData.pricePool[hh.code];
+        const sst=livePrice(hh.code);
         const bp=hh.buyPrice||hh.cost||0;
-        return s+(hh.qty||0)*(sst?sst.price:bp);
+        return s+(hh.qty||0)*(sst!=null?sst:bp);
       },0);
       const totalAsset=(p.cash||0)+totalHoldMv;
       const posPct=totalAsset>0?mv/totalAsset*100:0;
@@ -8364,11 +8407,11 @@ function renderHold(){
         <td class="r num qty-cell">${h.qty||0}</td>
         <td class="r num qty-cell"><span class="avail">${avail||0}</span></td>
         <td class="r num">${(h.buyPrice||0).toFixed(2)}</td>
-        <td class="r num">${(st.price||0).toFixed(2)}</td>
+        <td class="r num">${hasLive?refPrice.toFixed(2):"--"}</td>
         <td class="r num">${fmt(mv)}</td>
-        <td class="r num ${pctColor(floatPnl)}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
-        <td class="r num ${pctColor(dayPct)}">${pct(dayPct)}</td>
-        <td class="r num ${pctColor(totalPct)}">${pct(totalPct)}</td>
+        <td class="r num ${floatPnl==null?"":pctColor(floatPnl)}">${floatPnl==null?"--":(floatPnl>=0?"+":"")+floatPnl.toFixed(0)}</td>
+        <td class="r num ${dayPct==null?"":pctColor(dayPct)}">${dayPct==null?"--":pct(dayPct)}</td>
+        <td class="r num ${totalPct==null?"":pctColor(totalPct)}">${totalPct==null?"--":pct(totalPct)}</td>
         <td class="r num">${posPct.toFixed(1)}%</td>
         <td class="r num">${days}</td>
         <td style="font-size:11.5px;color:var(--text-dim)">${escHtml(holdReason(p,h)||"—")}</td>
@@ -8911,10 +8954,11 @@ function renderCharts(){
       return{value:+(s.strength*100).toFixed(1),itemStyle:{color:wash?"#ff8a3d":s.strength>0.55?"#f2555a":s.strength<0.45?"#00c2ff":"#e8b339"}};
     })}]
   });
-  /* 组合平均收益率：此前本函数未定义 avgRet，导致每次 tick 抛 ReferenceError */
+  /* 组合收益率：默认加权（总资产口径），算术平均仅作副指标——防"七角色平均（含0%席位）"误导 */
+  const wRet=simData.players.length?((simData.players.reduce((s,p)=>s+(p.asset||0),0)-INIT_CASH*simData.players.length)/(INIT_CASH*simData.players.length)*100):0;
   const avgRet=simData.players.reduce((s,p)=>s+(p.asset-INIT_CASH)/INIT_CASH*100,0)/(simData.players.length||1);
   $("statNote").textContent=
-    `本月组合 ${avgRet>=0?"+":""}${avgRet.toFixed(2)}% · 模拟赛局运行于本自然月内，月/年=当前累计 · 红涨绿跌`;
+    `本月组合 ${wRet>=0?"+":""}${wRet.toFixed(2)}%（总资产口径）· 角色算术平均 ${avgRet>=0?"+":""}${avgRet.toFixed(2)}% · 模拟赛局运行于本自然月内，月/年=当前累计 · 红涨绿跌`;
 }
 
 /* ===== 个股收益明细弹窗 ===== */
@@ -9252,11 +9296,10 @@ function renderDashStatus(){
   if(typeof simData==="undefined"||!simData)return;
   const ps=simData.players;let bull=0,bear=0,active=0,pnlSum=0;
   ps.forEach(p=>{const r=assetOf(p)-INIT_CASH;pnlSum+=r;if(r>0)bull++;else if(r<0)bear++;if(p.holdings.length>0)active++;});
-  const avg=pnlSum/(ps.length||1);
   set("dsBullBear",bull+" / "+bear);
   set("dsActive",active+"/"+ps.length);
   const pe=document.getElementById("dsPnl");
-  if(pe){pe.textContent=(avg>=0?"+":"")+avg.toFixed(0)+" 元";pe.style.color=avg>=0?"var(--up)":"var(--down)";}
+  if(pe){pe.textContent=(pnlSum>=0?"+":"")+pnlSum.toFixed(0)+" 元";pe.style.color=pnlSum>=0?"var(--up)":"var(--down)";}
   const pf=document.getElementById("dsPortfolio");
   if(pf){const t=bull>bear?"多头占优":bear>bull?"空头占优":"多空均衡";pf.textContent=t;pf.style.color=bull>bear?"var(--up)":bear>bull?"var(--down)":"var(--yellow)";}
 }
@@ -9419,13 +9462,15 @@ function renderReview(){
     const allHolds=[];
     simData.players.forEach(p=>p.holdings.forEach(h=>{
       const s=simData.pricePool[h.code];
-      allHolds.push({role:p.id,name:h.name,code:h.code,qty:h.qty,chg:s?s.chg:0,sector:s?s.sector:"—",industry:s?s.industry:"—",reason:h.reason||"—"});
+      const lp=livePrice(h.code);
+      const sChg=(lp!=null&&s&&!s._ph)?s.chg:null;
+      allHolds.push({role:p.id,name:h.name,code:h.code,qty:h.qty,chg:sChg,sector:s?s.sector:"—",industry:s?s.industry:"—",reason:h.reason||"—"});
     }));
     if(allHolds.length){
       daily.innerHTML=`
         <div class="review-meta">当前持仓快照 · 每日15:00收盘后自动生成正式小结</div>
         <div class="reason-list">${allHolds.map(h=>`
-          <div class="reason-item"><b>${escHtml(h.role)}</b> ${escHtml(h.name)}（${escHtml(h.code)}）${h.qty}股 · 当日 <b class="${h.chg>=0?"up":"down"}">${fmtPct(h.chg)}</b> · ${escHtml(h.sector)}/${escHtml(h.industry)}<br>持仓理由：${escHtml(h.reason)}</div>`).join("")}
+          <div class="reason-item"><b>${escHtml(h.role)}</b> ${escHtml(h.name)}（${escHtml(h.code)}）${h.qty}股 · 当日 <b class="${h.chg==null?"":(h.chg>=0?"up":"down")}">${h.chg==null?"--":fmtPct(h.chg)}</b> · ${escHtml(h.sector)}/${escHtml(h.industry)}<br>持仓理由：${escHtml(h.reason)}</div>`).join("")}
         </div>`;
     }else{
       daily.innerHTML=`<div class="review-note">等待收盘：今日 15:00 后将自动生成持仓复盘小结（结合板块与上证/深证/创业板/科创50 指数）。当前空仓。</div>`;
