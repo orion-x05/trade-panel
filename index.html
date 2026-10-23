@@ -1413,7 +1413,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <span class="ds-sep"></span>
     <span class="ds-item"><span class="ds-label">多头/空头</span><b id="dsBullBear">--</b></span>
     <span class="ds-item"><span class="ds-label">活跃角色</span><b id="dsActive">--</b></span>
-    <span class="ds-item"><span class="ds-label">浮动盈亏</span><b id="dsPnl">--</b></span>
+    <span class="ds-item"><span class="ds-label">平均总盈亏</span><b id="dsPnl">--</b></span>
     <span class="ds-sep"></span>
     <span class="ds-item"><span class="ds-label">上证指数</span><b id="dsSh">--</b></span>
     <span class="ds-item"><span class="ds-label">两市成交</span><b id="dsAmt">--</b></span>
@@ -1653,8 +1653,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         <table>
           <thead><tr>
             <th>排名</th><th>颜色</th><th>角色</th><th>策略</th><th class="r">账户权益</th><th class="r">持仓市值</th>
-            <th class="r">现金</th><th class="r">持仓数</th><th class="r">持仓股数</th><th class="r">实时收益率%</th>
-            <th class="r">浮动盈亏</th><th class="r">交易数</th><th class="r">胜率</th><th class="r">盈亏比</th>
+            <th class="r">现金</th><th class="r">持仓数</th><th class="r">持仓股数</th><th class="r" title="按实时行情重算账户权益（现金+持仓市值）得出的总收益率，含持仓浮动盈亏">实时收益率%</th>
+            <th class="r" title="仅统计卖出交易落袋的盈亏，不含持仓浮动盈亏；未卖出过的角色显示0">已实现盈亏</th><th class="r">交易数</th><th class="r">胜率</th><th class="r">盈亏比</th>
             <th class="r">夏普</th><th class="r">最大回撤</th><th>AI模型</th>
           </tr></thead>
           <tbody id="rankBody"></tbody>
@@ -6830,7 +6830,7 @@ function buildDailySummary(){
   simData.players.forEach(p=>{
     p.holdings.forEach(h=>{
       const st=simData.pricePool[h.code];
-      const chg=+((st.price/h.buyPrice-1)*100).toFixed(2);
+      const chg=st?+((st.price/h.buyPrice-1)*100).toFixed(2):0;
       /* 假跌破识别：MA20向上+股价小幅跌破MA20(<2%)+缩量 → 健康回调，继续持有 */
       let holdReason=HOLD_REASONS[p.id];
       if(st&&st.ma20&&st.price<st.ma20){
@@ -7328,7 +7328,7 @@ function renderRank(){
     const ret=(p.asset-INIT_CASH)/INIT_CASH*100;
     const heldQty=p.holdings.reduce((a,h)=>a+h.qty,0);
     const mv=p.asset-p.cash;
-    const floatPnl=p.trades.filter(t=>t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈").reduce((a,t)=>a+(t.profit||t.pnl||0),0);
+    const realizedPnl=p.trades.filter(t=>t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈").reduce((a,t)=>a+(t.profit||t.pnl||0),0);
     const trades=p.trades.length;
     /* 实时计算胜率和盈亏比 */
     const sells=p.trades.filter(t=>t.type==="sell"||t.dir==="卖"||t.dir==="部分止盈");
@@ -7351,7 +7351,7 @@ function renderRank(){
       <td class="r num">${p.holdings.length}只</td>
       <td class="r num">${heldQty}</td>
       <td class="r num ${pctColor(ret)}">${pct(ret)}</td>
-      <td class="r num ${floatPnl>=0?"up":"down"}">${floatPnl>=0?"+":""}${floatPnl.toFixed(0)}</td>
+      <td class="r num ${realizedPnl>=0?"up":"down"}">${realizedPnl>=0?"+":""}${realizedPnl.toFixed(0)}</td>
       <td class="r num">${trades}</td>
       <td class="r num">${sells.length?(winRate*100).toFixed(1)+'%':'--'}</td>
       <td class="r num">${sells.length?plRatio.toFixed(2):'--'}</td>
