@@ -7,7 +7,7 @@
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261024-r29-orion";
+<script>window.APP_VERSION="20261024-r30-sentiment";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -1408,6 +1408,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="hs-chip"><span class="hs-dot" id="heroDot"></span><span id="heroApi">行情接口 –</span></span>
       <span class="hs-chip" id="heroRun">运行角色 –</span>
       <span class="hs-chip" id="heroRegime" title="市场状态（ADX+均线判定，连续2日确认切换）">市场状态 –</span>
+      <span class="hs-chip" id="heroSentiment" title="情绪阶段（涨停池六指标：空间板/梯队/晋级率/炸板率/赚钱效应/家数）">情绪 –</span>
     </div>
   </div>
   <!-- ===== 系统总览状态条（组合状态 + 市场行情 + LIVE + AUTO REFRESH） ===== -->
@@ -1608,6 +1609,8 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="panel-tip">任一环节不满足即拦截，不进入下一环节 ▼</span>
     </div>
     <div class="panel-body">
+      <!-- 今日决策卡（新增模块规格）：情绪阶段 + 连板仓位上限 + 市场状态 + 数据态，开仓前先看这张卡 -->
+      <div id="todayDecisionCard" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>步骤</th><th>门禁项</th><th>判定标准</th><th>拦截示例</th></tr></thead>
@@ -2082,7 +2085,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
             <th>代码</th><th>名称</th><th>板块/行业</th><th>五行</th>
             <th class="r">最新价</th><th class="r">涨跌幅%</th><th class="r">量比</th><th>主力意图</th><th class="r">周线KD</th>
             <th class="r">RSI6</th><th class="r">透支分</th><th class="r">动量分</th><th class="r">筹码分</th>
-            <th class="r">综合评分</th><th>结论</th><th>建议</th><th>门禁</th>
+            <th class="r">综合评分</th><th>结论</th><th>建议</th><th>门禁</th><th title="点击检测：七项检查全过才成立（振幅≥12%/收盘≥最高95%/低点13:00前/板块扩散/放量≥1.5x/大盘不弱/收盘>均价）· 高潮退潮期禁止反包">反包</th>
           </tr></thead>
           <tbody id="poolBody"></tbody>
         </table>
@@ -2121,6 +2124,15 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   </div>
 </section>
 <section class="tab-view" id="view-limitdecoded">
+  <div class="panel">
+    <div class="panel-head" style="cursor:default">
+      <span class="panel-title">🌡 情绪温度计</span>
+      <span class="panel-tip">涨停池六大指标 → 五阶段判定（退潮优先级最高）· 决定今日开仓权限与仓位上限 · 涨跌解读统计已并入本面板</span>
+    </div>
+    <div class="panel-body" style="padding:14px">
+      <div id="sentimentGauge"></div>
+    </div>
+  </div>
   <div class="panel">
     <div class="panel-head" style="cursor:default">
       <span class="panel-title">📈 涨跌解读 · 涨停异动</span>
@@ -3381,6 +3393,189 @@ function regimeAtDate(idxBars,dateStr){
   const chg=seg.length>1?(seg[seg.length-1].close/seg[seg.length-2].close-1)*100:null;
   return classifyRegime(seg.map(b=>b.high),seg.map(b=>b.low),seg.map(b=>b.close),chg);
 }
+/* ---------- ⑥ 情绪梯队 sentiment（新增模块规格_情绪与反包） ----------
+   六大指标：空间板 / 梯队分布 / 晋级率 / 炸板率 / 赚钱效应 / 涨停家数
+   五阶段：ice 冰点 / repair 修复 / ferment 发酵 / climax 高潮 / ebb 退潮
+   退潮优先级最高：赚钱效应<0 或 炸板率>45% → ebb（退潮期做什么都是错的）。
+   验收4：任一数据源缺失 → ok:false + reason（前端显示 unknown，不返回默认值糊弄）。 */
+const SENTIMENT_STAGE_TEXT={ice:"冰点",repair:"修复",ferment:"发酵",climax:"高潮",ebb:"退潮",unknown:"未知"};
+const SENTIMENT_STYLE={ice:["#3b82f6","rgba(59,130,246,.14)","❄"],repair:["#22c55e","rgba(34,197,94,.14)","🌱"],ferment:["#f59e0b","rgba(245,158,11,.14)","🚀"],climax:["#ef4444","rgba(239,68,68,.14)","🔥"],ebb:["#8b5cf6","rgba(139,92,246,.14)","🌊"],unknown:["#6b7280","rgba(107,114,128,.14)","❔"]};
+function computeSentiment(input){
+  /* input: {zt_rows:[涨停池行], zt_tc:全市场涨停总数, yesterday_perf:{ok,rows,promote}} */
+  const out={ok:false,reason:"",stage:"unknown",metrics:{}};
+  const rows=input&&input.zt_rows;
+  if(!rows||!rows.length){out.reason="涨停池数据缺失";return out;}
+  const ztCount=(input.zt_tc&&input.zt_tc>0)?input.zt_tc:rows.length;
+  const maxBoard=rows.reduce((m,r)=>Math.max(m,r.lbc||0),0);
+  const ladder={lb1:0,lb2:0,lb3:0,lb4p:0};
+  rows.forEach(r=>{const l=r.lbc||0;if(l>=4)ladder.lb4p++;else if(l===3)ladder.lb3++;else if(l===2)ladder.lb2++;else ladder.lb1++;});
+  /* 炸板率 = 曾炸板家数/涨停家数（zbc>0 即当日盘中炸过板） */
+  const boomRows=rows.filter(r=>(r.zbc||0)>0).length;
+  const boomRate=boomRows/rows.length*100;
+  /* 晋级率：优先昨日池实绩（真实晋级），缺失退同日梯队比并标注 basis */
+  let promo12=null,promo23=null,promoBasis=null;
+  const yp=input.yesterday_perf;
+  if(yp&&yp.ok&&yp.promote&&yp.promote.base_1to2>0){
+    promo12=yp.promote.hit_1to2/yp.promote.base_1to2*100;
+    promo23=yp.promote.base_2to3>0?yp.promote.hit_2to3/yp.promote.base_2to3*100:null;
+    promoBasis="昨日池实绩";
+  }else{
+    if(ladder.lb1>0)promo12=ladder.lb2/ladder.lb1*100;
+    if(ladder.lb2>0)promo23=ladder.lb3/ladder.lb2*100;
+    promoBasis="同日梯队比（昨日池不可得）";
+  }
+  /* 赚钱效应：昨日涨停股今日平均涨跌幅；缺失 → null（unknown，不用0糊弄） */
+  let profitEffect=null;
+  if(yp&&yp.ok&&yp.rows&&yp.rows.length){
+    profitEffect=yp.rows.reduce((s,r)=>s+(r.today_pct||0),0)/yp.rows.length;
+  }
+  out.ok=true;
+  out.metrics={zt_count:ztCount,max_board:maxBoard,ladder,boom_rate:+boomRate.toFixed(1),
+    promo_1to2:promo12!=null?+promo12.toFixed(1):null,promo_2to3:promo23!=null?+promo23.toFixed(1):null,
+    promo_basis:promoBasis,profit_effect:profitEffect!=null?+profitEffect.toFixed(2):null,
+    boom_rows:boomRows};
+  out.stage=classifySentimentStage(Object.assign({ok:true},out.metrics));
+  return out;
+}
+function classifySentimentStage(m){
+  if(!m||!m.ok)return"unknown";
+  const {max_board,zt_count,boom_rate,profit_effect,promo_1to2}=m;
+  /* ① 退潮优先级最高：赚钱效应为负 或 炸板率>45% 直接判退潮 */
+  if(profit_effect!=null&&profit_effect<0)return"ebb";
+  if(boom_rate>45)return"ebb";
+  /* ② 高潮：空间板≥5 且家数≥60（过热），或 4板+晋级率≥40%+家数≥50 */
+  if(max_board>=5&&zt_count>=60)return"climax";
+  if(max_board>=4&&(promo_1to2||0)>=40&&zt_count>=50)return"climax";
+  /* ③ 发酵：赚钱效应为正 + 空间板≥3 + 家数≥40 + 炸板率≤35% + 首板晋级≥25% */
+  if(profit_effect!=null&&profit_effect>0&&max_board>=3&&zt_count>=40&&boom_rate<=35&&(promo_1to2||0)>=25)return"ferment";
+  /* ④ 冰点：家数<25，或 空间板≤2 且炸板率>30%（无高度+亏钱效应扩散） */
+  if(zt_count<25)return"ice";
+  if(max_board<=2&&boom_rate>30)return"ice";
+  /* ⑤ 其余：修复（从冰点回暖但未达发酵标准） */
+  return"repair";
+}
+/* 情绪阶段 → 连板/开仓系数（router 接入用）。ebb 禁仓、climax 半仓（规格明确指定）；
+   ice 冰点同样禁开新仓（亏钱效应+无高度，做什么都是错的），repair/ferment 不拦截。 */
+const SENTIMENT_POS_FACTOR={ice:0,repair:1,ferment:1,climax:0.5,ebb:0,unknown:1};
+const SENTIMENT_LIMIT_CAP={ice:0,repair:0.25,ferment:0.25,climax:0.15,ebb:0,unknown:0.25};
+function sentimentPosFactor(stage){return SENTIMENT_POS_FACTOR[stage]!=null?SENTIMENT_POS_FACTOR[stage]:1;}
+/* 情绪数据装载：data.json → 六指标 + 阶段。结果挂 window.__sentiment 供 UI/router 消费 */
+async function loadSentiment(){
+  try{
+    const r=await fetch("./data.json?"+Date.now());
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    const ld=d.limit_decoded||{};
+    const s=computeSentiment({zt_rows:ld.zt_rows||[],zt_tc:ld.zt_tc,yesterday_perf:d.yesterday_perf});
+    s.asof=ld.asof||"";
+    window.__sentiment=s;
+    return s;
+  }catch(e){
+    window.__sentiment={ok:false,reason:"data.json 读取失败:"+e.message,stage:"unknown",metrics:{}};
+    return window.__sentiment;
+  }
+}
+/* ---------- ⑦ 筹码估算 estimate_chips（新增模块规格_情绪与反包） ----------
+   不用逐笔数据，近120日日线成交量加权近似：每日 (最高+最低+收盘)/3 为当日筹码成本，
+   按成交量加权累计成价格分布，找峰。输出：
+   peaks 峰数 / main_peak_price 主峰价 / profit_ratio 获利盘 / concentration 集中度 /
+   shape 形态判定 / bias 多空倾向。 */
+function estimateChips(bars){
+  /* bars: [{date,high,low,close,vol}] 升序，至少30根；不足返回 null（验收4） */
+  const out={ok:false,reason:""};
+  if(!bars||bars.length<30){out.reason="日K不足30根";return out;}
+  const use=bars.slice(-120);
+  const N=use.length;
+  /* 价格分箱：以区间内 1% 宽度为一格，统计每格的成交量加权筹码 */
+  let lo=Infinity,hi=-Infinity;
+  use.forEach(b=>{lo=Math.min(lo,b.low);hi=Math.max(hi,b.high);});
+  if(hi<=lo){out.reason="价格区间退化";return out;}
+  const BINS=40,binW=(hi-lo)/BINS;
+  const bins=new Array(BINS).fill(0);
+  let volSum=0;
+  use.forEach(b=>{
+    const cost=(b.high+b.low+b.close)/3;
+    const v=Math.max(b.vol||0,0);
+    volSum+=v;
+    const idx=Math.min(BINS-1,Math.max(0,Math.floor((cost-lo)/binW)));
+    bins[idx]+=v;
+  });
+  if(volSum<=0){out.reason="成交量全为0";return out;}
+  /* 找峰：在原始 bins 上找局部极大（不用平滑——3格平滑会把孤立尖峰抹成等宽平台，
+     峰顶的严格不等式全部失效，真实的双峰结构被漏检）。间距<2格视为同一峰取高者。 */
+  const peaks=[];
+  for(let i=1;i<BINS-1;i++){
+    if(bins[i]<bins[i-1]||bins[i]<=bins[i+1])continue;
+    if(bins[i]/volSum<0.06)continue;                  /* 占比<6% 的毛刺不算峰 */
+    const last=peaks[peaks.length-1];
+    if(last&&i-last._bin<=2){
+      if(bins[i]>last._v){last._bin=i;last._v=bins[i];last.price=+(lo+(i+0.5)*binW).toFixed(2);last.ratio=+(bins[i]/volSum*100).toFixed(1);}
+    }else{
+      peaks.push({_bin:i,_v:bins[i],price:+(lo+(i+0.5)*binW).toFixed(2),ratio:+(bins[i]/volSum*100).toFixed(1)});
+    }
+  }
+  peaks.forEach(p=>{delete p._bin;delete p._v;});
+  const lastClose=use[N-1].close;
+  const mainPeak=peaks.length?peaks.reduce((a,b)=>b.ratio>a.ratio?b:a):{price:+((lo+hi)/2).toFixed(2),ratio:0};
+  /* 获利盘 = 成本低于现价的筹码占比 */
+  let profitVol=0;
+  use.forEach(b=>{if((b.high+b.low+b.close)/3<lastClose)profitVol+=Math.max(b.vol||0,0);});
+  const profitRatio=profitVol/volSum*100;
+  /* 集中度 = 主峰±5% 区间筹码占比 */
+  const bandLo=mainPeak.price*0.95,bandHi=mainPeak.price*1.05;
+  let bandVol=0;
+  use.forEach(b=>{const c=(b.high+b.low+b.close)/3;if(c>=bandLo&&c<=bandHi)bandVol+=Math.max(b.vol||0,0);});
+  const concentration=bandVol/volSum*100;
+  const peakPos=(mainPeak.price-lo)/(hi-lo);   /* 主峰在区间中的相对位置 0=底 1=顶 */
+  const topPeak=peaks.length?peaks.reduce((a,b)=>b.price>a.price?b:a):mainPeak;
+  const topPos=peaks.length?((topPeak.price-lo)/(hi-lo)):peakPos;  /* 最高峰位置：判"高位"用 */
+  /* 形态判定（规格五类）：低位单峰密集/单峰上方/高位单峰/高位多峰分散/多峰分散 */
+  let shape;
+  if(peaks.length<=1){
+    if(peakPos<0.35&&concentration>=45)shape="低位单峰密集";
+    else if(peakPos>=0.65&&concentration>=45)shape="高位单峰";
+    else shape=lastClose>mainPeak.price?"单峰上方":"单峰下方";
+  }else{
+    shape=topPos>=0.65?"高位多峰分散":"多峰分散";
+  }
+  /* 多空倾向：获利盘高+集中度高+主峰低于现价 → 多头；反之为空头 */
+  let bias;
+  if(profitRatio>=75&&concentration>=50&&lastClose>mainPeak.price)bias="多头（获利盘厚+筹码集中低位）";
+  else if(profitRatio<=30)bias="空头（套牢盘沉重）";
+  else if(peaks.length>=3&&concentration<35)bias="分歧（多峰分散，无主导成本区）";
+  else bias="中性";
+  return{ok:true,peaks,main_peak_price:mainPeak.price,profit_ratio:+profitRatio.toFixed(1),
+    concentration:+concentration.toFixed(1),shape,bias,last_close:+lastClose.toFixed(2),
+    bins:bins.map(v=>+(v/volSum*100).toFixed(2)),bin_lo:+lo.toFixed(2),bin_hi:+hi.toFixed(2),n:N};
+}
+/* ---------- ⑧ 反包检测 detect_reversal（新增模块规格_情绪与反包） ----------
+   七项检查全过才成立（风语筑形态 7/7 案例）：
+   ① 振幅≥12% ② 收盘≥最高价95% ③ 盘中低点在13:00前 ④ 板块扩散期（涨停≥3家且排名前50%）
+   ⑤ 拉升段放量≥1.5倍 ⑥ 大盘跌幅≥-1%（大盘不弱） ⑦ 收盘>均价。
+   仓位≤15%；climax/ebb 阶段禁止做反包（高位/退势反包是接飞刀）。 */
+const REVERSAL_CHECKS=["振幅≥12%","收盘≥最高价95%","低点在13:00前","板块扩散期","拉升放量≥1.5x","大盘不弱","收盘>均价"];
+function detectReversal(d){
+  /* d: {amplitude, close_vs_high, low_before_1300, sector:{limit_count,rank,total},
+         rally_vol_ratio, market_chg, close_vs_avg, stage}
+     任一字段缺失 → 该项记 null（不算过也不算挂），全过才成立 */
+  const c=[];
+  c.push(d.amplitude!=null?d.amplitude>=12:null);
+  c.push(d.close_vs_high!=null?d.close_vs_high>=0.95:null);
+  c.push(d.low_before_1300!=null?!!d.low_before_1300:null);
+  const sec=d.sector||{};
+  c.push(sec.limit_count!=null?(sec.limit_count>=3&&sec.rank!=null&&sec.total!=null&&sec.rank<=Math.ceil(sec.total/2)):null);
+  c.push(d.rally_vol_ratio!=null?d.rally_vol_ratio>=1.5:null);
+  c.push(d.market_chg!=null?d.market_chg>=-1:null);
+  c.push(d.close_vs_avg!=null?!!d.close_vs_avg:null);
+  const passed=c.filter(x=>x===true).length,failed=c.filter(x=>x===false).length;
+  const unknown=c.filter(x=>x===null).length;
+  const ok=passed===7;
+  let blockedReason="";
+  if(d.stage==="ebb")blockedReason="情绪退潮期，禁止反包（接飞刀）";
+  else if(d.stage==="climax")blockedReason="情绪高潮期，禁止反包（高位风险）";
+  return{ok,passed,failed,unknown,checks:c,blocked:!!blockedReason,blocked_reason:blockedReason,
+    max_position:ok?0.15:0,detail:REVERSAL_CHECKS.map((t,i)=>t+":"+(c[i]===null?"未知":c[i]?"过":"挂")).join("；")};
+}
 function getRegimeState(){
   if(!simData.regime)simData.regime={state:"RANGE",cand:"",days:0,day:"",adx:null,updatedAt:0};
   return simData.regime;
@@ -3390,6 +3585,7 @@ function regimeScale(role){
   return (t&&t[role])||0;
 }
 let regimePanicDay="";const regimeBlockDay={};
+let sentBlockDay="";  /* 情绪门禁每日只记一次拦截日志（ebb/ice 全角色禁开仓） */
 /* 每日判定一次（2日防抖）：取上证日K分类，写入 simData.regime 并持久化 */
 async function updateRegime(){
   try{
@@ -6621,6 +6817,18 @@ function tick(){
         log("info",`【${p.id}】regime=${_regime}(${REGIME_TEXT[_regime]||_regime}) 不在放行表，今日不开新仓（放行：${Object.keys(REGIME_ROUTES[_regime]||{}).map(r=>r+"×"+(REGIME_ROUTES[_regime][r])).join("，")||"全部冻结"}）`);
         pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:_regime,role:p.id,action:"skip",reason:"regime不在放行表，今日不开新仓"});
       }
+      /* 情绪梯队门禁（新增模块规格_情绪与反包 · 接入 router）：
+         ebb 退潮 / ice 冰点 → 全部角色禁开新仓（退潮期做什么都是错的，只跑持仓风控）；
+         climax 高潮 → 仓位×0.5（高位接力风险）；ferment/repair 不拦截。
+         数据缺失(unknown) 不拦截——验收4：不拿默认值假装有数据。 */
+      const _sentStage=(window.__sentiment&&window.__sentiment.stage)||"unknown";
+      const _sentFactor=sentimentPosFactor(_sentStage);
+      const _sentBlocked=_sentFactor<=0;
+      if(_sentBlocked&&sentBlockDay!==todayStr(now)){
+        sentBlockDay=todayStr(now);
+        log("warn",`【情绪门禁】阶段=${_sentStage}(${SENTIMENT_STAGE_TEXT[_sentStage]||""}) → 全部角色今日不开新仓（退潮/冰点期做什么都是错的；持仓止盈止损照常执行）`);
+        pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:_regime,sentiment:_sentStage,action:"freeze",reason:`情绪阶段=${_sentStage}，全角色禁开新仓`});
+      }
       /* KDJ金叉为通用必要条件；反包/强势涨停（妖股通行证）豁免金叉，极强势直接买；
          D7 周线超卖反转角色用自己的过滤器（周线KD≤−40+拐头），不走日线KDJ金叉闸；
          v0268 round3：D6 同样豁免——回测 D6 分支本就不看KDJ，此前实盘多一道金叉闸
@@ -6648,13 +6856,13 @@ function tick(){
       const flowOK=(!t||env.score>=45)?true:((simData.sectors[t.sector]&&simData.sectors[t.sector].flow||0)>0);
       /* KDJ金叉条件放宽：80%需要金叉，20%直接买（趋势已成立不等金叉） */
       const kdjOK=!t||t.kdjK===undefined||(Math.random()<0.2)||(t.kdjK>t.kdjD&&t.kdjKPrev<=t.kdjDPrev);
-      if(!_regimeBlocked&&canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance&&roleBuySlotOK(p.id,now))doBuy(p,t,now,0.6*_rs); /* 首次建仓：60%预算×regime缩放；尾盘按角色哈希错峰 */
+      if(!_regimeBlocked&&!_sentBlocked&&canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance&&roleBuySlotOK(p.id,now))doBuy(p,t,now,0.6*_rs*_sentFactor); /* 首次建仓：60%预算×regime缩放×情绪系数；尾盘按角色哈希错峰 */
       p.holdings.slice().forEach(h=>{
         const st=simData.pricePool[h.code];if(!st)return;
         /* 加仓逻辑：已有1批、非今日买入、KDJ再次金叉、股价在MA20上方 */
         if(h.lots&&h.lots.length===1&&canSell(h,now)&&st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK>st.kdjD&&st.kdjKPrev<=st.kdjDPrev&&st.price>st.ma20){
           const addTarget={code:h.code,name:h.name,sector:h.sector,industry:h.industry,wx:h.wx,price:st.price,ztLow:h.ztLow};
-          if(!_regimeBlocked&&canBuyNow(now)&&roleBuySlotOK(p.id,now))doBuy(p,addTarget,now,0.5*_rs);
+          if(!_regimeBlocked&&!_sentBlocked&&canBuyNow(now)&&roleBuySlotOK(p.id,now))doBuy(p,addTarget,now,0.5*_rs*_sentFactor);
         }
         let signal=null;
         const rp=ROLE_PARAMS[p.id]||{sl:7,tp:8};
@@ -7377,6 +7585,67 @@ function switchTab(name){
 
 /* ==================== 题材雷达 / 涨跌解读 / 机构研报 ==================== */
 var STAGE_STYLE={启动:["#3ecf8e","rgba(62,207,142,.14)"],发酵:["#f59e0b","rgba(245,158,11,.14)"],高潮:["#ef4444","rgba(239,68,68,.14)"],退潮:["#3b82f6","rgba(59,130,246,.14)"],持续:["#9ca3af","rgba(156,163,175,.14)"]};
+/* ---------- 情绪温度计（新增模块规格_情绪与反包 · 面板改造3/7） ----------
+   六指标 + 梯队分布 + 五阶段判定 + 判定依据。涨跌解读的炸板/晋级统计并入此面板。 */
+function renderSentimentGauge(){
+  const box=$("sentimentGauge");if(!box)return;
+  const s=window.__sentiment;
+  if(!s||!s.ok||s.stage==="unknown"){
+    box.innerHTML=`<div style="color:var(--text-faint);padding:12px">情绪数据不可用（${escHtml((s&&s.reason)||"加载中")}）——验收原则：数据缺失显示未知，不用默认值假装有数据，也不拦截交易。</div>`;
+    return;
+  }
+  const m=s.metrics||{},stage=s.stage;
+  const st=SENTIMENT_STYLE[stage]||SENTIMENT_STYLE.unknown;
+  const cap=SENTIMENT_LIMIT_CAP[stage];
+  const factor=sentimentPosFactor(stage);
+  const metric=(label,val,color,title)=>`<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:8px 12px;min-width:96px;flex:1" title="${title||""}">
+    <div style="font-size:11px;color:var(--text-faint)">${label}</div>
+    <div style="font-size:16px;font-weight:700;color:${color||"var(--text)"}">${val}</div></div>`;
+  const pe=(m.profit_effect!=null)?((m.profit_effect>=0?"+":"")+m.profit_effect+"%"):"未知";
+  const p12=(m.promo_1to2!=null)?m.promo_1to2+"%":"未知";
+  const p23=(m.promo_2to3!=null)?m.promo_2to3+"%":"未知";
+  /* 判定依据：按 classifySentimentStage 的顺序说明哪条规则命中 */
+  let basis;
+  if(stage==="ebb")basis="退潮判定优先：赚钱效应"+(m.profit_effect!=null?m.profit_effect+"%":"未知")+(m.profit_effect!=null&&m.profit_effect<0?"<0":"")+(m.boom_rate>45?" · 炸板率"+m.boom_rate+"%>45%":"")+" → 退潮期做什么都是错的，全角色禁开新仓";
+  else if(stage==="climax")basis="高潮判定：空间板"+m.max_board+"板 · 涨停"+m.zt_count+"家 · 首板晋级"+p12+" → 过热，仓位×0.5，禁止反包";
+  else if(stage==="ferment")basis="发酵判定：赚钱效应为正 · 空间板≥3 · 家数≥40 · 炸板率≤35% · 首板晋级≥25% → 健康做多，连板仓位≤25%";
+  else if(stage==="ice")basis="冰点判定：涨停"+m.zt_count+"家"+(m.max_board<=2&&m.boom_rate>30?" · 空间板≤2且炸板率"+m.boom_rate+"%":"")+" → 无高度+亏钱效应，禁开新仓";
+  else basis="修复判定：未达发酵标准也未触退潮 → 小仓试探，正常执行角色逻辑";
+  const ladderRows=[["1板",m.ladder.lb1,"#22c55e"],["2板",m.ladder.lb2,"#f59e0b"],["3板",m.ladder.lb3,"#f97316"],["4板+",m.ladder.lb4p,"#ef4444"]];
+  const ladMax=Math.max(1,...ladderRows.map(r=>r[1]));
+  /* 断层标记：相邻层家数落差>60% 且上层非0 → 断层（接力断档信号） */
+  const gaps=[];
+  for(let i=1;i<ladderRows.length;i++){
+    const [n0,a]=ladderRows[i-1],[n1,b]=ladderRows[i];
+    if(a>0&&b>0&&b<a*0.4)gaps.push(n0+"→"+n1+"断层（"+a+"→"+b+"）");
+  }
+  box.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="font-size:22px;font-weight:800;color:${st[0]};background:${st[1]};padding:6px 16px;border-radius:12px">${st[2]} ${SENTIMENT_STAGE_TEXT[stage]}</div>
+      <div style="font-size:12px;color:var(--text-dim)">开仓系数 <b style="color:${factor<=0?"#ef4444":"var(--up)"}">×${factor}</b> · 连板仓位上限 <b style="color:${cap<=0?"#ef4444":"var(--text)"}">${cap<=0?"禁开新仓":(cap*100).toFixed(0)+"%"}</b> · 反包试仓 <b style="color:${(stage==="ebb"||stage==="climax")?"#ef4444":"var(--text)"}">${(stage==="ebb"||stage==="climax")?"禁止":"≤15%"}</b></div>
+      <div style="font-size:11px;color:var(--text-faint);margin-left:auto">数据截至 ${escHtml(s.asof||"—")}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      ${metric("空间板",m.max_board+"板",m.max_board>=4?"#ef4444":"var(--text)","全市场最高连板高度")}
+      ${metric("涨停家数",m.zt_count+"家","#ef4444","全市场涨停总数（东财tc口径）")}
+      ${metric("炸板率",m.boom_rate+"%",m.boom_rate>45?"#ef4444":m.boom_rate>35?"#f59e0b":"var(--up)","曾炸板家数/涨停家数 · >45%判退潮")}
+      ${metric("赚钱效应",pe,(m.profit_effect==null?"var(--text-faint)":m.profit_effect<0?"var(--down)":"var(--up)"),"昨日涨停股今日平均涨跌幅 · <0判退潮")}
+      ${metric("首板晋级率",p12,"var(--text)","昨日1板股今日晋2板+比例（"+escHtml(m.promo_basis||"")+"）")}
+      ${metric("二进三",p23,"var(--text)","昨日2板股今日晋3板+比例")}
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">📋 判定依据：${basis}</div>
+    <div style="font-size:12px;font-weight:600;color:#c9d1d9;margin-bottom:6px">🪜 梯队分布（金字塔健康度）</div>
+    ${ladderRows.map(([n,v,col])=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="width:36px;font-size:11px;color:var(--text-faint)">${n}</span>
+        <div style="flex:1;background:rgba(255,255,255,.05);border-radius:4px;height:14px;overflow:hidden">
+          <div style="width:${(v/ladMax*100).toFixed(1)}%;height:100%;background:${col};border-radius:4px"></div>
+        </div>
+        <span style="width:44px;font-size:11px;color:${col};font-weight:600">${v}家</span>
+      </div>`).join("")}
+    ${gaps.length?`<div style="margin-top:8px;font-size:11px;color:#f59e0b">⚠️ 接力断层：${gaps.map(escHtml).join(" · ")}——上层断档说明高度起不来，打板风险偏高</div>`:`<div style="margin-top:8px;font-size:11px;color:var(--text-faint)">梯队连续无断层，金字塔结构${m.ladder.lb1>=m.ladder.lb2?"健康（底宽顶尖）":"偏倒锥（追高谨慎）"}</div>`}
+    <div style="margin-top:10px;font-size:11px;color:var(--text-faint)">晋级率口径：${escHtml(m.promo_basis||"—")}。退潮优先级最高：赚钱效应&lt;0 或 炸板率&gt;45% 直接判退潮，其余阶段判定均让位。</div>`;
+}
 function stageBadge(t){
   var st=STAGE_STYLE[t.stage]||STAGE_STYLE["持续"];
   return '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;color:'+st[0]+';background:'+st[1]+'">'+t.emoji+' '+t.stage+'</span>';
@@ -7420,8 +7689,16 @@ async function renderThemeRadar(){
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+stocks+'</div></div>';
   }).join("");
   if(lad){
+    /* 晋级率 + 断层标记（新增模块规格·面板改造6）：从情绪模块取真实晋级率，
+       断层=相邻层家数落差>60%（接力断档，打板风险偏高） */
+    const _sm=(window.__sentiment&&window.__sentiment.metrics)||{};
+    const _p12=_sm.promo_1to2!=null?"首板晋级率 <b style='color:#f59e0b'>"+_sm.promo_1to2+"%</b>":"首板晋级率 未知";
+    const _p23=_sm.promo_2to3!=null?"二进三 <b style='color:#f59e0b'>"+_sm.promo_2to3+"%</b>":"二进三 未知";
+    const _gaps=[];
+    const _lv=[["1板",ladN.lb1],["2板",ladN.lb2],["3板",ladN.lb3],["4板+",ladN.lb4]];
+    for(let i=1;i<_lv.length;i++){if(_lv[i-1][1]>0&&_lv[i][1]>0&&_lv[i][1]<_lv[i-1][1]*0.4)_gaps.push(_lv[i-1][0]+"→"+_lv[i][0]+"断层("+_lv[i-1][1]+"→"+_lv[i][1]+")");}
     var ladDefs=[["lb4","🔥 4板及以上 · 总龙头",4],["lb3","🚀 3板 · 高标",3],["lb2","📈 2板 · 发酵中段",2],["lb1","🌱 首板 · 扩散/新方向",1]];
-    lad.innerHTML='<div style="grid-column:1/-1;font-size:11px;color:var(--text-faint);margin-bottom:-2px">全市场涨停 <b style="color:#ef4444">'+(rd.zt_tc||rd.zt_count)+'</b> 家 · 首板 '+ladN.lb1+' · 2板 '+ladN.lb2+' · 3板 '+ladN.lb3+' · 4板+ '+ladN.lb4+'（各层内滚动查看全部）</div>'
+    lad.innerHTML='<div style="grid-column:1/-1;font-size:11px;color:var(--text-faint);margin-bottom:-2px">全市场涨停 <b style="color:#ef4444">'+(rd.zt_tc||rd.zt_count)+'</b> 家 · 首板 '+ladN.lb1+' · 2板 '+ladN.lb2+' · 3板 '+ladN.lb3+' · 4板+ '+ladN.lb4+' · '+_p12+' · '+_p23+(_gaps.length?(' · <b style="color:#f59e0b">⚠️'+_gaps.join(" · ")+'</b>'):'')+'（各层内滚动查看全部）</div>'
       +ladDefs.map(function(d){
       var arr=rd.ladder[d[0]]||[];
       var items=arr.length?arr.map(function(s){
@@ -7437,6 +7714,7 @@ async function renderThemeRadar(){
 }
 async function renderLimitDecoded(){
   var tp=document.getElementById("topbarPage"); if(tp)tp.textContent="涨跌解读";
+  try{renderSentimentGauge();}catch(e){}   /* 情绪温度计随本tab刷新（涨跌解读统计已并入） */
   var st=document.getElementById("limitStats"), zt=document.getElementById("limitZtTable"), dt=document.getElementById("limitDtTable");
   if(!zt)return;
   zt.innerHTML='<div style="color:var(--text-faint);padding:20px">正在读取 data.json …</div>';
@@ -7651,8 +7929,50 @@ function renderStats(){
     const _active=Object.keys(REGIME_ROUTES[_rg.state]||{}).join("/")||"全部冻结";
     _hRg.textContent="市场状态 "+(REGIME_TEXT[_rg.state]||_rg.state)+" · 放行"+_active+(_rg.adx!=null?" · ADX"+_rg.adx:"");
   }
+  /* 情绪阶段 chip（新增模块规格_情绪与反包）：阶段 + 仓位系数 + 关键指标，ebb/ice 红色告警 */
+  const _hSt=$("heroSentiment");
+  if(_hSt){
+    const s=window.__sentiment;
+    if(s&&s.ok&&s.stage!=="unknown"){
+      const m=s.metrics||{};
+      const st=SENTIMENT_STYLE[s.stage]||SENTIMENT_STYLE.unknown;
+      _hSt.textContent="情绪 "+st[2]+(SENTIMENT_STAGE_TEXT[s.stage]||s.stage)+" · 仓位×"+sentimentPosFactor(s.stage)+" · 涨停"+m.zt_count+"家/最高"+m.max_board+"板";
+      _hSt.style.color=(s.stage==="ebb"||s.stage==="ice")?"#ef4444":st[0];
+      _hSt.title="赚钱效应"+(m.profit_effect!=null?m.profit_effect+"%":"未知")+" · 炸板率"+m.boom_rate+"% · 首板晋级"+(m.promo_1to2!=null?m.promo_1to2+"%":"未知")+"（"+m.promo_basis+"）";
+    }else{
+      _hSt.textContent="情绪 ❔未知（数据缺失不拦截交易）";
+      _hSt.style.color="#6b7280";
+    }
+  }
   updateSnapCountUI();
+  try{renderTodayDecisionCard();}catch(e){}
 }
+/* 今日决策卡（新增模块规格_情绪与反包 · 面板改造2）：
+   情绪阶段 + 连板仓位上限 + 市场状态 + 数据态 + 反包规则，开仓前先看这张卡 */
+function renderTodayDecisionCard(){
+  const box=$("todayDecisionCard");if(!box)return;
+  const s=window.__sentiment||{stage:"unknown"};
+  const stage=s.ok?s.stage:"unknown";
+  const st=SENTIMENT_STYLE[stage]||SENTIMENT_STYLE.unknown;
+  const cap=SENTIMENT_LIMIT_CAP[stage]!=null?SENTIMENT_LIMIT_CAP[stage]:0.25;
+  const rg=getRegimeState();
+  const ds=isTradeTime(new Date())?dataState():"OK";
+  const card=(label,val,color,title)=>`<div style="flex:1;min-width:130px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:8px 12px" title="${title||""}">
+    <div style="font-size:11px;color:var(--text-faint)">${label}</div>
+    <div style="font-size:15px;font-weight:700;color:${color||"var(--text)"}">${val}</div></div>`;
+  const stageColor=(stage==="ebb"||stage==="ice")?"#ef4444":st[0];
+  const capTxt=cap<=0?"禁开新仓":(cap*100).toFixed(0)+"%";
+  const capColor=cap<=0?"#ef4444":(cap<=0.15?"#f59e0b":"var(--up)");
+  const revTxt=(stage==="ebb"||stage==="climax")?"禁止":"≤15%试仓";
+  const revColor=(stage==="ebb"||stage==="climax")?"#ef4444":"var(--text)";
+  box.innerHTML=card("情绪阶段",st[2]+(SENTIMENT_STAGE_TEXT[stage]||stage),stageColor,
+      "涨停池六指标判定 · 退潮/冰点禁开仓 · 高潮半仓 · 数据缺失不拦截")
+    +card("连板仓位上限",capTxt,capColor,"该情绪阶段下的单笔仓位系数上限")
+    +card("市场状态",(REGIME_TEXT[rg.state]||rg.state)+" · 放行"+(Object.keys(REGIME_ROUTES[rg.state]||{}).join("/")||"全冻"),"var(--text)","ADX+均线判定，2日防抖切换")
+    +card("反包试仓",revTxt,revColor,"七项检查全过才成立；高潮/退潮期禁止反包")
+    +card("数据状态",(DATA_STATE_TEXT[ds]||ds),ds==="OK"?"var(--up)":"#ef4444","OK=允许开仓 · STALE=只读 · MISSING=全冻结");
+}
+/* 渲染入口补调用：renderStats 末尾刷新决策卡（情绪/仓位系数随数据刷新） */
 
 function renderRank(){
   /* 渲染7大自动化核心模块卡片 */
@@ -8210,7 +8530,7 @@ function renderPool(){
     _old.forEach((tr,code)=>{if(_order.indexOf(code)<0&&tr.parentNode)tr.parentNode.removeChild(tr);});
     /* 展开/收起按钮行：独立管理，不卷入数据行 diff */
     let _tgl=pt.querySelector('tr[data-role="pool-toggle"]');
-    const _tglHtml=`<tr data-role="pool-toggle"><td colspan="17" style="text-align:center;padding:10px;border:none">
+    const _tglHtml=`<tr data-role="pool-toggle"><td colspan="18" style="text-align:center;padding:10px;border:none">
       <button onclick="togglePoolExpand()" style="padding:5px 18px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,.12);color:#3b82f6;cursor:pointer">${window.poolExpandAll?"▲ 收起（仅看评分前 12）":"▼ 展开全部 "+allStocks.length+" 只"}</button>
       <span style="margin-left:10px;font-size:11px;color:var(--text-faint)">按综合评分排序 · 已显示 ${_showList.length} / ${allStocks.length}</span>
     </td></tr>`;
@@ -8244,8 +8564,145 @@ function poolRowHtml(r,holdSec){
     `<td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>`,
     `<td><span class="${cls}" style="font-weight:600">${conc}</span></td>`,
     `<td style="color:${compScore>=65?"var(--up)":compScore>=55?"#ffd966":"var(--text-dim)"};font-weight:600;font-size:12px">${compScore>=65?"策略确认":compScore>=55?"可关注":"观察"}</td>`,
-    `<td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>`
+    `<td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>`,
+    `<td><span id="rev_${safeCode(st.code)}" class="rev-badge" onclick="event.stopPropagation();reversalPoolCheck('${safeCode(st.code)}','${poolFullCode(st.code)}','${escHtml(String(st.sector||""))}')" title="点击跑反包七项检查（拉分时+板块+大盘，约2秒）· 全过才成立，仓位≤15% · 高潮/退潮期禁止">检测</span></td>`
   ];
+}
+/* ---------- ⑨ 候选池「反包检测」列（面板改造4 · 新增模块规格_情绪与反包） ----------
+   七项检查中 ④板块扩散期 ⑤拉升放量 需要板块数据与个股分时，全池 12 只一起拉分时不现实
+   （12 个分时请求 + 多数根本不是反包形态）→ 点击式检测：点一下拉该股分时 + 日K（前收），
+   配 data.json 板块数据（sector_limit_count/rank）+ 大盘涨跌 + 情绪阶段，就地跑 detectReversal。
+   验收4：任一数据源缺失 → 该项记 null（未知），绝不用默认值糊弄；
+   结果缓存 __revResults，再点一次展开/收起七项明细行。 */
+const _revBusy={};
+async function loadThemeSectors(){
+  if(window.__themeSectors!==undefined)return window.__themeSectors;
+  try{
+    const r=await fetch("./data.json?"+Date.now());
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    const themes=(j.theme_radar&&j.theme_radar.themes)||[];
+    window.__themeSectors={themes,total:themes.length};
+  }catch(e){window.__themeSectors=null;}
+  return window.__themeSectors;
+}
+function _revTodayStr(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+async function reversalPoolCheck(code,txCode,sector){
+  if(_revBusy[code])return;
+  const badge=document.getElementById("rev_"+code);
+  if(window.__revResults&&window.__revResults[code]){toggleRevDetail(code);return;}
+  _revBusy[code]=1;
+  if(badge)badge.innerHTML='<span style="color:var(--text-faint)">⏳</span>';
+  try{
+    const [min,days,secs]=await Promise.all([txMinute(txCode),txDay(txCode,5),loadThemeSectors()]);
+    if(!min||min.length<10)throw new Error("分时数据不足（"+((min||[]).length)+"根）");
+    /* 前收：日K最后一根若是今日（未收盘）则取前一根收盘，否则取最后一根收盘 */
+    let prevClose=null;
+    if(days&&days.length>=2){
+      const last=days[days.length-1];
+      prevClose=(last.date===_revTodayStr()?days[days.length-2].close:last.close);
+    }
+    const m=computeReversalMetrics(min,prevClose,sector,secs);
+    const market_chg=(simData.index&&simData.index.shChg!=null)?simData.index.shChg:null;
+    const stage=(window.__sentiment&&window.__sentiment.stage)||"unknown";
+    const res=detectReversal({amplitude:m.amplitude,close_vs_high:m.close_vs_high,low_before_1300:m.low_before_1300,
+      sector:m.sector,rally_vol_ratio:m.rally_vol_ratio,market_chg,close_vs_avg:m.close_vs_avg,stage});
+    res.values={amplitude:m.amplitude,close_vs_high:m.close_vs_high,lowTime:m.lowTime,rally_vol_ratio:m.rally_vol_ratio,
+      market_chg,close_vs_avg:m.close_vs_avg,avgPrice:m.avgPrice,
+      sector_name:m.sector?(String(sector||"")||"?"):null,limit_count:m.sector?m.sector.limit_count:null,
+      rank:m.sector?m.sector.rank:null,total:m.sector?m.sector.total:null};
+    window.__revResults=window.__revResults||{};
+    window.__revResults[code]=res;
+    renderRevBadge(code,res);
+    toggleRevDetail(code,true);
+  }catch(e){
+    if(badge)badge.innerHTML='<span style="color:#ef4444;font-weight:700" title="'+escHtml(e.message||"检测失败")+'">失败</span>';
+  }
+  _revBusy[code]=0;
+}
+/* 反包指标纯函数（供单测）：分时数组 + 前收 + 板块串 + 题材雷达 → detectReversal 入参。
+   验收4：任何一环数据缺失 → 对应字段 null（未知），绝不用默认值冒充。 */
+function computeReversalMetrics(min,prevClose,sector,secs){
+  if(!min||min.length<10)throw new Error("分时数据不足");
+  const prices=min.map(m=>m.price),vols=min.map(m=>m.vol);
+  const high=Math.max.apply(null,prices),low=Math.min.apply(null,prices);
+  const close=prices[prices.length-1];
+  const amplitude=prevClose&&prevClose>0?+((high-low)/prevClose*100).toFixed(2):null;
+  const close_vs_high=high>0?+(close/high).toFixed(4):null;
+  /* 最低点出现时刻：13:00 前为真（time 形如 "0930"/"09:30"） */
+  const lowIdx=prices.indexOf(low);
+  const lowTime=String(min[lowIdx].time||"").replace(":","");
+  const low_before_1300=/^\d{3,4}$/.test(lowTime)?(parseInt(lowTime.slice(0,lowTime.length-2),10)*60+parseInt(lowTime.slice(-2),10))<13*60:null;
+  /* 拉升段放量：自日内低点至收盘的均量 / 低点之前的均量 */
+  let preVol=0,preN=0,rallyVol=0;
+  for(let i=0;i<min.length;i++){if(i<lowIdx){preVol+=vols[i];preN++;}else rallyVol+=vols[i];}
+  const rallyN=min.length-lowIdx;
+  const rally_vol_ratio=(preN>0&&preVol>0&&rallyN>0)?+((rallyVol/rallyN)/(preVol/preN)).toFixed(2):null;
+  /* 均价=分时成交量加权 */
+  let pv=0,vv=0;min.forEach(m=>{pv+=m.price*m.vol;vv+=m.vol;});
+  const avgPrice=vv>0?pv/vv:null;
+  const close_vs_avg=avgPrice!=null?close>avgPrice:null;
+  /* 板块扩散期：data.json 题材雷达匹配该股板块（涨停≥3家且排名前50%） */
+  let sec=null;
+  const s=String(sector||"");
+  if(secs&&secs.themes&&secs.themes.length&&s){
+    const hit=secs.themes.find(t=>t.name===s)||secs.themes.find(t=>s.indexOf(t.name)>=0||t.name.indexOf(s)>=0)||null;
+    if(hit)sec={limit_count:hit.sector_limit_count,rank:hit.sector_rank,total:secs.total};
+  }
+  return {amplitude,close_vs_high,low_before_1300,lowTime,rally_vol_ratio,close_vs_avg,avgPrice,sector:sec};
+}
+function renderRevBadge(code,res){
+  const badge=document.getElementById("rev_"+code);
+  if(!badge)return;
+  if(res.blocked){
+    badge.innerHTML='<span style="color:#ef4444;font-weight:700">禁止</span>';
+    badge.title="情绪阶段="+((window.__sentiment&&window.__sentiment.stage)||"unknown")+"："+res.blocked_reason+"（再点查看明细）";
+  }else if(res.ok){
+    badge.innerHTML='<span style="color:#22c55e;font-weight:700">✓7/7</span>';
+    badge.title="七项全过 → 可试仓 ≤15%（再点查看明细）";
+  }else{
+    const c=res.passed>=5?"#f59e0b":"var(--text-dim)";
+    badge.innerHTML='<span style="color:'+c+';font-weight:600">'+res.passed+'过'+(res.failed?'/挂'+res.failed:"")+(res.unknown?'/未'+res.unknown:"")+'</span>';
+    badge.title=(res.failed?res.failed+"项未过："+(res.unknown?res.unknown+"项数据缺失":"") :res.unknown+"项数据缺失")+" → 不成立（再点查看明细）";
+  }
+}
+function toggleRevDetail(code,forceOpen){
+  const tr=document.querySelector('tr[data-code="'+code+'"]');
+  if(!tr)return;
+  const old=document.getElementById("revDetail_"+code);
+  if(old){old.parentNode.removeChild(old);if(!forceOpen)return;}
+  if(old&&!forceOpen)return;
+  const res=window.__revResults&&window.__revResults[code];
+  if(!res)return;
+  const v=res.values||{};
+  const rowVals=[v.amplitude,v.close_vs_high,v.lowTime,v.limit_count,v.rally_vol_ratio,v.market_chg,v.avgPrice];
+  const items=REVERSAL_CHECKS.map((t,i)=>{
+    const st=res.checks[i];
+    const col=st===null?"#6b7280":st?"#22c55e":"#ef4444";
+    const mark=st===null?"？":st?"✓":"✗";
+    const val=rowVals[i];
+    const valTxt=val==null?"无数据":(i===1?((val*100).toFixed(1)+"%"):(i===2?val:(i===5?(val>0?"+"+val+"%":val+"%"):val)));
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text-dim)">'
+      +'<b style="color:'+col+'">'+mark+'</b>'+escHtml(t)
+      +(val!=null?'<span style="color:var(--text-faint)">'+escHtml(String(valTxt))+'</span>':'')+'</span>';
+  }).join("");
+  const verdict=res.blocked
+    ?'<b style="color:#ef4444">禁止反包</b> · '+escHtml(res.blocked_reason)
+    :(res.ok?'<b style="color:#22c55e">7/7 全过 → 可试仓 ≤15%</b>'
+      :'<b style="color:var(--text-dim)">'+res.passed+'过'+(res.failed?"/挂"+res.failed:"")+(res.unknown?"/数据缺失"+res.unknown:"")+' → 不成立</b>');
+  const sectorTxt=v.sector_name?('板块 '+escHtml(v.sector_name)+'（涨停'+v.limit_count+'家 · 排名'+v.rank+'/'+v.total+'）'):'板块未匹配到题材雷达（data.json）';
+  const html='<td colspan="18" style="background:rgba(255,255,255,.02);padding:8px 14px">'
+    +'<div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">🔄 反包七项检查 · '+verdict+'</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+items+'</div>'
+    +'<div style="font-size:11px;color:var(--text-faint)">'+sectorTxt+' · 大盘 '+(v.market_chg==null?"无数据":(v.market_chg>0?"+"+v.market_chg+"%":v.market_chg+"%"))+' · 情绪阶段 '+escHtml((window.__sentiment&&window.__sentiment.stage)||"unknown")+' · 数据缺口记「？」不计过，绝不用默认值冒充</div>'
+    +'</td>';
+  const det=document.createElement("tr");
+  det.id="revDetail_"+code;
+  det.innerHTML=html;
+  tr.parentNode.insertBefore(det,tr.nextSibling);
 }
 /* td 级 diff：逐单元格比对，只重写真变的单元格——价格每 tick 只变 2-3 个格，
    不再整行 17 个 td 全部重建（旧实现整表重建 + 本方案初版整行替换都会造成节点风暴） */
@@ -10407,7 +10864,11 @@ window.addEventListener("DOMContentLoaded",()=>{
   try{updatePoolSrcBadge();}catch(e){}
   try{updateSnapCountUI();}catch(e){}
   try{updateRegime();}catch(e){}
-  log("info","Orion-X 数据层已接管：数据三态门禁（OK/STALE/MISSING）· regime角色路由（ADX+均线，2日防抖）· 单笔≥1万门槛 · 决策快照留档（可导出JSONL）· 事件日志落盘");
+  /* 情绪梯队数据装载（新增模块规格）：data.json → 六指标 + 五阶段；
+     5分钟刷新一次（data.json 盘后更新，盘中变动慢，无需每 tick 拉） */
+  loadSentiment().then(()=>{try{renderStats();renderTodayDecisionCard();}catch(e){}});
+  setInterval(()=>{loadSentiment().then(()=>{try{renderStats();renderTodayDecisionCard();}catch(e){}});},5*60*1000);
+  log("info","Orion-X 数据层已接管：数据三态门禁（OK/STALE/MISSING）· regime角色路由（ADX+均线，2日防抖）· 单笔≥1万门槛 · 决策快照留档（可导出JSONL）· 事件日志落盘 · 情绪梯队门禁（ebb退潮/ice冰点禁开仓·climax高潮半仓）");
   /* 严格按照真实情况交易：强制关闭"跳过休市"，按 A 股真实交易时段（工作日 9:30-11:30 / 13:00-15:00）运行 */
   if(localStorage.getItem("forceTrade")==="1"){
     forceTrade=false;localStorage.setItem("forceTrade","0");
@@ -12848,6 +13309,11 @@ function renderTechChip(days){
   const bins=chipDist(days);
   const last=days[days.length-1];
   const lastP=Math.round(last.close/0.5)*0.5;
+  /* 规格模块 estimate_chips：峰识别 + 形态判定 + 获利盘/集中度/多空倾向（替代旧纯近似展示） */
+  const ch=estimateChips(days);
+  const peakLines=ch.ok?ch.peaks.map(p=>({yAxis:p.price.toFixed(2),
+    lineStyle:{color:"#f59e0b",type:"dashed",width:1},
+    label:{formatter:"峰"+p.price.toFixed(2)+"("+p.ratio.toFixed(0)+"%)",color:"#f59e0b",fontSize:9}})):[];
   c.setOption({animation:false,backgroundColor:"transparent",
     title:{text:"筹码分布（近120日量价近似）· 现价"+lastP.toFixed(2),left:8,top:6,textStyle:{color:"#c9d1d9",fontSize:12}},
     grid:{left:70,right:30,top:36,bottom:24},
@@ -12855,10 +13321,18 @@ function renderTechChip(days){
     yAxis:{type:"category",data:bins.map(b=>b.p.toFixed(2)),axisLabel:{color:"#8b949e",fontSize:10},axisLine:{lineStyle:{color:"rgba(255,255,255,.15)"}}},
     tooltip:{trigger:"axis",axisPointer:{type:"shadow"}},
     series:[{type:"bar",data:bins.map(b=>b.w),barWidth:"70%",
-      itemStyle:{color:(p)=>Math.abs(bins[p.dataIndex].p-lastP)<=0.5?"#f2555a":"#6fa8ff"}}]
+      itemStyle:{color:(p)=>Math.abs(bins[p.dataIndex].p-lastP)<=0.5?"#f2555a":"#6fa8ff"},
+      markLine:{silent:true,symbol:"none",data:peakLines}}]
   },true);
   const intent=techIntent(days,null);
-  document.getElementById("techSub").innerHTML=`<div class="tech-card"><h5>筹码结构 · 主力意图</h5>筹码峰=近120日各价位成交占比（红=现价附近筹码密集区，蓝=历史套牢/获利盘）。<br><span class="intent-tag ${intent.cls}">${intent.tag}</span> ${intent.text}</div>`;
+  const chipTxt=ch.ok
+    ? `<div class="tech-card"><h5>筹码结构 · 主力意图</h5>
+       形态 <b style="color:#f59e0b">${ch.shape}</b> · 主峰 <b>${ch.main_peak_price.toFixed(2)}</b>（${ch.peaks.length}峰）· 获利盘 <b style="color:${ch.profit_ratio>=50?"var(--up)":"var(--down)"}">${ch.profit_ratio.toFixed(1)}%</b> · 集中度 <b>${ch.concentration.toFixed(1)}%</b><br>
+       多空倾向：<b>${ch.bias}</b><br>
+       <span style="color:var(--text-faint);font-size:11px">筹码峰=近120日各价位成交占比（红=现价附近筹码密集区，蓝=历史套牢/获利盘；虚线=识别出的筹码峰）。</span><br>
+       <span class="intent-tag ${intent.cls}">${intent.tag}</span> ${intent.text}</div>`
+    : `<div class="tech-card"><h5>筹码结构 · 主力意图</h5>日K数据不足（${escHtml(ch.reason||"未知")}），暂无筹码结构判定。<br><span class="intent-tag ${intent.cls}">${intent.tag}</span> ${intent.text}</div>`;
+  document.getElementById("techSub").innerHTML=chipTxt;
 }
 /* 新浪日K直接fetch（腾讯ifzq被WAF拦截后改用新浪优先） */
 async function sinaDayFetch(code,count){
