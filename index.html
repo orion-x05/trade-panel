@@ -2091,7 +2091,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <div class="panel">
     <div class="panel-head" style="cursor:default">
       <span class="panel-title">🛰 题材雷达 · 周期表</span>
-      <span class="panel-tip">涨停池按板块聚合 · 逻辑 / 梯队 / 阶段（启动→发酵→高潮→退潮）· 盘后自动更新</span>
+      <span class="panel-tip">全市场涨停池按板块聚合 · 逻辑 / 梯队 / 阶段（启动→发酵→高潮→退潮）· 盘后自动更新</span>
     </div>
     <div class="panel-body" style="padding:14px">
       <div id="radarSummary"></div>
@@ -2102,7 +2102,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <div class="panel">
     <div class="panel-head" style="cursor:default">
       <span class="panel-title">🪜 连板梯队</span>
-      <span class="panel-tip">按连板高度分组的涨停股全景 · 高度即情绪刻度</span>
+      <span class="panel-tip">全市场涨停股按连板高度分组 · 高度即情绪刻度 · 层内可滚动看全部</span>
     </div>
     <div class="panel-body" style="padding:14px">
       <div id="radarLadder" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
@@ -2117,7 +2117,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
     <div class="panel-body" style="padding:14px">
       <div id="limitStats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
-      <div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🔒 涨停明细与归因</div>
+      <div style="font-size:13px;font-weight:600;margin:0 0 8px;color:var(--text)">🔒 涨停明细与归因 <span id="limitZtCount" style="font-weight:400;color:var(--text-faint)"></span></div>
       <div id="limitZtTable"></div>
       <div style="font-size:13px;font-weight:600;margin:18px 0 8px;color:var(--text)">💥 跌停统计</div>
       <div id="limitDtTable"></div>
@@ -7035,7 +7035,7 @@ async function renderThemeRadar(){
   var ladN={lb4:(rd.ladder.lb4||[]).length,lb3:(rd.ladder.lb3||[]).length,lb2:(rd.ladder.lb2||[]).length,lb1:(rd.ladder.lb1||[]).length};
   if(sum) sum.innerHTML='<div style="font-size:11px;color:var(--text-faint);margin-bottom:8px">📅 数据截至 '+(rd.asof||'—')+' · 盘中实时变动，盘后自动定稿</div>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    +radarChip("涨停家数",rd.zt_count,"#ef4444")+radarChip("跌停家数",rd.dt_count,"#3b82f6")
+    +radarChip("全市场涨停",rd.zt_tc||rd.zt_count,"#ef4444")+radarChip("跌停",rd.dt_tc||rd.dt_count,"#3b82f6")
     +radarChip("4板+",ladN.lb4,"#f59e0b")+radarChip("3板",ladN.lb3,"#f59e0b")
     +radarChip("2板",ladN.lb2)+radarChip("首板",ladN.lb1)+'</div>';
   box.innerHTML=rd.themes.map(function(t){
@@ -7057,7 +7057,8 @@ async function renderThemeRadar(){
   }).join("");
   if(lad){
     var ladDefs=[["lb4","🔥 4板及以上 · 总龙头",4],["lb3","🚀 3板 · 高标",3],["lb2","📈 2板 · 发酵中段",2],["lb1","🌱 首板 · 扩散/新方向",1]];
-    lad.innerHTML=ladDefs.map(function(d){
+    lad.innerHTML='<div style="grid-column:1/-1;font-size:11px;color:var(--text-faint);margin-bottom:-2px">全市场涨停 <b style="color:#ef4444">'+(rd.zt_tc||rd.zt_count)+'</b> 家 · 首板 '+ladN.lb1+' · 2板 '+ladN.lb2+' · 3板 '+ladN.lb3+' · 4板+ '+ladN.lb4+'（各层内滚动查看全部）</div>'
+      +ladDefs.map(function(d){
       var arr=rd.ladder[d[0]]||[];
       var items=arr.length?arr.map(function(s){
         return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--border-soft)">'
@@ -7065,7 +7066,8 @@ async function renderThemeRadar(){
           +'<span style="color:var(--text-faint)">'+escS(s.hybk)+' · 封单'+s.fund+'亿</span></div>';
       }).join(""):'<div style="font-size:12px;color:var(--text-faint);padding:8px 0">无</div>';
       return '<div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px">'
-        +'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">'+d[1]+' <span style="color:var(--text-faint);font-weight:400">('+arr.length+')</span></div>'+items+'</div>';
+        +'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">'+d[1]+' <span style="color:var(--text-faint);font-weight:400">('+arr.length+')</span></div>'
+        +'<div style="max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch">'+items+'</div></div>';
     }).join("");
   }
 }
@@ -7079,9 +7081,11 @@ async function renderLimitDecoded(){
   catch(e){ zt.innerHTML='<div style="color:var(--down);padding:20px">无法读取 data.json：'+escS(e.message)+'</div>'; return; }
   var d=data.limit_decoded||{};
   if(!d.ok){ zt.innerHTML='<div style="color:var(--text-faint);padding:20px">暂无涨跌解读数据（盘后由引擎自动生成）。</div>'; if(st)st.innerHTML=''; if(dt)dt.innerHTML=''; return; }
+  var zc=document.getElementById("limitZtCount");
+  if(zc)zc.textContent='· 全市场 '+(d.zt_tc||d.zt_count)+' 家';
   if(st) st.innerHTML='<div style="width:100%;font-size:11px;color:var(--text-faint);margin-bottom:2px">📅 数据截至 '+(d.asof||'—')+' · 盘中实时变动，盘后自动定稿 · 表格可左右滑动查看「异动归因」列</div>'
     +radarChip("情绪 "+d.mood_emoji,d.mood,"#f59e0b")
-    +radarChip("涨停",d.zt_count,"#ef4444")+radarChip("跌停",d.dt_count,"#3b82f6")
+    +radarChip("全市场涨停",d.zt_tc||d.zt_count,"#ef4444")+radarChip("跌停",d.dt_tc||d.dt_count,"#3b82f6")
     +radarChip("最高连板",d.max_lb+" 板","#f59e0b")+radarChip("早盘封板(≤9:35)",d.early)
     +radarChip("炸板总数",d.boom,"#ef4444")+radarChip("封单合计",d.seal_sum+" 亿");
   function ztTable(rows){
