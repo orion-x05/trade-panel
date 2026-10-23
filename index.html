@@ -7773,6 +7773,21 @@ function renderPool(){
   /* 候选池默认只显示评分前12行（移动端友好），可展开全部；有搜索词时自动全量 */
   const _searchKw=((document.getElementById('researchSearch')||{}).value||"").trim();
   const _poolLimit=(window.poolExpandAll||_searchKw)?allStocks.length:12;
+  const pt=$("poolBody");
+  /* 滞回带：默认只看前12，但已在榜的行允许掉到第16名、新行需冲进前10名才上榜。
+     价格每 3 秒微动就让第12/13名互换，没有缓冲带时行集合频繁进出——表格宽度跟着变、
+     横向滚动位置被浏览器 clamp 打偏（线上实测每轮少 30-45px），用户体感仍是
+     "刷新滚动太频繁"。缓冲带把这种边缘抖动吸收掉，集合稳定了滚动才稳。 */
+  let _showList=allStocks;
+  if(_poolLimit<allStocks.length){
+    const _prevArr=pt&&pt.__poolOrder?pt.__poolOrder:[];
+    const _prevSet=new Set(_prevArr);
+    /* 只有上轮就是限量态（≤16行）才启用滞回；从展开全部/搜索态切回限量时严格截断，
+       否则 __poolOrder 里存着全量顺序，滞回条件会把第10-16名全放回来（收起变16行） */
+    const _hyst=_prevArr.length<=16;
+    _showList=allStocks.filter((r,i)=>i<10||(_hyst&&i<16&&_prevSet.has(safeCode(r.st.code))));
+    if(_showList.length<_poolLimit)_showList=allStocks.slice(0,_poolLimit);
+  }
   /* 行级 diff + 粘性排序：
      旧实现每 3 秒 tick 都 pt.innerHTML="" 整表重建——表格在 .table-wrap 里横向滚动，
      用户滚到一半看"评分/结论"列时被反复打回开头；且综合评分随价格每秒微动，名次
@@ -7780,8 +7795,7 @@ function renderPool(){
      现在：行按 code 复用；评分名次微调时行序冻结（只更新价格/评分数值文本），
      只有集合成员真变（新上榜/跌出前12）时才移动节点；滚动位置始终保存恢复。
      盘后价格不动时整表零 DOM 操作，完全无感。 */
-  const _showRows=allStocks.slice(0,_poolLimit).map(r=>({code:safeCode(r.st.code),row:r,html:poolRowHtml(r,holdSec)}));
-  const pt=$("poolBody");
+  const _showRows=_showList.map(r=>({code:safeCode(r.st.code),row:r,html:poolRowHtml(r,holdSec)}));
   if(pt){
     const wrap=pt.closest(".table-wrap");
     const _sl=wrap?wrap.scrollLeft:0,_sT=wrap?wrap.scrollTop:0;
@@ -7827,7 +7841,7 @@ function renderPool(){
     let _tgl=pt.querySelector('tr[data-role="pool-toggle"]');
     const _tglHtml=`<tr data-role="pool-toggle"><td colspan="17" style="text-align:center;padding:10px;border:none">
       <button onclick="togglePoolExpand()" style="padding:5px 18px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,.12);color:#3b82f6;cursor:pointer">${window.poolExpandAll?"▲ 收起（仅看评分前 12）":"▼ 展开全部 "+allStocks.length+" 只"}</button>
-      <span style="margin-left:10px;font-size:11px;color:var(--text-faint)">按综合评分排序 · 已显示 ${Math.min(_poolLimit,allStocks.length)} / ${allStocks.length}</span>
+      <span style="margin-left:10px;font-size:11px;color:var(--text-faint)">按综合评分排序 · 已显示 ${_showList.length} / ${allStocks.length}</span>
     </td></tr>`;
     if(allStocks.length>12){
       if(!_tgl){pt.insertAdjacentHTML("beforeend",_tglHtml);}
