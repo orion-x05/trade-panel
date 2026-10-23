@@ -2047,9 +2047,10 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="panel-head">
       <span class="panel-title">候选行情池 · 研究评分</span>
       <span class="panel-tip" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <input type="text" id="researchSearch" placeholder="🔍 输入代码搜索/过滤..." 
+        <input type="text" id="researchSearch" placeholder="🔍 输入代码/名称搜索/过滤..." 
           style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-soft);background:rgba(255,255,255,.05);color:var(--text)"
           oninput="filterResearchTable()">
+        <span id="poolSearchCount" style="color:var(--text-faint)"></span>
         <span id="pickStatus" style="color:var(--text-dim)">待扫描全市场…</span>
         <button onclick="pickFromFullMarket(true)" style="padding:3px 10px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:rgba(16,185,129,.12);color:var(--down);cursor:pointer">🔄 全市场选股</button>
       </span>
@@ -4857,23 +4858,26 @@ function initPanelFolds(){
 }
 /* 研究评分面板股票搜索过滤 */
 function filterResearchTable(){
-  const keyword = document.getElementById('researchSearch').value.trim().toLowerCase();
-  const tbody = document.getElementById('researchBody');
-  if(!tbody)return;
+  const input=document.getElementById('researchSearch');
+  const keyword=(input?input.value:"").trim().toLowerCase();
+  const tbody=document.getElementById('poolBody');
+  const cntEl=document.getElementById('poolSearchCount');
   // 如果输入的是6位股票代码，自动从全市场加载
   if(/^\d{6}$/.test(keyword)){
     searchAndAddStock(keyword);
   }
-  const rows = tbody.querySelectorAll('tr');
-  let visible = 0;
-  rows.forEach(row => {
-    const code = row.children[1]?.textContent?.toLowerCase() || '';
-    const name = row.children[2]?.textContent?.toLowerCase() || '';
-    const show = !keyword || code.includes(keyword) || name.includes(keyword);
-    row.style.display = show ? '' : 'none';
+  if(!tbody)return;
+  const rows=tbody.querySelectorAll('tr[data-code]');
+  let visible=0;
+  rows.forEach(row=>{
+    const code=(row.children[0]?row.children[0].textContent:"").toLowerCase();
+    const name=(row.children[1]?row.children[1].textContent:"").toLowerCase();
+    const show=!keyword||code.indexOf(keyword)>=0||name.indexOf(keyword)>=0;
+    const disp=show?'':'none';
+    if(row.style.display!==disp)row.style.display=disp;  /* 没变就不写，避免每 tick 无谓属性变更 */
     if(show)visible++;
   });
-  document.getElementById('researchSearchCount').textContent = `共 ${visible} 只`;
+  if(cntEl)cntEl.textContent=keyword?`筛选出 ${visible} 只`:"";
 }
 /* 全市场股票动态加载：输入6位代码，自动获取腾讯行情并计算评分，加到研究面板 */
 function searchAndAddStock(code){
@@ -7693,7 +7697,8 @@ function renderPool(){
   /* 防御：pricePool 未初始化（如冷启动 seeds 未跑）时按空池处理，
      不让整函数抛错——函数尾部还挂着六步门禁表格的填充逻辑 */
   if(!simData.pricePool)simData.pricePool={};
-  const pt=$("poolBody");if(pt)pt.innerHTML="";
+  /* 注意：不再在这里清空 poolBody——表格改行级 diff 渲染（见下方），
+     整表清空重建会把用户在表里的滚动位置打回开头 */
   const holdSec=new Set();
   simData.players.forEach(p=>p.holdings.forEach(h=>{const s=simData.pricePool[h.code];if(s)holdSec.add(s.sector);}));
   
@@ -7768,37 +7773,102 @@ function renderPool(){
   /* 候选池默认只显示评分前12行（移动端友好），可展开全部；有搜索词时自动全量 */
   const _searchKw=((document.getElementById('researchSearch')||{}).value||"").trim();
   const _poolLimit=(window.poolExpandAll||_searchKw)?allStocks.length:12;
-  allStocks.slice(0,_poolLimit).forEach(({st,gate,it,compScore,over,mom,chip,conc,cls})=>{
-    pt.insertAdjacentHTML("beforeend",`<tr class="clickable" onclick="showDetail('${safeCode(st.code)}')">
-      <td class="num">${st.code}</td>
-      <td>${escHtml(st.name)}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>
-      <td style="color:var(--text-dim)">${escHtml(st.sector||"—")}${st.industry&&st.industry!==st.sector?'/'+escHtml(st.industry):''}</td>
-      <td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>
-      <td class="r num">${st._ph?'<span style="color:var(--text-faint)" title="实时行情未获取，显示初始参考价">--</span>':(st.price||0).toFixed(2)}</td>
-      <td class="r num ${pctColor(st.chg)}">${st._ph?'<span style="color:var(--text-faint)">--</span>':pct(st.chg)}</td>
-      <td class="r num">${st._ph?'<span style="color:var(--text-faint)">--</span>':(st.vol||0).toFixed(2)}</td>
-      <td>${st._ph?'<span style="color:var(--text-faint);font-size:11px" title="行情未更新">待更新</span>':`<span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span>`}</td>
-      <td class="r num">${(()=>{const w=weeklyKD(st.code);if(!w)return '<span style="color:var(--text-faint)" title="周线KD预载中（约1分钟内自动补齐）">--</span>';const c=w.kd<=-40?'#ff6b35':w.kd<=-20?'#fbbf24':'var(--text-dim)';return `<span style="color:${c};font-weight:${w.turnUp?"700":"400"}">${w.kd.toFixed(1)}${w.turnUp?"↑":""}</span>`;})()}</td>
-      <td class="r num">${(st.rsi6||50).toFixed(1)}</td>
-      <td class="r num">${over}</td>
-      <td class="r num">${mom}</td>
-      <td class="r num">${chip}</td>
-      <td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>
-      <td><span class="${cls}" style="font-weight:600">${conc}</span></td>
-      <td style="color:${compScore>=65?"var(--up)":compScore>=55?"#ffd966":"var(--text-dim)"};font-weight:600;font-size:12px">${compScore>=65?"策略确认":compScore>=55?"可关注":"观察"}</td>
-      <td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>
-    </tr>`);
-  });
-  /* 展开/收起按钮行（池子大于12只时才出现） */
-  if(allStocks.length>12){
-    pt.insertAdjacentHTML("beforeend",`<tr><td colspan="17" style="text-align:center;padding:10px;border:none">
+  /* 行级 diff + 粘性排序：
+     旧实现每 3 秒 tick 都 pt.innerHTML="" 整表重建——表格在 .table-wrap 里横向滚动，
+     用户滚到一半看"评分/结论"列时被反复打回开头；且综合评分随价格每秒微动，名次
+     频繁互换又导致行序乱窜，观感就是"刷新滚动太频繁"。
+     现在：行按 code 复用；评分名次微调时行序冻结（只更新价格/评分数值文本），
+     只有集合成员真变（新上榜/跌出前12）时才移动节点；滚动位置始终保存恢复。
+     盘后价格不动时整表零 DOM 操作，完全无感。 */
+  const _showRows=allStocks.slice(0,_poolLimit).map(r=>({code:safeCode(r.st.code),row:r,html:poolRowHtml(r,holdSec)}));
+  const pt=$("poolBody");
+  if(pt){
+    const wrap=pt.closest(".table-wrap");
+    const _sl=wrap?wrap.scrollLeft:0,_sT=wrap?wrap.scrollTop:0;
+    const _old=new Map();
+    pt.querySelectorAll("tr[data-code]").forEach(tr=>_old.set(tr.getAttribute("data-code"),tr));
+    /* 粘性顺序：以上次的显示顺序为骨架（仍在集合内的保持原位），
+       新上榜的按当前分数插入到第一个分数比它低的行之前——集合成员不变时顺序完全冻结 */
+    const _score=new Map(_showRows.map(r=>[r.code,r.row.compScore]));
+    const _prev=pt.__poolOrder||[];
+    const _order=[];
+    _prev.forEach(c=>{if(_score.has(c))_order.push(c);});
+    _showRows.forEach(r=>{
+      if(_order.indexOf(r.code)>=0)return;
+      let idx=_order.findIndex(c=>_score.get(c)<r.row.compScore);
+      if(idx<0)idx=_order.length;
+      _order.splice(idx,0,r.code);
+    });
+    const _byCode=new Map(_showRows.map(r=>[r.code,r]));
+    const _curOrder=[...pt.querySelectorAll("tr[data-code]")].map(tr=>tr.getAttribute("data-code"));
+    const _sameOrder=_curOrder.length===_order.length&&_curOrder.every((c,i)=>c===_order[i]);
+    if(!_sameOrder){
+      /* 集合成员变了才重排：按粘性顺序装入 fragment 整体插回 */
+      const _frag=document.createDocumentFragment();
+      _order.forEach(code=>{
+        const r=_byCode.get(code);
+        let tr=_old.get(code);
+        if(!tr){tr=document.createElement("tr");tr.className="clickable";tr.setAttribute("data-code",code);tr.onclick=function(){showDetail(code);};_old.set(code,tr);tr.innerHTML=r.html.join("");}
+        else updatePoolRow(tr,r.html);
+        _frag.appendChild(tr);
+      });
+      pt.appendChild(_frag);
+    }else{
+      /* 顺序没变：原地更新内容，不动任何节点位置 */
+      _order.forEach(code=>{
+        const tr=_old.get(code),r=_byCode.get(code);
+        if(tr&&r)updatePoolRow(tr,r.html);
+      });
+    }
+    pt.__poolOrder=_order;
+    /* 消失的行（评分跌出前12 / 池子缩减）清掉 */
+    _old.forEach((tr,code)=>{if(_order.indexOf(code)<0&&tr.parentNode)tr.parentNode.removeChild(tr);});
+    /* 展开/收起按钮行：独立管理，不卷入数据行 diff */
+    let _tgl=pt.querySelector('tr[data-role="pool-toggle"]');
+    const _tglHtml=`<tr data-role="pool-toggle"><td colspan="17" style="text-align:center;padding:10px;border:none">
       <button onclick="togglePoolExpand()" style="padding:5px 18px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:rgba(59,130,246,.12);color:#3b82f6;cursor:pointer">${window.poolExpandAll?"▲ 收起（仅看评分前 12）":"▼ 展开全部 "+allStocks.length+" 只"}</button>
       <span style="margin-left:10px;font-size:11px;color:var(--text-faint)">按综合评分排序 · 已显示 ${Math.min(_poolLimit,allStocks.length)} / ${allStocks.length}</span>
-    </td></tr>`);
+    </td></tr>`;
+    if(allStocks.length>12){
+      if(!_tgl){pt.insertAdjacentHTML("beforeend",_tglHtml);}
+      else if(_tgl.outerHTML!==_tglHtml){_tgl.outerHTML=_tglHtml;}
+    }else if(_tgl&&_tgl.parentNode){_tgl.parentNode.removeChild(_tgl);}
+    if(wrap){wrap.scrollLeft=_sl;wrap.scrollTop=_sT;}
   }
   /* 六步门禁说明表：已抽成独立的 renderSixSteps()（render() 里单独调用），
      不再依赖 renderPool 的选股管线——管线中途抛错时门禁表也曾跟着空白 */
   try{renderSixSteps();}catch(e){}
+}
+/* 候选池单行各单元格 HTML 数组（diff 渲染用：整行串即行的"指纹"，内容没变就不碰 DOM） */
+function poolRowHtml(r,holdSec){
+  const {st,gate,it,compScore,over,mom,chip,conc,cls}=r;
+  return [
+    `<td class="num">${st.code}</td>`,
+    `<td>${escHtml(st.name)}${holdSec.has(st.sector)?' <span class="rel-tag" title="与已持仓板块相关，可优先研究">相关持仓</span>':''}</td>`,
+    `<td style="color:var(--text-dim)">${escHtml(st.sector||"—")}${st.industry&&st.industry!==st.sector?'/'+escHtml(st.industry):''}</td>`,
+    `<td><span class="wx ${wxClass(st.wx)}">${st.wx||"—"}</span></td>`,
+    `<td class="r num">${st._ph?'<span style="color:var(--text-faint)" title="实时行情未获取，显示初始参考价">--</span>':(st.price||0).toFixed(2)}</td>`,
+    `<td class="r num ${pctColor(st.chg)}">${st._ph?'<span style="color:var(--text-faint)">--</span>':pct(st.chg)}</td>`,
+    `<td class="r num">${st._ph?'<span style="color:var(--text-faint)">--</span>':(st.vol||0).toFixed(2)}</td>`,
+    `<td>${st._ph?'<span style="color:var(--text-faint);font-size:11px" title="行情未更新">待更新</span>':`<span class="intent-tag ${it.cls}" style="font-size:11px;padding:0 6px" title="${it.text}">${it.tag}</span>`}</td>`,
+    `<td class="r num">${(()=>{const w=weeklyKD(st.code);if(!w)return '<span style="color:var(--text-faint)" title="周线KD预载中（约1分钟内自动补齐）">--</span>';const c=w.kd<=-40?'#ff6b35':w.kd<=-20?'#fbbf24':'var(--text-dim)';return `<span style="color:${c};font-weight:${w.turnUp?"700":"400"}">${w.kd.toFixed(1)}${w.turnUp?"↑":""}</span>`;})()}</td>`,
+    `<td class="r num">${(st.rsi6||50).toFixed(1)}</td>`,
+    `<td class="r num">${over}</td>`,
+    `<td class="r num">${mom}</td>`,
+    `<td class="r num">${chip}</td>`,
+    `<td class="r num ${compScore>=65?"up":compScore>=55?"":"down"}"><b>${compScore}</b></td>`,
+    `<td><span class="${cls}" style="font-weight:600">${conc}</span></td>`,
+    `<td style="color:${compScore>=65?"var(--up)":compScore>=55?"#ffd966":"var(--text-dim)"};font-weight:600;font-size:12px">${compScore>=65?"策略确认":compScore>=55?"可关注":"观察"}</td>`,
+    `<td><span class="tag ${gate.cls}" style="cursor:pointer" onclick="event.stopPropagation();showDetail('${safeCode(st.code)}')" title="点击查看六道门禁详情">${gate.label}</span></td>`
+  ];
+}
+/* td 级 diff：逐单元格比对，只重写真变的单元格——价格每 tick 只变 2-3 个格，
+   不再整行 17 个 td 全部重建（旧实现整表重建 + 本方案初版整行替换都会造成节点风暴） */
+function updatePoolRow(tr,tds){
+  const cells=tr.children;
+  for(let i=0;i<tds.length&&i<cells.length;i++){
+    if(cells[i].innerHTML!==tds[i])cells[i].innerHTML=tds[i];
+  }
 }
 
 /* 六步门禁说明表（静态规则，独立于任何行情数据，随时可填） */
@@ -15107,21 +15177,44 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   }
   /* —— 移动端表格防溢出：所有表格自动包一层横向滚动容器（幂等 + 动态渲染兜底） —— */
   (function(){
+    function hasScrollX(el){
+      /* 旧版只查 inline style（p.style.overflowX==='auto'），漏掉了 .table-wrap 这类
+         "滚动能力来自 CSS class"的容器——候选池表格因此被双层包裹（.table-wrap 里又包了
+         一层 auto），真正的滚动容器变成中间那层，外层 closest('.table-wrap') 存/恢复的
+         scrollLeft 恒为 0，用户滚到一半的列位照样被打回开头。改用计算样式一并识别。 */
+      try{return getComputedStyle(el).overflowX==='auto';}catch(_){return false;}
+    }
+    function unwrapTables(root){
+      /* 拆掉历史遗留的双层包裹：我们包的 div[data-autowrap]，若其父容器已有横向滚动
+         （.table-wrap），把表格移回父容器、删包裹层，恢复单层结构 */
+      try{
+        (root||document).querySelectorAll('div[data-autowrap]').forEach(function(w){
+          var t=w.querySelector(':scope > table'); if(!t)return;
+          var p=w.parentElement; if(!p)return;
+          if(hasScrollX(p)){
+            p.insertBefore(t,w); w.parentElement.removeChild(w);
+            try{delete t.dataset.wrapped;}catch(_){}
+          }
+        });
+      }catch(_){}
+    }
     function wrapTables(root){
       try{
         (root||document).querySelectorAll('table').forEach(function(t){
           if(t.dataset&&t.dataset.wrapped)return;
           var p=t.parentElement; if(!p)return;
-          if(p.style&&p.style.overflowX==='auto'){try{t.dataset.wrapped='1';}catch(_){}return;}
+          if(hasScrollX(p)){try{t.dataset.wrapped='1';}catch(_){}return;}
           var w=document.createElement('div');
           w.style.overflowX='auto'; w.style.overflowY='hidden';
           w.style.webkitOverflowScrolling='touch'; w.style.maxWidth='100%';
+          try{w.setAttribute('data-autowrap','1');}catch(_){}
           p.insertBefore(w,t); w.appendChild(t);
           try{t.dataset.wrapped='1';}catch(_){}
         });
       }catch(_){}
     }
     window.wrapTables=wrapTables;
+    unwrapTables(document);   /* 先拆历史双层包裹，再走正常包裹流程 */
     wrapTables(document);
     /* 动态渲染的表格（收益排名/研报流/涨停表等）自动补齐 */
     if(window.MutationObserver){
