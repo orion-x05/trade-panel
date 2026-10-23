@@ -453,10 +453,12 @@ def _fetch_pools_one_day(date_str, pagesize):
     zt_raw, out["zt_tc"] = _fetch_pool("https://push2ex.eastmoney.com/getTopicZTPool", "fbt:asc")
     for p in zt_raw:
         fbt = p.get("fbt") or 0
+        lbc = int(p.get("lbc") or 0)
         out["zt"].append({
             "code": p.get("c", ""), "name": p.get("n", ""),
             "zdp": round(float(p.get("zdp") or 0), 2),
-            "lbc": int(p.get("lbc") or 0),                              # 连板数
+            "lbc": lbc,                                               # 连板数
+            "limit_type": "连板" if lbc >= 2 else "首板",              # 涨停类型（情绪梯队模块字段）
             "fund": round(float(p.get("fund") or 0) / 1e8, 2),          # 封单额(亿)
             "hs": round(float(p.get("hs") or 0), 1),                    # 换手率%
             "zbc": int(p.get("zbc") or 0),                              # 炸板次数
@@ -478,14 +480,88 @@ def _fetch_pools_one_day(date_str, pagesize):
     return out
 
 def get_limit_pools(pagesize=80):
-    """【涨跌解读】涨停/跌停池。当天无数据（节假日/盘后未生成）自动向前回退最多5天。"""
+    """【涨跌解读】涨停/跌停池。当天无数据（节假日/盘后未生成）自动向前回退最多5天。
+    返回带 pool_date：数据实际归属的交易日（YYYYMMDD）。
+    关键：周末东财会兜底返回上个交易日的池（tc 非 0），若把周六当归属日，
+    下游「昨日涨停表现」回退一天拿到的还是同一个池（晋级率恒 0、赚钱效应恒 100% 自比）。
+    故周末直接跳过，只认工作日里第一个有数据的日期；节假日东财返回空，自然继续回退。"""
     last = {"ok": False, "zt": [], "dt": []}
     for k in range(6):
         ds = (cn_now() - timedelta(days=k)).strftime("%Y%m%d")
+        d = datetime.strptime(ds, "%Y%m%d")
+        if d.weekday() >= 5:
+            continue  # 周末：东财兜底数据归属上一交易日，不当成池日期
         last = _fetch_pools_one_day(ds, pagesize)
         if last["ok"]:
+            last["pool_date"] = ds
             return last
     return last
+
+def _tx_prefix(code):
+    """A股代码 → 腾讯行情前缀（6→sh，0/3→sz，4/8→bj）"""
+    if code.startswith(("6", "9")):
+        return "sh"
+    if code.startswith(("0", "3", "2")):
+        return "sz"
+    if code.startswith(("4", "8")):
+        return "bj"
+    return "sh"
+
+def build_yesterday_perf(zt_today, pool_date=None):
+    """【情绪梯队数据层】昨日涨停股今日表现 + 真实晋级率。
+    pool_date: 当前涨停池的实际交易日（YYYYMMDD，来自 get_limit_pools 的 pool_date）。
+    回退从 pool_date 的前一天开始——周末/节假日时“昨天”是最近交易日的前一交易日，
+    而不是今天往前一天（那会拿到同一个池自己比自己，晋级率恒 0）。
+    拉昨日涨停池，用腾讯批量报价取今日涨跌幅：
+      rows: [{code,name,yesterday_board_count,today_pct,is_zt_today,lbc_today}]
+      promote: {base_1to2, hit_1to2, base_2to3, hit_2to3, basis}
+        - 首板晋级 = 昨日1板股今日仍涨停且连板≥2；二进三 = 昨日2板股今日涨停且连板≥3
+    验收标准4：任一数据源缺失 → ok=False + reason，前端返回 unknown，不用默认值糊弄。"""
+    out = {"ok": False, "rows": [], "promote": None, "basis": "昨日池实绩", "reason": ""}
+    base = datetime.strptime(pool_date, "%Y%m%d") if pool_date else (cn_now() - timedelta(days=1))
+    prev_zt = None
+    for k in range(1, 8):
+        ds = (base - timedelta(days=k)).strftime("%Y%m%d")
+        d = datetime.strptime(ds, "%Y%m%d")
+        if d.weekday() >= 5:
+            continue  # 周末无交易，跳过（东财对周末日期同样兜底返回上一交易日数据）
+        prev = _fetch_pools_one_day(ds, 100)
+        if prev.get("zt"):
+            prev_zt = prev["zt"]
+            break
+    if not prev_zt:
+        out["reason"] = "昨日涨停池不可得（回退5天均无数据）"
+        return out
+    codes = [s["code"] for s in prev_zt]
+    quotes = {}
+    for i in range(0, len(codes), 50):  # 腾讯批量报价分批，防URL过长
+        batch = codes[i:i + 50]
+        quotes.update(_tx_quotes([_tx_prefix(c) + c for c in batch]))
+    today_map = {s["code"]: s for s in (zt_today or [])}
+    rows, got = [], 0
+    for s in prev_zt:
+        q = quotes.get(s["code"]) or {}
+        pct = q.get("f3")
+        if pct is None:
+            continue  # 报价缺失 → 该行不计入（保持均值干净）
+        got += 1
+        t = today_map.get(s["code"])
+        rows.append({"code": s["code"], "name": s["name"],
+                     "yesterday_board_count": s["lbc"],
+                     "today_pct": round(float(pct), 2),
+                     "is_zt_today": bool(t), "lbc_today": (t or {}).get("lbc", 0)})
+    if got < len(prev_zt) * 0.5:
+        out["reason"] = f"腾讯报价缺失过多（{got}/{len(prev_zt)}）"
+        return out
+    base1 = [s for s in prev_zt if s["lbc"] == 1]
+    base2 = [s for s in prev_zt if s["lbc"] == 2]
+    hit1 = sum(1 for s in base1 if today_map.get(s["code"], {}).get("lbc", 0) >= 2)
+    hit2 = sum(1 for s in base2 if today_map.get(s["code"], {}).get("lbc", 0) >= 3)
+    out.update({"ok": True, "rows": rows,
+                "promote": {"base_1to2": len(base1), "hit_1to2": hit1,
+                            "base_2to3": len(base2), "hit_2to3": hit2},
+                "asof": cn_now().strftime("%Y-%m-%d %H:%M")})
+    return out
 
 def build_theme_radar(zt, dt=None, prev_snap=None, zt_tc=None, dt_tc=None):
     """【题材雷达·周期表】涨停池按行业板块聚合成题材：连板梯队/封单资金/阶段判断。
@@ -497,12 +573,13 @@ def build_theme_radar(zt, dt=None, prev_snap=None, zt_tc=None, dt_tc=None):
     for s in zt:
         name = s["hybk"]
         t = themes.setdefault(name, {"name": name, "n": 0, "max_lb": 0, "lb_sum": 0,
-                                     "seal": 0.0, "boom": 0, "stocks": []})
+                                     "seal": 0.0, "boom": 0, "stocks": [], "_members": []})
         t["n"] += 1
         t["max_lb"] = max(t["max_lb"], s["lbc"])
         t["lb_sum"] += s["lbc"]
         t["seal"] = round(t["seal"] + s["fund"], 2)
         t["boom"] += s["zbc"]
+        t["_members"].append({"zdp": s.get("zdp", 0), "lbc": s["lbc"]})
         t["stocks"].append({"name": s["name"], "code": s["code"], "lbc": s["lbc"], "fund": s["fund"]})
     rows = []
     for t in themes.values():
@@ -520,10 +597,17 @@ def build_theme_radar(zt, dt=None, prev_snap=None, zt_tc=None, dt_tc=None):
             stage, emoji = "退潮", "🌊"
         else:
             stage, emoji = "持续", "▶️"
+        # 板块热度字段（情绪梯队/反包「板块扩散期」判定用）：
+        # sector_pct = 成员股当日涨幅均值（无独立板块指数口径时的诚实近似，前端标注）
+        sector_pct = round(sum(s.get("zdp", 0) for s in t["_members"]) / n, 2) if n else 0
         rows.append({**t, "avg_lb": round(avg_lb, 1), "stage": stage, "emoji": emoji,
                      "p_n": p_n, "delta_n": n - p_n,
+                     "sector_pct": sector_pct, "sector_limit_count": n,
                      "stocks": sorted(t["stocks"], key=lambda x: -x["lbc"])[:6]})
+        rows[-1].pop("_members", None)  # 内部聚合字段不输出
     rows.sort(key=lambda r: (-r["max_lb"], -r["n"], -r["seal"]))
+    for i, r in enumerate(rows):  # 板块排名：按连板高度+家数+封单综合序的位次
+        r["sector_rank"] = i + 1
     ladder = {"lb4": [], "lb3": [], "lb2": [], "lb1": []}
     for s in zt:
         lb = s["lbc"]
@@ -707,7 +791,9 @@ def _tx_quotes(codes):
         text = raw.decode("gbk", "ignore")
         out = {}
         for line in text.split(";"):
-            m = re.match(r'v_(\w+)="(.+)"', line)
+            # 腾讯响应以 ";\n" 分隔：除首行外每行带 \n 前缀，re.match 锚定行首会漏掉
+            # 后续所有代码（旧 bug：批量报价只解析出第一个代码，静默返回残缺数据）。
+            m = re.search(r'v_(\w+)="(.+)"', line)
             if not m:
                 continue
             arr = m.group(2).split("~")
@@ -2524,6 +2610,14 @@ def main():
         decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
         print(f"  📈 涨跌解读：全市场涨停 {decoded['zt_tc']} 家（实拉 {decoded['zt_count']}）· 跌停 {decoded['dt_tc']} 家（实拉 {decoded['dt_count']}）· 最高 {decoded['max_lb']} 连板 · 情绪{decoded['mood']}")
+        # 情绪梯队数据层：昨日涨停今日表现 + 真实晋级率（缺失 → ok=False，前端 unknown）
+        yperf = build_yesterday_perf(zt, pools.get("pool_date"))
+        data["yesterday_perf"] = yperf
+        if yperf.get("ok"):
+            pr = yperf["promote"]
+            print(f"  🌡 情绪梯队数据层：昨日涨停今日均涨 {sum(r['today_pct'] for r in yperf['rows'])/len(yperf['rows']):+.2f}% · 首板晋级 {pr['hit_1to2']}/{pr['base_1to2']} · 二进三 {pr['hit_2to3']}/{pr['base_2to3']}")
+        else:
+            print(f"  🌡 情绪梯队数据层：不可得（{yperf.get('reason')}）→ 前端 unknown")
         reports = get_research_reports(days=7)
         surveys = get_org_surveys(days=3)
         data["research_feed"] = build_research_block(reports, surveys)
