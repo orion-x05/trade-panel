@@ -6966,7 +6966,52 @@ function switchTab(name){
   document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
   document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+name));
   /* 更新头部页面名 */
-  /* ==================== 题材雷达 / 涨跌解读 / 机构研报 ==================== */
+  const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置",psyche:"真实角色心理",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报"};
+  const tp=document.getElementById("topbarPage"); if(tp) tp.textContent=tabNames[name]||"";
+  /* 六部门禁与实时日志仅在运行总览显示 */
+  const showGlobal = (name==="overview");
+  ["panel-six-step","panel-event-log"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display = showGlobal ? "" : "none";
+  });
+  /* 群聊面板从隐藏 tab 切回来时：刷新回到底部按钮态（隐藏期间无布局，状态可能陈旧） */
+  if(name==="airesearch"&&typeof chatUpdateScrollBtn==="function")setTimeout(chatUpdateScrollBtn,50);
+  /* 延迟更久，等tab完全显示后再resize和渲染图表 */
+  setTimeout(()=>{
+    /* 所有已知图表全部resize */
+    [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
+      if(c){try{c.resize();}catch(e){}}
+    });
+    /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0）；cSectorRank/cSectorAmt 为市场深度行业两图（已随面板迁入 research tab） */
+    ["cKline","cIntraday","cVol","cBottom","cGauge","cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
+    if(name==="overview"||name==="rank"||name==="review"||name==="research"){ try{renderSentimentProcess();}catch(e){} }
+    /* 特定tab需要重新渲染 */
+    if(name==="global"){try{renderGlobal();}catch(e){}}
+    if(name==="review"){try{renderReview();}catch(e){}}
+    if(name==="rank"){try{renderRank();renderHoldCards();}catch(e){}}
+    if(name==="hold"){try{renderHold();}catch(e){}}
+    if(name==="overview"){try{renderMarketView();}catch(e){}}
+    if(name==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该tab内 */
+    if(name==="research"){try{renderMarketView();}catch(e){}} /* 市场深度六图已自总览迁入本tab：切换到时初始化（含隐藏期0×0被跳过的兜底） */
+    /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
+       导致 cBottom(综合底部信号)/cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
+    if(name==="airesearch"){
+      /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
+         导致 cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
+      if(!MK_CHARTS["cGauge"]){try{renderFearGreed();}catch(e){console.warn("补渲染恐惧贪婪仪表盘失败",e);}}
+    }
+    /* 修复：底部探测器面板在"个股研究"tab(view-research)，页面加载时该 tab 隐藏，
+       cBottom(综合底部信号)仪表盘拿到 0×0 容器被跳过且不再重试 → 一直空白。
+       这里不认 tab 名，只要该元素已可见且未初始化就补渲染（哪个 tab 含它都能触发）。 */
+    {
+      const cbe=document.getElementById("cBottom");
+      if(cbe&&cbe.offsetWidth>0&&!MK_CHARTS["cBottom"]){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){console.warn("补渲染底部信号仪表盘失败",e);}}
+    }
+    if(name==="settings"){try{fillSettings();}catch(e){}}
+    try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
+  },100);
+}
+
+/* ==================== 题材雷达 / 涨跌解读 / 机构研报 ==================== */
 var STAGE_STYLE={启动:["#3ecf8e","rgba(62,207,142,.14)"],发酵:["#f59e0b","rgba(245,158,11,.14)"],高潮:["#ef4444","rgba(239,68,68,.14)"],退潮:["#3b82f6","rgba(59,130,246,.14)"],持续:["#9ca3af","rgba(156,163,175,.14)"]};
 function stageBadge(t){
   var st=STAGE_STYLE[t.stage]||STAGE_STYLE["持续"];
@@ -7122,50 +7167,6 @@ async function renderInstResearch(){
   }
 }
 
-const tabNames={overview:"运行总览",rank:"实时收益排名",airesearch:"AI研究中心",global:"全球市场",review:"复盘总结",knowledge:"交易知识库",hold:"持仓·手动下单",research:"个股研究·候选池",sim:"策略模拟",settings:"设置",psyche:"真实角色心理",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报"};
-  const tp=document.getElementById("topbarPage"); if(tp) tp.textContent=tabNames[name]||"";
-  /* 六部门禁与实时日志仅在运行总览显示 */
-  const showGlobal = (name==="overview");
-  ["panel-six-step","panel-event-log"].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.style.display = showGlobal ? "" : "none";
-  });
-  /* 群聊面板从隐藏 tab 切回来时：刷新回到底部按钮态（隐藏期间无布局，状态可能陈旧） */
-  if(name==="airesearch"&&typeof chatUpdateScrollBtn==="function")setTimeout(chatUpdateScrollBtn,50);
-  /* 延迟更久，等tab完全显示后再resize和渲染图表 */
-  setTimeout(()=>{
-    /* 所有已知图表全部resize */
-    [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
-      if(c){try{c.resize();}catch(e){}}
-    });
-    /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0）；cSectorRank/cSectorAmt 为市场深度行业两图（已随面板迁入 research tab） */
-    ["cKline","cIntraday","cVol","cBottom","cGauge","cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
-    if(name==="overview"||name==="rank"||name==="review"||name==="research"){ try{renderSentimentProcess();}catch(e){} }
-    /* 特定tab需要重新渲染 */
-    if(name==="global"){try{renderGlobal();}catch(e){}}
-    if(name==="review"){try{renderReview();}catch(e){}}
-    if(name==="rank"){try{renderRank();renderHoldCards();}catch(e){}}
-    if(name==="hold"){try{renderHold();}catch(e){}}
-    if(name==="overview"){try{renderMarketView();}catch(e){}}
-    if(name==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该tab内 */
-    if(name==="research"){try{renderMarketView();}catch(e){}} /* 市场深度六图已自总览迁入本tab：切换到时初始化（含隐藏期0×0被跳过的兜底） */
-    /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
-       导致 cBottom(综合底部信号)/cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
-    if(name==="airesearch"){
-      /* 修复：页面加载时 AI tab 处于隐藏态，mkChart 拿到的容器是 0×0 而被跳过且不再重试，
-         导致 cGauge(恐惧贪婪) 仪表盘一直空白。切到本 tab 且容器可见时补渲染。 */
-      if(!MK_CHARTS["cGauge"]){try{renderFearGreed();}catch(e){console.warn("补渲染恐惧贪婪仪表盘失败",e);}}
-    }
-    /* 修复：底部探测器面板在"个股研究"tab(view-research)，页面加载时该 tab 隐藏，
-       cBottom(综合底部信号)仪表盘拿到 0×0 容器被跳过且不再重试 → 一直空白。
-       这里不认 tab 名，只要该元素已可见且未初始化就补渲染（哪个 tab 含它都能触发）。 */
-    {
-      const cbe=document.getElementById("cBottom");
-      if(cbe&&cbe.offsetWidth>0&&!MK_CHARTS["cBottom"]){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){console.warn("补渲染底部信号仪表盘失败",e);}}
-    }
-    if(name==="settings"){try{fillSettings();}catch(e){}}
-    try{render();}catch(e){} /* 通用兜底：所有面板数据互通刷新 */
-  },100);
-}
 document.getElementById("tabNav").addEventListener("click",e=>{
   const btn=e.target.closest(".tab");
   if(btn){ switchTab(btn.dataset.tab); if(window.innerWidth<=768) toggleSidenav(false); }
