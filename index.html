@@ -15093,7 +15093,7 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
     if(_was)loadDashboardSnapshot();
   }
   /* —— 键盘导航：1-9 切 tab / ←→ 切换 / Esc 关闭弹层 —— */
-  var NAV=['overview','rank','airesearch','global','review','knowledge','research','psyche','sim','settings'];
+  var NAV=['overview','rank','airesearch','global','themeradar','limitdecoded','instresearch','review','knowledge','research','psyche','sim','settings'];
   function navIdx(){var a=document.querySelector('.tab.active');if(!a||!a.dataset.tab)return 0;var i=NAV.indexOf(a.dataset.tab);return i<0?0:i;}
   window.addEventListener('keydown',function(e){
     var tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable))return;
