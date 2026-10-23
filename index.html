@@ -15092,6 +15092,41 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
       .observe(ov,{attributes:true,attributeFilter:['class']});
     if(_was)loadDashboardSnapshot();
   }
+  /* —— 移动端表格防溢出：所有表格自动包一层横向滚动容器（幂等 + 动态渲染兜底） —— */
+  (function(){
+    function wrapTables(root){
+      try{
+        (root||document).querySelectorAll('table').forEach(function(t){
+          if(t.dataset&&t.dataset.wrapped)return;
+          var p=t.parentElement; if(!p)return;
+          if(p.style&&p.style.overflowX==='auto'){try{t.dataset.wrapped='1';}catch(_){}return;}
+          var w=document.createElement('div');
+          w.style.overflowX='auto'; w.style.overflowY='hidden';
+          w.style.webkitOverflowScrolling='touch'; w.style.maxWidth='100%';
+          p.insertBefore(w,t); w.appendChild(t);
+          try{t.dataset.wrapped='1';}catch(_){}
+        });
+      }catch(_){}
+    }
+    window.wrapTables=wrapTables;
+    wrapTables(document);
+    /* 动态渲染的表格（收益排名/研报流/涨停表等）自动补齐 */
+    if(window.MutationObserver){
+      var mo=new MutationObserver(function(muts){
+        var need=false;
+        for(var i=0;i<muts.length;i++){
+          var ns=muts[i].addedNodes; if(!ns)continue;
+          for(var j=0;j<ns.length;j++){
+            var n=ns[j];
+            if(n.nodeType===1&&(n.tagName==='TABLE'||(n.querySelector&&n.querySelector('table')))){need=true;break;}
+          }
+          if(need)break;
+        }
+        if(need)wrapTables(document);
+      });
+      mo.observe(document.body,{childList:true,subtree:true});
+    }
+  })();
   /* —— 键盘导航：1-9 切 tab / ←→ 切换 / Esc 关闭弹层 —— */
   var NAV=['overview','rank','airesearch','global','themeradar','limitdecoded','instresearch','review','knowledge','research','psyche','sim','settings'];
   function navIdx(){var a=document.querySelector('.tab.active');if(!a||!a.dataset.tab)return 0;var i=NAV.indexOf(a.dataset.tab);return i<0?0:i;}
