@@ -513,7 +513,8 @@ def build_theme_radar(zt, dt=None, prev_snap=None):
         ladder[key].append({"name": s["name"], "code": s["code"], "lbc": lb,
                             "hybk": s["hybk"], "fund": s["fund"]})
     return {"ok": bool(rows), "themes": rows[:14], "ladder": ladder,
-            "zt_count": len(zt), "dt_count": len(dt or [])}
+            "zt_count": len(zt), "dt_count": len(dt or []),
+            "asof": cn_now().strftime("%Y-%m-%d %H:%M")}
 
 def _limit_decode_text(s):
     """单只涨停股异动归因（模板化，基于连板/封板时间/炸板/封单/换手）"""
@@ -561,7 +562,8 @@ def build_limit_decoded(zt, dt):
         mood, mood_emoji = "低迷", "🧊"
     return {"ok": bool(zt or dt), "zt_rows": zt_rows[:80], "dt_rows": dt_rows[:30],
             "zt_count": n_zt, "dt_count": n_dt, "boom": boom, "max_lb": max_lb,
-            "early": early, "seal_sum": seal_sum, "mood": mood, "mood_emoji": mood_emoji}
+            "early": early, "seal_sum": seal_sum, "mood": mood, "mood_emoji": mood_emoji,
+            "asof": cn_now().strftime("%Y-%m-%d %H:%M")}
 
 def get_research_reports(days=7, pagesize=60):
     """【机构研报】东财研报中心个股研报流（标题/机构/评级/目标价/预测PE）"""
@@ -621,7 +623,8 @@ def build_research_block(reports, surveys):
     cons_rows = [c for c in cons.values() if len(c["orgs"]) >= 2]
     cons_rows.sort(key=lambda c: (-len(c["orgs"]), -c["n"]))
     return {"ok": bool(reports or surveys), "reports": reports[:40],
-            "consensus": cons_rows[:12], "surveys": surveys[:25]}
+            "consensus": cons_rows[:12], "surveys": surveys[:25],
+            "asof": cn_now().strftime("%Y-%m-%d %H:%M")}
 
 def get_index_kline(index_code="sh000001", count=60):
     """【大盘K线走势】抓取指数日K（开收高低），用于判断趋势/形态，不只看收盘"""
