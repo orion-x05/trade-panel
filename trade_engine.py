@@ -420,43 +420,60 @@ def _em_json(url, params=None, timeout=15):
         return None
 
 def _fetch_pools_one_day(date_str, pagesize):
-    """抓某一天涨停/跌停池（date_str=YYYYMMDD）"""
+    """抓某一天涨停/跌停池（date_str=YYYYMMDD）。
+    翻页拉全市场：接口单页最多 pagesize 条，按返回的 tc(全市场总数)逐页补齐，
+    避免百股涨停的活跃日只拿到第一页（旧版 pagesize=80 单页，82家就会被砍2只）。"""
     out = {"ok": False, "date": date_str, "zt": [], "dt": [], "zt_tc": 0, "dt_tc": 0}
-    j = _em_json("https://push2ex.eastmoney.com/getTopicZTPool", params={
-        "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
-        "Pageindex": 0, "pagesize": pagesize, "sort": "fbt:asc", "date": date_str})
-    if j and j.get("data"):
-        d = j["data"]
-        out["date"] = str(d.get("qdate", date_str))
-        out["zt_tc"] = int(d.get("tc") or 0)
-        for p in d.get("pool", []) or []:
-            fbt = p.get("fbt") or 0
-            out["zt"].append({
-                "code": p.get("c", ""), "name": p.get("n", ""),
-                "zdp": round(float(p.get("zdp") or 0), 2),
-                "lbc": int(p.get("lbc") or 0),                              # 连板数
-                "fund": round(float(p.get("fund") or 0) / 1e8, 2),          # 封单额(亿)
-                "hs": round(float(p.get("hs") or 0), 1),                    # 换手率%
-                "zbc": int(p.get("zbc") or 0),                              # 炸板次数
-                "hybk": p.get("hybk") or "其他",
-                "fbt": "%02d:%02d" % (fbt // 10000, (fbt // 100) % 100) if fbt else "--",
-                "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),          # 流通市值(亿)
-            })
-    j2 = _em_json("https://push2ex.eastmoney.com/getTopicDTPool", params={
-        "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
-        "Pageindex": 0, "pagesize": pagesize, "sort": "fund:asc", "date": date_str})
-    if j2 and j2.get("data"):
-        d2 = j2["data"]
-        out["dt_tc"] = int(d2.get("tc") or 0)
-        for p in d2.get("pool", []) or []:
-            out["dt"].append({
-                "code": p.get("c", ""), "name": p.get("n", ""),
-                "zdp": round(float(p.get("zdp") or 0), 2),
-                "days": int(p.get("days") or 0),                            # 连续跌停天数
-                "hs": round(float(p.get("hs") or 0), 1),
-                "hybk": p.get("hybk") or "其他",
-                "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),
-            })
+
+    def _fetch_pool(url, sort, max_pages=25):
+        """翻页拉全某个池子，返回 (原始行列表, tc全市场总数)。按代码去重防翻页重叠。"""
+        rows, seen, tc = [], set(), 0
+        for page in range(max_pages):
+            j = _em_json(url, params={
+                "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
+                "Pageindex": page, "pagesize": pagesize, "sort": sort, "date": date_str})
+            if not (j and j.get("data")):
+                break
+            d = j["data"]
+            tc = int(d.get("tc") or 0)
+            pool = d.get("pool") or []
+            fresh = 0
+            for p in pool:
+                code = p.get("c", "")
+                if code and code in seen:
+                    continue
+                seen.add(code)
+                rows.append(p)
+                fresh += 1
+            # 拉满 tc、或本页无新增/空页 → 收工
+            if not pool or fresh == 0 or (tc and len(rows) >= tc):
+                break
+        return rows, tc
+
+    zt_raw, out["zt_tc"] = _fetch_pool("https://push2ex.eastmoney.com/getTopicZTPool", "fbt:asc")
+    for p in zt_raw:
+        fbt = p.get("fbt") or 0
+        out["zt"].append({
+            "code": p.get("c", ""), "name": p.get("n", ""),
+            "zdp": round(float(p.get("zdp") or 0), 2),
+            "lbc": int(p.get("lbc") or 0),                              # 连板数
+            "fund": round(float(p.get("fund") or 0) / 1e8, 2),          # 封单额(亿)
+            "hs": round(float(p.get("hs") or 0), 1),                    # 换手率%
+            "zbc": int(p.get("zbc") or 0),                              # 炸板次数
+            "hybk": p.get("hybk") or "其他",
+            "fbt": "%02d:%02d" % (fbt // 10000, (fbt // 100) % 100) if fbt else "--",
+            "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),          # 流通市值(亿)
+        })
+    dt_raw, out["dt_tc"] = _fetch_pool("https://push2ex.eastmoney.com/getTopicDTPool", "fund:asc")
+    for p in dt_raw:
+        out["dt"].append({
+            "code": p.get("c", ""), "name": p.get("n", ""),
+            "zdp": round(float(p.get("zdp") or 0), 2),
+            "days": int(p.get("days") or 0),                            # 连续跌停天数
+            "hs": round(float(p.get("hs") or 0), 1),
+            "hybk": p.get("hybk") or "其他",
+            "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),
+        })
     out["ok"] = bool(out["zt"] or out["dt"])
     return out
 
@@ -470,10 +487,11 @@ def get_limit_pools(pagesize=80):
             return last
     return last
 
-def build_theme_radar(zt, dt=None, prev_snap=None):
-    """【题材雷达·周期表】涨停池按行业板块聚合成题材：连板梯队/封板资金/阶段判断。
+def build_theme_radar(zt, dt=None, prev_snap=None, zt_tc=None, dt_tc=None):
+    """【题材雷达·周期表】涨停池按行业板块聚合成题材：连板梯队/封单资金/阶段判断。
     stage: 启动🌱(新出现) 发酵🚀(家数/高度升) 高潮🔥(高度3+或家数6+) 退潮🌊(家数/高度降) 持续▶️
     prev_snap: data['theme_history'] 里最近一个交易日的 {题材: {n, max_lb}}，用于环比定阶段。
+    zt_tc/dt_tc: 接口返回的全市场涨停/跌停总数（tc），用于面板展示与完整性核对。
     """
     themes = {}
     for s in zt:
@@ -514,6 +532,7 @@ def build_theme_radar(zt, dt=None, prev_snap=None):
                             "hybk": s["hybk"], "fund": s["fund"]})
     return {"ok": bool(rows), "themes": rows[:14], "ladder": ladder,
             "zt_count": len(zt), "dt_count": len(dt or []),
+            "zt_tc": int(zt_tc or len(zt)), "dt_tc": int(dt_tc or len(dt or [])),
             "asof": cn_now().strftime("%Y-%m-%d %H:%M")}
 
 def _limit_decode_text(s):
@@ -539,8 +558,8 @@ def _limit_decode_text(s):
         bits.append(f"换手率{s['hs']}%，筹码剧烈交换")
     return "；".join(bits) + "。"
 
-def build_limit_decoded(zt, dt):
-    """【涨跌解读】涨停明细+归因、统计摘要、跌停统计"""
+def build_limit_decoded(zt, dt, zt_tc=None, dt_tc=None):
+    """【涨跌解读】涨停明细+归因、统计摘要、跌停统计。zt/dt 为全市场涨停/跌停池（翻页拉全）。"""
     n_zt, n_dt = len(zt), len(dt)
     boom = sum(s["zbc"] for s in zt)
     max_lb = max([s["lbc"] for s in zt], default=0)
@@ -560,8 +579,10 @@ def build_limit_decoded(zt, dt):
         mood, mood_emoji = "温和", "🌤"
     else:
         mood, mood_emoji = "低迷", "🧊"
-    return {"ok": bool(zt or dt), "zt_rows": zt_rows[:80], "dt_rows": dt_rows[:30],
-            "zt_count": n_zt, "dt_count": n_dt, "boom": boom, "max_lb": max_lb,
+    return {"ok": bool(zt or dt), "zt_rows": zt_rows[:500], "dt_rows": dt_rows[:200],
+            "zt_count": n_zt, "dt_count": n_dt,
+            "zt_tc": int(zt_tc or n_zt), "dt_tc": int(dt_tc or n_dt),
+            "boom": boom, "max_lb": max_lb,
             "early": early, "seal_sum": seal_sum, "mood": mood, "mood_emoji": mood_emoji,
             "asof": cn_now().strftime("%Y-%m-%d %H:%M")}
 
@@ -2484,6 +2505,7 @@ def main():
     try:
         pools = get_limit_pools()
         zt, dt = pools.get("zt", []), pools.get("dt", [])
+        zt_tc, dt_tc = pools.get("zt_tc") or 0, pools.get("dt_tc") or 0
         today_key = cn_now().strftime("%Y-%m-%d")
         hist = data.setdefault("theme_history", {})
         prev_snap = None
@@ -2491,7 +2513,7 @@ def main():
             if k < today_key:
                 prev_snap = hist[k]  # 最近一个历史交易日快照，用于题材阶段环比
         if zt:
-            radar = build_theme_radar(zt, dt, prev_snap)
+            radar = build_theme_radar(zt, dt, prev_snap, zt_tc=zt_tc, dt_tc=dt_tc)
             data["theme_radar"] = radar
             hist[today_key] = {t["name"]: {"n": t["n"], "max_lb": t["max_lb"]} for t in radar["themes"]}
             for k in sorted(hist.keys())[:-30]:  # 只保留最近30个交易日快照
@@ -2499,9 +2521,9 @@ def main():
             top = radar["themes"][0] if radar["themes"] else None
             if top:
                 print(f"  🛰 题材雷达：{top['emoji']} {top['name']}（{top['n']}家涨停/最高{top['max_lb']}板/{top['stage']}）")
-        decoded = build_limit_decoded(zt, dt)
+        decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
-        print(f"  📈 涨跌解读：涨停 {decoded['zt_count']} 家 · 跌停 {decoded['dt_count']} 家 · 最高 {decoded['max_lb']} 连板 · 情绪{decoded['mood']}")
+        print(f"  📈 涨跌解读：全市场涨停 {decoded['zt_tc']} 家（实拉 {decoded['zt_count']}）· 跌停 {decoded['dt_tc']} 家（实拉 {decoded['dt_count']}）· 最高 {decoded['max_lb']} 连板 · 情绪{decoded['mood']}")
         reports = get_research_reports(days=7)
         surveys = get_org_surveys(days=3)
         data["research_feed"] = build_research_block(reports, surveys)
