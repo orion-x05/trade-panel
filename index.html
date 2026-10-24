@@ -7,7 +7,7 @@
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261024-r33-gmkfix";
+<script>window.APP_VERSION="20261024-r34-w1stops";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -6379,6 +6379,22 @@ const ROLE_PARAMS={
   D6:{sl:10,tp:20,note:"涨停回调·强势股弹性大·涨停低点硬止损"},
   D7:{sl:10,tp:25,note:"周线超卖反转·波段弹性大·分批止盈"}
 };
+/* ===== W1 止损统一（补丁_止损与信号降噪.md 一）：单一数据源 =====
+   止损距离 = slMult × ATR（纯ATR倍数制）；与后端 trade_engine.py ROLES.sl_atr 对齐：
+   D1 3→2.5（让利润奔跑）/ D2 1.5→2.0 / D3 1.0→2.0（⚠️1ATR是D3胜率0%直接原因）/
+   D4 2.0 不动（唯一有效策略）/ D5 2→2.5（回踩需更宽空间）/ D6 3.5→3.0（打板波动大）/
+   D7 1.5→2.5（反趋势试错宁宽勿紧）。
+   tpMult 为止盈风格（W1维持RR结构 tp=sl×RR，W3再换R倍数分批止盈）；
+   maLine/style 仅回测模拟(sellSignal)展示用。实时模拟、回测模拟、doBuy仓位公式共用本表。 */
+const ATR_PARAMS={
+  D1:{tpMult:4,  slMult:2.5,maLine:'MA20', style:'长线趋势'},
+  D2:{tpMult:2,  slMult:2,  maLine:'MA5',  style:'短线型'},
+  D3:{tpMult:1.5,slMult:2,  maLine:'MA5',  style:'防守型'},
+  D4:{tpMult:3,  slMult:2,  maLine:'MA10', style:'波段进攻'},
+  D5:{tpMult:2.5,slMult:2.5,maLine:'MA10', style:'波段防守'},
+  D6:{tpMult:5,  slMult:3,  maLine:'MA20', style:'妖股激进'},
+  D7:{tpMult:3,  slMult:2.5,maLine:'EMA21',style:'周线超卖反转'}
+};
 /* 出厂默认值快照：回测调参出错/清除时用它回滚（ROLE_PARAMS 会被调参改写） */
 const ROLE_PARAMS_DEFAULT=JSON.parse(JSON.stringify(ROLE_PARAMS));
 
@@ -6602,7 +6618,18 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   }
   /* 单票仓位硬顶（需求书 max_single_pct=0.25，与六步门禁第6步文字对齐） */
   const _singleCap=ORION_CFG.gatesOn?Math.min(BUY_LIMIT,ORION_CFG.maxSinglePct):BUY_LIMIT;
-  let budget=Math.min(p.cash*_singleCap*ratio,p.cash);
+  /* W1仓位公式（补丁二，与后端 trade_engine.py do_buy 同构）：风险由仓位控制——
+     单笔风险预算=权益×1%，止损距离=slMult×ATR%（无ATR按默认2%波动率）；
+     预算=min(风险预算, 权益×单票顶, 现金)。波动越大买越少，风险恒定1%。
+     群聊防守/回测调参等折扣已在上面乘进 ratio，此处保持叠加关系。 */
+  const _atrRec=atrCache[target.code];
+  const _atrPct=(_atrRec&&_atrRec.atr>0)?_atrRec.atr/target.price*100:2.0;
+  const _slMult=(ATR_PARAMS[p.id]||ATR_PARAMS.D2).slMult;
+  const _stopDistPct=Math.max(_slMult*_atrPct,0.5);
+  const _equity=p.cash+p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+((lp!=null?lp:(h.buyPrice||h.cost||0))*h.qty);},0);
+  const _budgetRisk=_equity*0.01/(_stopDistPct/100);
+  const _budgetCap=_equity*_singleCap;
+  let budget=Math.min(_budgetRisk,_budgetCap,p.cash)*ratio;
   /* 板块规则检查：最少买入股数 + 资金门槛权限 */
   const board=getBoard(target.code);
   const boardRule=BOARD_RULES[board];
@@ -6904,10 +6931,13 @@ function tick(){
             signal="周线超卖反转·跌破10%止损位·清仓";
           }
         }
-        /* ATR止盈止损参数（和回测一致，七角色梯度分明） */
-        const atrParamsMap={D3:{tpMult:1.5,slMult:1},D2:{tpMult:2,slMult:1.5},D5:{tpMult:2.5,slMult:2},D4:{tpMult:3,slMult:2},D1:{tpMult:4,slMult:3},D6:{tpMult:5,slMult:3.5},D7:{tpMult:3,slMult:1.5}};
+        /* ATR止盈止损参数（和回测一致，七角色梯度分明）——W1止损统一见 ATR_PARAMS 单一数据源 */
+        const atrParamsMap=ATR_PARAMS;
         const atrParams=atrParamsMap[p.id]||atrParamsMap.D2;
         const atrVal=atrCache[h.code]?atrCache[h.code].atr:null;
+        /* W1保险丝（补丁一）：浮亏-12%无条件全部清仓（防跳空；正常情况ATR止损先触发，
+           与后端 check_sell_signals 的 FUSE_PCT 一致；D7自有-10%硬止损更紧，在上面已先判） */
+        if(!signal&&st.price<=h.buyPrice*0.88){signal=`保险丝熔断·浮亏${(chg*100).toFixed(1)}%·全部清仓`;}
         if(p.id==="D6"){if(st.price<h.ztLow)signal=SELL_REASONS.D6;}
         else if(atrVal&&atrVal>0){
           /* 有ATR数据：用ATR波动率止盈止损 */
@@ -12157,22 +12187,15 @@ function sellSignal(role,P,i,cost,rules,holdDays){
   if(holdDays===undefined) holdDays=999;
   const c=pxAt(P,i),ma20=P.ma20[i];
   const rp=ROLE_PARAMS[role]||{sl:7,tp:8};
-  /* ATR止盈止损参数（师傅策略：波动率自适应，七角色梯度分明）
-     D3最防守→D2短线→D5波段防守→D4波段进攻→D1长线→D6妖股最激进 */
+  /* ATR止盈止损参数（师傅策略：波动率自适应，七角色梯度分明）——W1止损统一，单一数据源 ATR_PARAMS */
   const atrVal = P.atr[i]||0;
-  const atrParamsMap = {
-    D3:{tpMult:1.5, slMult:1,   maLine:'MA5',  style:'防守型'},
-    D2:{tpMult:2,   slMult:1.5, maLine:'MA5',  style:'短线型'},
-    D5:{tpMult:2.5, slMult:2,   maLine:'MA10', style:'波段防守'},
-    D4:{tpMult:3,   slMult:2,   maLine:'MA10', style:'波段进攻'},
-    D1:{tpMult:4,   slMult:3,   maLine:'MA20', style:'长线趋势'},
-    D6:{tpMult:5,   slMult:3.5, maLine:'MA20', style:'妖股激进'},
-    D7:{tpMult:3,   slMult:1.5, maLine:'EMA21', style:'周线超卖反转'}
-  };
+  const atrParamsMap = ATR_PARAMS;
   const atrParams = atrParamsMap[role] || atrParamsMap.D2;
   /* 【快速止损】买入后3日内浮亏达5%无条件止损（防止下跌趋势中扛单，比ATR止损更早离场） */
   const quickProfit=(c-cost)/cost*100;
   if(holdDays<=3 && quickProfit<=-5) return `快速止损·买入${holdDays}日浮亏5%`;
+  /* W1保险丝（补丁一）：浮亏-12%无条件清仓（防跳空；与实时模拟/后端一致） */
+  if(quickProfit<=-12) return `保险丝熔断·浮亏${quickProfit.toFixed(1)}%`;
   /* ATR止损：亏损超过slMult×ATR就止损（波动率自适应，高波动股止损宽，低波动股止损紧） */
   if(rules.sl && atrVal>0 && c <= cost - atrParams.slMult*atrVal){
     return `ATR止损·跌${atrParams.slMult}倍ATR（${((cost-c)/cost*100).toFixed(1)}%）`;

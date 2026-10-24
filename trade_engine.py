@@ -41,20 +41,29 @@ WXPUSHER_TOPIC_ID  = os.environ.get("WXPUSHER_TOPIC_ID", "")
 
 # 自适应优化边界（小幅度，防止乱调）
 SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
-# 前端「回测 → 实盘调参」落盘文件（面板点「复制 bt_tune.json」→ 放到仓库根目录）
+# ===== W1 止损与仓位（补丁_止损与信号降噪.md 第一周：只改止损参数+仓位公式）=====
+# 止损距离 = sl_atr × ATR（纯ATR倍数制，前后端 atrParamsMap 对齐）：
+#   固定百分比止损会被个股正常波动频繁触发、胜率被噪声吃掉；ATR反映真实波动幅度。
+#   D3 从 1.0ATR 放宽到 2.0ATR——1ATR 是 D3 胜率 0% 的直接原因（补丁原文标注 ⚠️）。
+# sl/tp 百分比不再决定止损距离，降级为：盈亏比 RR 来源 + 回测调参(bt_tune)通道。
+RISK_PER_TRADE = 0.01   # 单笔风险预算：最多亏总权益 1%
+MAX_SINGLE_PCT = 0.25   # 单票硬顶：占总权益 25%
+FUSE_PCT = 0.12         # 保险丝：浮亏 -12% 无条件全部清仓（防跳空，正常情况ATR止损先触发）
+DEFAULT_ATR_PCT = 2.0   # 无ATR数据时的默认波动率（与前端 defAtr=买入价×2% 一致）
 BT_TUNE_FILE = "bt_tune.json"
 
 ROLES = {
     # weight：融合层投票权重；conviction：信念强度（越高越不易漂移、越敢自主否决）；
-    # patience：耐心/择时严格度（越高越「宁可错过不做错」）；temperament：人格标签（拟人化推送）
-    "D1": {"name": "锋", "sl": 7, "tp": 12, "weight": 1.2, "temperament": "锐意进取", "conviction": 1.0, "patience": 0.8},
-    "D2": {"name": "衡", "sl": 6, "tp": 8, "weight": 1.0, "temperament": "均衡稳健", "conviction": 1.0, "patience": 1.0},
-    "D3": {"name": "镜", "sl": 5, "tp": 6, "weight": 0.9, "temperament": "辩证中立", "conviction": 0.9, "patience": 1.1},
-    "D4": {"name": "啸", "sl": 7, "tp": 10, "weight": 1.1, "temperament": "趋势跟随", "conviction": 1.0, "patience": 0.9},
-    "D5": {"name": "渊", "sl": 6, "tp": 9, "weight": 1.0, "temperament": "逆向耐心", "conviction": 1.3, "patience": 1.4},
-    "D6": {"name": "焰", "sl": 8, "tp": 15, "weight": 0.8, "temperament": "激进搏杀", "conviction": 0.7, "patience": 0.5},
-    # D7 周线超卖反转（与前端 ROLE_PARAMS 对齐：sl10/tp25，atrParamsMap sl1.5/tp3）
-    "D7": {"name": "沉", "sl": 10, "tp": 25, "weight": 0.9, "temperament": "长线逆向", "conviction": 1.4, "patience": 1.5},
+    # patience：耐心/择时严格度（越高越「宁可错过不做错」）；temperament：人格标签（拟人化推送）；
+    # sl_atr：W1 止损倍数（D1锋2.5/D2衡2.0/D3镜2.0/D4啸2.0/D5渊2.5/D6焰3.0/D7沉2.5）
+    "D1": {"name": "锋", "sl": 7, "tp": 12, "sl_atr": 2.5, "weight": 1.2, "temperament": "锐意进取", "conviction": 1.0, "patience": 0.8},
+    "D2": {"name": "衡", "sl": 6, "tp": 8, "sl_atr": 2.0, "weight": 1.0, "temperament": "均衡稳健", "conviction": 1.0, "patience": 1.0},
+    "D3": {"name": "镜", "sl": 5, "tp": 6, "sl_atr": 2.0, "weight": 0.9, "temperament": "辩证中立", "conviction": 0.9, "patience": 1.1},
+    "D4": {"name": "啸", "sl": 7, "tp": 10, "sl_atr": 2.0, "weight": 1.1, "temperament": "趋势跟随", "conviction": 1.0, "patience": 0.9},
+    "D5": {"name": "渊", "sl": 6, "tp": 9, "sl_atr": 2.5, "weight": 1.0, "temperament": "逆向耐心", "conviction": 1.3, "patience": 1.4},
+    "D6": {"name": "焰", "sl": 8, "tp": 15, "sl_atr": 3.0, "weight": 0.8, "temperament": "激进搏杀", "conviction": 0.7, "patience": 0.5},
+    # D7 周线超卖反转（与前端 ROLE_PARAMS 对齐：sl10/tp25，atrParamsMap sl1.5→W1改2.5/tp3）
+    "D7": {"name": "沉", "sl": 10, "tp": 25, "sl_atr": 2.5, "weight": 0.9, "temperament": "长线逆向", "conviction": 1.4, "patience": 1.5},
 }
 
 STOCK_POOL = [
@@ -1969,16 +1978,20 @@ def d7_sell_signal(hold, st):
     return None
 
 def effective_sl_tp(role_id, st):
-    """【波动率自适应止损止盈】固定百分比止损会被个股正常波动频繁触发→胜率被噪声吃掉。
-    改为 sl_eff = max(出厂sl, atr_pct*2)，tp_eff = sl_eff * RR（RR=出厂tp/sl 恒定），
-    使止损落在噪声之外、盈亏比不变：低波动蓝筹走出厂值(地板)，高波动标的止损/止盈同步放大。
-    返回 (sl_eff, tp_eff, rr)。"""
+    """【W1·波动率自适应止损】止损距离 = sl_atr × ATR（补丁_止损与信号降噪.md 一）。
+    固定百分比止损会被个股正常波动频繁触发、胜率被噪声吃掉；ATR 反映真实波动幅度，
+    止损落在噪声之外。无ATR数据时按默认波动率 2%（与前端 defAtr 一致）。
+    止盈暂维持 RR 结构 tp_eff = sl_eff × RR（RR=出厂tp/sl），W3 再换 R 倍数分批止盈。
+    返回 (sl_eff, tp_eff, rr)，单位均为百分比。"""
     role = ROLES.get(role_id, {})
     base_sl = role.get("sl", 7)
     base_tp = role.get("tp", 12)
+    sl_atr = role.get("sl_atr", 2.0)
     rr = (base_tp / base_sl) if base_sl else 1.5
     atr_pct = st.get("atr_pct") or 0.0
-    sl_eff = max(float(base_sl), atr_pct * 2.0)
+    if atr_pct <= 0:
+        atr_pct = DEFAULT_ATR_PCT
+    sl_eff = sl_atr * atr_pct
     tp_eff = sl_eff * rr
     return round(sl_eff, 2), round(tp_eff, 2), round(rr, 2)
 
@@ -2000,6 +2013,11 @@ def check_sell_signals(player, stock_data):
                 continue
         bp = hold.get("buyPrice") or hold.get("cost") or 0
         chg = (st["price"] - bp) / bp * 100
+        # 【W1·保险丝】浮亏 -12% 无条件全部清仓（补丁一：仅防跳空，正常情况ATR止损先触发；
+        # 与 position_plan.py check_exits 的 fuse 语义一致——绝对硬顶，D6 3ATR 宽止损
+        # 在高波动票上会被 12% 先截停，这是有意的风险封顶）
+        if bp > 0 and chg <= -FUSE_PCT * 100:
+            signals.append((hold, f"保险丝熔断{chg:+.1f}%", 1.0)); continue
         # 【波动率自适应】止损/止盈随个股真实波动放大，避免被噪声止损；盈亏比恒定
         sl_eff, tp_eff, rr = effective_sl_tp(player["id"], st)
         # 【移动止损·锁利】记录历史最大浮盈；曾达(自适应)目标一半则硬止损线上抬到成本-2%，永久锁利。
@@ -2328,27 +2346,30 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
 
 def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=False):
     """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
-    # 【仓位动态调整】根据历史胜率调整单笔仓位比例
-    trades = player.get("trades", [])
-    sells = [t for t in trades if t["type"] == "sell"]
-    wins = [t for t in sells if t.get("profit", 0) > 0]
-    win_rate = len(wins) / len(sells) if sells else 0.5
+    # 【W1·仓位公式】风险由仓位控制，不由止损距离控制（补丁二）：
+    #   单笔风险预算 = 权益 × 1%；止损距离 = sl_atr × ATR%（无ATR按默认2%波动率）
+    #   预算 = min(权益×1% ÷ 止损距离, 权益×25%)；波动越大买越少，风险恒定 1%
+    # 胜率档位从「基数」移除（原 0.15/0.20/0.25 三档即被替换的旧公式），
+    # 信号强度/情绪/回撤/传染/否决/ntf 等既有乘数全部保留，叠加在风险预算之上。
     rid = player.get("id")
     # 【回测调参】该角色在面板回测中被判定偏弱 → 暂停开仓
     if rid in ROLES and ROLES[rid].get("enabled") is False:
         print(f"  ⏸️  {rid} 回测调参已暂停开仓，跳过 {st['name']}")
         return
-    # 胜率>60%：仓位提升到25%；胜率<40%：仓位降低到15%；其他：20%
-    # 【回测调参】bt_tune.json 给出单笔仓位上限时优先使用（回测结论直接约束实盘仓位）
+    # 【回测调参】bt_tune.json 给出单笔仓位上限时作为硬顶（回测结论直接约束实盘仓位）
     cap = ROLES.get(rid, {}).get("pos_cap")
-    if cap:
-        position_ratio = cap
-    elif win_rate > 0.6:
-        position_ratio = 0.25
-    elif win_rate < 0.4:
-        position_ratio = 0.15
-    else:
-        position_ratio = 0.20
+    atr_pct = st.get("atr_pct") or 0.0
+    if atr_pct <= 0:
+        atr_pct = DEFAULT_ATR_PCT
+    sl_atr = ROLES.get(rid, {}).get("sl_atr", 2.0)
+    stop_dist_pct = max(sl_atr * atr_pct, 0.5)  # 防ATR极小导致预算爆炸
+    equity = player["cash"] + sum(
+        (h.get("price") or h.get("buyPrice") or 0) * h.get("qty", 0)
+        for h in player.get("holdings", []))
+    budget_risk = equity * RISK_PER_TRADE / (stop_dist_pct / 100.0)
+    budget_cap = equity * (cap if cap else MAX_SINGLE_PCT)
+    position_ratio = min(budget_risk, budget_cap) / max(player["cash"], 1)
+    position_ratio = min(position_ratio, 1.0)
     # 【信号强度仓位】评分越高仓位越重（弱信号降仓控回撤）；回测调参 cap 优先时不叠加
     if cap is None:
         sig_k = 1.0 if score >= 80 else 0.7 if score >= 60 else 0.5
