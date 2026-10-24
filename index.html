@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20261025-r36-p0dedup</title>
+<title>Orion-X AI量化投研面板 · v20261025-r37-p0ledger</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261025-r36-p0dedup";
+<script>window.APP_VERSION="20261025-r37-p0ledger";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -211,7 +211,22 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .topbar-clock { margin-left:auto; text-align:right; line-height:1.2; }
   .clock-time { font-family:var(--mono); font-size:16px; font-weight:600; color:var(--text); display:block; }
   .clock-date { font-size:11.5px; color:var(--text-faint); display:block; }
-  @media (max-width:680px){
+    /* ===== 账不平告警条（P0-2）=====
+     默认 hidden；Σ(现金+持仓市值) 与 Σp.asset 差异>1 元时由 checkLedgerBalance() 显示。
+     账不平是数据链路事故，不是行情涨跌——所以这里刻意用告警语义的 --red 而非涨跌语义的 --up，
+     避免用户把"系统数据错了"误读成"今天亏钱了"（审查报告 P2：红=涨/红=事故 混淆）。 */
+  .ledger-alert {
+    display:flex; align-items:flex-start; gap:8px;
+    padding:8px 12px; margin:-4px 0 12px;
+    background:var(--red-bg); border:1px solid var(--red); border-radius:10px;
+    color:var(--red); font-size:13px; font-weight:600; line-height:1.45;
+  }
+  /* display:flex 会覆盖 hidden 属性的默认 display:none，必须显式声明才能"默认不可见" */
+  .ledger-alert[hidden]{display:none}
+  .ledger-alert-ico{flex:0 0 auto;font-size:14px;line-height:1.45}
+  .ledger-alert-text{flex:1 1 auto;min-width:0;word-break:break-all}
+  .ledger-alert-num{font-family:var(--mono)}
+@media (max-width:680px){
     .topbar-pill { display:none; }
     .topbar-page { font-size:15px; }
     .clock-time { font-size:14px; }
@@ -1379,6 +1394,12 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <span class="clock-date" id="clockDate">----/--/--</span>
   </div>
 </header>
+
+<!-- 账不平告警条：默认隐藏，renderStats() 检测到 diff>1 时显示（P0-2） -->
+<div class="ledger-alert" id="ledgerAlert" role="alert" aria-live="assertive" hidden>
+  <span class="ledger-alert-ico">⚠</span>
+  <span class="ledger-alert-text" id="ledgerAlertText"></span>
+</div>
 
 <div class="app-layout">
 <nav class="sidenav" id="tabNav">
@@ -2696,7 +2717,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r36-p0dedup</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r37-p0ledger</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -8044,6 +8065,40 @@ function resetAllDefault(){
   localStorage.clear(); location.reload();
 }
 
+/* 账不平校验（用户补丁③ P0-2）：Σ(现金+持仓市值) vs Σp.asset。
+   p.asset 会被行情重算，若与数据源记录值差异>1元，说明数据链路不一致——
+   历史教训：差异曾达 38,554.99 元却只躺在 console 里没人看见，界面照常显示"正常"，
+   用户据此做加减仓判断。所以除了 console.error，必须在顶栏下方显式红字告警。
+   抽成具名函数（而不是塞在 renderStats 里）是为了能被单测直接调用，不必依赖整个 render 流程。 */
+function checkLedgerBalance(){
+  let diff=0;
+  try{
+    const recomputed=simData.players.reduce((s,p)=>s+(p.cash||0)+p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+(h.qty||0)*(lp!=null?lp:(h.buyPrice||h.cost||0));},0),0);
+    const recorded=simData.players.reduce((s,p)=>s+(p.asset||0),0);
+    diff=recomputed-recorded;
+    if(Math.abs(diff)>1){
+      console.error("[账不平] Σ(现金+持仓市值)="+recomputed.toFixed(2)+" vs Σp.asset="+recorded.toFixed(2)+" diff="+diff.toFixed(2));
+      showLedgerAlert(diff);
+    }else{
+      hideLedgerAlert();
+    }
+  }catch(e){}
+  return diff;
+}
+/* 告警条只负责"显示/隐藏"两件事：文案统一在这里拼，避免 render 各处各拼一份导致措辞漂移 */
+function showLedgerAlert(diff){
+  const el=document.getElementById("ledgerAlert"), tx=document.getElementById("ledgerAlertText");
+  if(!el||!tx) return;
+  const abs=Math.abs(diff);
+  /* 千分位：38,554.99 这种量级没有分隔符很难一眼看出是"三万八"还是"三百八" */
+  const n=abs.toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  tx.innerHTML="账不平：Σ现金+持仓 与 Σ角色权益 差 <span class=\"ledger-alert-num\">"+n+"</span> 元（数据链路异常，本页权益数字暂不可信）";
+  el.hidden=false;
+}
+function hideLedgerAlert(){
+  const el=document.getElementById("ledgerAlert");
+  if(el) el.hidden=true;
+}
 function renderStats(){
   /* 显示前重新计算每个角色的资产，确保用最新行情数据 */
   simData.players.forEach(p=>{
@@ -8063,13 +8118,8 @@ function renderStats(){
       if(p.asset_history.length>365) p.asset_history.shift();
     }
   });
-  /* 账不平校验（用户补丁③）：Σ(现金+持仓市值) vs Σp.asset。
-     p.asset 会被行情重算，若与数据源记录值差异>1元，说明数据链路不一致——显式告警不静默。 */
-  try{
-    const recomputed=simData.players.reduce((s,p)=>s+(p.cash||0)+p.holdings.reduce((a,h)=>{const lp=livePrice(h.code);return a+(h.qty||0)*(lp!=null?lp:(h.buyPrice||h.cost||0));},0),0);
-    const recorded=simData.players.reduce((s,p)=>s+(p.asset||0),0);
-    if(Math.abs(recomputed-recorded)>1)console.error("[账不平] Σ(现金+持仓市值)="+recomputed.toFixed(2)+" vs Σp.asset="+recorded.toFixed(2)+" diff="+(recomputed-recorded).toFixed(2));
-  }catch(e){}
+  /* 账不平校验：见上方 checkLedgerBalance()，diff>1 时顶栏下方显示红字告警条 */
+  checkLedgerBalance();
   /* 组合收益率双口径：加权（总资产口径 = Σ资产/Σ初始-1，用户真正关心的"70万赚了多少"）为主展示，
      算术平均（七角色简单平均，含从未交易的 D6/D7 两个 0% 席位，会稀释/夸大）降为副指标参考。
      历史教训：曾用算术平均展示 -5.81%（真实总资产口径 -0.20%，差 29 倍），误导人工判断。 */
