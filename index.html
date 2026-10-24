@@ -7,7 +7,7 @@
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261024-r32-uxbatch1";
+<script>window.APP_VERSION="20261024-r33-gmkfix";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -329,7 +329,7 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
     display:flex; gap:6px; flex-wrap:wrap;
     padding:10px 4px 2px; margin-bottom:10px;
     border-bottom:1px solid var(--border-soft);
-    position:sticky; top:56px; z-index:50;
+    position:sticky; top:58px; z-index:50;  /* topbar 实测高 57.75px，多 0.25px 防缝隙 */
     background:var(--bg); 
   }
   .sn-item {
@@ -11425,8 +11425,18 @@ async function txKlineRange(code,start,count){
   }
   return days;
 }
-/* 新浪（伦敦金/原油）：JSONP 全局变量捕获 */
+/* 新浪（伦敦金/原油）：JSONP 全局变量捕获。
+   【2026-10-24 熔断】stock1/stock2 的 futures jsonp 已被反爬破坏为
+   重定向注释 + var X([...]) 的非法JS格式（var 后接调用表达式），
+   任何 script 注入都会抛 Uncaught SyntaxError: Unexpected token '(' 且取不到数
+   （与指数/个股链路的 __sinaJsonpDead 同一破坏模式，实测确认两域名皆中招）。
+   故默认熔断：金/油面板降级为 腾讯实时快照(qt.gtimg.cn/q=hf_XAU · 合法JS)
+   + 东财日K兜底；sinaGlobal 保留为熔断解除后的后备路径。 */
+function sinaFuturesBroken(){return !!window.__sinaFuturesDead;}
+function markSinaFuturesDead(){window.__sinaFuturesDead=true;}
+window.__sinaFuturesDead=true;
 function sinaGlobal(method,symbol,cb){
+  if(sinaFuturesBroken()){cb(null);return;}
   /* 唯一回调名：金/油面板切换时日K与分时可能并发加载，硬编码 window._ 会被
      后到的响应覆盖，导致先发的请求读到后发的数据（竞态） */
   const cbName="_sg_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
@@ -11447,6 +11457,50 @@ function sinaMin(symbol,cb){
     const arr=(d.minLine_1d)||[];
     cb(arr.map(x=>({time:x[0],price:parseFloat(x[1])})).filter(x=>!isNaN(x.price)));
   });
+}
+/* 腾讯全球期货实时快照（qt.gtimg.cn/q=hf_XAU,hf_OIL · script注入 charset=gbk）。
+   响应为合法JS：v_hf_XAU="最新,涨跌%,?,?,高,低,时间,结算,?,?,?,日期,名称";
+   字段实测（2026-10-24）：[0]最新价 [1]涨跌% [4]高 [5]低 [6]时间 [13]名称，
+   昨收=[0]/(1+[1]/100) 与日K收盘精确吻合（3997.79 vs 结算4024.26 · -0.66%）。
+   该域名项目已大量使用（A股实时同源），国内可达性最好，作为金/油主力实时源。 */
+const _gfq={};
+function gfQuote(codes,cb){
+  const key=codes.join(",");
+  const hit=_gfq[key];
+  if(hit&&Date.now()-hit.t<15000){cb(hit.d);return;}
+  const s=document.createElement("script");
+  s.charset="gbk";
+  s.src=`https://qt.gtimg.cn/q=${key}&_=${Date.now()}`;
+  s.onerror=()=>{cb(null);try{s.remove();}catch(e){}};
+  s.onload=()=>{
+    const out={};
+    codes.forEach(c=>{
+      const v=window["v_"+c];
+      if(typeof v==="string"&&v.length>10){
+        const f=v.split(",");
+        if(f.length>=7){
+          out[c]={price:+f[0],chgPct:parseFloat(f[1]),high:+f[4],low:+f[5],time:f[6]||"",name:f[13]||""};
+          try{delete window["v_"+c];}catch(e){}
+        }
+      }
+    });
+    _gfq[key]={t:Date.now(),d:out};
+    cb(Object.keys(out).length?out:null);
+    try{s.remove();}catch(e){}
+  };
+  document.body.appendChild(s);
+}
+/* 东财全球期货日K（push2his · fetch，ACAO:* 与A股K线同域名同模式）。
+   secid：101.XAU=伦敦金现 / 101.OIL=国际原油主连。月K/年K由 aggK 聚合。 */
+async function emGlobalKline(secid,count){
+  try{
+    const r=await fetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&klt=101&fqt=1&beg=0&end=20500101&lmt=${count}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56`);
+    const j=await r.json();
+    if(j.data&&j.data.klines){
+      return j.data.klines.map(line=>{const p=line.split(",");return {date:p[0],open:+p[1],close:+p[2],high:+p[3],low:+p[4],vol:+p[5]||0};});
+    }
+  }catch(e){}
+  return [];
 }
 /* 由日K聚合 月K/年K（真实数据聚合，不编造） */
 function aggK(days,kind){
@@ -13044,7 +13098,7 @@ async function renderGlobal(){
     if(gmkAsset==="sh"){
       if(gmkPath==="min"){
         const m=await txMinute("sh000001");
-        if(!m||!m.length){chartHint("gmkChart",true,"⏳ 分时数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,"暂无分时数据");return;} chartHint("gmkChart",false);
+        if(!m||!m.length){chartHint("gmkChart",true,"⏳ 分时数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,"暂无分时数据");if(gmkChart)gmkChart.clear();return;} chartHint("gmkChart",false);
         setGmkStatus(title,m[m.length-1].price,null,"腾讯行情 · 上证分时");
         renderGmkLine(m,"上证指数 · 分时");
       }else{
@@ -13052,49 +13106,66 @@ async function renderGlobal(){
         if(gmkPath==="day"){
           d=await txDay("sh000001",240);frm="腾讯行情 · 上证日K";
           if(!d.length){d=await sinaKlineP(240,240);frm="新浪行情 · 上证日K";}
-          if(!d.length){chartHint("gmkChart",true,"⏳ 日K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
+          if(!d.length){chartHint("gmkChart",true,"⏳ 日K数据源暂不可达 · 稍后自动重试");if(gmkChart)gmkChart.clear();return;} chartHint("gmkChart",false);
           const last=d[d.length-1],prev=d[d.length-2];
           setGmkStatus(title,last?last.close.toFixed(2):null,prev?((last.close-prev.close)/prev.close*100):null,frm);
           renderGmkK(d,"上证指数 · 日K");
         }else if(gmkPath==="month"){
           d=await txKline("sh000001","month",120);frm="腾讯行情 · 上证月K";
           if(!d.length){d=await sinaKlineP(7200,120);frm="新浪行情 · 上证月K";}
-          if(!d.length){chartHint("gmkChart",true,"⏳ 月K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
+          if(!d.length){chartHint("gmkChart",true,"⏳ 月K数据源暂不可达 · 稍后自动重试");if(gmkChart)gmkChart.clear();return;} chartHint("gmkChart",false);
           setGmkStatus(title,null,null,frm);
           renderGmkK(d,"上证指数 · 月K");
         }else{
           d=await txKline("sh000001","month",360);frm="腾讯行情 · 上证年K(月K聚合)";
           if(!d.length){d=await sinaKlineP(7200,360);frm="新浪行情 · 上证年K(月K聚合)";}
-          if(!d.length){chartHint("gmkChart",true,"⏳ 年K数据源暂不可达 · 稍后自动重试");return;} chartHint("gmkChart",false);
+          if(!d.length){chartHint("gmkChart",true,"⏳ 年K数据源暂不可达 · 稍后自动重试");if(gmkChart)gmkChart.clear();return;} chartHint("gmkChart",false);
           setGmkStatus(title,null,null,frm);
           renderGmkK(aggK(d,"year"),"上证指数 · 年K");
         }
       }
     }else{
-      const sym=gmkAsset==="gold"?"XAU":"OIL";
-      const src="新浪全球期货 · "+(gmkAsset==="gold"?"伦敦金现货":"国际原油主连");
+      /* 金/油：新浪 futures JSONP 已熔断（__sinaFuturesDead）→ 级联：
+         实时价=腾讯快照(qt.gtimg.cn/q=hf_XAU · 合法JS) / 日K=东财 push2his；
+         分时无替代源 → 明确降级提示 + 清旧图，杜绝挂着一张别的资产的旧图。
+         实时价刷新只写 price/chg 两元素、不碰 src，且必须在降级 setGmkStatus 之后调用，
+         否则缓存命中时的同步回调会被随后的 setGmkStatus(null) 把价格擦掉。 */
+      const gcode=gmkAsset==="gold"?"hf_XAU":"hf_OIL";
+      const emSecid=gmkAsset==="gold"?"101.XAU":"101.OIL";
+      const label=gmkAsset==="gold"?"伦敦金":"国际原油";
+      const gmkRealtime=()=>gfQuote([gcode],q=>{
+        const d=q&&q[gcode];if(!d)return;
+        const p=document.getElementById("gmkPrice"),c=document.getElementById("gmkChg");
+        if(p)p.textContent="最新 "+d.price.toFixed(2);
+        if(c){c.textContent=(d.chgPct>=0?"+":"")+(d.chgPct||0).toFixed(2)+"%";c.style.color=d.chgPct>=0?"var(--up)":"var(--down)";}
+      });
       if(gmkPath==="min"){
-        sinaMin(sym,m=>{
-          if(!m||!m.length){chartHint("gmkChart",true,"⏳ 全球分时数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,src+" · 暂无分时");return;} chartHint("gmkChart",false);
-          const last=m[m.length-1],first=m[0];
-          const chg=last.price&&first.price?((last.price-first.price)/first.price*100):null;
-          setGmkStatus(title,last.price.toFixed(2),chg,src+" · 分时");
-          renderGmkLine(m,(gmkAsset==="gold"?"伦敦金":"国际原油")+" · 分时");
-        });
+        chartHint("gmkChart",true,"⏳ "+label+" 分时数据源已停止服务（新浪接口变更）· 实时报价见上方状态条");
+        setGmkStatus(title,null,null,"腾讯行情 · "+label+"实时（分时图暂缺）");
+        gmkRealtime();
+        if(gmkChart)gmkChart.clear();
       }else{
-        sinaDay(sym,d=>{
-          if(!d||!d.length){chartHint("gmkChart",true,"⏳ 全球日K数据源暂不可达 · 稍后自动重试");setGmkStatus(title,null,null,src+" · 无日K");return;} chartHint("gmkChart",false);
-          const last=d[d.length-1],prev=d[d.length-2];
-          const chg=prev?((last.close-prev.close)/prev.close*100):null;
-          if(gmkPath==="day"){setGmkStatus(title,last.close.toFixed(2),chg,src+" · 日K");renderGmkK(d,(gmkAsset==="gold"?"伦敦金":"国际原油")+" · 日K");}
-          else if(gmkPath==="month"){setGmkStatus(title,null,null,src+" · 由日K聚合");renderGmkK(aggK(d,"month"),(gmkAsset==="gold"?"伦敦金":"国际原油")+" · 月K");}
-          else{setGmkStatus(title,null,null,src+" · 由日K聚合");renderGmkK(aggK(d,"year"),(gmkAsset==="gold"?"伦敦金":"国际原油")+" · 年K");}
-        });
+        const d=await emGlobalKline(emSecid,gmkPath==="day"?240:400);
+        if(!d.length){
+          chartHint("gmkChart",true,"⏳ "+label+" 日K数据源暂不可达 · 稍后自动重试（实时报价见上方）");
+          setGmkStatus(title,null,null,"日K暂不可达 · 实时报价见上");
+          gmkRealtime();
+          if(gmkChart)gmkChart.clear();
+          return;
+        }
+        chartHint("gmkChart",false);
+        const last=d[d.length-1],prev=d[d.length-2];
+        const chg=prev?((last.close-prev.close)/prev.close*100):null;
+        if(gmkPath==="day"){setGmkStatus(title,last.close.toFixed(2),chg,"东方财富 · "+label+"日K");renderGmkK(d,label+" · 日K");}
+        else if(gmkPath==="month"){setGmkStatus(title,null,null,"东方财富 · 日K聚合");renderGmkK(aggK(d,"month"),label+" · 月K（日K聚合）");}
+        else{setGmkStatus(title,null,null,"东方财富 · 日K聚合");renderGmkK(aggK(d,"year"),label+" · 年K（日K聚合）");}
+        gmkRealtime();
       }
     }
   }catch(err){
     chartHint("gmkChart",true,"⏳ 行情数据加载失败 · 稍后自动重试");
     setGmkStatus(title,null,null,"数据加载失败:"+err.message);
+    if(gmkChart)gmkChart.clear();
     if(window.console)console.warn("global market err",err);
   }
 }
