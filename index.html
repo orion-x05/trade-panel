@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20261025-r37-p0ledger</title>
+<title>Orion-X AI量化投研面板 · v20261025-r38-holdtab</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261025-r37-p0ledger";
+<script>window.APP_VERSION="20261025-r38-holdtab";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -1151,14 +1151,19 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
   .modern .app-layout{gap:0}
   .modern .market-bar{overflow-x:auto}
   .modern .bottom-bar{
-    display:grid;grid-template-columns:repeat(5,1fr);
+    /* 等分用 flex 而不是 grid 固定列数：历史 bug——grid-template-columns:repeat(5,1fr)
+       与 HTML 里的 4 个按钮不同步，第 5 列空置，整排按钮左偏、右侧空出 1/5 宽度
+       （实测 390px 空 82px、768px 空 157px）。flex:1 让列数恒等于按钮数，
+       以后增删 tab 不会再出现"列数与项数不同步"的同类错位。 */
+    display:flex;align-items:stretch;
     position:fixed;left:0;right:0;bottom:0;z-index:1200;
     background:rgba(13,17,23,.92);backdrop-filter:blur(12px);
     border-top:1px solid var(--border-soft);
     padding:7px 6px calc(7px + env(safe-area-inset-bottom));
   }
   .modern .bottom-bar .bb-item{
-    display:flex;flex-direction:column;align-items:center;gap:3px;
+    flex:1 1 0;min-width:0;                       /* 等分底栏宽度，项数变化时自动重算 */
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
     background:transparent;border:0;color:var(--text-faint);
     font-family:inherit;font-size:10.5px;cursor:pointer;padding:4px 2px;
   }
@@ -1401,6 +1406,25 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <span class="ledger-alert-text" id="ledgerAlertText"></span>
 </div>
 
+<!-- ===== 系统总览状态条（LIVE / 组合状态 / 多空 / 活跃角色 / 总盈亏 / 上证指数 / 两市成交 / 恐惧贪婪）=====
+     已从「今日」tab 内部上移到顶栏正下方：指数是看盘第一眼就要有的一行，原先埋在首屏第 3 屏
+     （移动端实测 y≈595，要往下滚才看得见）。放到 body 直属层级 = 全局常驻，切到任何 tab 都在。 -->
+<div class="dash-status" id="dashStatus">
+  <span class="ds-live"><i class="ds-dot"></i>LIVE</span>
+  <span class="ds-item"><span class="ds-label">组合状态</span><b id="dsPortfolio">--</b></span>
+  <span class="ds-sep"></span>
+  <span class="ds-item"><span class="ds-label">多头/空头</span><b id="dsBullBear">--</b></span>
+  <span class="ds-item"><span class="ds-label">活跃角色</span><b id="dsActive">--</b></span>
+  <span class="ds-item"><span class="ds-label">总盈亏</span><b id="dsPnl">--</b></span>
+  <span class="ds-sep"></span>
+  <span class="ds-item"><span class="ds-label">上证指数</span><b id="dsSh">--</b></span>
+  <span class="ds-item"><span class="ds-label">两市成交</span><b id="dsAmt">--</b></span>
+  <span class="ds-sep"></span>
+  <span class="ds-item"><span class="ds-label">恐惧贪婪</span><b id="dsFg">--</b></span>
+  <span class="spacer"></span>
+  <span class="ds-refresh">AUTO REFRESH <b id="dsCountdown">3</b>s</span>
+</div>
+
 <div class="app-layout">
 <nav class="sidenav" id="tabNav">
   <div class="sidenav-brand">
@@ -1414,6 +1438,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <div class="sidenav-group">盯盘</div>
     <button class="tab active" data-tab="today"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M3 11.5L12 3l9 8.5"/><path d="M5 10.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9.5"/><path d="M10 21v-6h4v6"/></svg></span>今日</button>
     <button class="tab" data-tab="market"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></span>行情</button>
+    <button class="tab" data-tab="hold"><span class="tab-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg></span>持仓</button>
     <div class="sidenav-group">决策</div>
     <button class="tab" data-tab="scan"><span class="tab-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>扫描</button>
     <button class="tab" data-tab="post"><span class="tab-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>盘后</button>
@@ -1448,22 +1473,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <span class="hs-chip" id="heroRegime" title="市场状态（ADX+均线判定，连续2日确认切换）">市场状态 –</span>
       <span class="hs-chip" id="heroSentiment" title="情绪阶段（涨停池六指标：空间板/梯队/晋级率/炸板率/赚钱效应/家数）">情绪 –</span>
     </div>
-  </div>
-  <!-- ===== 系统总览状态条（组合状态 + 市场行情 + LIVE + AUTO REFRESH） ===== -->
-  <div class="dash-status">
-    <span class="ds-live"><i class="ds-dot"></i>LIVE</span>
-    <span class="ds-item"><span class="ds-label">组合状态</span><b id="dsPortfolio">--</b></span>
-    <span class="ds-sep"></span>
-    <span class="ds-item"><span class="ds-label">多头/空头</span><b id="dsBullBear">--</b></span>
-    <span class="ds-item"><span class="ds-label">活跃角色</span><b id="dsActive">--</b></span>
-    <span class="ds-item"><span class="ds-label">总盈亏</span><b id="dsPnl">--</b></span>
-    <span class="ds-sep"></span>
-    <span class="ds-item"><span class="ds-label">上证指数</span><b id="dsSh">--</b></span>
-    <span class="ds-item"><span class="ds-label">两市成交</span><b id="dsAmt">--</b></span>
-    <span class="ds-sep"></span>
-    <span class="ds-item"><span class="ds-label">恐惧贪婪</span><b id="dsFg">--</b></span>
-    <span class="spacer"></span>
-    <span class="ds-refresh">AUTO REFRESH <b id="dsCountdown">3</b>s</span>
   </div>
   <!-- ===== 状态栏（最上方） ===== -->
   <div class="market-bar" id="marketBar">
@@ -1515,44 +1524,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
       </section>
       <div class="dash-mod-grid" id="dashModules"></div>
-    </div>
-  </div>
-  <!-- ===== 首屏四块 · 之四：持仓信号（资产汇总+持仓卡，自排名 tab 迁入首屏；行情三态：无实时价显示 --） ===== -->
-  <div class="panel collapsible" id="panel-hold-signal" style="margin-top:12px">
-    <div class="panel-head" onclick="togglePanel('panel-hold-signal')">
-      <span class="panel-title">📦 持仓信号</span>
-      <span class="panel-tip">资产汇总 / 搜索 / 筛选 · 点击卡片展开每笔买入明细 ▼</span>
-    </div>
-    <div class="panel-body">
-      <div id="holdSummaryC" class="hold-summary" style="display:none">
-        <div class="hs-top">
-          <div>
-            <div class="hs-label" title="七角色全部持仓的市值合计（不含现金；组合总资产见顶部状态条）">持仓总市值</div>
-            <div class="hs-asset" id="hsAssetC">--</div>
-          </div>
-          <div style="text-align:right">
-            <div class="hs-label">今日盈亏</div>
-            <div class="hs-today" id="hsTodayC" style="color:var(--text-faint)">--</div>
-          </div>
-        </div>
-        <div class="hs-grid">
-          <div class="hs-cell"><div class="hs-label">总投入本金</div><div class="hs-val" id="hsCostC">--</div></div>
-          <div class="hs-cell"><div class="hs-label">已实现盈亏</div><div class="hs-val" id="hsRealizedC" style="color:var(--text-faint)">--</div></div>
-          <div class="hs-cell"><div class="hs-label">未实现盈亏</div><div class="hs-val" id="hsFloatC" style="color:var(--text-faint)">--</div></div>
-          <div class="hs-cell"><div class="hs-label">总盈亏</div><div class="hs-val" id="hsTotalC" style="color:var(--text-faint)">--</div></div>
-        </div>
-      </div>
-      <div class="hold-search">
-        <input id="holdSearchC" placeholder="搜索代码或名称..." oninput="renderHoldCards()">
-      </div>
-      <div class="hold-tabs" id="holdTabsC">
-        <span class="hold-tab on" data-hf="all" onclick="setHoldTabC(this)">全部</span>
-        <span class="hold-tab" data-hf="holding" onclick="setHoldTabC(this)">持仓中</span>
-        <span class="hold-tab" data-hf="closed" onclick="setHoldTabC(this)">已清仓</span>
-        <span class="hold-tab" data-hf="today" onclick="setHoldTabC(this)">今日交易</span>
-      </div>
-      <div class="hold-list" id="holdCards" style="display:none"></div>
-      <div id="holdEmptyC" style="display:none;text-align:center;color:var(--text-faint);padding:28px;font-size:12px">当前全角色空仓 · 引擎将在交易时段自动开仓（或点"跳过休市"立即运行）</div>
     </div>
   </div>
   <!-- ===== v0246 市场看板 ===== -->
@@ -1723,6 +1694,52 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div class="log-box" id="logBox"></div>
     </div>
   </section>
+</section>
+
+<!-- ===== 持仓（独立 tab）=====
+     从「今日」tab 首屏迁出：持仓是"我现在手里有什么、赚了还是亏了"，要能一步直达，
+     不该和决策卡 / 角色快照挤在同一屏往下翻（移动端实测原位置 y≈2509，要滚三屏）。
+     侧栏与底部菜单都有入口；今日首屏相应从「四块」变「三块」（Hero / 决策卡 / 角色快照）。
+     渲染函数 renderHold / renderHoldCards 按 ID 找元素，与本 section 的父节点无关，迁移后照常工作。 -->
+<section class="tab-view" id="view-hold">
+  <!-- ===== 首屏四块 · 之四：持仓信号（资产汇总+持仓卡，自排名 tab 迁入首屏；行情三态：无实时价显示 --） ===== -->
+  <div class="panel collapsible" id="panel-hold-signal" style="margin-top:12px">
+    <div class="panel-head" onclick="togglePanel('panel-hold-signal')">
+      <span class="panel-title">📦 持仓信号</span>
+      <span class="panel-tip">资产汇总 / 搜索 / 筛选 · 点击卡片展开每笔买入明细 ▼</span>
+    </div>
+    <div class="panel-body">
+      <div id="holdSummaryC" class="hold-summary" style="display:none">
+        <div class="hs-top">
+          <div>
+            <div class="hs-label" title="七角色全部持仓的市值合计（不含现金；组合总资产见顶部状态条）">持仓总市值</div>
+            <div class="hs-asset" id="hsAssetC">--</div>
+          </div>
+          <div style="text-align:right">
+            <div class="hs-label">今日盈亏</div>
+            <div class="hs-today" id="hsTodayC" style="color:var(--text-faint)">--</div>
+          </div>
+        </div>
+        <div class="hs-grid">
+          <div class="hs-cell"><div class="hs-label">总投入本金</div><div class="hs-val" id="hsCostC">--</div></div>
+          <div class="hs-cell"><div class="hs-label">已实现盈亏</div><div class="hs-val" id="hsRealizedC" style="color:var(--text-faint)">--</div></div>
+          <div class="hs-cell"><div class="hs-label">未实现盈亏</div><div class="hs-val" id="hsFloatC" style="color:var(--text-faint)">--</div></div>
+          <div class="hs-cell"><div class="hs-label">总盈亏</div><div class="hs-val" id="hsTotalC" style="color:var(--text-faint)">--</div></div>
+        </div>
+      </div>
+      <div class="hold-search">
+        <input id="holdSearchC" placeholder="搜索代码或名称..." oninput="renderHoldCards()">
+      </div>
+      <div class="hold-tabs" id="holdTabsC">
+        <span class="hold-tab on" data-hf="all" onclick="setHoldTabC(this)">全部</span>
+        <span class="hold-tab" data-hf="holding" onclick="setHoldTabC(this)">持仓中</span>
+        <span class="hold-tab" data-hf="closed" onclick="setHoldTabC(this)">已清仓</span>
+        <span class="hold-tab" data-hf="today" onclick="setHoldTabC(this)">今日交易</span>
+      </div>
+      <div class="hold-list" id="holdCards" style="display:none"></div>
+      <div id="holdEmptyC" style="display:none;text-align:center;color:var(--text-faint);padding:28px;font-size:12px">当前全角色空仓 · 引擎将在交易时段自动开仓（或点"跳过休市"立即运行）</div>
+    </div>
+  </div>
 </section>
 
 <!-- ===== Tab1 收益排名 ===== -->
@@ -2717,7 +2734,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r37-p0ledger</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r38-holdtab</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -2907,6 +2924,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 <nav class="bottom-bar" id="bottomBar" aria-label="底部导航">
   <button class="bb-item active" data-tab="today" onclick="switchTab('today')"><i>◎</i><span>今日</span></button>
   <button class="bb-item" data-tab="market" onclick="switchTab('market')"><i>◍</i><span>行情</span></button>
+  <button class="bb-item" data-tab="hold" onclick="switchTab('hold')"><i>◈</i><span>持仓</span></button>
   <button class="bb-item" data-tab="post" onclick="switchTab('post')"><i>✦</i><span>盘后</span></button>
   <button class="bb-item" data-tab="more" onclick="toggleSidenav()"><i>☰</i><span>更多</span></button>
 </nav>
@@ -7699,9 +7717,9 @@ function emIndustryFetch(codes){
    盘后 = 复盘(review) / AI研讨(airesearch)
    回测 = 策略模拟(sim)   学习 = 知识库(knowledge)   设置 = settings
    switchTab 同时接受主 tab 名（切组并回到组内默认视图）和子视图名（切组内指定视图）。 */
-const TAB_GROUPS={today:["overview","rank","psyche"],market:["global","themeradar","limitdecoded","instresearch"],scan:["research"],post:["review","airesearch"],sim:["sim"],knowledge:["knowledge"],settings:["settings"]};
+const TAB_GROUPS={today:["overview","rank","psyche"],hold:["hold"],market:["global","themeradar","limitdecoded","instresearch"],scan:["research"],post:["review","airesearch"],sim:["sim"],knowledge:["knowledge"],settings:["settings"]};
 const TAB_SUB_LABEL={overview:"总览",rank:"排名",psyche:"角色心理",global:"全球市场",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报",review:"复盘总结",airesearch:"AI研讨"};
-const TAB_GROUP_LABEL={today:"今日",market:"行情",scan:"扫描",post:"盘后",sim:"回测",knowledge:"学习",settings:"设置"};
+const TAB_GROUP_LABEL={today:"今日",hold:"持仓",market:"行情",scan:"扫描",post:"盘后",sim:"回测",knowledge:"学习",settings:"设置"};
 let curGroup="today",curView="overview";
 function tabGroupOf(name){for(const g in TAB_GROUPS){if(TAB_GROUPS[g].indexOf(name)>=0)return g;}return null;}
 function renderSubNav(){
@@ -7748,6 +7766,9 @@ function switchTab(name){
     if(curView==="instresearch"){try{renderInstResearch();}catch(e){}}
     if(curView==="review"){try{renderReview();}catch(e){}}
     if(curView==="rank"){try{renderRank();renderHoldCards();}catch(e){}}
+    /* 持仓独立 tab：切进来时补一次渲染。平时 tick 也会调 renderHold，但刚从隐藏态切出时
+       容器此前宽度为 0，卡片可能没铺开，这里兜一次底。 */
+    if(curView==="hold"){try{renderHold();renderHoldCards();}catch(e){}}
     if(curView==="psyche"){try{renderPsyche();}catch(e){}}
     if(curView==="overview"){try{renderMarketView();}catch(e){}}
     if(curView==="airesearch"){try{renderMarketView();}catch(e){}} /* 情绪面板在该视图内 */
