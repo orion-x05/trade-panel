@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20260910-r28</title>
+<title>Orion-X AI量化投研面板 · v20261025-r35-w2entry</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261024-r34-w1stops";
+<script>window.APP_VERSION="20261025-r35-w2entry";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2696,7 +2696,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20260910-r28</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r35-w2entry</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -6397,6 +6397,74 @@ const ATR_PARAMS={
 };
 /* 出厂默认值快照：回测调参出错/清除时用它回滚（ROLE_PARAMS 会被调参改写） */
 const ROLE_PARAMS_DEFAULT=JSON.parse(JSON.stringify(ROLE_PARAMS));
+/* ===== W2 两段式建仓（补丁_止损与信号降噪.md 三；设计原则来自 position_plan.py）=====
+   第 1 批：信号确认日 14:45 尾盘试仓 1/3（整百股，至少 1 手）
+   第 2 批：次日 (a)不破前日收盘 → 补 2/3 (b)低开但快速翻红 → 补 2/3 (c)低开不翻红 → 放弃，仅留 1/3
+   为什么不一次买满：尾盘突破信号往往已是当日高位，次日低开是常态；
+   先买 1/3，用剩下的 2/3 换取「确认权」——判断错误时亏得少。
+   与后端 trade_engine.py first_tranche_shares / process_second_tranche 同构。 */
+const W2_FIRST_PCT=1/3;
+/* 第2批补仓率统计（补丁验收项：记录第2批补仓率）——挂 window 供验收脚本与复盘读取 */
+window.__w2Stats={fill:0,abandon:0};
+function firstTrancheShares(total,minBuy){
+  minBuy=minBuy||100;
+  if(total<minBuy)return 0;
+  let first=Math.floor(total*W2_FIRST_PCT/minBuy)*minBuy;
+  if(first<minBuy)first=minBuy; /* 不足一批则给一批（小仓位首笔即全量）*/
+  return Math.min(first,total);
+}
+/* 第2批状态判定：返回 'fill'/'abandon'/null（未到次日/未开盘/已处理/无第2批可补）。
+   prevClose 优先取次日行情 st.prevClose（即前日收盘价，最准），持仓回填值兜底。 */
+function secondTrancheAction(h,st,now){
+  if(!h||h.tranche!==1||h.secondDone)return null;
+  if(todayStr(new Date(h.buyTime))===todayStr(now))return null; /* 第1批当日不处理 */
+  /* 必须已开盘（9:30-15:00 或强制开市）：开盘前行情仍是昨收，
+     此时「现价≥前收」恒成立，会误判为「不破前收」提前补仓 */
+  if(!isTradeTime(now))return null;
+  if(!h.planTotal||h.planTotal<=h.qty)return null; /* 计划量已买足（小仓位首笔即全量） */
+  const pc=h.prevClose||st.prevClose||0;
+  if(pc<=0||!(st.price>0))return 'abandon'; /* 无前收/价格数据，保守放弃 */
+  const open=(st.open&&st.open>0)?st.open:st.price;
+  if(st.price>=pc)return 'fill';        /* (a) 不破前日收盘 */
+  if(st.price>open)return 'fill';       /* (b) 低开但快速翻红 */
+  return 'abandon';                     /* (c) 低开不翻红 */
+}
+/* 执行第2批：fill 补足 2/3（加权成本），abandon 仅留 1/3；返回 'fill'/'abandon'/null */
+function processSecondTranche(p,h,st,now){
+  const act=secondTrancheAction(h,st,now);
+  if(!act)return null;
+  h.secondDone=true;
+  const pct=st.prevClose?((st.price-st.prevClose)/st.prevClose*100).toFixed(1):'?';
+  if(act==='abandon'){
+    window.__w2Stats.abandon++;
+    log('info',`【${p.id}】${escHtml(h.name)}(${h.code})第2批放弃（低开不翻红：现价${st.price.toFixed(2)} vs 前收${(h.prevClose||st.prevClose||0).toFixed(2)}），仅留第1批${h.qty}股`);
+    return 'abandon';
+  }
+  const qty=h.planTotal-h.qty;
+  if(qty<100){window.__w2Stats.abandon++;log('info',`【${p.id}】${escHtml(h.name)}第2批可补不足1手（${qty}股），按放弃处理`);return 'abandon';}
+  const amount=qty*st.price;
+  const fee=Math.max(amount*0.000115,5);
+  if(amount+fee>p.cash){window.__w2Stats.abandon++;log('warn',`【${p.id}】${escHtml(h.name)}第2批现金不足（需${(amount+fee).toFixed(0)}，余${p.cash.toFixed(0)}），放弃`);return 'abandon';}
+  p.cash-=amount+fee;
+  const costPerShare=(amount+fee)/qty;
+  const totalQty=h.qty+qty;
+  h.buyPrice=(h.buyPrice*h.qty+costPerShare*qty)/totalQty;
+  h.qty=totalQty;
+  h.tranche=2;
+  if(!h.lots)h.lots=[];
+  h.lots.push({price:st.price,qty,time:now.toISOString(),reason:'第2批补仓',fee});
+  if(!p.trades)p.trades=[];
+  p.trades.push({type:'buy2',code:h.code,name:h.name,qty,price:st.price,fee,time:now.toISOString(),reason:`第2批补仓·${st.price>=(h.prevClose||st.prevClose||0)?'不破前收':'低开翻红'}`});
+  window.__w2Stats.fill++;
+  log('trade',`【${p.id}】第2批补仓${escHtml(h.name)}(${h.code})${qty}股 @${st.price.toFixed(2)}（${st.price>=(h.prevClose||st.prevClose||0)?'不破前收':'低开翻红'}，前收${(h.prevClose||st.prevClose||0).toFixed(2)}），累计${totalQty}股，新成本${h.buyPrice.toFixed(2)}`);
+  return 'fill';
+}
+/* 第1批开新仓的尾盘窗口（补丁三原文「信号确认日 14:45 尾盘试仓」）：
+   14:45-15:00。不在此窗口不开新仓（加仓/第2批补仓不受限——补仓是已确认计划的延续）。 */
+function tailEntryWindow(now){
+  const hm=now.getHours()*60+now.getMinutes();
+  return hm>=885&&hm<900;
+}
 
 /* ==================== 参数撤回栈（v0267：撤回上一步）====================
    所有会改写 ROLE_PARAMS 的外部动作（回测应用 / AI 自动调 / 恢复出厂 / 单条回滚），
@@ -6642,8 +6710,13 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     return false;
   }
   const minBuy=boardRule.minBuy;
-  const qty=Math.floor(budget/target.price/minBuy)*minBuy;
-  if(qty<minBuy)return false; /* 每次买入不得低于板块最低股数 */
+  /* W2 两段式建仓（补丁三，与后端 trade_engine.py do_buy 同构）：
+     计划总股数不变（W1 风险预算公式产出），第1批只执行 1/3——
+     尾盘突破信号往往已是当日高位、次日低开是常态，先买1/3换取「确认权」，
+     第2批由 processSecondTranche 次日按「不破前收/低开翻红」补足。 */
+  const _planTotal=Math.floor(budget/target.price/minBuy)*minBuy;
+  const qty=firstTrancheShares(_planTotal,minBuy);
+  if(qty<minBuy)return false; /* 第1批不得低于板块最低股数 */
   const amount=qty*target.price;
   /* 最小单笔金额门槛（需求书P2-⑩）：佣金最低5元+印花税0.1%双边，单笔<1万时
      费用占比>0.18%——200股@29.85=5970元双边成本约11元，赚了也被摩擦吃掉。
@@ -6669,8 +6742,11 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
     log("trade",`【${p.id}】加仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，累计${totalQty}股，新成本${exist.buyPrice.toFixed(2)}，仓率${_posPct}%，原因：加仓·${buyReason}`);
   }else{
     p.holdings.push({code:target.code,name:target.name,sector:target.sector,industry:target.industry,wx:target.wx,
-      qty,buyPrice:costPerShare,buyTime:now.toISOString(),ztLow:target.ztLow,reason:buyReason,lots:[{price:target.price,qty,time:now.toISOString(),reason:buyReason,fee:fee}]});
-    log("trade",`【${p.id}】建仓${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，仓率${_posPct}%，原因：${buyReason}`);
+      qty,buyPrice:costPerShare,buyTime:now.toISOString(),ztLow:target.ztLow,reason:buyReason,lots:[{price:target.price,qty,time:now.toISOString(),reason:buyReason,fee:fee}],
+      /* W2 两段式建仓状态：planTotal=计划总股数；tranche=已建批次(1/2)；secondDone=第2批已判定；
+         prevClose=第1批成交日收盘价（当日收盘后由 tick 回填，供次日判定兜底）*/
+      planTotal:_planTotal,tranche:1,secondDone:false,prevClose:null});
+    log("trade",`【${p.id}】建仓(第1批1/3)${escHtml(target.name)}(${target.code})${qty}股 @${target.price.toFixed(2)}，成本${costPerShare.toFixed(2)}，计划${_planTotal}股，仓率${_posPct}%，原因：${buyReason}`);
   }
   p.trades.push({type:"buy",code:target.code,qty,price:target.price,fee:fee,time:now.toISOString(),reason:exist?"加仓·"+buyReason:buyReason});
   /* 决策快照（需求书P0-③）：成交即留档，含数据状态/regime/指标/门禁轨迹/模型参数 */
@@ -6904,11 +6980,20 @@ function tick(){
       const flowOK=(!t||env.score>=45)?true:((simData.sectors[t.sector]&&simData.sectors[t.sector].flow||0)>0);
       /* KDJ金叉条件放宽：80%需要金叉，20%直接买（趋势已成立不等金叉） */
       const kdjOK=!t||t.kdjK===undefined||(Math.random()<0.2)||(t.kdjK>t.kdjD&&t.kdjKPrev<=t.kdjDPrev);
-      if(!_regimeBlocked&&!_sentBlocked&&canBuyNow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance&&roleBuySlotOK(p.id,now))doBuy(p,t,now,0.6*_rs*_sentFactor); /* 首次建仓：60%预算×regime缩放×情绪系数；尾盘按角色哈希错峰 */
+      /* W2 两段式建仓：新开仓只在 14:45-15:00 尾盘窗口（补丁三「信号确认日 14:45 尾盘试仓」）。
+         加仓/第2批补仓不受此限——它们是已确认计划的延续，不是新的信号判断。 */
+      if(!_regimeBlocked&&!_sentBlocked&&canBuyNow(now)&&tailEntryWindow(now)&&t&&flowOK&&kdjOK&&Math.random()<buyChance&&roleBuySlotOK(p.id,now))doBuy(p,t,now,0.6*_rs*_sentFactor); /* 首次建仓：60%预算×regime缩放×情绪系数；尾盘按角色哈希错峰 */
       p.holdings.slice().forEach(h=>{
         const st=simData.pricePool[h.code];if(!st)return;
+        /* W2 第1批成交日收盘后回填「前日收盘价」：次日判定「不破前收」时需要它兜底
+           （实时行情 st.prevClose 在次日同样可用，这里回填是为了复盘/日志可追溯）*/
+        if(h.tranche===1&&!h.prevClose&&afterClose(now)&&st.price>0)h.prevClose=st.price;
+        /* W2 第2批确认（补丁三）：次日不破前收/低开翻红 → 补足 2/3；低开不翻红 → 放弃仅留 1/3。
+           先于普通加仓执行，且未判定的持仓不走普通加仓（避免绕过两段式结构一次性买满）。*/
+        processSecondTranche(p,h,st,now);
+        const w2Pending=h.tranche===1&&!h.secondDone;
         /* 加仓逻辑：已有1批、非今日买入、KDJ再次金叉、股价在MA20上方 */
-        if(h.lots&&h.lots.length===1&&canSell(h,now)&&st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK>st.kdjD&&st.kdjKPrev<=st.kdjDPrev&&st.price>st.ma20){
+        if(!w2Pending&&h.lots&&h.lots.length===1&&canSell(h,now)&&st.kdjK!==undefined&&st.kdjKPrev!==undefined&&st.kdjK>st.kdjD&&st.kdjKPrev<=st.kdjDPrev&&st.price>st.ma20){
           const addTarget={code:h.code,name:h.name,sector:h.sector,industry:h.industry,wx:h.wx,price:st.price,ztLow:h.ztLow};
           if(!_regimeBlocked&&!_sentBlocked&&canBuyNow(now)&&roleBuySlotOK(p.id,now))doBuy(p,addTarget,now,0.5*_rs*_sentFactor);
         }
@@ -12322,6 +12407,31 @@ function sellSignal(role,P,i,cost,rules,holdDays){
   if(role==="D6"&&P.ztLow[i]!=null&&c<P.ztLow[i])return"跌破涨停低点";
   return null;
 }
+/* W2 第2批确认（回测·日线口径，与实时 secondTrancheAction/processSecondTranche 同规则）：
+   信号日买 1/3，次日判定——(a)收盘≥前收 → 补 2/3 (b)低开但收>开（翻红）→ 补 2/3
+   (c)低开不翻红 → 放弃，仅留 1/3。成交额与成本按加权更新，补仓/放弃都记进 trades。
+   抽成独立函数（而非内联在循环里）是为了可验收：验收脚本可直接喂确定性参数。 */
+function btSecondTranche(A,exist,P,i,role,date){
+  if(!exist||exist.tranche!==1||exist.secondDone||i-exist.bi<1)return null;
+  /* 计划量已买足（小仓位首笔即全量）→ 无第2批，不记放弃（否则污染补仓率统计） */
+  if(!exist.planTotal||exist.planTotal<=exist.qty){exist.secondDone=true;return null;}
+  const pc=exist.prevClose,px=P.closes[i],op=(P.days[i]&&P.days[i].open)||px;
+  const why=px>=pc?"不破前收":(px>op?"低开翻红":"低开不翻红");
+  const fill=!(why==="低开不翻红");
+  exist.secondDone=true;
+  const q2=exist.planTotal-exist.qty;
+  const q=exist.quality||{stars:1,label:"勉强符合",score:50};
+  if(fill&&q2>=100){
+    A.cash-=q2*px;
+    exist.cost=(exist.cost*exist.qty+px*q2)/(exist.qty+q2);
+    exist.qty+=q2;exist.tranche=2;exist.bi=i;
+    exist.lots.push({q:q2,price:px,bi:i});
+    A.trades.push({role,dir:"补仓",code:exist.code,date,price:px,shares:q2,pnl:null,reason:`第2批·${why}`,quality:q});
+    return "fill";
+  }
+  A.trades.push({role,dir:"放弃",code:exist.code,date,price:px,shares:0,pnl:null,reason:`第2批·${why}·放弃（仅留第1批${exist.qty}股）`,quality:q});
+  return "abandon";
+}
 function multiBacktest(dayMap,roles,rules){
   const preps={};for(const code in dayMap){const P=prepStock(dayMap[code]);P.code=code;preps[code]=P;}
   /* v0269：必须给 P.code 赋值——weeklySeriesFor(P) 以 P.code 为缓存键且无 code 直接返回 null，
@@ -12356,6 +12466,8 @@ function multiBacktest(dayMap,roles,rules){
         const P=preps[code];if(!P||!P.closes[i])continue;
         const exist=A.holds.find(h=>h.code===code);
         if(exist){
+          /* W2 第2批确认（补丁三，日线口径）：信号日买1/3，次日判定补足或放弃 */
+          btSecondTranche(A,exist,P,i,role,date);
           /* 加仓条件：仅1批、T+1可卖、KDJ金叉、MA20上方 */
           if(exist.lots&&exist.lots.length>=2)continue;
           if(i-exist.bi<=1)continue;
@@ -12376,10 +12488,13 @@ function multiBacktest(dayMap,roles,rules){
           if(A.holds.length>=MAX_POS)continue; /* 持仓数量上限 */
           const asset=A.cash+A.holds.reduce((s,h)=>s+h.qty*pxAt(preps[h.code],i),0);
           const budget=Math.min(A.cash,asset*0.15); /* 首次用15%仓位（半仓建仓，总仓位上限25%） */
-          const q=Math.floor(budget/P.closes[i]/100)*100;
+          const planTotal=Math.floor(budget/P.closes[i]/100)*100;
+          /* W2 两段式建仓：第1批只买 1/3（补丁三）；计划总量与第2批状态一并留档 */
+          const q=firstTrancheShares(planTotal,100);
           if(q<200)continue;
           const quality=calcTradeQuality(role,P,i);
-          A.cash-=q*P.closes[i];A.holds.push({code,qty:q,cost:P.closes[i],bi:i,lots:[{q,price:P.closes[i],bi:i}],partialTaken:false,quality});
+          A.cash-=q*P.closes[i];A.holds.push({code,qty:q,cost:P.closes[i],bi:i,lots:[{q,price:P.closes[i],bi:i}],partialTaken:false,quality,
+            planTotal:planTotal,tranche:1,secondDone:false,prevClose:P.closes[i] /* 日线口径：信号日收盘价即成交价 */});
           const ma20Up=i>=5&&P.ma20[i]>P.ma20[i-5];
           const fakeBreak=ma20Up&&i>=1&&P.closes[i-1]<P.ma20[i-1]&&P.closes[i]>P.ma20[i]&&(P.volR[i]||1)<1.2;
           const buyReason=(role==="D3"?genDebateReason(P,i):BUY_REASONS[role])+(fakeBreak?"【假跌破后收回MA20·MA20向上+缩量·强低吸信号】":"")+`【${qualityStars(quality.stars)}${quality.label}】`;
@@ -12395,6 +12510,10 @@ function multiBacktest(dayMap,roles,rules){
     if(A.holds.length>MAX_POS)A.holds=A.holds.slice(0,MAX_POS);
     const final=A.eq.length?A.eq[A.eq.length-1]:INIT_CASH;
     let peak=-1e9,mdd=0;A.eq.forEach(v=>{peak=Math.max(peak,v);mdd=Math.max(mdd,(peak-v)/peak*100);});
+    /* W2 第2批补仓率（补丁三验收项：记录第2批补仓率）——补仓次数 / (补仓+放弃) */
+    const _w2fill=A.trades.filter(t=>t.dir==="补仓"),_w2ab=A.trades.filter(t=>t.dir==="放弃");
+    const tranche2={fill:_w2fill.length,abandon:_w2ab.length,
+      rate:(_w2fill.length+_w2ab.length)?_w2fill.length/(_w2fill.length+_w2ab.length)*100:0};
     /* 交易质量统计：按星级分组统计胜率和平均盈亏 */
     const qualityStats={3:{count:0,wins:0,totalPnl:0},2:{count:0,wins:0,totalPnl:0},1:{count:0,wins:0,totalPnl:0},0:{count:0,wins:0,totalPnl:0}};
     sells.forEach(t=>{
@@ -12411,7 +12530,7 @@ function multiBacktest(dayMap,roles,rules){
     });
     return{role,asset:final,total:(final-INIT_CASH)/INIT_CASH*100,winRate:sells.length?wins.length/sells.length*100:0,
       avg:sells.length?sells.reduce((s,t)=>s+t.pnl,0)/sells.length:0,mdd,holds:A.holds.length,trades:A.trades,eq:A.eq,
-      cats:preps[codes[0]].days.slice(START).map(d=>d.date),qualityStats};
+      cats:preps[codes[0]].days.slice(START).map(d=>d.date),qualityStats,tranche2};
   });
 }
 async function runSim(){

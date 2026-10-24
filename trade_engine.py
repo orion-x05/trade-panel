@@ -50,6 +50,84 @@ RISK_PER_TRADE = 0.01   # 单笔风险预算：最多亏总权益 1%
 MAX_SINGLE_PCT = 0.25   # 单票硬顶：占总权益 25%
 FUSE_PCT = 0.12         # 保险丝：浮亏 -12% 无条件全部清仓（防跳空，正常情况ATR止损先触发）
 DEFAULT_ATR_PCT = 2.0   # 无ATR数据时的默认波动率（与前端 defAtr=买入价×2% 一致）
+# ===== W2 两段式建仓（补丁_止损与信号降噪.md 第三章；设计原则来自 position_plan.py）=====
+# 第 1 批：信号确认日尾盘试仓 1/3（整百股，至少 1 手）
+# 第 2 批：次日 (a)不破前日收盘 → 补 2/3 (b)低开但快速翻红 → 补 2/3 (c)低开不翻红 → 放弃，仅留 1/3
+# 为什么不一次买满：尾盘突破信号往往已是当日高位，次日低开是常态；
+#   先买 1/3，用剩下的 2/3 换取「确认权」——判断错误时亏得少（position_plan.EntryPlan 原话）。
+W2_FIRST_PCT = 1.0 / 3.0      # 第1批占计划总股数比例
+W2_STATS = {"fill": 0, "abandon": 0}   # 第2批补仓率统计（补丁验收项：记录第2批补仓率）
+
+def first_tranche_shares(total):
+    """按 position_plan.build_entry_plan 同口径取第1批股数：int(total*1/3/100)*100，
+    小仓位保护（total<300 时公式给0）→ 至少1手且不超过总量。"""
+    if total < 100:
+        return 0
+    first = int(total * W2_FIRST_PCT / 100) * 100
+    return max(min(first, total), 100)
+
+def process_second_tranche(player, hold, st, now=None):
+    """W2 第2批处理。每轮对持仓调用一次，返回 "fill"/"abandon"/None（未到次日或已处理）。
+    第1批成交日当天不处理；次日按 (a)不破前收/(b)低开翻红 补仓，(c)低开不翻红放弃。
+    prev_close 优先取持仓回填值（第1批成交日收盘价），缺失时回退当日行情 st["prev_close"]。"""
+    import datetime as _dt
+    if not hold or hold.get("tranche") != 1 or hold.get("secondDone"):
+        return None
+    now = now or cn_now()
+    try:
+        buy_day = _dt.datetime.fromisoformat(str(hold.get("buyTime", ""))).date()
+    except Exception:
+        buy_day = now.date()
+    if buy_day >= now.date():
+        return None   # 第1批当日不处理，等次日
+    if int(hold.get("planTotal", 0)) <= int(hold.get("qty", 0)):
+        hold["secondDone"] = True   # 计划量已买足（小仓位首笔即全量），无需第2批
+        return None
+    hold["secondDone"] = True
+    # 前日收盘价：优先次日行情 st["prev_close"]（即第1批成交日收盘价，最准），持仓回填值兜底
+    pc = st.get("prev_close") or hold.get("prevClose") or 0
+    px = st.get("price") or 0
+    op = st.get("open") or px
+    if pc <= 0 or px <= 0:
+        W2_STATS["abandon"] += 1
+        print(f"  ⏸️  {player['id']} {hold.get('name','')} 第2批放弃（无前收/价格数据，保守起见仅留第1批）")
+        return "abandon"
+    if px >= pc:
+        action, why = "fill", "不破前收"
+    elif px > op:
+        action, why = "fill", "低开翻红"
+    else:
+        action, why = "abandon", "低开不翻红"
+    if action == "abandon":
+        W2_STATS["abandon"] += 1
+        print(f"  ⏸️  {player['id']} {hold.get('name','')} 第2批放弃（{why}：收{px:.2f} vs 前收{pc:.2f}），仅留第1批{hold.get('qty',0)}股")
+        return "abandon"
+    qty = int(hold.get("planTotal", 0)) - int(hold.get("qty", 0))
+    if qty < 100:
+        W2_STATS["abandon"] += 1
+        print(f"  ⏸️  {player['id']} {hold.get('name','')} 第2批可补不足1手（{qty}股），按放弃处理")
+        return "abandon"
+    amount = qty * px
+    fee = max(amount * 0.00025, 5)
+    if amount + fee > player["cash"]:
+        W2_STATS["abandon"] += 1
+        print(f"  ⏸️  {player['id']} {hold.get('name','')} 第2批现金不足（需{amount+fee:.0f} 余{player['cash']:.0f}），放弃")
+        return "abandon"
+    player["cash"] -= (amount + fee)
+    old_qty, old_cost = int(hold["qty"]), float(hold["buyPrice"])
+    hold["qty"] = old_qty + qty
+    hold["buyPrice"] = (old_cost * old_qty + ((amount + fee) / qty) * qty) / hold["qty"]
+    hold["tranche"] = 2
+    W2_STATS["fill"] += 1
+    player["trades"].append({
+        "type": "buy2", "code": hold["code"], "name": hold.get("name", ""),
+        "qty": qty, "price": px, "fee": fee,
+        "time": now.isoformat(), "reason": f"第2批补仓·{why}",
+        "trend": "neutral"
+    })
+    print(f"  ✅ {player['id']} {hold.get('name','')} 第2批补仓 {qty}股 @{px:.2f}（{why}），累计{hold['qty']}股，新成本{hold['buyPrice']:.2f}")
+    return "fill"
+
 BT_TUNE_FILE = "bt_tune.json"
 
 ROLES = {
@@ -2002,6 +2080,9 @@ def check_sell_signals(player, stock_data):
     for hold in player["holdings"]:
         if hold["code"] not in stock_data or not can_sell_t1(hold): continue
         st = stock_data[hold["code"]]
+        # 【W2·第2批处理】两段式建仓的次日确认先于一切卖出判定——
+        # 补仓/放弃是建仓计划的延续，与当日止盈止损信号互不干扰。
+        process_second_tranche(player, hold, st)
         # D7 周线超卖反转：分批止盈/硬止损专属逻辑优先，未命中再走下方通用规则
         if player["id"] == "D7":
             sig = d7_sell_signal(hold, st)
@@ -2395,7 +2476,11 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
         position_ratio *= 0.5
     # 【国家队领先指标】明确进场适度领先加仓(×1.15)，未见动作略偏防御(×0.9)
     budget = player["cash"] * position_ratio * ntf
-    qty = int(budget / st["price"] / 100) * 100
+    plan_total = int(budget / st["price"] / 100) * 100   # W2：计划总股数（原一次性买入量）
+    # 【W2·两段式建仓】第1批只买 1/3（补丁三）：尾盘突破信号往往已是当日高位、
+    #   次日低开是常态；先买 1/3，用剩下的 2/3 换取「确认权」。第2批次日判定见
+    #   process_second_tranche（不破前收/低开翻红补仓，低开不翻红放弃）。
+    qty = first_tranche_shares(plan_total)
     if qty < 100:
         print(f"  {player['id']} 资金不足，跳过 {st['name']}")
         return
@@ -2406,21 +2491,24 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     player["holdings"].append({
         "code": code, "name": st["name"], "qty": qty,
         "buyPrice": cost_per, "buyTime": cn_now().isoformat(),
-        "reason": reason, "score": score
+        "reason": reason, "score": score,
+        # W2 两段式建仓状态：planTotal=计划总量；tranche=已建批次；secondDone=第2批已判定
+        "planTotal": plan_total, "tranche": 1, "secondDone": False,
+        "prevClose": st.get("price") or 0,   # 第1批成交日收盘价（日线口径=成交价），供次日判定
     })
     player["trades"].append({
         "type": "buy", "code": code, "name": st["name"],
         "qty": qty, "price": st["price"], "fee": fee,
-        "time": cn_now().isoformat(), "reason": reason,
+        "time": cn_now().isoformat(), "reason": f"{reason}（第1批试仓1/3，计划{plan_total}股）",
         "trend": trend
     })
     # 【每笔买入都推送】去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
     # 只要真实成交就推；统一走 push_report（仅 WxPusher），消息含时间+原因
     push_report(
-        f"📈 {player['id']} 建仓 {st['name']}",
-        f"股票：{st['name']}({code})\n数量：{qty}股\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ T+1：明日可卖出\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"📈 {player['id']} 建仓(第1批) {st['name']}",
+        f"股票：{st['name']}({code})\n数量：{qty}股（计划{plan_total}股的1/3试仓）\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ 第2批：次日不破前收/低开翻红补足，低开不翻红放弃\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    print(f"  ✅ {player['id']} 买入 {st['name']} {qty}股 @{st['price']:.2f}")
+    print(f"  ✅ {player['id']} 买入 {st['name']} {qty}股 @{st['price']:.2f}（第1批1/3，计划{plan_total}股）")
 
 def do_sell(player, hold, st, reason, data, ratio=1.0):
     sell_qty = hold["qty"] if ratio >= 1 else int(hold["qty"] * ratio / 100) * 100
