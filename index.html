@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20261025-r35-w2entry</title>
+<title>Orion-X AI量化投研面板 · v20261025-r36-p0dedup</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261025-r35-w2entry";
+<script>window.APP_VERSION="20261025-r36-p0dedup";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -2696,7 +2696,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r35-w2entry</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r36-p0dedup</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
@@ -14145,7 +14145,7 @@ function initTech(){
   });
 }
 /* 启动市场消息自动追踪：立即拉取一次，此后每 60 秒自动刷新 */
-fetchNews();
+if(!window._newsInit){window._newsInit=1;fetchNews();}
 setInterval(fetchNews,60000);
 /* ===== 外部监控：二级/三级折叠切换 ===== */
 function toggleExt(name){
@@ -14317,14 +14317,6 @@ function vixLive(){
 }
 
 
-/* 交易知识库折叠/展开通用函数 */
-/* 启动市场消息自动追踪：立即拉取一次，此后每 60 秒自动刷新 */
-fetchNews();
-setInterval(fetchNews,60000);
-/* ===== 外部监控：二级/三级折叠切换 ===== */
-/* ---------- 龙虎榜 ---------- */
-/* ---------- 北向资金 ---------- */
-/* ---------- 宝妈指数 ---------- */
 /* ==================== v0267 三大思维框架（缠论 + 芒格思维 + 涛动周期论）====================
    七角色 system prompt 与 AI 评审官/修正提案 prompt 统一注入。
    三者分工：周期定方向（做不做）→ 芒格定纪律（敢不敢做）→ 缠论定位置（在哪下手）。 */
