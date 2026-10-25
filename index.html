@@ -1,4 +1,42 @@
 <!DOCTYPE html>
+
+<script>
+(function(){
+  /* 批2-4b 卡片进场错峰（独立顶层脚本：双时机执行，幂等） */
+  var ioInit=function(){
+    if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    var cards=document.querySelectorAll(".today-grid > .panel,.today-grid > .mini-card");
+    if(!cards.length)return;
+    for(var i=0;i<cards.length;i++){
+      cards[i].style.setProperty("--d",(i*60)+"ms");
+      cards[i].classList.add("tg-in");
+    }
+    if(!("IntersectionObserver" in window)){
+      for(var k=0;k<cards.length;k++)cards[k].classList.add("tg-in-ok");
+      return;
+    }
+    var io=new IntersectionObserver(function(es){
+      for(var n=0;n<es.length;n++){
+        if(es[n].isIntersecting){es[n].target.classList.add("tg-in-ok");io.unobserve(es[n].target);}
+      }
+    },{threshold:.15});
+    for(var m=0;m<cards.length;m++)io.observe(cards[m]);
+  };
+  try{ioInit();}catch(e){}
+  setTimeout(function(){try{ioInit();}catch(e){}},500);
+})();
+</script>
+<script>
+(function(){
+  /* 下拉刷新兜底（仅 ≤640px；若批1 段未完整注册则补上；refreshAll 自带 3s 防抖+busy 锁，重复注册无害） */
+  var mq=window.matchMedia?window.matchMedia('(max-width: 640px)'):null;
+  if(!mq||!mq.matches)return;
+  var sy=0,pulling=false;
+  document.addEventListener('touchstart',function(e){ if(window.scrollY>0)return; pulling=true; sy=e.touches[0].clientY; },{passive:true});
+  document.addEventListener('touchmove',function(e){ if(!pulling)return; var dy=e.touches[0].clientY-sy; if(dy>60){ pulling=false; window.refreshAll(); } },{passive:true});
+  document.addEventListener('touchend',function(){ pulling=false; },{passive:true});
+})();
+</script>
 <html lang="zh-CN" class="modern">
 <head>
 <meta charset="UTF-8">
@@ -7914,11 +7952,16 @@ function switchTab(name){
   if(group){curGroup=group;curView=name;}
   else if(TAB_GROUPS[name]){curGroup=name;curView=TAB_GROUPS[name][0];}
   else{return;}
-  document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+curView));
-  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
-  document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
-  try{window.updateBBInd&&window.updateBBInd();}catch(e){}
-  renderSubNav();
+  const applyView=function(){
+    document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+curView));
+    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
+    document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
+    try{window.updateBBInd&&window.updateBBInd();}catch(e){}
+    renderSubNav();
+  };
+  if(document.startViewTransition&&!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)){
+    try{document.startViewTransition(applyView);}catch(e){applyView();}
+  }else{applyView();}
   /* 更新头部页面名：主 tab 名 + （子视图名） */
   const tp=document.getElementById("topbarPage");
   if(tp)tp.textContent=(TAB_GROUP_LABEL[curGroup]||curGroup)+((TAB_GROUPS[curGroup]||[]).length>1?" · "+(TAB_SUB_LABEL[curView]||curView):"");
@@ -8476,7 +8519,7 @@ function renderTodayDecisionCard(){
   hero.querySelector('#heroSub').textContent=subTxt;
   const hs=hero.querySelector('#heroSpark');if(hs)hs.innerHTML=sparkHtml;
   const hr=hero.querySelector('#heroReason');if(hr)hr.innerHTML=reasonLines.join("");
-  const hc=document.getElementById('heroCap');if(hc){hc.textContent=cap<=0?"0%":(cap*100).toFixed(0)+"%";hc.style.color=cap<=0?"var(--err)":(cap<=0.15?"var(--warn)":"var(--ok)");}
+  const hc=document.getElementById('heroCap');if(hc){try{window.countUpNum(hc,cap<=0?0:cap*100,{suffix:"%",dur:650});}catch(e){hc.textContent=cap<=0?"0%":(cap*100).toFixed(0)+"%";}hc.style.color=cap<=0?"var(--err)":(cap<=0.15?"var(--warn)":"var(--ok)");}
   const hd=document.getElementById('heroData');if(hd){hd.textContent=(DATA_STATE_TEXT[ds]||ds);hd.style.color=dsBad?"var(--err)":"var(--ok)";}
   hero.setAttribute("data-verdict",verdict);
   try{renderTodayGrid2(cap,rg);}catch(e){}
@@ -17278,6 +17321,14 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   }
+
+  /* ===== 交接包批2-4b：卡片进场 IO 错峰 + spark 柱 grow + tab 淡入淡出 ===== */
+  ::view-transition-old(root){animation:var(--t-base) var(--out) both}
+  ::view-transition-new(root){animation:var(--t-base) var(--out) both}
+  .today-grid > .panel.tg-in,.today-grid > .mini-card.tg-in{opacity:0;transform:translateY(18px)}
+  .today-grid > .panel.tg-in-ok,.today-grid > .mini-card.tg-in-ok{opacity:1;transform:none}
+  .today-grid > .panel,.today-grid > .mini-card{transition:opacity var(--t-base) var(--out) var(--d,0ms),transform var(--t-base) var(--out) var(--d,0ms),border-color var(--t-base) var(--out) var(--d,0ms),box-shadow var(--t-base) var(--out) var(--d,0ms)}
+  .spark-bar{transform-origin:bottom;animation:barGrow .6s var(--spring) both}
 </style>
 
 <script id="ui-enhance-js">
@@ -17551,7 +17602,9 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
     document.addEventListener('touchstart',function(e){ if(window.scrollY>0)return; pulling=true; sy=e.touches[0].clientY; },{passive:true});
     document.addEventListener('touchmove',function(e){ if(!pulling)return; var dy=e.touches[0].clientY-sy; if(dy>60){ pulling=false; window.refreshAll(); } },{passive:true});
     document.addEventListener('touchend',function(){ pulling=false; },{passive:true});
-  })();
+  
+  
+})();
 
 </script>
 
