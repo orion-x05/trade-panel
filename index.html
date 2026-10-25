@@ -173,14 +173,14 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
 </script>
 <style>
   :root {
-    --bg:#0b0f14; --bg-panel:#121821; --bg-card:#151d28; --bg-hover:#1a2432;
-    --border:#233040; --border-soft:#1b2533;
-    --text:#dbe4ee; --text-dim:#7d8ca0; --text-faint:#55637a;
+    --bg:oklch(0.145 0.004 260); --bg-panel:oklch(0.19 0.006 260); --bg-card:oklch(0.195 0.006 260); --bg-hover:oklch(0.25 0.008 260);
+    --border:oklch(1 0 0 / .07); --border-soft:oklch(1 0 0 / .05);
+    --text:oklch(0.96 0.002 260); --text-dim:oklch(0.72 0.004 260); --text-faint:#55637a;
     --green:#3ecf8e; --green-bg:rgba(62,207,142,.12);
     --red:#f2555a; --red-bg:rgba(242,85,90,.13);
-    --up:#f2555a; --up-bg:rgba(242,85,90,.13);      /* A股习惯：涨=红 */
-    --down:#3ecf8e; --down-bg:rgba(62,207,142,.12); /* A股习惯：跌=绿 */
-    --yellow:#e8b339; --yellow-bg:rgba(232,179,57,.12);
+    --up:oklch(0.66 0.17 22); --up-bg:rgba(242,85,90,.13);      /* A股习惯：涨=红 */
+    --down:oklch(0.76 0.14 160); --down-bg:rgba(62,207,142,.12); /* A股习惯：跌=绿 */
+    --yellow:oklch(0.80 0.13 80); --yellow-bg:rgba(232,179,57,.12);
     --cyan:#3fb6d8;
     --c1:#ff5d8f; --c2:#00e5a0; --c3:#b388ff; --c4:#ffc300; --c5:#00c2ff; --c6:#ff8a3d;
     --mono:"SF Mono","JetBrains Mono","Cascadia Code",Consolas,"Liberation Mono",monospace;
@@ -188,21 +188,25 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
     /* ===== Design Token（任务包 v2 第六节） ===== */
     /* 字号 7 档 */
     --fs-micro:10.5px; --fs-xs:11.5px; --fs-sm:12.5px; --fs-base:13.5px;
-    --fs-lg:16px; --fs-xl:20px; --fs-display:72px;
+    --fs-lg:16px; --fs-xl:20px; --fs-display:clamp(56px,6.4vw,104px);
     /* 圆角 3 档 */
     --r-sm:4px; --r-md:16px; --r-lg:24px; --r-pill:999px;
     /* 间距 4 基线 */
     --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px;
     /* 唯一主色（快捷按钮/高亮/交互反馈统一走它，不再散用蓝/紫） */
     --accent:#4d9fff; --accent-dim:rgba(77,159,255,.14);
+    /* 交接包：Hero 唯一暖渐变 + 流体间距 + 回弹曲线 */
+    --warm-a:oklch(0.87 0.10 65); --warm-b:oklch(0.76 0.15 42);
+    --gap:clamp(14px,1.1vw,22px); --pad:clamp(24px,1.6vw,34px);
+    --spring:cubic-bezier(.34,1.56,.64,1); --out:cubic-bezier(.22,.8,.2,1);
     /* 状态色：只许用于边框/圆点/徽章背景（任务包铁律②） */
     --ok:#2ecc8f; --warn:#e8b339; --err:#ef5f5f;
     /* 动效 2 档（任务包铁律⑦） */
-    --t-fast:120ms; --t-base:200ms;
+    --t-fast:120ms; --t-base:200ms; --t-slow:400ms;
     --ease:cubic-bezier(.2,.8,.2,1);
     --ease-bounce:cubic-bezier(.34,1.56,.64,1);
     /* 对比度修复：--text-faint 不达 AA(3.16)，提亮到 #6b7a90（任务包 8.1） */
-    --text-faint:#6b7a90;
+    --text-faint:oklch(0.60 0.006 260);
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
@@ -1546,24 +1550,27 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
   </div>
   <!-- ===== 首屏之 Hero：今日决策（唯一视觉重心，结论判定优先级 数据态→情绪→regime） ===== -->
-  <div class="panel hero-panel" id="panel-today-decision" style="margin-top:12px">
-    <div class="hero" id="todayHero">
-      <div class="hero-main">
-        <div class="hero-eyebrow">今日决策</div>
-        <div class="hero-num" id="heroNum"><span class="sk-block" style="width:210px"></span></div>
-        <div class="hero-sub" id="heroSub">数据加载中…</div>
-        <div class="hero-spark" id="heroSpark"></div>
-        <div class="hero-reason" id="heroReason" hidden></div>
-        <div class="hero-actions">
-          <button class="hero-btn" id="heroReasonBtn" onclick="toggleHeroReason()">查看理由</button>
-          <button class="hero-btn ghost" onclick="dismissHeroToday()">今日不动</button>
+  <div class="today-grid">
+    <div class="panel hero-panel" id="panel-today-decision">
+      <div class="hero" id="todayHero">
+        <div class="hero-main">
+          <div class="hero-eyebrow">今日决策</div>
+          <div class="hero-num" id="heroNum"><span class="sk-block" style="width:210px"></span></div>
+          <div class="hero-sub" id="heroSub">数据加载中…</div>
+          <div class="hero-spark" id="heroSpark"></div>
+          <div class="hero-reason" id="heroReason" hidden></div>
+          <div class="hero-actions">
+            <button class="hero-btn" id="heroReasonBtn" onclick="toggleHeroReason()">查看理由</button>
+            <button class="hero-btn ghost" onclick="dismissHeroToday()">今日不动</button>
+          </div>
         </div>
       </div>
-      <div class="hero-side">
-        <div class="hero-mini"><div class="mini-label">仓位上限</div><div class="mini-val" id="heroCap"><span class="sk-block" style="width:52px"></span></div></div>
-        <div class="hero-mini"><div class="mini-label">数据状态</div><div class="mini-val" id="heroData"><span class="sk-block" style="width:56px"></span></div></div>
-      </div>
     </div>
+    <div class="mini-card"><div class="mini-label">仓位上限</div><div class="mini-val" id="heroCap"><span class="sk-block" style="width:52px"></span></div></div>
+    <div class="mini-card"><div class="mini-label">数据状态</div><div class="mini-val" id="heroData"><span class="sk-block" style="width:56px"></span></div></div>
+    <div class="mini-card t5"><div class="mini-label">情绪温度 · 近5日涨停家数</div><div class="t5-body" id="ts5"></div></div>
+    <div class="mini-card t4"><div class="mini-label">仓位结构 · 连板上限</div><div class="t4-mid"><div class="donut-wrap"><div class="donut" id="ts4d"><span class="donut-val" id="ts4v">--</span></div></div><span class="donut-tip" id="ts4t">--</span></div></div>
+    <div class="mini-card t3"><div class="mini-label">放行角色 · 当前 regime</div><div id="ts3"></div></div>
   </div>
     <!-- ===== 通栏分层 · 02 趋势（横贯全宽，概览之下明细之上） ===== -->
   <div class="layer-tag" data-band="2"><span class="layer-no">02</span><span class="layer-name">趋势 · 走势与统计</span><span class="layer-line"></span></div>
@@ -8376,6 +8383,41 @@ function renderStats(){
 }
 /* 今日决策卡（新增模块规格_情绪与反包 · 面板改造2）：
    情绪阶段 + 连板仓位上限 + 市场状态 + 数据态 + 反包规则，开仓前先看这张卡 */
+function renderTodayGrid2(cap,rg){
+  const s5=document.getElementById("ts5");
+  if(s5){
+    let html="";
+    try{
+      const th=window.__themeHistory||{};
+      const days=Object.keys(th).sort();
+      const nums=days.slice(-5).map(d=>Object.values(th[d]).reduce((a,x)=>a+(x.n||0),0));
+      if(nums.length>=1){
+        const max=Math.max.apply(null,nums.concat([1]));
+        html='<div class="t5-bars">'+nums.map(function(n,i){return '<div class="t5-bar" style="height:'+(22+66*n/max)+'%" title="'+days[days.length-nums.length+i]+' '+n+'家"><span>'+n+'</span></div>';}).join("")+'</div>';
+        html+='<div class="t5-foot">近'+nums.length+'日 · '+days[days.length-1]+' '+nums[nums.length-1]+'家</div>';
+      }else{html='<div class="t5-foot">暂无历史</div>';}
+    }catch(e){html='<div class="t5-foot">暂无历史</div>';}
+    s5.innerHTML=html;
+  }
+  const s4d=document.getElementById("ts4d");
+  if(s4d){
+    const c=Math.max(0,Math.min(1,cap||0))*100;
+    s4d.style.background='conic-gradient(var(--accent) '+c*3.6+'deg,oklch(1 0 0/.08) '+c*3.6+'deg)';
+    const v=document.getElementById("ts4v");if(v)v.textContent=(cap<=0?"0":c.toFixed(0))+"%";
+    const t=document.getElementById("ts4t");if(t)t.textContent=(cap<=0?"冰点/退潮 · 禁开仓":"剩余可用 · 上限");
+  }
+  const s3=document.getElementById("ts3");
+  if(s3){
+    const routes=REGIME_ROUTES&&REGIME_ROUTES[rg&&rg.state]?REGIME_ROUTES[rg.state]:{};
+    const names={D1:"趋势突破",D2:"多因子",D3:"多空辩论",D4:"量价共振",D5:"趋势回踩",D6:"涨停回踩",D7:"周线超卖"};
+    const keys=Object.keys(routes);
+    if(!keys.length){s3.innerHTML='<div class="t5-foot">全冻 · 不操作</div>';}
+    else{
+      s3.innerHTML='<div class="t3-list">'+keys.map(function(k,i){return '<div class="t3-item" style="animation-delay:'+(i*60)+'ms"><span class="t3-name">'+(names[k]||k)+'</span><span class="t3-badge">放行</span></div>';}).join("")+'</div>';
+    }
+  }
+}
+
 function renderTodayDecisionCard(){
   const box=$("todayDecisionCard");
   const hero=$("todayHero");if(!hero)return;
@@ -8433,9 +8475,10 @@ function renderTodayDecisionCard(){
   hero.querySelector('#heroSub').textContent=subTxt;
   const hs=hero.querySelector('#heroSpark');if(hs)hs.innerHTML=sparkHtml;
   const hr=hero.querySelector('#heroReason');if(hr)hr.innerHTML=reasonLines.join("");
-  const hc=hero.querySelector('#heroCap');if(hc){hc.textContent=cap<=0?"0%":(cap*100).toFixed(0)+"%";hc.style.color=cap<=0?"var(--err)":(cap<=0.15?"var(--warn)":"var(--ok)");}
-  const hd=hero.querySelector('#heroData');if(hd){hd.textContent=(DATA_STATE_TEXT[ds]||ds);hd.style.color=dsBad?"var(--err)":"var(--ok)";}
+  const hc=document.getElementById('heroCap');if(hc){hc.textContent=cap<=0?"0%":(cap*100).toFixed(0)+"%";hc.style.color=cap<=0?"var(--err)":(cap<=0.15?"var(--warn)":"var(--ok)");}
+  const hd=document.getElementById('heroData');if(hd){hd.textContent=(DATA_STATE_TEXT[ds]||ds);hd.style.color=dsBad?"var(--err)":"var(--ok)";}
   hero.setAttribute("data-verdict",verdict);
+  try{renderTodayGrid2(cap,rg);}catch(e){}
 }
 /* 渲染入口补调用：renderStats 末尾刷新决策卡（情绪/仓位系数随数据刷新） */
 
@@ -16702,6 +16745,16 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
 <!-- ===== UI 增强：交互 / 反馈 / 导航（简洁化） ===== -->
 
 <style id="ui-enhance">
+  /* ===== 交接包：物理层（颗粒噪点 + 暗角，pointer-events 全透） ===== */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:59;
+    background:radial-gradient(120% 80% at 50% 0%,transparent 55%,oklch(0.08 0.004 260 / .55) 100%);
+  }
+
   /* ===== 交接包批1：刷新策略 ===== */
   .ds-refresh{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;
     color:var(--text-dim);transition:color var(--t-fast) var(--ease);user-select:none}
@@ -17131,6 +17184,53 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .rank-toggle{font-size:11.5px;color:var(--text-faint);background:rgba(255,255,255,.05);border:1px solid var(--border);
     border-radius:var(--r-sm);padding:4px 10px;cursor:pointer;transition:color var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
   .rank-toggle:hover{color:var(--accent);border-color:var(--accent-dim)}
+
+  /* ===== 交接包批2：今日页 12 列网格 + Hero 8×2 + 右下双小卡（唯一暖渐变） ===== */
+  .today-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap);max-width:1760px;margin:0 auto;padding:var(--pad) 0}
+  .today-grid > .panel,.today-grid > .mini-card{min-width:0}
+  .hero-panel{grid-column:span 8;grid-row:span 2;margin-top:0}
+  .mini-card{grid-column:span 4;align-self:stretch;
+    background:linear-gradient(180deg,var(--bg-card),oklch(0.165 0.005 260));
+    border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4);
+    display:flex;flex-direction:column;justify-content:center;gap:var(--sp-1);
+    box-shadow:0 2px 12px oklch(0 0 0/.18);
+    transition:transform var(--t-base) var(--out),border-color var(--t-base) var(--out)}
+  .mini-card:hover{transform:translateY(-3px);border-color:oklch(1 0 0/.14)}
+  .mini-card .mini-val{font-size:clamp(28px,2.2vw,38px)}
+  /* Hero 卡：唯一暖渐变（深琥珀调，保留亮字/状态色对比） */
+  .hero{background:linear-gradient(155deg,oklch(0.30 0.06 60),oklch(0.225 0.05 48) 65%,oklch(0.19 0.045 42));
+    border:1px solid oklch(1 0 0/.08);box-shadow:0 8px 32px oklch(0 0 0/.4)}
+  .hero::before{background:radial-gradient(circle,rgba(232,179,57,.16),transparent 65%)}
+  @media (min-width:641px){ .hero-num{font-size:var(--fs-display)} }
+  @media (max-width:860px){
+    .today-grid{grid-template-columns:1fr;gap:12px;padding:var(--pad) 0}
+    .hero-panel{grid-column:auto;grid-row:auto}
+    .mini-card{grid-column:auto}
+  }
+
+  /* ===== 交接包批2：第二排 5+4+3（情绪温度柱/仓位结构环/放行角色） ===== */
+  .t5{grid-column:span 5}.t4{grid-column:span 4}.t3{grid-column:span 3}
+  .t5-body{display:flex;flex-direction:column;gap:6px}
+  .t5-bars{display:flex;align-items:flex-end;gap:8px;height:92px}
+  .t5-bar{flex:1;min-width:0;background:linear-gradient(180deg,var(--warm-a),oklch(0.83 0.12 58));border-radius:6px 6px 2px 2px;display:flex;align-items:flex-end;justify-content:center;animation:barGrow .6s var(--spring) both}
+  .t5-bar span{font-size:10px;color:oklch(0.14 0.02 60);font-weight:800;padding-bottom:4px}
+  .t5-foot{font-size:var(--fs-micro);color:var(--text-faint);text-align:center}
+  @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .t5-bar{transform-origin:bottom}
+  .t4-mid{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:4px}
+  .donut-wrap{position:relative;width:104px;height:104px;flex:none}
+  .donut{width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--accent) 0deg,oklch(1 0 0/.08) 0deg);display:flex;align-items:center;justify-content:center;animation:spinIn .7s var(--spring) both}
+  .donut::before{content:"";position:absolute;width:68%;height:68%;border-radius:50%;background:var(--bg-card)}
+  .donut-val{position:relative;z-index:1;font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+  @keyframes spinIn{from{transform:rotate(-140deg) scale(.6);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}
+  .donut-tip{font-size:var(--fs-micro);color:var(--text-faint);text-align:center}
+  .t3-list{display:flex;flex-direction:column;gap:6px}
+  .t3-item{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-sm);padding:6px 10px;border:1px solid var(--border-soft);border-radius:var(--r-sm);animation:rowSlide .5s var(--out) both;transition:transform var(--t-base) var(--out)}
+  .t3-item:hover{transform:translateX(6px)}
+  .t3-name{color:var(--text)}
+  .t3-badge{font-size:var(--fs-micro);color:var(--ok);border:1px solid var(--ok);border-radius:var(--r-pill);padding:1px 8px}
+  @keyframes rowSlide{from{transform:translateX(-14px);opacity:0}to{transform:translateX(0);opacity:1}}
+  @media (max-width:860px){.t5,.t4,.t3{grid-column:auto}}
 </style>
 
 <script id="ui-enhance-js">
