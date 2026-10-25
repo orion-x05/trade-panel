@@ -1521,7 +1521,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   <div class="panel collapsible" id="panel-role-snap" style="margin-top:12px">
     <div class="panel-head" onclick="togglePanel('panel-role-snap')">
       <span class="panel-title">🎭 角色快照</span>
-      <span class="panel-tip">组合汇总指标 + 7 角色收益 / 胜率 / 回撤 / 信号强度 ▼</span>
+      <span class="panel-tip">7 角色收益 / 胜率 / 回撤 / 信号强度 ▼</span>
     </div>
     <div class="panel-body">
       <section class="stats">
@@ -7730,7 +7730,8 @@ function renderSubNav(){
   bar.innerHTML=views.map(v=>'<button class="sn-item'+(v===curView?" on":"")+'" data-view="'+v+'" onclick="switchTab(\''+v+'\')">'+escHtml(TAB_SUB_LABEL[v]||v)+'</button>').join("");
 }
 function switchTab(name){
-  window.scrollTo(0,0);
+  /* 切 tab：瞬时回顶（smooth 会拖沓；视觉平滑由 .tab-view.active 的 tabIn 动画承担） */
+  try{window.scrollTo({top:0,behavior:'auto'});}catch(e){window.scrollTo(0,0);}
   /* 判定 name 是主 tab 还是子视图，解析出 (group,view) */
   let group=tabGroupOf(name);
   if(group){curGroup=group;curView=name;}
@@ -16444,6 +16445,48 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .dss-item .dss-label{font-size:11px;color:var(--text-faint)}
   .dss-item .dss-val{font-size:16px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px}
   @media (max-width:768px){.ds-snapshot{display:grid;grid-template-columns:repeat(2,1fr)}.dss-item{border-right:none;border-bottom:1px solid var(--border-soft)}.dss-item:nth-last-child(-n+2){border-bottom:none}}
+
+  /* ============ 版面简洁化：去重 + 层级收敛（20261025） ============ */
+  /* ① 角色快照 stats 四卡与上方 hero-summary 同屏 100% 重复（组合收益/行情接口/运行角色/领先角色）
+       已由 hero 承担，此处隐藏；保留 DOM 以免 render() 直取 id 报错，仅视觉去重 */
+  .modern #panel-role-snap .stats{display:none}
+  /* ② hero 摘要：视觉升格为"主数据带"，不再被下方重复卡片稀释 */
+  .modern #view-overview .hero-summary{
+    position:relative;
+    background:linear-gradient(180deg,rgba(47,211,154,.05),transparent 65%),linear-gradient(180deg,#18212e,#141c27)!important;
+    border:1px solid rgba(255,255,255,.09)!important;
+    border-radius:18px!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.3),0 16px 40px -16px rgba(0,0,0,.6)!important;
+  }
+  .modern #view-overview .hero-summary .hs-value{font-size:34px}
+  /* ③ 面板标题区：收敛视觉噪音——tip 弱化、标题与 tip 间距拉开，折叠态 head 不再抢眼 */
+  .modern .panel-head{gap:8px;align-items:baseline}
+  .modern .panel-title{font-size:14.5px;font-weight:700;letter-spacing:.2px}
+  .modern .panel-tip{font-size:11px;color:var(--text-faint);font-weight:400;letter-spacing:.1px}
+  /* 折叠态：head 压暗，暗示内容已收起（展开时恢复） */
+  .modern .panel.collapsible.collapsed .panel-head{opacity:.78}
+  .modern .panel.collapsible.collapsed .panel-head:hover{opacity:.9}
+  /* ④ 折叠箭头：head 悬停/展开态轻微旋转提示（有 ▼ 或 ▾ 的面板） */
+  .modern .panel.collapsible .panel-head{cursor:pointer}
+  .modern .panel-head .tech-fold-arrow,.modern .panel-title .tech-fold-arrow{transition:transform .22s cubic-bezier(.22,1,.36,1)}
+  .modern .panel.collapsible:not(.collapsed) .panel-head .tech-fold-arrow{transform:rotate(180deg)}
+  /* ⑤ 面板展开动画：替代 display 硬切，展开时内容淡入上移（折叠瞬间收起、展开柔滑） */
+  .modern .panel.collapsible:not(.collapsed) .panel-body{animation:panelBodyIn .3s cubic-bezier(.22,1,.36,1)}
+  @keyframes panelBodyIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* ⑥ 数字变色过渡：涨跌着色变化不跳变 */
+  .modern .stat-value,.modern .mk-metric .m-value,.modern .hs-value,.modern .sp-price{transition:color .3s ease}
+  /* ⑦ 表格行 hover 反馈（原有基础上加深，点击有压感） */
+  .modern tbody tr:hover{background:rgba(255,255,255,.045)!important}
+  .modern tbody tr:active{background:rgba(255,255,255,.07)!important}
+  /* ⑧ 操作按钮：统一按压反馈 */
+  .modern button:not(.tab):active{transform:translateY(1px) scale(.98)}
+  .modern .gmk-btn,.modern .mini-btn,.modern .sn-item{transition:transform .15s ease,color .15s,border-color .15s,background .15s}
+  .modern .sn-item:active{transform:scale(.96)}
+  /* ⑨ 二级导航（subnav）：选中态更精致，hover 平滑 */
+  .modern .sn-item{border-radius:9px;padding:6px 15px}
+  .modern .sn-item.on{background:linear-gradient(135deg,rgba(62,207,142,.22),rgba(59,130,246,.22));box-shadow:inset 0 0 0 1px rgba(62,207,142,.35)}
+  /* ⑩ 指标卡 hover：保留微升但不拖影（轻量化） */
+  .modern .mk-metric:hover,.modern .mk-card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 28px -14px rgba(0,0,0,.5)!important}
 </style>
 <script id="ui-enhance-js">
 (function(){
