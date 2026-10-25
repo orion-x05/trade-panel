@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orion-X AI量化投研面板 · v20261025-r38-holdtab</title>
+<title>Orion-X AI量化投研面板 · v20261025-r39-mktop</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
 <link rel="preconnect" href="https://qt.gtimg.cn" crossorigin>
-<script>window.APP_VERSION="20261025-r38-holdtab";
+<script>window.APP_VERSION="20261025-r39-mktop";
 
 /* 盘面文本缓存：一轮群聊里 6 个 Agent 共用同一份快照。
    原来每个 Agent 的 system prompt 都重新拼一遍盘面，群聊一次烧 6 份、自由讨论烧 18 份，
@@ -344,8 +344,7 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
     display:flex; gap:6px; flex-wrap:wrap;
     padding:10px 4px 2px; margin-bottom:10px;
     border-bottom:1px solid var(--border-soft);
-    position:sticky; top:58px; z-index:50;  /* topbar 实测高 57.75px，多 0.25px 防缝隙 */
-    background:var(--bg); 
+    /* 不再 sticky：用户反馈往下滑时该栏悬停盖在其他卡片上（20261025）。随页面正常滚走 */
   }
   .sn-item {
     padding:6px 14px; border-radius:8px; border:1px solid var(--border-soft);
@@ -1461,6 +1460,30 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 <!-- ===== 运行总览（独立tab） ===== -->
 <section class="tab-view active" id="view-overview">
   <!-- ===== Hero 摘要区（方向①：渐变主指标卡） ===== -->
+  <!-- ===== v0246 市场看板（用户指定：放在组合收益上方，一进总览先看大盘再看自己） ===== -->
+  <div class="mk-grid mk-g6" id="idxRow"></div>
+  <div class="mk-grid mk-g4 mk-mt">
+    <div class="mk-metric mk-accent-up">
+      <div class="m-label">上涨 / 下跌 / 平盘</div>
+      <div class="m-value"><span style="color:var(--up)" id="vUp">--</span><span class="m-sep"> / </span><span style="color:var(--down)" id="vDown">--</span></div>
+      <div class="m-sub" id="vFlat">平盘 -- 家</div>
+    </div>
+    <div class="mk-metric">
+      <div class="m-label">两市成交额（沪+深）</div>
+      <div class="m-value" id="vAmount">--</div>
+      <div class="m-sub" id="vAmountSub">沪深两市合计</div>
+    </div>
+    <div class="mk-metric">
+      <div class="m-label">涨停 / 跌停家数</div>
+      <div class="m-value"><span style="color:var(--up)" id="vLU">--</span><span class="m-sep"> / </span><span style="color:var(--down)" id="vLD">--</span></div>
+      <div class="m-sub" id="vAvgChg">平均涨跌幅 --</div>
+    </div>
+      <div class="mk-metric">
+      <div class="m-label">市场情绪温度 · 主参考：大盘</div>
+      <div class="m-value" id="vTemp">--<span class="m-unit">℃</span></div>
+      <div class="m-sub" id="vTempSub">等待数据…</div>
+    </div>
+  </div>
   <div class="hero-summary">
     <div class="hs-main">
       <div class="hs-label">组合总收益率 · 本月（总资产口径）</div>
@@ -1527,29 +1550,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
   <!-- ===== v0246 市场看板 ===== -->
-  <div class="mk-grid mk-g6" id="idxRow"></div>
-  <div class="mk-grid mk-g4 mk-mt">
-    <div class="mk-metric mk-accent-up">
-      <div class="m-label">上涨 / 下跌 / 平盘</div>
-      <div class="m-value"><span style="color:var(--up)" id="vUp">--</span><span class="m-sep"> / </span><span style="color:var(--down)" id="vDown">--</span></div>
-      <div class="m-sub" id="vFlat">平盘 -- 家</div>
-    </div>
-    <div class="mk-metric">
-      <div class="m-label">两市成交额（沪+深）</div>
-      <div class="m-value" id="vAmount">--</div>
-      <div class="m-sub" id="vAmountSub">沪深两市合计</div>
-    </div>
-    <div class="mk-metric">
-      <div class="m-label">涨停 / 跌停家数</div>
-      <div class="m-value"><span style="color:var(--up)" id="vLU">--</span><span class="m-sep"> / </span><span style="color:var(--down)" id="vLD">--</span></div>
-      <div class="m-sub" id="vAvgChg">平均涨跌幅 --</div>
-    </div>
-      <div class="mk-metric">
-      <div class="m-label">市场情绪温度 · 主参考：大盘</div>
-      <div class="m-value" id="vTemp">--<span class="m-unit">℃</span></div>
-      <div class="m-sub" id="vTempSub">等待数据…</div>
-    </div>
-  </div>
   <!-- ===== v0267 大盘情绪面板：由「个股研究」tab 融合迁入，与上方指标卡合并为一处；
        涨跌家数/温度/成交额等快照指标已在指标卡展示，此处只放过程与细节（不重复）；
        默认折叠与总览其余面板约定一致（initPanelFolds 会认 data-collapsed），展开时 refreshFoldedCharts 初始化图表 ===== -->
@@ -2734,7 +2734,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">当前版本</div>
-          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r38-holdtab</div>
+          <div style="font-size:14px;font-weight:600;margin-top:4px" id="setVersion">v20261025-r39-mktop</div>
         </div>
         <div style="background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px">
           <div style="font-size:11px;color:var(--text-faint)">主题</div>
