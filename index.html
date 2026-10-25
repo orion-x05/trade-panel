@@ -2982,11 +2982,11 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 
 <!-- 移动端底部导航（方向①：现代仪表盘，仅 ≤768px 显示） -->
 <nav class="bottom-bar" id="bottomBar" aria-label="底部导航">
+  <span class="bb-ind" id="bbInd"></span>
   <button class="bb-item active" data-tab="today" onclick="switchTab('today')"><i>◎</i><span>今日</span></button>
   <button class="bb-item" data-tab="market" onclick="switchTab('market')"><i>◍</i><span>行情</span></button>
   <button class="bb-item" data-tab="hold" onclick="switchTab('hold')"><i>◈</i><span>持仓</span></button>
-  <button class="bb-item" data-tab="post" onclick="switchTab('post')"><i>✦</i><span>盘后</span></button>
-  <button class="bb-item" data-tab="more" onclick="toggleSidenav()"><i>☰</i><span>更多</span></button>
+  <button class="bb-item" data-tab="scan" onclick="switchTab('scan')"><i>⛁</i><span>扫描</span></button>
 </nav>
 
 </div>
@@ -7917,6 +7917,7 @@ function switchTab(name){
   document.querySelectorAll(".tab-view").forEach(p=>p.classList.toggle("active",p.id==="view-"+curView));
   document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
   document.querySelectorAll(".bb-item").forEach(b=>b.classList.toggle("active",b.dataset.tab===curGroup));
+  try{window.updateBBInd&&window.updateBBInd();}catch(e){}
   renderSubNav();
   /* 更新头部页面名：主 tab 名 + （子视图名） */
   const tp=document.getElementById("topbarPage");
@@ -17231,6 +17232,52 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .t3-badge{font-size:var(--fs-micro);color:var(--ok);border:1px solid var(--ok);border-radius:var(--r-pill);padding:1px 8px}
   @keyframes rowSlide{from{transform:translateX(-14px);opacity:0}to{transform:translateX(0);opacity:1}}
   @media (max-width:860px){.t5,.t4,.t3{grid-column:auto}}
+
+  /* ===== 交接包批2-4a：底部四格胶囊页签 + 指示器 + 圆形扩散 + 下滑隐藏 ===== */
+  html{touch-action:manipulation;overscroll-behavior-y:contain}
+  .bottom-bar{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    width:min(92%,560px);display:flex;padding:5px;gap:4px;
+    background:oklch(0.20 0.008 260 / .92);backdrop-filter:blur(14px);
+    border:1px solid var(--border);border-radius:999px;
+    z-index:80;box-shadow:0 10px 30px oklch(0 0 0/.45);
+    transition:transform var(--t-base) var(--out);
+  }
+  .bottom-bar.bb-hide{transform:translate(-50%,calc(120% + 10px))}
+  .bb-ind{
+    position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:999px;z-index:0;pointer-events:none;
+    background:var(--accent-dim);border:1px solid var(--accent);
+    box-shadow:0 0 12px rgba(79,140,255,.28);
+    transition:left .42s var(--spring),width .42s var(--spring);
+  }
+  .bb-item{
+    flex:1 1 0;min-width:0;position:relative;z-index:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    border-radius:999px;border:none;background:transparent;color:var(--text-dim);
+    padding:9px 0 8px;min-height:44px;font-size:11px;cursor:pointer;
+    transition:color var(--t-base) var(--out);
+  }
+  .bb-item i{font-style:normal;font-size:17px;line-height:1}
+  .bb-item.active{color:var(--text);font-weight:600}
+  @keyframes bbRipple{from{transform:scale(0);opacity:.32}to{transform:scale(2.8);opacity:0}}
+  .bb-ripple{position:absolute;border-radius:50%;background:var(--accent);animation:bbRipple .5s var(--out) forwards;pointer-events:none;z-index:0}
+  /* 移动端：恢复汉堡开抽屉（四格无"更多"），主操作抬到 44px */
+  @media (max-width:640px){
+    .modern .hamburger{display:flex}
+    .modern .hero-btn{min-height:44px;padding:10px 20px}
+    .modern .ui-top{bottom:calc(74px + env(safe-area-inset-bottom))}
+  }
+  /* 浮层滚动隔离（交接包移动端第 5 条） */
+  .modal-mask .modal,.side-panel,.sidenav,#cmdPalette,.sheet,.drawer-panel{overscroll-behavior:contain}
+  /* 滚动条深色（验收项） */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:oklch(1 0 0/.18);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+  /* 系统减少动态效果：全关（交接包动效第 12 条） */
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
 </style>
 
 <script id="ui-enhance-js">
@@ -17377,6 +17424,46 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
       });
       mo.observe(document.body,{childList:true,subtree:true});
     }
+  })();
+
+  window.updateBBInd=function(){
+    const bar=document.getElementById("bottomBar");
+    const ind=document.getElementById("bbInd");
+    if(!bar||!ind)return;
+    const act=bar.querySelector(".bb-item.active");
+    if(!act){ind.style.width="0";return;}
+    ind.style.left=act.offsetLeft+"px";
+    ind.style.width=act.offsetWidth+"px";
+  };
+  (function(){
+    const bar=document.getElementById("bottomBar");
+    if(!bar)return;
+    bar.addEventListener("click",function(e){
+      const b=e.target.closest(".bb-item");
+      if(!b)return;
+      const r=document.createElement("span");
+      r.className="bb-ripple";
+      const rect=bar.getBoundingClientRect();
+      r.style.left=(e.clientX-rect.left)+"px";
+      r.style.top=(e.clientY-rect.top)+"px";
+      r.style.width=r.style.height="8px";
+      r.style.transform="translate(-50%,-50%)";
+      bar.appendChild(r);
+      setTimeout(function(){r.remove();},520);
+    });
+    window.addEventListener("resize",function(){try{updateBBInd();}catch(e){}});
+    let lastY=window.scrollY,lastT=Date.now();
+    window.addEventListener("scroll",function(){
+      try{
+        const y=window.scrollY;
+        if(Math.abs(y-lastY)<6||Date.now()-lastT<200)return;
+        lastT=Date.now();
+        if(y>lastY&&y>140)bar.classList.add("bb-hide");
+        else if(y<lastY)bar.classList.remove("bb-hide");
+        lastY=y;
+      }catch(e){}
+    },{passive:true});
+    setTimeout(function(){try{window.updateBBInd&&window.updateBBInd();}catch(e){}},400);
   })();
   /* —— 键盘导航：1-7 切主 tab / ←→ 切换 / Esc 关闭弹层 —— */
   var NAV=['today','market','scan','post','sim','knowledge','settings'];
