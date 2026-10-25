@@ -1461,7 +1461,9 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
 <section class="tab-view active" id="view-overview">
   <!-- ===== Hero 摘要区（方向①：渐变主指标卡） ===== -->
   <!-- ===== v0246 市场看板（用户指定：放在组合收益上方，一进总览先看大盘再看自己） ===== -->
-  <div class="mk-grid mk-g6" id="idxRow"></div>
+    <!-- ===== 通栏分层 · 01 概览（主次 Hero：大盘+决策，一眼看全局） ===== -->
+  <div class="layer-tag" data-band="1"><span class="layer-no">01</span><span class="layer-name">概览 · 大盘与今日决策</span><span class="layer-line"></span></div>
+<div class="mk-grid mk-g6" id="idxRow"></div>
   <div class="mk-grid mk-g4 mk-mt">
     <div class="mk-metric mk-accent-up">
       <div class="m-label">上涨 / 下跌 / 平盘</div>
@@ -1517,8 +1519,59 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
       <div id="todayDecisionCard" style="display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
   </div>
+    <!-- ===== 通栏分层 · 02 趋势（横贯全宽，概览之下明细之上） ===== -->
+  <div class="layer-tag" data-band="2"><span class="layer-no">02</span><span class="layer-name">趋势 · 走势与统计</span><span class="layer-line"></span></div>
+<div class="panel collapsible" id="panel-return-trend" data-collapsed>
+    <div class="panel-head" style="flex-wrap:wrap;gap:8px">
+      <span class="panel-title" onclick="togglePanel('panel-return-trend')" style="cursor:pointer" title="点击折叠/展开">📈 收益走势分析 ▼</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px">
+        <select id="returnRoleSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:100px" onchange="renderCharts()">
+          <option value="ALL">组合平均</option>
+          <option value="D1">D1 趋势突破</option>
+          <option value="D2">D2 多Agent共识</option>
+          <option value="D3">D3 多空辩论</option>
+          <option value="D4">D4 假突破低吸</option>
+          <option value="D5">D5 回踩确认</option>
+          <option value="D6">D6 涨停回踩</option>
+          <option value="D7">D7 周线超卖反转</option>
+        </select>
+        <button class="gmk-btn" id="returnUnitBtn" style="padding:5px 10px;font-size:12px;white-space:nowrap" onclick="toggleReturnUnit()">百分比</button>
+        <input type="month" id="returnMonthSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:120px" onchange="renderCharts()">
+        <button class="gmk-btn" style="padding:5px 10px;font-size:12px;background:#3b82f6;color:#fff;white-space:nowrap" onclick="openStockDetailModal()">个股明细</button>
+        <button class="gmk-btn" style="padding:5px 10px;font-size:12px;background:#8b5cf6;color:#fff;white-space:nowrap" onclick="openRolePKModal()">角色PK</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;gap:30px;margin:6px 6px 10px;flex-wrap:wrap">
+        <div><div style="font-size:13px;color:var(--text-dim)" id="monthPnlLabel">所选区间总收益(元)</div><div class="v up" id="monthPnl" style="font-size:22px;font-weight:700;color:var(--up)">+0.00</div></div>
+        <div><div style="font-size:13px;color:var(--text-dim)" id="monthRetLabel">所选区间收益率</div><div class="v" id="monthRet" style="font-size:22px;font-weight:700;color:var(--text-faint)">--</div></div>
+        <div><div style="font-size:13px;color:var(--text-dim)">区间天数</div><div class="v" id="monthDays" style="font-size:22px;font-weight:700">0天</div></div>
+      </div>
+      <div class="chart-box" id="chartEq" style="height:320px"></div>
+    </div>
+  </div>
+  <div class="panel collapsible" id="panel-return-stat" data-collapsed>
+    <div class="panel-head" onclick="togglePanel('panel-return-stat')">
+      <span class="panel-title">收益统计（本月 / 本年）</span>
+      <span class="panel-tip" id="statNote">模拟赛局运行于本自然月内，本月=本年=当前累计收益</span>
+    </div>
+    <div class="panel-body stat-grid">
+      <div class="stat-chart-box">
+        <div class="stat-chart-title">本月每日收益（红涨绿跌）</div>
+        <div class="chart-box chart-sm" id="monthChart"></div>
+      </div>
+      <div class="stat-chart-box">
+        <div class="stat-chart-title">年度收益（按角色）</div>
+        <div class="chart-box chart-sm" id="yearChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 六步门禁（全局，实时日志上方） ===== -->
   <!-- ===== 首屏四块 · 之三：角色快照（7 角色收益/胜率/回撤/信号强度，默认展开） ===== -->
-  <div class="panel collapsible" id="panel-role-snap" style="margin-top:12px">
+    <!-- ===== 通栏分层 · 03 明细（角色与信号逐笔） ===== -->
+  <div class="layer-tag" data-band="3"><span class="layer-no">03</span><span class="layer-name">明细 · 角色与信号</span><span class="layer-line"></span></div>
+<div class="panel collapsible" id="panel-role-snap" style="margin-top:12px">
     <div class="panel-head" onclick="togglePanel('panel-role-snap')">
       <span class="panel-title">🎭 角色快照</span>
       <span class="panel-tip">7 角色收益 / 胜率 / 回撤 / 信号强度 ▼</span>
@@ -1567,53 +1620,6 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 
-  <div class="panel collapsible" id="panel-return-trend" data-collapsed>
-    <div class="panel-head" style="flex-wrap:wrap;gap:8px">
-      <span class="panel-title" onclick="togglePanel('panel-return-trend')" style="cursor:pointer" title="点击折叠/展开">📈 收益走势分析 ▼</span>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px">
-        <select id="returnRoleSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:100px" onchange="renderCharts()">
-          <option value="ALL">组合平均</option>
-          <option value="D1">D1 趋势突破</option>
-          <option value="D2">D2 多Agent共识</option>
-          <option value="D3">D3 多空辩论</option>
-          <option value="D4">D4 假突破低吸</option>
-          <option value="D5">D5 回踩确认</option>
-          <option value="D6">D6 涨停回踩</option>
-          <option value="D7">D7 周线超卖反转</option>
-        </select>
-        <button class="gmk-btn" id="returnUnitBtn" style="padding:5px 10px;font-size:12px;white-space:nowrap" onclick="toggleReturnUnit()">百分比</button>
-        <input type="month" id="returnMonthSel" class="mini-select" style="padding:5px 8px;font-size:12px;flex:1;min-width:120px" onchange="renderCharts()">
-        <button class="gmk-btn" style="padding:5px 10px;font-size:12px;background:#3b82f6;color:#fff;white-space:nowrap" onclick="openStockDetailModal()">个股明细</button>
-        <button class="gmk-btn" style="padding:5px 10px;font-size:12px;background:#8b5cf6;color:#fff;white-space:nowrap" onclick="openRolePKModal()">角色PK</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div style="display:flex;gap:30px;margin:6px 6px 10px;flex-wrap:wrap">
-        <div><div style="font-size:13px;color:var(--text-dim)" id="monthPnlLabel">所选区间总收益(元)</div><div class="v up" id="monthPnl" style="font-size:22px;font-weight:700;color:var(--up)">+0.00</div></div>
-        <div><div style="font-size:13px;color:var(--text-dim)" id="monthRetLabel">所选区间收益率</div><div class="v" id="monthRet" style="font-size:22px;font-weight:700;color:var(--text-faint)">--</div></div>
-        <div><div style="font-size:13px;color:var(--text-dim)">区间天数</div><div class="v" id="monthDays" style="font-size:22px;font-weight:700">0天</div></div>
-      </div>
-      <div class="chart-box" id="chartEq" style="height:320px"></div>
-    </div>
-  </div>
-  <div class="panel collapsible" id="panel-return-stat" data-collapsed>
-    <div class="panel-head" onclick="togglePanel('panel-return-stat')">
-      <span class="panel-title">收益统计（本月 / 本年）</span>
-      <span class="panel-tip" id="statNote">模拟赛局运行于本自然月内，本月=本年=当前累计收益</span>
-    </div>
-    <div class="panel-body stat-grid">
-      <div class="stat-chart-box">
-        <div class="stat-chart-title">本月每日收益（红涨绿跌）</div>
-        <div class="chart-box chart-sm" id="monthChart"></div>
-      </div>
-      <div class="stat-chart-box">
-        <div class="stat-chart-title">年度收益（按角色）</div>
-        <div class="chart-box chart-sm" id="yearChart"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 六步门禁（全局，实时日志上方） ===== -->
   <div class="panel collapsible" id="panel-six-step" data-collapsed>
     <div class="panel-head" onclick="togglePanel('panel-six-step')">
       <span class="panel-title">📋 整合买入策略 · 六步门禁（由 D1-D6 顺势规则整合；D7 为周线反趋势角色，不走日线门禁，仅受「周线KD≤−40 且 %K拐头」独立闸门约束）</span>
@@ -8322,6 +8328,10 @@ function setHoldTab(el){
   el.classList.add("on");
   renderHold();
 }
+window.setHoldTabKey=function(key){
+  const el=document.querySelector('#holdTabsC .hold-tab[data-hf="'+key+'"]');
+  if(el)setHoldTabC(el);else{renderHoldCards();}
+};
 function setHoldTabC(el){
   document.querySelectorAll("#holdTabsC .hold-tab").forEach(x=>x.classList.remove("on"));
   el.classList.add("on");
@@ -8348,6 +8358,7 @@ function renderHoldCards(){
   const search=($("holdSearchC")||{}).value||"";
   const tabEl=document.querySelector(".hold-tab.on");
   const tab=tabEl?(tabEl.dataset.hf||"all"):"all";
+  if(tab!=="all"||search){const htc=$("holdTabsC");if(htc)htc.style.display="";}
   const wxColorMap={"金":"#fbbf24","木":"#22c55e","水":"#3b82f6","火":"#ef4444","土":"#a16207"};
   let any=false;
   let rowIdx=0;
@@ -8412,7 +8423,8 @@ function renderHoldCards(){
           const lReason=l.reason?`<div style="margin-top:3px;color:var(--text-faint)">${escHtml(l.reason)}</div>`:"";
           return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">卖出 · ${ldate} · ${lpQty}股 @${lpPrice.toFixed(2)} · 盈亏${lpShow}${lReason}</div>`;
         }).join("");
-        ht.insertAdjacentHTML("beforeend",`<div class="hold-card" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
+        const hSoldToday=(()=>{const tt=new Date(h.time);return !isNaN(tt)&&tt.toDateString()===now.toDateString();})();
+        ht.insertAdjacentHTML("beforeend",`<div class="hold-card" data-kb="closed" data-today="${hSoldToday?1:0}" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
           <div class="hc-top">
             <div>
               <div class="hc-name">${escHtml(h.name)}<span style="color:var(--text-faint);font-size:10px;margin-left:6px">${escHtml(h.code)}</span></div>
@@ -8503,7 +8515,7 @@ function renderHoldCards(){
         const lPrice=l.price||0;
         return `<div data-hlot="${rowId}" style="display:none;font-size:11px;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">第${i+1}笔买入 · ${ldate} · ${l.qty||0}股 @${lPrice.toFixed(2)}<div style="margin-top:3px;color:var(--text-faint)">${escHtml(l.reason||"")}</div></div>`;
       }).join("");
-      ht.insertAdjacentHTML("beforeend",`<div class="hold-card" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
+      ht.insertAdjacentHTML("beforeend",`<div class="hold-card" data-kb="holding" data-today="${hasTodayTrade?1:0}" style="--hc:${PLAYER_COLORS[p.id]||'#3b82f6'}" onclick="toggleLots('${rowId}')">
         <div class="hc-top">
           <div>
             <div class="hc-name">${escHtml(h.name)}<span style="color:var(--text-faint);font-size:10px;margin-left:6px">${escHtml(h.code)}</span></div>
@@ -8530,6 +8542,43 @@ function renderHoldCards(){
       </div>`);
     });
   });
+  /* 看板分列：全部视图 → 持仓中 / 今日交易 / 已清仓 三列（列头计数，横向滚动） */
+  if(tab==="all"&&!search){
+    try{
+      const cards=Array.prototype.slice.call(ht.querySelectorAll('.hold-card'));
+      const cols={holding:[],today:[],closed:[]};
+      cards.forEach(c=>{
+        const kb=c.getAttribute('data-kb')||'holding';
+        if(kb==='closed'){cols.closed.push(c);}
+        else{
+          cols.holding.push(c);
+          if(c.getAttribute('data-today')==='1')cols.today.push(c);
+        }
+      });
+      if(cards.length){
+        const htc=$("holdTabsC");if(htc)htc.style.display="none";
+        const wrap=document.createElement('div');wrap.className='hold-kanban';
+        const mkCol=(key,label,arr,icon)=>{
+          const col=document.createElement('div');col.className='kanban-col';
+          const head=document.createElement('div');head.className='kanban-col-head';
+          head.setAttribute('onclick',"setHoldTabKey('"+key+"')");
+          head.innerHTML='<span class="kc-dot" style="background:'+(key==='holding'?'var(--up)':key==='today'?'var(--cyan)':'var(--text-faint)')+'"></span><span class="kc-name">'+label+'</span><span class="kc-count">'+arr.length+'</span>';
+          col.appendChild(head);
+          const body=document.createElement('div');body.className='kanban-col-body';
+          arr.forEach(c=>body.appendChild(c));
+          col.appendChild(body);
+          wrap.appendChild(col);
+        };
+        mkCol('holding','持仓中',cols.holding);
+        mkCol('today','今日交易',cols.today);
+        mkCol('closed','已清仓',cols.closed);
+        ht.innerHTML='';
+        ht.appendChild(wrap);
+        /* 列头计数同步 */
+        const counts=ht.querySelectorAll('.kanban-col');
+      }
+    }catch(e){console.warn('kanban regroup fail',e);}
+  }
   /* 汇总面板 */
   const hs=$("holdSummaryC"),he=$("holdEmptyC");
   if(hs){
@@ -16512,6 +16561,44 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   html.modern #view-overview .mk-metric:hover,html.modern #view-overview .mk-card:hover{
     border-color:rgba(148,163,184,.22);box-shadow:none;transform:none;
   }
+
+  /* ===== 通栏横带 · 层标签（Stacked Bands） ===== */
+  html.modern #view-overview .layer-tag{display:flex;align-items:center;gap:10px;margin:34px 0 4px;padding:0 2px;position:relative}
+  html.modern #view-overview .layer-tag .layer-no{font-size:22px;font-weight:700;letter-spacing:.5px;background:linear-gradient(135deg,#4f8cff,#7c5cff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+  html.modern #view-overview .layer-tag .layer-name{font-size:12px;font-weight:600;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;white-space:nowrap}
+  html.modern #view-overview .layer-tag .layer-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(79,140,255,.28),rgba(79,140,255,0));margin-left:6px}
+  html.modern #view-overview .layer-tag[data-band="1"]{margin-top:6px}
+  html.modern #view-overview .layer-tag[data-band="2"]{margin-top:40px}
+  html.modern #view-overview .layer-tag[data-band="3"]{margin-top:40px}
+  /* 层内面板间距：同一层内紧凑，层与层之间由标签拉开 */
+  html.modern #view-overview .panel{margin-top:10px}
+  @media (max-width:760px){
+    html.modern #view-overview .layer-tag{margin:26px 0 2px}
+    html.modern #view-overview .layer-tag .layer-no{font-size:18px}
+    html.modern #view-overview .layer-tag[data-band="2"],html.modern #view-overview .layer-tag[data-band="3"]{margin-top:30px}
+  }
+
+  /* ===== 看板分列（Kanban Columns）：持仓页全部视图 ===== */
+  .hold-kanban{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .hold-kanban::-webkit-scrollbar{height:6px}
+  .hold-kanban::-webkit-scrollbar-thumb{background:rgba(148,163,184,.25);border-radius:3px}
+  .hold-kanban .kanban-col{flex:0 0 236px;min-width:236px;display:flex;flex-direction:column;gap:10px;scroll-snap-align:start}
+  .hold-kanban .kanban-col-head{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:10px;background:rgba(15,21,31,.6);border:1px solid rgba(148,163,184,.14);position:sticky;left:0}
+  .hold-kanban .kc-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .hold-kanban .kc-name{font-size:12px;font-weight:600;color:var(--text);letter-spacing:.5px}
+  .hold-kanban .kc-count{margin-left:auto;font-size:11px;font-weight:700;color:var(--text-dim);background:rgba(148,163,184,.12);border-radius:99px;padding:1px 8px;font-variant-numeric:tabular-nums}
+  .hold-kanban .kanban-col-body{display:flex;flex-direction:column;gap:10px}
+  .hold-kanban .hold-card{width:100%;margin:0}
+  .hold-kanban .hold-card .hc-tags .hc-tag{font-size:10px}
+  .hold-kanban .hold-card .hc-metrics .hc-metric{font-size:10px}
+  .hold-kanban .hold-card .hc-metrics .hc-metric b{font-size:11px}
+  .hold-kanban .hold-card .hc-pnl-amt{font-size:14px}
+
+  .hold-kanban .kanban-col-head{cursor:pointer;transition:border-color .2s,background .2s}
+  .hold-kanban .kanban-col-head:hover{border-color:rgba(79,140,255,.45);background:rgba(79,140,255,.08)}
+  .hold-kanban .kanban-col-head .kc-name::after{content:"›";opacity:.45;margin-left:2px;font-size:10px}
+  /* 单列视图下卡片宽度恢复全宽 */
+  #view-hold .hold-card{width:100%}
 </style>
 
 <script id="ui-enhance-js">
