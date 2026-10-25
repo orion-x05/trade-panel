@@ -1,46 +1,11 @@
 <!DOCTYPE html>
 
-<script>
-(function(){
-  /* 批2-4b 卡片进场错峰（独立顶层脚本：双时机执行，幂等） */
-  var ioInit=function(){
-    if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    var cards=document.querySelectorAll(".today-grid > .panel,.today-grid > .mini-card");
-    if(!cards.length)return;
-    for(var i=0;i<cards.length;i++){
-      cards[i].style.setProperty("--d",(i*60)+"ms");
-      cards[i].classList.add("tg-in");
-    }
-    if(!("IntersectionObserver" in window)){
-      for(var k=0;k<cards.length;k++)cards[k].classList.add("tg-in-ok");
-      return;
-    }
-    var io=new IntersectionObserver(function(es){
-      for(var n=0;n<es.length;n++){
-        if(es[n].isIntersecting){es[n].target.classList.add("tg-in-ok");io.unobserve(es[n].target);}
-      }
-    },{threshold:.15});
-    for(var m=0;m<cards.length;m++)io.observe(cards[m]);
-  };
-  try{ioInit();}catch(e){}
-  setTimeout(function(){try{ioInit();}catch(e){}},500);
-})();
-</script>
-<script>
-(function(){
-  /* 下拉刷新兜底（仅 ≤640px；若批1 段未完整注册则补上；refreshAll 自带 3s 防抖+busy 锁，重复注册无害） */
-  var mq=window.matchMedia?window.matchMedia('(max-width: 640px)'):null;
-  if(!mq||!mq.matches)return;
-  var sy=0,pulling=false;
-  document.addEventListener('touchstart',function(e){ if(window.scrollY>0)return; pulling=true; sy=e.touches[0].clientY; },{passive:true});
-  document.addEventListener('touchmove',function(e){ if(!pulling)return; var dy=e.touches[0].clientY-sy; if(dy>60){ pulling=false; window.refreshAll(); } },{passive:true});
-  document.addEventListener('touchend',function(){ pulling=false; },{passive:true});
-})();
-</script>
+
 <html lang="zh-CN" class="modern">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0e13">
 <title>Orion-X AI量化投研面板 · v20261025-r39-mktop</title>
 <!-- 行情接口加速：DNS预解析 + 预连接 -->
 <link rel="dns-prefetch" href="//qt.gtimg.cn">
@@ -1190,7 +1155,8 @@ if(typeof echarts==="undefined"){document.write('<script src="https://cdn.jsdeli
 .modern .sidenav .tab.active{color:var(--accent);background:var(--accent-bg)}
 .modern .sidenav .tab.active::before{background:var(--accent)}
 /* 顶部栏：细线分隔 + 轻微毛玻璃 */
-.modern .topbar{border-bottom:1px solid var(--border-soft);background:rgba(13,17,23,.7);backdrop-filter:blur(8px);padding:12px 20px}
+.modern .topbar{position:sticky;top:0;z-index:120;display:flex;align-items:center;gap:12px;height:72px;box-sizing:border-box;border-bottom:1px solid var(--border-soft);background:rgba(13,17,23,.7);backdrop-filter:blur(8px);padding:0 20px;transition:height var(--t-base) var(--out),padding var(--t-base) var(--out)}
+  .topbar.shrunk{height:56px;padding:0 16px}
 /* 表格：卡片内水平滚动，不撑破页面（修复移动端横向溢出隐患） */
 .modern .table-wrap{border:1px solid var(--border-soft);border-radius:var(--radius-sm);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .modern .table-wrap table{min-width:max-content}
@@ -17262,9 +17228,9 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
   .t5-bar{transform-origin:bottom}
   .t4-mid{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:4px}
-  .donut-wrap{position:relative;width:104px;height:104px;flex:none}
+  .donut-wrap{position:relative;width:clamp(120px,10vw,150px);height:clamp(120px,10vw,150px);flex:none}
   .donut{width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--accent) 0deg,oklch(1 0 0/.08) 0deg);display:flex;align-items:center;justify-content:center;animation:spinIn .7s var(--spring) both}
-  .donut::before{content:"";position:absolute;width:68%;height:68%;border-radius:50%;background:var(--bg-card)}
+  .donut::before{content:"";position:absolute;width:calc(100% - 30px);height:calc(100% - 30px);border-radius:50%;background:var(--bg-card)}
   .donut-val{position:relative;z-index:1;font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
   @keyframes spinIn{from{transform:rotate(-140deg) scale(.6);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}
   .donut-tip{font-size:var(--fs-micro);color:var(--text-faint);text-align:center}
@@ -17329,6 +17295,12 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .today-grid > .panel.tg-in-ok,.today-grid > .mini-card.tg-in-ok{opacity:1;transform:none}
   .today-grid > .panel,.today-grid > .mini-card{transition:opacity var(--t-base) var(--out) var(--d,0ms),transform var(--t-base) var(--out) var(--d,0ms),border-color var(--t-base) var(--out) var(--d,0ms),box-shadow var(--t-base) var(--out) var(--d,0ms)}
   .spark-bar{transform-origin:bottom;animation:barGrow .6s var(--spring) both}
+
+  /* ===== 交接包批2-5：color-scheme / 焦点环 / 尺寸规范 ===== */
+  html{color-scheme:dark}
+  *:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  .t5-bars{height:152px}
+  .t3-item{min-height:46px}
 </style>
 
 <script id="ui-enhance-js">
@@ -17606,6 +17578,53 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   
 })();
 
+</script><script>
+(function(){
+  /* 批2-4b 卡片进场错峰（独立顶层脚本：双时机执行，幂等） */
+  var ioInit=function(){
+    if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    var cards=document.querySelectorAll(".today-grid > .panel,.today-grid > .mini-card");
+    if(!cards.length)return;
+    for(var i=0;i<cards.length;i++){
+      cards[i].style.setProperty("--d",(i*60)+"ms");
+      cards[i].classList.add("tg-in");
+    }
+    if(!("IntersectionObserver" in window)){
+      for(var k=0;k<cards.length;k++)cards[k].classList.add("tg-in-ok");
+      return;
+    }
+    var io=new IntersectionObserver(function(es){
+      for(var n=0;n<es.length;n++){
+        if(es[n].isIntersecting){es[n].target.classList.add("tg-in-ok");io.unobserve(es[n].target);}
+      }
+    },{threshold:.15});
+    for(var m=0;m<cards.length;m++)io.observe(cards[m]);
+  };
+  try{ioInit();}catch(e){}
+  setTimeout(function(){try{ioInit();}catch(e){}},500);
+})();
+</script>
+<script>
+(function(){
+  /* 批2-5：顶栏滚动收窄 72→56（sticky 钉住 + 过渡） */
+  var tb=document.querySelector('header.topbar');
+  if(tb){
+    var on=function(){ if(window.scrollY>8){tb.classList.add('shrunk');}else{tb.classList.remove('shrunk');} };
+    window.addEventListener('scroll',on,{passive:true});
+    on();
+  }
+})();
+</script>
+<script>
+(function(){
+  /* 下拉刷新兜底（仅 ≤640px；若批1 段未完整注册则补上；refreshAll 自带 3s 防抖+busy 锁，重复注册无害） */
+  var mq=window.matchMedia?window.matchMedia('(max-width: 640px)'):null;
+  if(!mq||!mq.matches)return;
+  var sy=0,pulling=false;
+  document.addEventListener('touchstart',function(e){ if(window.scrollY>0)return; pulling=true; sy=e.touches[0].clientY; },{passive:true});
+  document.addEventListener('touchmove',function(e){ if(!pulling)return; var dy=e.touches[0].clientY-sy; if(dy>60){ pulling=false; window.refreshAll(); } },{passive:true});
+  document.addEventListener('touchend',function(){ pulling=false; },{passive:true});
+})();
 </script>
 
 <!-- ===== 命令面板 Cmd/Ctrl+K（交互细则4 · 任务包 7.4） ===== -->
