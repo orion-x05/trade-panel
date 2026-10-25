@@ -2217,16 +2217,14 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
        默认折叠（initPanelFolds 认 data-collapsed），展开时 refreshFoldedCharts 初始化图表 ===== -->
   <div class="panel collapsible" id="panel-sentiment" data-collapsed style="margin-top:16px">
     <div class="panel-head" onclick="togglePanel('panel-sentiment')">
-      <span class="panel-title">📊 大盘情绪 · 走势过程与辅助参考</span>
-      <span class="panel-tip">涨跌家数/温度快照见上方指标卡 · 此处：K线过程 / 国家队 / 多周期 / 恐惧贪婪 / 辅助情绪</span>
+      <span class="panel-title">📊 大盘情绪 · 量能 / 多周期 / 国家队参考</span>
+      <span class="panel-tip">K线走势见「全球市场」· 此处：成交量 / 多周期 / 恐惧贪婪 / 国家队 / 辅助情绪</span>
     </div>
     <div class="panel-body">
       <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
       <div class="ms-process">
-        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
+        <div class="ms-sect-title">📊 大盘量能 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（两市成交量：近20日 + 今日实时，对比 MA5）</span></div>
         <div class="kline-grid">
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
           <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
         </div>
         <div class="kline-grid" style="margin-top:12px">
@@ -4170,10 +4168,6 @@ function mkCardTitle(chartId,txt){
 
 /* ==================== 情绪面板：走势过程 + 国家队探测 ==================== */
 async function renderSentimentProcess(){
-  /* 大盘日K */
-  try{ const k=await txKline("sh000001","day",50); mkRenderKline(k); }catch(e){ console.warn("K线渲染失败",e); chartHint("cKline",true); }
-  /* 当日分时（过程） */
-  try{ const m=await txMinute("sh000001"); mkRenderIntraday(m); }catch(e){ console.warn("分时渲染失败",e); chartHint("cIntraday",true); }
   /* 大盘总体成交量（两市成交量：上证+深证日K成交量，腾讯源，CORS友好） */
   try{
     const [shK,szK]=await Promise.all([txVolKline("sh000001",20),txVolKline("sz399001",20)]);
@@ -5343,14 +5337,14 @@ function refreshFoldedCharts(){
       [eqChart,monthChart,yearChart,sectorChart,gmkChart,simChart,techChart,momChart].forEach(c=>{
         if(c){try{c.resize();}catch(e){}}
       });
-      ["cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt","cKline","cIntraday","cVol","cGauge"].forEach(id=>{
+      ["cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt","cVol","cGauge"].forEach(id=>{
         const ch=MK_CHARTS[id];if(ch){try{ch.resize();}catch(e){}}
       });
       /* 折叠期间 init 会拿到 0×0 画布被 mkChart 跳过 → 实例不存在时，展开后按可见性补渲染 */
       const _vis=id=>{const el=document.getElementById(id);return el&&el.offsetWidth>0;};
       if(_vis("cGauge")&&!MK_CHARTS["cGauge"]&&typeof renderFearGreed==="function"){try{renderFearGreed();}catch(e){}}
       if(_vis("cBottom")&&!MK_CHARTS["cBottom"]&&typeof renderBottomDetector==="function"){try{renderBottomDetector(window.__policyBottom,window.__techBottom);}catch(e){}}
-      if(_vis("cKline")&&!MK_CHARTS["cKline"]&&typeof renderSentimentProcess==="function"){try{renderSentimentProcess();}catch(e){}}
+      if(_vis("cVol")&&!MK_CHARTS["cVol"]&&typeof renderSentimentProcess==="function"){try{renderSentimentProcess();}catch(e){}}
       if(typeof renderMarketView==="function")renderMarketView();
       if(typeof renderSectorBoards==="function")renderSectorBoards();
       if(typeof renderCharts==="function")renderCharts();
