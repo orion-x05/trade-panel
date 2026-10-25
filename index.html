@@ -1550,54 +1550,7 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
   <!-- ===== v0246 市场看板 ===== -->
-  <!-- ===== v0267 大盘情绪面板：由「个股研究」tab 融合迁入，与上方指标卡合并为一处；
-       涨跌家数/温度/成交额等快照指标已在指标卡展示，此处只放过程与细节（不重复）；
-       默认折叠与总览其余面板约定一致（initPanelFolds 会认 data-collapsed），展开时 refreshFoldedCharts 初始化图表 ===== -->
-  <div class="panel collapsible" id="panel-sentiment" data-collapsed style="margin-top:16px">
-    <div class="panel-head" onclick="togglePanel('panel-sentiment')">
-      <span class="panel-title">📊 大盘情绪 · 走势过程与辅助参考</span>
-      <span class="panel-tip">涨跌家数/温度快照见上方指标卡 · 此处：K线过程 / 国家队 / 多周期 / 恐惧贪婪 / 辅助情绪</span>
-    </div>
-    <div class="panel-body">
-      <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
-      <div class="ms-process">
-        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
-        <div class="kline-grid">
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
-          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
-          <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
-        </div>
-        <div class="kline-grid" style="margin-top:12px">
-          <div class="kline-cell"><div class="kline-cap">🧭 多周期共振（日/周/月方向 + 置信度 GATE）</div><div id="mpBody" class="mp-body"><div class="ms-loading">诊断中…</div></div></div>
-          <div class="kline-cell"><div class="kline-cap">😨🤑 恐惧贪婪指数（市场情绪综合评级）</div><div id="cGauge" class="ech" style="height:200px"></div></div>
-        </div>
-      </div>
-      <!-- 国家队资金动向（最高优先级：先人一步探测资金异动，猜测意图并验证） -->
-      <div class="ms-process" style="border-top:1px dashed var(--border-soft)">
-        <div class="ms-sect-title">🛡️ 国家队资金动向<span class="ms-prio">最高优先级</span><span style="font-size:10px;color:var(--text-faint);font-weight:400">（宽基ETF异动 · 尾盘异动 · 沪深300/中证2000强弱 · 意图猜测+验证）</span></div>
-        <div id="ntBody" class="nt-body"><div class="ms-loading">探测中…</div></div>
-      </div>
-      <div class="ext-aux-label" id="extAuxLabel" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
-      <div class="tech-fold-body" id="extBody" style="display:none">
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（辅助） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
-          <div id="momBody" style="display:none"></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪（辅助） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
-          <div id="vixBody" style="display:none"></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（辅助） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
-          <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
-        </div>
-        <div class="ext-block">
-          <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（辅助） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
-          <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
+  
   <!-- ===== 最近信号 Tape ===== -->
   <div class="panel collapsible" id="panel-tape" data-collapsed style="margin-top:12px">
     <div class="panel-head" onclick="togglePanel('panel-tape')">
@@ -2259,6 +2212,56 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
     </div>
   </div>
 </section>
+<section class="tab-view" id="view-sentiment">
+<!-- ===== 大盘情绪面板（由「今日·总览」迁入行情 tab；涨跌家数/温度/成交额快照仍在上方指标卡；
+       默认折叠（initPanelFolds 认 data-collapsed），展开时 refreshFoldedCharts 初始化图表 ===== -->
+  <div class="panel collapsible" id="panel-sentiment" data-collapsed style="margin-top:16px">
+    <div class="panel-head" onclick="togglePanel('panel-sentiment')">
+      <span class="panel-title">📊 大盘情绪 · 走势过程与辅助参考</span>
+      <span class="panel-tip">涨跌家数/温度快照见上方指标卡 · 此处：K线过程 / 国家队 / 多周期 / 恐惧贪婪 / 辅助情绪</span>
+    </div>
+    <div class="panel-body">
+      <!-- 大盘走势 · 过程（不只看收盘：K线形态 + 当日分时 + 总体成交量） -->
+      <div class="ms-process">
+        <div class="ms-sect-title">📉 大盘走势 · 过程<span style="font-size:10px;color:var(--text-faint);font-weight:400">（不只看收盘：K线形态 / 当日分时 / 总体成交量）</span></div>
+        <div class="kline-grid">
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 日K（近50日，含 MA5/MA20）</div><div id="cKline" class="ech"></div></div>
+          <div class="kline-cell"><div class="kline-cap">上证指数 · 当日分时（盘中过程）</div><div id="cIntraday" class="ech"></div></div>
+          <div class="kline-cell kline-cell-wide"><div class="kline-cap">大盘总体成交量（两市成交额·近20日 + 今日实时，对比 MA5）</div><div id="cVol" class="ech"></div></div>
+        </div>
+        <div class="kline-grid" style="margin-top:12px">
+          <div class="kline-cell"><div class="kline-cap">🧭 多周期共振（日/周/月方向 + 置信度 GATE）</div><div id="mpBody" class="mp-body"><div class="ms-loading">诊断中…</div></div></div>
+          <div class="kline-cell"><div class="kline-cap">😨🤑 恐惧贪婪指数（市场情绪综合评级）</div><div id="cGauge" class="ech" style="height:200px"></div></div>
+        </div>
+      </div>
+      <!-- 国家队资金动向（最高优先级：先人一步探测资金异动，猜测意图并验证） -->
+      <div class="ms-process" style="border-top:1px dashed var(--border-soft)">
+        <div class="ms-sect-title">🛡️ 国家队资金动向<span class="ms-prio">最高优先级</span><span style="font-size:10px;color:var(--text-faint);font-weight:400">（宽基ETF异动 · 尾盘异动 · 沪深300/中证2000强弱 · 意图猜测+验证）</span></div>
+        <div id="ntBody" class="nt-body"><div class="ms-loading">探测中…</div></div>
+      </div>
+      <div class="ext-aux-label" id="extAuxLabel" onclick="toggleExt('main')">辅助情绪参考（宝妈 / 美股估值 / 龙虎 / 北向）· 点击展开 ▾</div>
+      <div class="tech-fold-body" id="extBody" style="display:none">
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('mom')">👩‍👧 宝妈指数 · 散户情绪（辅助） <span class="tech-fold-arrow" id="momArrow">▾</span></div>
+          <div id="momBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('vix')">📈 美股 + A股 估值与情绪（辅助） <span class="tech-fold-arrow" id="vixArrow">▾</span></div>
+          <div id="vixBody" style="display:none"></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('lhb')">🐯 龙虎榜 · 游资动向（辅助） <span class="tech-fold-arrow" id="lhbArrow">▾</span></div>
+          <div id="lhbBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载龙虎榜数据...</div></div>
+        </div>
+        <div class="ext-block">
+          <div class="ext-sub-head" onclick="toggleExt('north')">🌍 北向资金 · 外资流向（辅助） <span class="tech-fold-arrow" id="northArrow">▾</span></div>
+          <div id="northBody" style="display:none"><div style="padding:8px;color:#8b949e;font-size:12px">点击加载北向资金数据...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- ===== 策略模拟 ===== -->
 <section class="tab-view" id="view-sim">
@@ -7717,8 +7720,8 @@ function emIndustryFetch(codes){
    盘后 = 复盘(review) / AI研讨(airesearch)
    回测 = 策略模拟(sim)   学习 = 知识库(knowledge)   设置 = settings
    switchTab 同时接受主 tab 名（切组并回到组内默认视图）和子视图名（切组内指定视图）。 */
-const TAB_GROUPS={today:["overview","rank","psyche"],hold:["hold"],market:["global","themeradar","limitdecoded","instresearch"],scan:["research"],post:["review","airesearch"],sim:["sim"],knowledge:["knowledge"],settings:["settings"]};
-const TAB_SUB_LABEL={overview:"总览",rank:"排名",psyche:"角色心理",global:"全球市场",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报",review:"复盘总结",airesearch:"AI研讨"};
+const TAB_GROUPS={today:["overview","rank","psyche"],hold:["hold"],market:["global","sentiment","themeradar","limitdecoded","instresearch"],scan:["research"],post:["review","airesearch"],sim:["sim"],knowledge:["knowledge"],settings:["settings"]};
+const TAB_SUB_LABEL={overview:"总览",rank:"排名",psyche:"角色心理",global:"全球市场",sentiment:"大盘情绪",themeradar:"题材雷达",limitdecoded:"涨跌解读",instresearch:"机构研报",review:"复盘总结",airesearch:"AI研讨"};
 const TAB_GROUP_LABEL={today:"今日",hold:"持仓",market:"行情",scan:"扫描",post:"盘后",sim:"回测",knowledge:"学习",settings:"设置"};
 let curGroup="today",curView="overview";
 function tabGroupOf(name){for(const g in TAB_GROUPS){if(TAB_GROUPS[g].indexOf(name)>=0)return g;}return null;}
@@ -7759,7 +7762,7 @@ function switchTab(name){
     });
     /* 情绪面板新增图表 resize（避免隐藏tab下宽度为0）；cSectorRank/cSectorAmt 为市场深度行业两图（已随面板迁入 research tab） */
     ["cKline","cIntraday","cVol","cBottom","cGauge","cDist","cRadar","cBreadth","cTier","cSectorRank","cSectorAmt"].forEach(id=>{ const ch=MK_CHARTS[id]; if(ch){try{ch.resize();}catch(e){}} });
-    if(curView==="overview"||curView==="rank"||curView==="review"||curView==="research"){ try{renderSentimentProcess();}catch(e){} }
+    if(curView==="overview"||curView==="rank"||curView==="review"||curView==="research"||curView==="sentiment"){ try{renderSentimentProcess();}catch(e){} }
     /* 特定视图需要重新渲染 */
     if(curView==="global"){try{renderGlobal();}catch(e){}}
     if(curView==="themeradar"){try{renderThemeRadar();}catch(e){}}
