@@ -16642,6 +16642,69 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
     html.modern #view-overview .market-bar button{padding:7px 10px;font-size:11px;flex:1}
     html.modern #view-overview .market-bar{flex-wrap:wrap}
   }
+
+  /* ===== 第四批 · Circle Reveal（切 tab 圆形扩散转场） ===== */
+  html.modern .tab-view.active{
+    animation:tabIn .3s cubic-bezier(.22,1,.36,1),circleReveal .45s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes circleReveal{from{clip-path:circle(0% at 50% 92%)}to{clip-path:circle(150% at 50% 92%)}}
+
+  /* ===== 第四批 · Expanding Tab（侧栏收起时 hover 平滑展开文字） ===== */
+  html.modern .sidenav.collapsed .sidenav .tab{
+    position:relative;overflow:visible;
+  }
+  html.modern .sidenav.collapsed .sidenav .tab.expanding{
+    position:relative;z-index:40;width:max-content;min-width:64px;
+    background:var(--bg-hover);gap:11px;padding:10px 12px;font-size:13.5px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 1px rgba(148,163,184,.12);
+    border-radius:10px;
+  }
+  html.modern .sidenav.collapsed .sidenav .tab.expanding .tab-ico{font-size:initial}
+  @media (max-width:768px){
+    html.modern .tab-view.active{animation:tabIn .3s cubic-bezier(.22,1,.36,1)}
+  }
+
+  /* Expanding Tab 修复：收起态放开 overflow，hover 文字可撑开 */
+  html.modern .sidenav.collapsed{overflow:visible}
+  html.modern .sidenav.collapsed .sidenav-scroll{overflow:visible}
+  html.modern .sidenav.collapsed .sidenav .tab{transition:all .22s cubic-bezier(.4,0,.2,1)}
+  html.modern .sidenav.collapsed .sidenav .tab.expanding{
+    width:max-content;min-width:64px;background:var(--bg-hover);
+    gap:11px;padding:10px 12px;font-size:13.5px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 1px rgba(148,163,184,.12);
+  }
+
+  /* Expanding Tab 修复 v2：收起态 hover 时文字以弹出层显示（避开 flex 裁剪） */
+  html.modern .sidenav.collapsed .sidenav .tab.expanding{
+    width:auto;min-width:0;
+    background:transparent;box-shadow:none;gap:0;padding:0;
+    position:relative;z-index:45;
+  }
+  html.modern .sidenav.collapsed .sidenav .tab.expanding .tab-ico{position:static;flex:none}
+  html.modern .sidenav.collapsed .sidenav .tab.expanding::after{
+    content:attr(data-label);
+    position:absolute;left:36px;top:50%;transform:translateY(-50%);
+    font-size:12.5px;font-weight:500;color:var(--text);
+    background:var(--bg-hover);border:1px solid rgba(148,163,184,.2);
+    border-radius:8px;padding:5px 10px;white-space:nowrap;
+    box-shadow:0 10px 28px rgba(0,0,0,.5);
+    opacity:0;animation:etIn .22s cubic-bezier(.2,.8,.3,1) forwards;
+    z-index:50;
+  }
+  @keyframes etIn{from{opacity:0;transform:translateY(-50%) translateX(-4px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
+
+  /* Expanding Tab 修复 v3：收起态 hover 文字弹出（selector 层级修正） */
+  html.modern .sidenav.collapsed .tab.expanding{position:relative;z-index:45}
+  html.modern .sidenav.collapsed .tab.expanding::after{
+    content:attr(data-label);
+    position:absolute;left:40px;top:50%;transform:translateY(-50%);
+    font-size:12.5px;font-weight:500;color:var(--text);
+    background:var(--bg-hover);border:1px solid rgba(148,163,184,.22);
+    border-radius:8px;padding:5px 10px;white-space:nowrap;
+    box-shadow:0 10px 28px rgba(0,0,0,.5);
+    opacity:0;animation:etIn .22s cubic-bezier(.2,.8,.3,1) forwards;
+  }
+  @keyframes etIn{from{opacity:0;transform:translateY(-50%) translateX(-5px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
 </style>
 
 <script id="ui-enhance-js">
@@ -16678,7 +16741,18 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
     setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);
   };
   /* —— 侧栏收起 —— */
-  function applySidenavCollapsed(c){var n=document.getElementById('tabNav');if(!n)return;n.classList.toggle('collapsed',!!c);try{localStorage.setItem('sidenavCollapsed',c?'1':'0');}catch(e){}var b=document.getElementById('sidenavCollapseBtn');if(b)b.textContent=c?'»':'«';}
+  function applySidenavCollapsed(c){
+    var n=document.getElementById('tabNav');if(!n)return;
+    n.classList.toggle('collapsed',!!c);
+    try{localStorage.setItem('sidenavCollapsed',c?'1':'0');}catch(e){}
+    var b=document.getElementById('sidenavCollapseBtn');if(b)b.textContent=c?'»':'«';
+    /* Expanding Tab：收起态 hover 图标平滑展开文字 */
+    n.querySelectorAll('.tab').forEach(function(t){
+      if(!t.getAttribute('data-label'))t.setAttribute('data-label',t.textContent.trim());
+      t.onmouseenter=function(){if(n.classList.contains('collapsed'))t.classList.add('expanding');};
+      t.onmouseleave=function(){t.classList.remove('expanding');};
+    });
+  }
   window.toggleSidenavCollapse=function(){var n=document.getElementById('tabNav');if(n)applySidenavCollapsed(!n.classList.contains('collapsed'));};
   try{applySidenavCollapsed(localStorage.getItem('sidenavCollapsed')==='1');}catch(e){}
   /* —— 回到顶部 —— */
