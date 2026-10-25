@@ -3193,7 +3193,7 @@ const AGENT_DETAILS = {
     desc:"多智能体投票共识框架。拆分多个独立 AI 子 Agent，分别负责技术面、基本面、资金面、风控评估；只有多数 Agent 观点达成一致看多才执行下单，意见分歧时选择空仓观望。",
     adv:"单一维度信号不容易误导交易，风控稳健，震荡市表现较好。", dis:"单边快速拉升时多个 Agent 难以快速达成共识，容易踏空主升行情。",
     rules:"【子Agent分工】技术面/基本面/资金面/风控各1票；≥3票看多才下单，2:2分歧即观望。【七因子门禁】量能适中、RSI45-70、均线多头、MA20向上、涨幅0.5%-5%、相对强势、收盘在MA5上方，满足≥4条才考虑。【置信度】≥60%；最多同时持有5只。【空仓检验】假设空仓，这只是否仍是舒服买点？赢面<60%不操作。【止损】-7%或跌破MA20，须注明口径来源。【止盈】+8%兑现一半；跌破MA10全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
-  D3:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
+  D3:{ model:"异构模型·通义/Kimi（与其余角色不同厂商）", modelCode:"hetero-b" /* 交接包第八部分：D3镜 0.8+异厂商 */,
     desc:"设置多头、空头两组 Agent 进行辩论博弈。多头 Agent 挖掘买入利好逻辑，空头 Agent 专门挖掘潜在利空与风险隐患；只有多头能有效反驳空头提出的风险点，才判定可以开仓。适合财报、消息催化驱动的个股行情。",
     adv:"自动排查暴雷与隐藏风险，不会单向乐观。", dis:"行情急速涨跌时辩论耗时、信号偏慢；极端行情容易僵持，无法给出明确指令。",
     rules:"【辩论规则】多头论据须比空头多≥2条才开仓；大资金连续2日放量流入=多方铁证，连续2日放量下跌=一票否决。【数值门禁】涨幅>4%或量比>2一律不追（等回调）；RSI6 40-70；置信度≥60%。【止损】-7%或跌破辩论中多方确认的关键支撑位（须注明是哪个价位及来源）。【止盈】冲高放量兑现一半；跌破MA10全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
@@ -3209,7 +3209,7 @@ const AGENT_DETAILS = {
     desc:"涨停回调低吸策略。先定板块：锁定当日主力资金洗盘/回调的活跃板块；再从板块内筛选最近5个交易日内出现过涨停、且回调未跌破涨停当日最低点的个股；等待缩量回踩后低吸进场，博取强势股二次拉升。",
     adv:"强势股回调买点确定性强，盈亏比高，贴合涨停板后洗盘再启动节奏；板块联动过滤了弱势股。", dis:"板块整体退潮时涨停回调股易持续阴跌，必须严格执行跌破涨停低点即离场。",
     rules:"【选股】①板块先行：只选当日主力资金洗盘的活跃板块；②个股门槛：最近5日内有涨停、回调未跌破涨停当日最低点；③量能：回调缩量、地量企稳为佳。【专属信号·v0269】涨停基因（近10日涨停）是D6专属信号；周线超卖但无涨停基因的股票归D7沉，两者选股空间互斥、互不越界。【情绪温度门禁】炸板率>35%、板块退潮或龙头大跌→禁止打板与低吸；板块须在当日主力资金活跃前列。【进场·v0269量化口径】近10日涨停基因（涨停后1-10日内）、收盘价低于涨停价（未反包才算真回调）、量比<1.35缩量、站稳MA20（偏离上界5%、下界容忍刺破4%）、当日收阳且高于前收、MA20向上、未破涨停当日最低点、无放量恐慌盘、自涨停后高点回调2%-30%、距涨停低点≤15%、回调期均量比<2.0、近5日涨幅≤35%（反包涨停路≤30%）；防追涨类全局过滤（近5日>20%/乖离MA5>4%等）对D6豁免——选股池天然是近期涨停基因股，改由本套门禁控风险。【离场】跌破涨停当日最低点、或板块转弱即卖出；参考止损7%。【止盈】冲高放量长上影→兑现一半；跌破MA10→全部离场。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" },
-  D7:{ model:"DeepSeek V4 Flash（快速思考）", modelCode:"deepseek-v4-flash",
+  D7:{ model:"异构模型·通义/Kimi（与其余角色不同厂商）", modelCode:"hetero-b" /* 交接包第八部分：D7沉 0.8+异厂商 */,
     desc:"周线超卖反转波段策略。用典型价 HLC3=(H+L+C)/3 的随机指标（14周期、5周期平滑）减50 做周线波段过滤器：读数 ≤−40 算超卖、且拐头向上才做多，专接周线级别深跌后的反转拐点，不追跌不接落刀。止盈分批：一半仓位看周线 EMA21（21周≈季度趋势线，触及/跌破兑现），另一半看日线同款过滤器进入超买（读数 ≥+40）离场。",
     adv:"与其他角色完全错位：其他六个角色全是顺势（突破/共振/回踩/涨停），D7 只做'跌透反转'，补充面板缺失的超卖反弹风格；周线级别低频信号，噪音少。", dis:"周线信号低频，可能长时间空仓；'超卖'后若基本面崩塌会继续阴跌，拐头确认只排除一部分风险，必须严格执行分批止盈与止损。",
     rules:"【过滤器】典型价 HLC3=(H+L+C)/3；随机指标 %K=(HLC3−L₁₄)/(H₁₄−L₁₄)×100，%D=%K的5周期平滑；读数=%K−50，区间−50~+50，0=中轴。【进场】周线读数≤−40（≈原始KD≤10）算超卖，且%K由降转升（拐头向上），且周线EMA21（21周收盘均线）向上确认趋势修复中，三者缺一不可；当日须收阳确认。【EMA21依据·v0269】实测全池83只/2025时段：无EMA21条件时39笔仅29.7%胜率——超卖拐头但季度趋势线仍向下多是下跌中继，EMA21向上才是真反转起点。【选股边界·v0268】近5日有涨停的股票一律不碰（涨停基因是D6焰的专属信号），D7只做无涨停基因的阴跌超卖股——旧版无此界，实测D7触发的股票100%也被D6触发，选股空间被完全包含。【路径一致·v0268】回测与实盘同口径：周线聚合KD≤−40+拐头向上+无涨停基因+收阳（旧版回测无D7分支、永远空仓，仅实盘有信号）。【止盈】一半仓位：周线价格触及/跌破EMA21兑现；另一半：日线同款过滤器读数≥+40（≈原始KD≥90）超买离场。【止损】参考止损−10%，须注明口径（周线背驰段起点/结构低点）；周线读数回升至−30以上且拐头向下时趋势反转，清仓。【模拟执行】单笔首次买入资金上限20%；最多同时持有5只；100股整手；A股T+1；已有持仓不重复买入；模拟佣金0.03%每笔最低5元，卖出另计0.05%摩擦费用。【决策记录·每笔必填】市场判断(带数值+数据缺失声明) → 买点类型 → 仓位(含费资金百分比) → 止损价并注明口径来源 → 止盈规则(分批，必填) → 盘中失效条件(带阈值)。缺止盈或缺止损口径=结论不完整，降级为观察、不下单。【市场状态→仓位系数】进攻/主升×1.0、修复×0.75、分歧或高位震荡×0.5(只减不加)、退潮或冰点×0(禁开新仓)。单笔仓位=角色上限×系数；个股过热(RSI6>75 或 5日百分位>95)再×0.5。【逆向清单】下单前必须写一句「什么情况下这笔一定亏」，并列出1条反面证据(达尔文协议)；列不出反面证据=未研究透，进 Too Hard 筐、不交易。【退出量化】禁止「减仓」这类无量化指令，必须写成「减X%或减X股」；价格参考必须注明口径，不得出现无来源的数字。" }
@@ -3813,7 +3813,7 @@ function runExplainLoss(){
 }
 /* ---------- ④ 角色差异化 temperature（P1-④：七角色全用同一模型同一温度必然同质） ----------
    D3 多空辩论"唱反调"的角色给最高温度；严格执行型角色低温。 */
-const ROLE_TEMP={D1:0.5,D2:0.7,D3:0.9,D4:0.6,D5:0.7,D6:0.5,D7:0.8};
+const ROLE_TEMP={D1:0.3,D2:0.4,D3:0.8,D4:0.5,D5:0.3,D6:0.6,D7:0.8}; /* 交接包第八部分：D1锋/D5渊严格执行低温0.3；D3镜/D7沉探索高温度0.8 */
 function roleTemperature(role){return ROLE_TEMP[role]!=null?ROLE_TEMP[role]:0.7;}
 /* ---------- ⑤ 下单时点分散（P2-⑨） ----------
    实测七角色决策集中在 14:31-14:44 同一分钟，同质化决策被同时放大。
@@ -6851,7 +6851,7 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   if(ORION_CFG.gatesOn&&amount<ORION_CFG.minAmount){
     log("warn",`【${p.id}】跳过买入：${escHtml(target.name)}(${target.code})单笔仅${amount.toFixed(0)}元 < 最小门槛${ORION_CFG.minAmount}元（佣金+印花税占比过高，拒绝摩擦磨损）`);
     pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:target.code,name:target.name,
-      action:"skip",reason:`单笔${amount.toFixed(0)}元 < 最小门槛${ORION_CFG.minAmount}元`,indicators:snapIndicators(st),gate:snapGate(st),params:{temperature:roleTemperature(p.id)}});
+      action:"skip",reason:`单笔${amount.toFixed(0)}元 < 最小门槛${ORION_CFG.minAmount}元`,indicators:snapIndicators(st),gate:snapGate(st),params:{temperature:roleTemperature(p.id),model:"deepseek-chat"}});
     return false;
   }
   const fee=Math.max(amount*0.000115,5);
@@ -6879,7 +6879,7 @@ function doBuy(p,target,now,ratio,skipPriceCheck){
   /* 决策快照（需求书P0-③）：成交即留档，含数据状态/regime/指标/门禁轨迹/模型参数 */
   pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:target.code,name:target.name,
     action:exist?"add":"buy",qty,price:target.price,amount:+amount.toFixed(2),fee:+fee.toFixed(2),
-    indicators:snapIndicators(st),gate:snapGate(st),reason:buyReason,params:{temperature:roleTemperature(p.id),ratio:+ratio.toFixed(2),maxSinglePct:_singleCap}});
+    indicators:snapIndicators(st),gate:snapGate(st),reason:buyReason,params:{temperature:roleTemperature(p.id),model:"deepseek-chat",ratio:+ratio.toFixed(2),maxSinglePct:_singleCap}});
   todayBuyMap[key]=todayStr(now);
   // 微信推送买入（AI已考虑T+1规则，当日买入次日才可卖）
   const profitHint = exist ? `加仓${qty}股，累计${exist.qty}股，新成本${exist.buyPrice.toFixed(2)}` : `建仓${qty}股，成本${costPerShare.toFixed(2)}`;
@@ -6907,7 +6907,7 @@ function doSell(p,hold,st,now,reason,ratio){
   /* 决策快照：卖出同样留档（归因时买卖成对才完整） */
   pushSnapshot({ts:now.toISOString(),dataState:dataState(),regime:getRegimeState().state,role:p.id,code:hold.code,name:hold.name,
     action:actualQty>=hold.qty?"sell":"partial_sell",qty:actualQty,price:st.price,profit:+profit.toFixed(2),
-    indicators:snapIndicators(st),reason,params:{temperature:roleTemperature(p.id)}});
+    indicators:snapIndicators(st),reason,params:{temperature:roleTemperature(p.id),model:"deepseek-chat"}});
   if(actualQty>=hold.qty){
     p.holdings=p.holdings.filter(h=>h!==hold);
     log("trade",`【${p.id}】清仓${escHtml(hold.name)}(${hold.code})${actualQty}股 @${st.price.toFixed(2)}，盈亏${profit>=0?"+":""}${profit.toFixed(2)}，原因：${reason}`);
@@ -7521,7 +7521,7 @@ async function genRevisionProposal(p,avgRet){
       `{"type":"structure","rulePatch":"一条具体可执行的中文规则条款，将追加到角色规则末尾","rationale":"一句中文"}]}\n`+
       `约束：param 的 target 只能是 sl 或 tp；proposed 与 current 差值不超过 ${AUTO_PARAM_MAX_STEP}；changes 共 1-3 条；frameworkCheck 三项必填；除 JSON 外不输出任何字符。`;
     let reply=null;
-    try{reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],800,1);}catch(e){reply=null;}
+    try{reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],800,1,roleTemperature(p.id) /* 调参按角色温度 */);}catch(e){reply=null;}
     let rec=null;
     if(reply){
       try{
@@ -10911,6 +10911,28 @@ function renderSidePanel(code,name,price,chg,st){
   `;
   
   $("sidePanelBody").innerHTML=html;
+  
+  /* 交接包第七部分：二级页通栏横带（概览带 sticky / 操作带粘底仅移动端） */
+  try{
+    const spb=$("sidePanelBody");
+    if(spb){
+      const ov=document.createElement("div");ov.className="sp-overview";
+      const back=document.createElement("button");back.className="sp-back";back.type="button";back.innerHTML="‹ 返回";
+      back.onclick=function(){closeSidePanel();};
+      ov.appendChild(back);
+      const pr=spb.querySelector(".sp-price-row");
+      if(pr){
+        ov.appendChild(pr);
+        const meta=document.createElement("div");meta.className="sp-ov-meta";
+        meta.innerHTML='MA5 <b>'+ma5.toFixed(2)+'</b> · MA20 <b>'+ma20.toFixed(2)+'</b> · RSI6 <b>'+rsi.toFixed(1)+'</b> · 量比 <b>'+volRatio.toFixed(2)+'</b> · 换手 <b>'+turnover.toFixed(2)+'%</b>';
+        ov.appendChild(meta);
+      }
+      spb.insertBefore(ov, spb.firstChild);
+      const acts=document.createElement("div");acts.className="sp-actions";
+      acts.innerHTML='<button class="sp-a1" type="button">加仓</button><button class="sp-a2" type="button">减仓</button><button class="sp-a3" type="button">移出自选</button>';
+      spb.appendChild(acts);
+    }
+  }catch(e){}
   
   /* 渲染侧边栏K线图（默认日K） */
   setTimeout(()=>{renderSpDayKline();},100);
@@ -15856,7 +15878,7 @@ function trackAgentUsage(usage){
   }catch(e){}
 }
 /* 统一 DeepSeek 调用：自动重试 + 45秒超时 + 用量统计 */
-async function callAgentAPI(messages,maxTokens,retry){
+async function callAgentAPI(messages,maxTokens,retry,temp){
   const apiKey=getDeepSeekKey();
   if(!apiKey)throw new Error("未配置DeepSeek API密钥，请先到设置页填写");
   const maxTry=(retry==null?1:retry)+1;
@@ -15869,7 +15891,7 @@ async function callAgentAPI(messages,maxTokens,retry){
         method:"POST",
         signal:ctrl.signal,
         headers:{"Content-Type":"application/json","Authorization":"Bearer "+apiKey},
-        body:JSON.stringify({model:"deepseek-chat",messages:messages,max_tokens:maxTokens||300,temperature:0.8})
+        body:JSON.stringify({model:"deepseek-chat",messages:messages,max_tokens:maxTokens||300,temperature:temp!=null?temp:0.8})
       });
       clearTimeout(timer);
       if(!r.ok)throw new Error("HTTP "+r.status+(r.status===401?"（密钥无效）":r.status===402?"（余额不足）":""));
@@ -16106,7 +16128,7 @@ async function pvSend(role){
     /* 带上对话历史做上下文 */
     const history=PV_SESSIONS[role].slice(-10).map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}));
     history.push({role:"user",content:text});
-    const reply=await callAgentAPI([{role:"system",content:sys},...history],250,1);
+    const reply=await callAgentAPI([{role:"system",content:sys},...history],250,1,roleTemperature(role));
     loading.remove();
     pvAddMsg(box,"agent",p,reply);
     PV_SESSIONS[role].push({role:"agent",text:reply});
@@ -16468,7 +16490,7 @@ async function sendAgentChat(){
         "- 你会怎么做（买/等/减/卖 + 大致仓位）？\n"+
         "- 想追问用户或回应某位同伴，就点名说。\n"+
         "2-4句话，口语化，像在群里聊天。";
-      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],300,1);
+      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],300,1,roleTemperature(role));
       hideTyping();
       addChatMsg(role,reply);
       replyCacheSet(cacheKey,reply);
@@ -16501,7 +16523,7 @@ async function suggestGroupName(){
     try{
       const sys=agentSystemPrompt(p,{market:false,vs:false});
       const prompt="你们六个人在群里讨论，要给这个炒股群取个名字。你觉得这个群应该叫什么名字？要符合你的风格，要酷，要有炒股的感觉。就说一个名字，再加一句为什么取这个名字。简短点，一句话就行。";
-      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],150,1);
+      const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],150,1,roleTemperature(role));
       addChatMsg(role,reply);
     }catch(e){
       addChatMsg(role,"（发言失败："+e.message+"）");
@@ -16553,7 +16575,7 @@ async function agentFreeDiscussion(topic){
 ${recent||"（还没有人发言，你是第一个）"}
 
 请以「${p.name}」的身份说 2-3 句话：给出你的观点，可以反驳别人也可以补充，并且要结合上面的真实盘面数据说话（提到具体股票时带上名称和代码）。口语化，像在群里聊天，不要说自己是AI。`;
-        const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],250,1);
+        const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],250,1,roleTemperature(role));
         hideTyping();
         addChatMsg(role, reply);
         replyCacheSet(dKey,reply);
@@ -16588,7 +16610,7 @@ ${recent||"（还没有人发言，你是第一个）"}
       "止盈规则：<必须给出分批止盈规则，如'冲高放量兑现一半+跌破MA10全部离场'；确无参考位时写明理由，不许省略>\n"+
       "止损/退出：<价格线(注明口径来源)+结构线+盘中动态阈值(如量比超2.2)+成交兜底，四要素至少给两条>\n"+
       "关键风险：<一句话>";
-    const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],600,1);
+    const reply=await callAgentAPI([{role:"system",content:sys},{role:"user",content:prompt}],600,1,roleTemperature(role));
     hideTyping();
     addChatMsg("consensus","📋 共识结论（主持人 D2衡）\n"+reply);
   }catch(e){
@@ -17301,6 +17323,22 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   *:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
   .t5-bars{height:152px}
   .t3-item{min-height:46px}
+
+  /* ===== 交接包第七部分：二级页通栏横带（概览带 sticky / 趋势带独占 / 明细带 / 操作带粘底仅移动端） ===== */
+  .side-panel-body{display:flex;flex-direction:column;gap:44px;padding:16px 20px 100px}
+  .sp-overview{position:sticky;top:-16px;z-index:6;margin:-16px -20px 0;padding:10px 16px 14px;background:rgba(13,17,23,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-soft)}
+  .sp-overview .sp-price-row{margin:0;padding-top:4px}
+  .sp-back{background:none;border:none;color:var(--text-dim);font-size:14px;padding:6px 0;cursor:pointer;display:block}
+  .sp-back:hover{color:var(--text)}
+  .sp-ov-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin-top:6px;line-height:1.5}
+  .sp-ov-meta b{color:var(--text);font-weight:700}
+  .side-panel-body #sideKline{height:340px!important}
+  .sp-actions{position:sticky;bottom:-16px;z-index:6;display:none;gap:10px;padding:14px 0 18px;margin:0 -20px -100px;background:linear-gradient(180deg,transparent,rgba(13,17,23,.95) 30%)}
+  @media(max-width:640px){.sp-actions{display:flex}}
+  .sp-actions button{flex:1;min-height:44px;border:none;border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer}
+  .sp-a1{background:linear-gradient(135deg,var(--up),oklch(0.62 0.16 25));color:#0b0e13}
+  .sp-a2{background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--border-soft)}
+  .sp-a3{background:transparent;color:var(--text-dim);border:1px solid var(--border-soft)}
 </style>
 
 <script id="ui-enhance-js">
