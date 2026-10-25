@@ -16438,13 +16438,13 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .modern ::-webkit-scrollbar-track{background:transparent}
   .modern ::-webkit-scrollbar-thumb{background:rgba(125,140,160,.22);border-radius:5px}
   .modern ::-webkit-scrollbar-thumb:hover{background:rgba(125,140,160,.4)}
-  /* 组合快照条（消费后端 dashboard_summary） */
+  /* 组合快照条（消费后端 dashboard_summary）——去重后仅保留总资产/最差角色/数据更新 3 项 */
   .ds-snapshot{display:flex;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;overflow:hidden;margin-bottom:12px}
   .dss-item{flex:1 1 0;min-width:118px;padding:11px 16px;display:flex;flex-direction:column;gap:3px;border-right:1px solid var(--border-soft)}
   .dss-item:last-child{border-right:none}
   .dss-item .dss-label{font-size:11px;color:var(--text-faint)}
   .dss-item .dss-val{font-size:16px;font-weight:700;font-family:var(--mono);letter-spacing:-.3px}
-  @media (max-width:768px){.ds-snapshot{display:grid;grid-template-columns:repeat(2,1fr)}.dss-item{border-right:none;border-bottom:1px solid var(--border-soft)}.dss-item:nth-last-child(-n+2){border-bottom:none}}
+  @media (max-width:768px){.ds-snapshot{display:grid;grid-template-columns:repeat(3,1fr)}.dss-item{border-right:none;border-bottom:1px solid var(--border-soft)}.dss-item:nth-last-child(-n+2){border-bottom:none}}
 
   /* ============ 版面简洁化：去重 + 层级收敛（20261025） ============ */
   /* ① 角色快照 stats 四卡与上方 hero-summary 同屏 100% 重复（组合收益/行情接口/运行角色/领先角色）
@@ -16522,13 +16522,12 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
       var best=s.best_role,bestTxt=best?(best.id+' '+best.name+' '+(best.recent_pnl>=0?'+':'')+Math.round(best.recent_pnl)):'—';
       var worst=s.worst_role,worstTxt=worst?(worst.id+' '+worst.name+' '+Math.round(worst.recent_pnl)):'—';
       var upd=s.last_update?String(s.last_update).replace('T',' ').slice(0,16):'—';
+      /* 去重（20261025）：总盈亏/最佳角色/持仓角色 分别已由 dashStatus 状态条与 hero 主卡展示，
+         此快照条只保留三处均没有的独有信息：总资产 / 最差角色 / 数据更新 */
       strip.style.display='flex';
       strip.innerHTML=
         '<div class="dss-item"><span class="dss-label">总资产</span><span class="dss-val">¥'+Number(s.total_assets||0).toLocaleString('zh-CN',{maximumFractionDigits:0})+'</span></div>'+
-        '<div class="dss-item"><span class="dss-label">总盈亏</span><span class="dss-val" style="color:'+pnlCls+'">'+(s.total_pnl>=0?'+':'')+Number(s.total_pnl||0).toLocaleString('zh-CN',{maximumFractionDigits:0})+' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)</span></div>'+
-        '<div class="dss-item"><span class="dss-label">最佳角色</span><span class="dss-val" style="color:var(--up)">'+bestTxt+'</span></div>'+
         '<div class="dss-item"><span class="dss-label">最差角色</span><span class="dss-val" style="color:var(--down)">'+worstTxt+'</span></div>'+
-        '<div class="dss-item"><span class="dss-label">持仓角色</span><span class="dss-val">'+(s.active_roles||0)+' / '+(s.roles_count||0)+'</span></div>'+
         '<div class="dss-item"><span class="dss-label">数据更新</span><span class="dss-val" style="font-size:13px">'+upd+'</span></div>';
     }).catch(function(){if(strip)strip.style.display='none';});
   }
