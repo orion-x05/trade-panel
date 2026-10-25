@@ -16599,6 +16599,49 @@ document.querySelectorAll(".tab").forEach(function(b){b.addEventListener("click"
   .hold-kanban .kanban-col-head .kc-name::after{content:"›";opacity:.45;margin-left:2px;font-size:10px}
   /* 单列视图下卡片宽度恢复全宽 */
   #view-hold .hold-card{width:100%}
+
+  /* ===== 第三批 · Hero 主角化（视觉重心：首屏只看一个点） ===== */
+  html.modern .hero-summary{
+    position:relative;overflow:hidden;
+    background:linear-gradient(120deg,rgba(79,140,255,.24),rgba(120,90,255,.13) 52%,rgba(79,140,255,.05) 82%,transparent);
+    border:1px solid rgba(79,140,255,.32);
+    box-shadow:0 0 0 1px rgba(79,140,255,.2),0 12px 40px -14px rgba(79,140,255,.34),inset 0 1px 0 rgba(255,255,255,.05);
+    padding:18px 22px;margin-bottom:16px;
+  }
+  html.modern .hero-summary::after{
+    content:"";position:absolute;top:0;right:0;width:220px;height:100%;
+    background:radial-gradient(ellipse at top right,rgba(79,140,255,.16),transparent 62%);
+    pointer-events:none;
+  }
+  html.modern .hero-summary .hs-value{
+    font-size:40px;line-height:1.05;letter-spacing:-1px;margin-top:8px;
+    text-shadow:0 0 18px rgba(79,140,255,.35),0 0 40px rgba(79,140,255,.18);
+  }
+  html.modern .hero-summary .hs-label{font-size:13px;letter-spacing:.5px;color:var(--text-dim)}
+  html.modern .hero-summary .hs-sub{font-size:13px;margin-top:6px}
+  html.modern .hero-summary .hs-chip{
+    background:rgba(79,140,255,.1);border:1px solid rgba(79,140,255,.22);color:var(--text-dim);
+    padding:6px 12px;border-radius:20px;font-size:12px;
+  }
+  @media (max-width:768px){
+    html.modern .hero-summary{padding:16px 16px 18px}
+    html.modern .hero-summary .hs-value{font-size:34px}
+  }
+
+  /* ===== 第三批 · Quick Actions（主色圆钮组，操作焦点） ===== */
+  html.modern #view-overview .market-bar{padding:10px 12px;background:rgba(15,21,31,.72);border:1px solid rgba(148,163,184,.14);border-radius:12px;margin:0 0 14px}
+  html.modern #view-overview .market-bar button{
+    border:none;border-radius:99px;padding:8px 14px;font-size:12px;font-weight:600;
+    background:linear-gradient(135deg,#4f8cff,#6a5cff);color:#fff;cursor:pointer;
+    box-shadow:0 4px 14px -4px rgba(79,140,255,.5);
+    transition:transform .15s,box-shadow .2s,filter .2s;
+  }
+  html.modern #view-overview .market-bar button:hover{transform:translateY(-1px);box-shadow:0 6px 18px -4px rgba(79,140,255,.6);filter:brightness(1.08)}
+  html.modern #view-overview .market-bar button:active{transform:scale(.96)}
+  @media (max-width:768px){
+    html.modern #view-overview .market-bar button{padding:7px 10px;font-size:11px;flex:1}
+    html.modern #view-overview .market-bar{flex-wrap:wrap}
+  }
 </style>
 
 <script id="ui-enhance-js">
