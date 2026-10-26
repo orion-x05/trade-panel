@@ -67,20 +67,20 @@ jobs:
         run: |
           # 用Python直发GitHub API上传data.json（curl内嵌base64在文件变大后会超命令行长度上限）
           python3 - <<'PYEOF'
-import json,base64,urllib.request,os
-tok=os.environ["GH_TOKEN"]
-base="https://api.github.com/repos/orion-x05/trade-panel"
-def gh(method,url,payload=None):
-    req=urllib.request.Request(base+url, method=method,
-        headers={"Authorization":"token "+tok,"Content-Type":"application/json","Accept":"application/vnd.github+json"})
-    data=json.dumps(payload).encode() if payload is not None else None
-    with urllib.request.urlopen(req,data=data) as r:
-        return json.loads(r.read().decode())
-meta=gh("GET","/contents/data.json?ref=main")
-content=base64.b64encode(open("data.json","rb").read()).decode()
-gh("PUT","/contents/data.json",{"message":"auto: 交易引擎更新","content":content,"sha":meta.get("sha"),"branch":"main"})
-print("✅ data.json 已更新")
-PYEOF
+          import json,base64,urllib.request,os
+          tok=os.environ["GH_TOKEN"]
+          base="https://api.github.com/repos/orion-x05/trade-panel"
+          def gh(method,url,payload=None):
+              req=urllib.request.Request(base+url, method=method,
+                  headers={"Authorization":"token "+tok,"Content-Type":"application/json","Accept":"application/vnd.github+json"})
+              data=json.dumps(payload).encode() if payload is not None else None
+              with urllib.request.urlopen(req,data=data) as r:
+                  return json.loads(r.read().decode())
+          meta=gh("GET","/contents/data.json?ref=main")
+          content=base64.b64encode(open("data.json","rb").read()).decode()
+          gh("PUT","/contents/data.json",{"message":"auto: 交易引擎更新","content":content,"sha":meta.get("sha"),"branch":"main"})
+          print("✅ data.json 已更新")
+          PYEOF
 
   backtest:
     runs-on: ubuntu-latest
@@ -109,20 +109,20 @@ PYEOF
         run: |
           if [ ! -f bt_tune.json ]; then echo "无 bt_tune.json，跳过提交"; exit 0; fi
           python3 - <<'PYEOF'
-import json,base64,urllib.request,os
-tok=os.environ["GH_TOKEN"]
-base="https://api.github.com/repos/orion-x05/trade-panel"
-def gh(method,url,payload=None):
-    req=urllib.request.Request(base+url, method=method,
-        headers={"Authorization":"token "+tok,"Content-Type":"application/json","Accept":"application/vnd.github+json"})
-    data=json.dumps(payload).encode() if payload is not None else None
-    with urllib.request.urlopen(req,data=data) as r:
-        return json.loads(r.read().decode())
-try:
-    meta=gh("GET","/contents/bt_tune.json?ref=main")
-except Exception:
-    print("bt_tune.json 在 main 不存在，跳过提交"); raise SystemExit(0)
-content=base64.b64encode(open("bt_tune.json","rb").read()).decode()
-gh("PUT","/contents/bt_tune.json",{"message":"auto: 回测参数更新","content":content,"sha":meta.get("sha"),"branch":"main"})
-print("✅ bt_tune.json 已更新")
-PYEOF
+          import json,base64,urllib.request,os
+          tok=os.environ["GH_TOKEN"]
+          base="https://api.github.com/repos/orion-x05/trade-panel"
+          def gh(method,url,payload=None):
+              req=urllib.request.Request(base+url, method=method,
+                  headers={"Authorization":"token "+tok,"Content-Type":"application/json","Accept":"application/vnd.github+json"})
+              data=json.dumps(payload).encode() if payload is not None else None
+              with urllib.request.urlopen(req,data=data) as r:
+                  return json.loads(r.read().decode())
+          try:
+              meta=gh("GET","/contents/bt_tune.json?ref=main")
+          except Exception:
+              print("bt_tune.json 在 main 不存在，跳过提交"); raise SystemExit(0)
+          content=base64.b64encode(open("bt_tune.json","rb").read()).decode()
+          gh("PUT","/contents/bt_tune.json",{"message":"auto: 回测参数更新","content":content,"sha":meta.get("sha"),"branch":"main"})
+          print("✅ bt_tune.json 已更新")
+          PYEOF
