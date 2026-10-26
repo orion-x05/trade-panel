@@ -1617,7 +1617,7 @@ function renderMarket(){
   if(ok){
     if(tempEl){tempEl.textContent=(temp!=null?(temp>0?"+":"")+temp:"—");tempEl.style.color=temp!=null?(temp>8?"var(--up)":(temp<-8?"var(--down)":"var(--txt)")):"var(--faint)";}
     if(bs){bs.textContent="正常";bs.className="badge ok";}
-    if(note)note.innerHTML="指数加权温度（上证45%+深成35%+创业20%）<br>涨停 <b class=\"wup\">"+(m.zt_count!=null?m.zt_count:"--")+"</b> 家 · 跌停 <b class=\"wdn\">"+((__D.limit&&__D.limit.dt_count)!=null?__D.limit.dt_count:"--")+"</b> 家 · 两市成交约 <b>"+amt.toFixed(0)+"</b> 亿";
+    if(note)note.innerHTML="指数加权温度（上证45%+深成35%+创业20%）<br>涨停 <b class=\"wup\">"+(m.zt_count!=null?m.zt_count:"--")+"</b> 家 · 跌停 <b class=\"wdn\">"+((__D.limit&&__D.limit.dt_count)!=null?__D.limit.dt_count:"--")+"</b> 家 · 两市成交约 <b>"+((__D.idx&&Object.keys(__D.idx).length>=3&&isFinite(amt))?amt.toFixed(0):"--")+"</b> 亿";
     if(dist){
       var rows="";
       IDX_FULL.slice(0,3).forEach(function(x){
@@ -1847,12 +1847,17 @@ function boot(){
   loadSentiment().then(function(){
     renderToday();renderScan();renderPost();renderHold();renderSim();
     if(typeof renderSettings==="function")renderSettings();
+    renderMarket();
   });
   fetchIndex().then(function(){renderMarket();renderToday();});
   if(!Object.keys(__D.idx||{}).length)fetchIndex().then(renderMarket);
   setTimeout(function(){
     if(!__D.idx||!Object.keys(__D.idx).length){var st=document.getElementById("mkState");if(st){st.textContent="重试中";}}
   },15000);
+  /* 兜底：所有 .reveal 卡强制可见（不依赖滚动触发，避免整块留白） */
+  setTimeout(function(){
+    document.querySelectorAll(".reveal:not(.in)").forEach(function(el){el.classList.add("in");});
+  },800);
 }
 boot();
 setInterval(function(){loadSentiment().then(function(){renderToday();renderScan();renderPost();renderHold();});fetchIndex().then(function(){renderMarket();renderToday();});},300000);
