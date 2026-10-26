@@ -788,7 +788,7 @@ body::after{   /* 暗角 */
     </section>
 
     <section class="card mini reveal" style="--d:.16s"><button class="more" aria-label="刷新数据" title="刷新数据">↻</button>
-      <div class="card-title">数据状态<span class="badge ok">正常</span></div>
+      <div class="card-title">数据状态<span class="badge ok" id="dsBadge">正常</span></div>
       <div class="mini-val" style="font-size:clamp(20px,1.6vw,24px)"><span id="dsTime">--:--</span><span class="u" id="dsHint">–</span></div>
       <div class="mini-note">腾讯 ✓ · 东财 ✓ · 新浪 ✓</div>
     </section>
@@ -1312,6 +1312,11 @@ body::after{   /* 暗角 */
     $('dsTime').textContent = t;
     $('dsHint').textContent = v.stale ? '已过期' : '正常';
     $('dsHint').style.color = v.stale ? 'var(--up)' : 'var(--down)';
+    const bd = $('dsBadge');
+    if (bd) {
+      bd.textContent = v.stale ? '已过期' : '正常';
+      bd.className = 'badge ' + (v.stale ? 'bad' : 'ok');
+    }
 
     // 七角色
     const ps = d.players || [];
