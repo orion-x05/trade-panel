@@ -877,6 +877,10 @@ body::after{   /* 暗角 */
       <div class="card-title">连板高度分布</div>
       <div class="rows" id="lbDist"><div class="loading-note">加载中…</div></div>
     </section>
+    <section class="card s3 reveal" style="--d:.20s">
+      <div class="card-title">板块雷达<span class="lbl lbl-warn">最强题材</span></div>
+      <div class="rows" id="themeRows"><div class="loading-note">加载中…</div></div>
+    </section>
   </div>
 </section>
 
@@ -943,6 +947,14 @@ body::after{   /* 暗角 */
       <div class="card-title">七角色定位</div>
       <div class="rows" id="roleIntroRows"></div>
     </section>
+    <section class="card s3 reveal" style="--d:.16s">
+      <div class="card-title">角色心理<span class="lbl lbl-warn">今日心情</span></div>
+      <div class="rows" id="psyRows"></div>
+    </section>
+    <section class="card s5 reveal" style="--d:.20s">
+      <div class="card-title">研究动态<span class="badge ok" id="feedState">—</span></div>
+      <div class="rows" id="feedRows"></div>
+    </section>
   </div>
 </section>
 
@@ -955,6 +967,10 @@ body::after{   /* 暗角 */
     <section class="card s4 reveal" style="--d:.10s">
       <div class="card-title">七角色温度（推理参数）</div>
       <div class="rows" id="roleRows"></div>
+    </section>
+    <section class="card s4 reveal" style="--d:.13s">
+      <div class="card-title">角色参数<span class="lbl lbl-cool">引擎自动调参</span></div>
+      <div class="rows" id="paramRows"></div>
     </section>
     <section class="card s3 reveal" style="--d:.16s">
       <div class="card-title">关于</div>
@@ -1447,6 +1463,13 @@ function loadSentiment(){
     __D.limit=d.limit_decoded||{};
     __D.players=d.players||null;
     __D.yesterday=d.yesterday_perf||null;
+    __D.psych=d.role_psychology||null;
+    __D.tuned=d.tuned_roles||null;
+    __D.weights=d.tuned_weights||null;
+    __D.ds=d.dashboard_summary||null;
+    __D.feed=d.research_feed||null;
+    __D.radar=d.theme_radar||null;
+    __D.losses=d.consecutive_losses||null;
     return st;
   }).catch(function(e){
     __D.sentiment={ok:false,reason:"data.json 读取失败:"+e.message,stage:"unknown",metrics:{}};
@@ -1681,6 +1704,15 @@ function renderScan(){
     if(peEl){peEl.textContent="—";peEl.style.color="var(--faint)";}
     if(peNote)peNote.textContent="昨日涨停池表现不可得";
   }
+  var themeRows=document.getElementById("themeRows");
+  if(themeRows){
+    var th=(__D.radar&&__D.radar.themes)||[];
+    if(th.length){
+      themeRows.innerHTML=th.slice(0,8).map(function(t){
+        return '<div class="row2"><span class="nm">'+esc(t.name||"")+'</span><span class="tag">'+(t.n||0)+' 家 · '+(t.max_lb||0)+' 板</span><span class="v '+(t.boom&&t.boom>0?"warn":"up")+'">封板 '+(t.seal!=null?t.seal.toFixed(0):"--")+' 亿</span></div>';
+      }).join("");
+    } else themeRows.innerHTML='<div class="loading-note">暂无板块数据</div>';
+  }
   var lbDist=document.getElementById("lbDist");
   if(lbDist){
     var lad=m.ladder||{};
@@ -1728,7 +1760,20 @@ function renderHold(){
     });
     var base=pl.length*100000;
     var net=tot-base;
-    if(pnl){pnl.textContent=(net>0?"+":"")+Math.round(net).toLocaleString("zh-CN");pnl.style.color=net>0?"var(--down)":(net<0?"var(--up)":"var(--faint)");}
+    var ds=__D.ds,noteEl=document.getElementById("holdNote");
+    if(pnl){
+      if(ds&&ds.total_pnl!=null){
+        pnl.textContent=(ds.total_pnl>0?"+":"")+Math.round(ds.total_pnl).toLocaleString("zh-CN");
+        pnl.style.color=ds.total_pnl>0?"var(--down)":(ds.total_pnl<0?"var(--up)":"var(--faint)");
+      }else{
+        pnl.textContent=(net>0?"+":"")+Math.round(net).toLocaleString("zh-CN");
+        pnl.style.color=net>0?"var(--down)":(net<0?"var(--up)":"var(--faint)");
+      }
+    }
+    if(noteEl&&ds&&ds.total_assets!=null){
+      var best=ds.best_role,worst=ds.worst_role;
+      noteEl.innerHTML='总资产 <b>'+Math.round(ds.total_assets).toLocaleString("zh-CN")+'</b> 元 · 活跃角色 '+(ds.active_roles!=null?ds.active_roles:"--")+' 个 · 累计 '+(ds.total_trades!=null?ds.total_trades:"--")+' 笔<br>最强 <b class="wup">'+(best?(best.id+" "+esc(best.name)+" "+(best.recent_pnl>0?"+":"")+Math.round(best.recent_pnl)+"元"):"--")+'</b> · 最弱 <b class="wdn">'+(worst?(worst.id+" "+esc(worst.name)+" "+Math.round(worst.recent_pnl)+"元"):"--")+'</b>';
+    }
     if(badge)badge.textContent=pl.length+" 角色";
     if(list){
       list.innerHTML=pl.map(function(p){
@@ -1807,6 +1852,14 @@ function renderSettings(){
       return '<div class="row"><span class="nm">'+r+" "+esc((ROLE_NAMES[r]||r).split("·")[1]||"")+'</span><span class="v" style="color:'+col+'">'+t.toFixed(1)+'</span></div>';
     }).join("");
   }
+  var pr=document.getElementById("paramRows");
+  if(pr){
+    var tuned=__D.tuned||{},weights=__D.weights||{},losses=__D.losses||{};
+    pr.innerHTML=["D1","D2","D3","D4","D5","D6","D7"].map(function(id){
+      var t=tuned[id]||{};
+      return '<div class="row2"><span class="nm">'+id+'</span><span class="tag">止损 '+(t.sl!=null?t.sl+"%":"--")+' · 止盈 '+(t.tp!=null?t.tp+"%":"--")+'</span><span class="v">权重 '+(weights[id]!=null?weights[id].toFixed(1):"--")+' · 连亏 '+(losses[id]!=null?losses[id]:0)+'</span></div>';
+    }).join("");
+  }
 }
 /* ---------- 回测 / 学习页 ---------- */
 function renderSim(){
@@ -1821,6 +1874,32 @@ function renderSim(){
   var rir=document.getElementById("roleIntroRows");
   if(rir){
     rir.innerHTML='<div class="row"><span class="nm">D1 锋</span><span class="tag">趋势突破</span></div><div class="row"><span class="nm">D2 衡</span><span class="tag">多因子</span></div><div class="row"><span class="nm">D3 镜</span><span class="tag">多空辩论</span></div><div class="row"><span class="nm">D4 啸</span><span class="tag">量价共振</span></div><div class="row"><span class="nm">D5 渊</span><span class="tag">趋势回踩</span></div><div class="row"><span class="nm">D6 焰</span><span class="tag">涨停回踩</span></div><div class="row"><span class="nm">D7 沉</span><span class="tag">周线超卖</span></div>';
+  }
+  var psy=document.getElementById("psyRows");
+  if(psy){
+    var ps=__D.psych||{};
+    var ids=["D1","D2","D3","D4","D5","D6","D7"];
+    var html=[];
+    ids.forEach(function(id){
+      var p=ps[id];
+      if(p){
+        html.push('<div class="row2"><span class="nm">'+esc(p.name||id)+' · '+esc(p.temperament||"")+'</span><span class="tag">心情 '+(p.mood!=null?(p.mood>0?"+":"")+p.mood.toFixed(2):"--")+'</span><span class="v '+(p.win_rate!=null?(p.win_rate>0.5?"up":"down"):"")+'">'+(p.win_rate!=null?"胜率 "+(p.win_rate*100).toFixed(0)+"%":"—")+'</span></div><div class="mono-note">“'+esc(p.monologue||"")+'”</div>');
+      }
+    });
+    psy.innerHTML=html.join("")||'<div class="loading-note">暂无角色心理数据</div>';
+  }
+  var feed=document.getElementById("feedRows"),feedState=document.getElementById("feedState");
+  if(feed){
+    var rf=(__D.feed&&__D.feed.reports)||[];
+    if(rf.length){
+      if(feedState)feedState.textContent=rf.length+" 条";
+      feed.innerHTML=rf.slice(0,5).map(function(r){
+        return '<div class="row2"><span class="nm">'+esc(r.name||"")+" "+esc(r.code||"")+'</span><span class="tag">'+(r.org||"")+" · "+(r.rating||"")+'</span><span class="v">'+esc((r.date||"").slice(5))+'</span></div><div class="mono-note">'+esc(r.title||"")+'</div>';
+      }).join("");
+    } else {
+      if(feedState)feedState.textContent="—";
+      feed.innerHTML='<div class="loading-note">暂无研报数据</div>';
+    }
   }
 }
 /* ---------- 视图切换（覆写 demo 的 switchTab） ---------- */
