@@ -882,6 +882,10 @@ body::after{   /* 暗角 */
 
 <section class="view" id="view-hold">
   <div class="grid">
+    <section class="card s5 reveal" style="--d:.01s">
+      <div class="card-title">持仓明细<span class="badge ok" id="posState">—</span></div>
+      <div class="rows" id="posList"><div class="loading-note">读取持仓明细…</div></div>
+    </section>
     <section class="card s5 reveal" style="--d:.02s">
       <div class="card-title">模拟持仓<span class="badge ok" id="holdBadge">—</span></div>
       <div class="rows" id="holdList"><div class="loading-note">读取本地模拟盘数据…</div></div>
@@ -1684,6 +1688,33 @@ function renderScan(){
   }
 }
 /* ---------- 持仓页 ---------- */
+function fetchPosQuotes(){
+  return new Promise(function(resolve){
+    var pairs=[];
+    (__D.players||[]).forEach(function(p){
+      (p.holdings||[]).forEach(function(h){
+        if(h&&h.code){var pref=(h.code.charAt(0)==="6"||h.code.charAt(0)==="9"||h.code.charAt(0)==="5")?"sh":"sz";pairs.push([pref+h.code,h.code]);}
+      });
+    });
+    var uniq={};pairs.forEach(function(x){uniq[x[0]]=x[1];});
+    var keys=Object.keys(uniq);
+    if(!keys.length){__D.q={};return resolve(null);}
+    var s=document.createElement("script");
+    s.src="https://qt.gtimg.cn/q="+keys.join(",")+"&_="+Date.now();
+    var done=false;
+    s.onload=function(){
+      if(done)return;done=true;
+      __D.q={};
+      keys.forEach(function(k){
+        var w=window["v_"+k];
+        if(w&&w.indexOf("~")>0){var f=w.split("~");__D.q[uniq[k]]={price:parseFloat(f[3])||0,chg:parseFloat(f[31])||0};}
+      });
+      resolve(__D.q);
+    };
+    s.onerror=function(){if(done)return;done=true;resolve(null);};
+    document.head.appendChild(s);
+  });
+}
 function renderHold(){
   var list=document.getElementById("holdList");
   var pnl=document.getElementById("holdPnl");
@@ -1710,6 +1741,22 @@ function renderHold(){
         var ret=(p.asset-100000)/100000*100;
         return '<div class="row2"><span class="nm">'+esc(p.id||"")+'</span><span class="v '+signCls(ret)+'">'+(ret>0?"+":"")+ret.toFixed(2)+"%</span></div>";
       }).join("");
+    }
+    var posEl=document.getElementById("posList"),posState=document.getElementById("posState");
+    if(posEl){
+      var qt=__D.q||{},qok=Object.keys(qt).length>0,rows=[];
+      pl.forEach(function(p){
+        (p.holdings||[]).forEach(function(h){
+          var r=qt[h.code]||{},cur=r.price||0,cost=h.buyPrice||0;
+          var pnl=cur&&cost?(cur-cost)*h.qty:null;
+          var pct=cur&&cost?(cur-cost)/cost*100:null;
+          var col=(p.id==="D3"||p.id==="D7")?"var(--warn)":"var(--down)";
+          rows.push('<div class="row2"><span class="nm"><span class="dot" style="background:'+col+';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px"></span>'+esc(p.id)+" "+esc(p.name)+" · "+esc(h.name||"")+' <span style="color:var(--dim);font-size:11px">'+esc(h.code||"")+'</span></span><span class="tag">'+(h.qty||0)+'股 @'+(cost?cost.toFixed(2):"--")+'</span><span class="v '+(pnl!=null?(pnl>=0?"up":"down"):"")+'">'+(pnl!=null?(pnl>0?"+":"")+Math.round(pnl)+"元"+(pct!=null?" ("+(pct>0?"+":"")+pct.toFixed(1)+"%)":""):(qok?"价格缺失":"加载中…"))+'</span></div>');
+        });
+      });
+      if(!rows.length)rows.push('<div class="loading-note">暂无持仓</div>');
+      posEl.innerHTML=rows.join("");
+      if(posState)posState.textContent=qok?"实时":(pl.length?"价格加载中":"—");
     }
   }else{
     if(badge)badge.textContent="无本地数据";
@@ -1826,6 +1873,7 @@ function switchTab(el){
   showView(name);
   if(name==="market"){if(!Object.keys(__D.idx||{}).length)fetchIndex().then(renderMarket);}
   if(name==="scan"||name==="post"||name==="hold")renderScan(),renderPost(),renderHold();
+  if(name==="hold")fetchPosQuotes().then(function(){renderHold();});
 }
 document.querySelectorAll("#drawer a").forEach(function(a){
   a.addEventListener("click",function(e){e.preventDefault();switchTab(a);});
@@ -1835,6 +1883,7 @@ function refreshAll(){
   var btn=document.getElementById("refreshBtn");
   loadSentiment().then(function(){renderToday();renderScan();renderPost();renderHold();renderSim();});
   fetchIndex().then(function(){renderMarket();renderToday();});
+  fetchPosQuotes().then(function(){renderHold();});
   if(!Object.keys(__D.idx||{}).length)fetchIndex().then(renderMarket);
 }
 document.getElementById("refreshBtn").addEventListener("click",function(e){e.stopPropagation();refreshAll();});
@@ -1848,6 +1897,7 @@ function boot(){
     renderToday();renderScan();renderPost();renderHold();renderSim();
     if(typeof renderSettings==="function")renderSettings();
     renderMarket();
+    fetchPosQuotes().then(function(){renderHold();});
   });
   fetchIndex().then(function(){renderMarket();renderToday();});
   if(!Object.keys(__D.idx||{}).length)fetchIndex().then(renderMarket);
