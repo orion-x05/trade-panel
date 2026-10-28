@@ -1922,19 +1922,41 @@ body::after{   /* 暗角 */
     (DATA.players || []).forEach(p => { nmMap[p.id] = p.name || ''; });
     let rrows = '';
     if (rf && typeof rf === 'object' && !Array.isArray(rf)) {
-      rrows = Object.keys(rf).slice(0, 7).map(k => {
+      const TR = { bull: '多头', bear: '空头', neutral: '震荡', up: '走高', down: '走低' };
+      const cn = a => a.map(x => TR[x] || x).join('/');
+      const cnt = {};
+      Object.keys(rf).forEach(k => {
+        const t = (rf[k] || {}).bad_trends;
+        if (Array.isArray(t)) t.forEach(x => { cnt[x] = (cnt[x] || 0) + 1; });
+      });
+      const total = Object.keys(rf).length;
+      const top = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+      let head = '';
+      if (top && cnt[top] >= 3) {
+        head = '<div class="row"><span class="nm" style="color:var(--warn)">全体共振</span>' +
+          '<span class="tag" style="color:var(--warn)">' + cnt[top] + '/' + total + ' 角色规避「' +
+          (TR[top] || top) + '」趋势</span></div>';
+      }
+      const vals = Object.keys(rf).map(k => {
         const v = rf[k] || {};
         const parts = [];
-        if (Array.isArray(v.bad_trends) && v.bad_trends.length) parts.push('避开趋势 ' + v.bad_trends.join('/'));
+        if (Array.isArray(v.bad_trends) && v.bad_trends.length) parts.push('避开 ' + cn(v.bad_trends) + ' 趋势');
         if (Array.isArray(v.bad_sectors) && v.bad_sectors.length) parts.push('避开板块 ' + v.bad_sectors.join('/'));
         if (Array.isArray(v.bad_reasons) && v.bad_reasons.length) parts.push('失败因 ' + v.bad_reasons.slice(0, 3).join('/'));
         if (typeof rf[k] === 'string') parts.push(rf[k]);
-        const txt = parts.join(' · ').trim();
-        return '<div class="row"><span class="nm">' + k + ' ' + (nmMap[k] || '') + '</span>' +
-          '<span class="tag" style="max-width:64%;white-space:normal;text-align:right;' +
-          (txt ? 'color:var(--warn)' : 'color:var(--faint)') + '">' +
-          (txt || '本轮无负面记录') + '</span></div>';
-      }).join('');
+        return { k: k, txt: parts.join(' · ').trim() };
+      });
+      const hit = vals.filter(x => x.txt);
+      const skip = vals.length - hit.length;
+      rrows = head + hit.map(x =>
+        '<div class="row"><span class="nm">' + x.k + ' ' + (nmMap[x.k] || '') + '</span>' +
+        '<span class="tag" style="max-width:64%;white-space:normal;text-align:right;color:var(--dim)">' +
+        x.txt + '</span></div>'
+      ).join('');
+      if (hit.length && skip) {
+        rrows += '<div class="row"><span class="nm" style="color:var(--faint)">其余 ' + skip +
+          ' 个角色本轮无负面记录</span></div>';
+      }
     }
     $('rvReflect').innerHTML = rrows ||
       '<div class="row"><span class="nm" style="color:var(--faint)">暂无反思记录</span></div>';
