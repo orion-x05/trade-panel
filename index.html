@@ -915,7 +915,11 @@ body::after{   /* 暗角 */
     <div class="rows" id="scanZT"></div>
   </section>
   <section class="card" style="grid-column:1/-1">
-    <div class="card-title">候选池</div>
+    <div class="card-title">题材雷达</div>
+    <div class="rows" id="scanTheme"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1">
+    <div class="card-title">机构研报</div>
     <div class="rows" id="scanPool"></div>
   </section>
 </div>
@@ -1613,21 +1617,32 @@ body::after{   /* 暗角 */
 
   function renderScan() {
     if (!DATA) return;
-    const rows = (DATA.limit_decoded && DATA.limit_decoded.zt_rows) || [];
-    $('scanZT').innerHTML = rows.slice(0, 8).map(r =>
+
+    /* 涨停梯队 */
+    const zt = (DATA.limit_decoded && DATA.limit_decoded.zt_rows) || [];
+    $('scanZT').innerHTML = zt.slice(0, 8).map(r =>
       '<div class="row"><span class="nm">' + (r.name || r.code) + '</span>' +
-      '<span class="tag">' + (r.lbc ? r.lbc + ' 板' : '首板') + '</span>' +
-      '<span class="v" style="color:var(--up)">+' + (r.zdp != null ? r.zdp : '--') + '%</span></div>'
+      '<span class="tag">' + (r.hybk || '') + '</span>' +
+      '<span class="v" style="color:var(--up)">' +
+      (r.lbc ? r.lbc + ' 板' : '首板') + '</span></div>'
     ).join('') || '<div class="row"><span class="nm" style="color:var(--faint)">今日无涨停数据</span></div>';
 
-    const pool = DATA.research_feed || [];
-    $('scanPool').innerHTML = pool.slice(0, 8).map(x => {
-      const nm = x.name || x.title || x.code || '—';
-      const sc = x.score != null ? x.score : (x.total != null ? x.total : '--');
-      return '<div class="row"><span class="nm">' + nm + '</span>' +
-        '<span class="tag">' + (x.code || '') + '</span>' +
-        '<span class="v" style="color:var(--dim)">' + sc + '</span></div>';
-    }).join('') || '<div class="row"><span class="nm" style="color:var(--faint)">候选池为空</span></div>';
+    /* 题材雷达 */
+    const th = (DATA.theme_radar && DATA.theme_radar.themes) || [];
+    $('scanTheme').innerHTML = th.slice(0, 6).map(t =>
+      '<div class="row"><span class="nm">' + (t.name || '—') + '</span>' +
+      '<span class="tag">' + (t.n || 0) + ' 只 · 最高 ' + (t.max_lb || 0) + ' 板</span>' +
+      '<span class="v" style="color:var(--warn)">封板 ' + (t.seal != null ? t.seal : '--') + '</span></div>'
+    ).join('') || '<div class="row"><span class="nm" style="color:var(--faint)">暂无题材数据</span></div>';
+
+    /* 机构研报 */
+    const rp = (DATA.research_feed && DATA.research_feed.reports) || [];
+    $('scanPool').innerHTML = rp.slice(0, 8).map(r =>
+      '<div class="row"><span class="nm">' + (r.name || '—') + '</span>' +
+      '<span class="tag">' + (r.org || '') + ' · ' + (r.date || '') + '</span>' +
+      '<span class="v" style="color:' + ((r.rating || '').indexOf('增') >= 0 ? 'var(--up)' : 'var(--dim)') + '">' +
+      (r.rating || '—') + '</span></div>'
+    ).join('') || '<div class="row"><span class="nm" style="color:var(--faint)">暂无研报</span></div>';
   }
 
   function renderReview() {
