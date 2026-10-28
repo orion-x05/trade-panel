@@ -705,7 +705,7 @@ body::after{   /* 暗角 */
 }
 </style>
 <style id="idx-style">
-.idx-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:14px}
+.idx-row{display:grid !important;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:14px}
 .idx-item{min-width:0;padding:12px 12px 11px;border-radius:14px;background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.06)}
 .idx-item .n{font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -826,9 +826,6 @@ body::after{   /* 暗角 */
     </section>
 
   </div>
-</div>
-
-
 <div class="grid view" id="view-market" hidden>
   <section class="card" style="grid-column:1/-1">
     <div class="card-title">大盘 · 实时<button class="chip" id="mkRefresh">刷新</button></div>
@@ -858,6 +855,8 @@ body::after{   /* 暗角 */
     <div class="rows" id="holdDetail"></div>
   </section>
 </div>
+</div>
+
 
 <nav class="tabbar" id="tabbar">
   <span class="ind" id="ind"></span>
