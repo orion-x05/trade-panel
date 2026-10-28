@@ -742,6 +742,24 @@ body::after{   /* 暗角 */
   }
 }
 </style>
+<style id="nav-mobile">
+/* 手机：顶部导航代替底部页签，保留展开 + 液态指示 */
+@media (max-width:860px){
+  .nav{grid-template-columns:1fr !important; height:auto !important;
+    gap:10px !important; padding:10px 0 8px !important}
+  .tabs{
+    display:flex !important; justify-self:stretch !important;
+    width:100% !important; overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    padding:4px !important;
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:none}
+  .tabbar{display:none !important}
+  .wrap{padding-bottom:24px !important}
+  .bottom-bar{display:none !important}
+}
+</style>
 </head>
 <body>
 
