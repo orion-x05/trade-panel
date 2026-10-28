@@ -837,7 +837,11 @@ body::after{   /* 暗角 */
     </section>
 
     
-<section class="card s5 reveal" id="idxBand" style="--d:.18s;grid-column:1/-1">
+<section class="card" id="statsBand" style="grid-column:1/-1">
+    <div class="card-title">市场概况</div>
+    <div class="idx-row" id="statsRow"></div>
+  </section>
+  <section class="card" id="idxBand" style="grid-column:1/-1">
   <div class="card-title">大盘 · 实时<button class="chip" id="idxRefresh" onclick="location.reload()">刷新</button></div>
   <div class="idx-row" id="idxRow"></div>
 </section>
@@ -1321,6 +1325,7 @@ body::after{   /* 暗角 */
         liq.classList.add('stretch');
         moveTo(b, true);
         setTimeout(function () { liq.classList.remove('stretch'); }, 130);
+        setTimeout(function () { moveTo(b, false); }, 420);   /* 动画结束再对齐一次 */
       });
       b.addEventListener('mouseenter', function () {
         liq.classList.add('stretch');
@@ -1519,6 +1524,7 @@ body::after{   /* 暗角 */
     const k = Math.max(0, order.indexOf(v));
     document.querySelectorAll('.tabs .tab').forEach((b, i) => b.classList.toggle('on', i === k));
     document.querySelectorAll('.tabbar button').forEach((b, i) => b.classList.toggle('on', i === k));
+    if (v === 'today') renderStats();
     if (v === 'market') renderMarket();
     if (v === 'hold') renderHold();
     if (v === 'scan') renderScan();
@@ -1572,6 +1578,27 @@ body::after{   /* 暗角 */
     $('holdDetail').innerHTML = lines.join('') || '<div class="row"><span class="nm" style="color:var(--faint)">当前无持仓</span></div>';
   }
 
+  function renderStats() {
+    if (!DATA) return;
+    const ld = DATA.limit_decoded || {};
+    const ms = DATA.market_sentiment || {};
+    const ds = DATA.dashboard_summary || {};
+    const up = Math.round((ms.breadth ?? 0) * 100);
+    const ret = ds.total_pnl_pct != null ? ds.total_pnl_pct * 100 : null;
+    const items = [
+      ['涨 / 跌占比', up + '% / ' + (100 - up) + '%', up >= 50 ? 'var(--up)' : 'var(--down)'],
+      ['涨停 / 跌停', (ld.zt_count ?? '--') + ' / ' + (ld.dt_count ?? '--'), 'var(--warn)'],
+      ['情绪', ld.mood || '--', 'var(--txt)'],
+      ['组合收益', ret == null ? '--' : (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%',
+        ret == null ? 'var(--faint)' : (ret >= 0 ? 'var(--up)' : 'var(--down)')]
+    ];
+    const el = $('statsRow');
+    if (el) el.innerHTML = items.map(x =>
+      '<div class="idx-item"><div class="n">' + x[0] + '</div>' +
+      '<div class="p" style="color:' + x[2] + ';font-size:clamp(15px,1.3vw,18px)">' + x[1] + '</div></div>'
+    ).join('');
+  }
+
   function renderScan() {
     if (!DATA) return;
     const rows = (DATA.limit_decoded && DATA.limit_decoded.zt_rows) || [];
@@ -1620,7 +1647,7 @@ body::after{   /* 暗角 */
 
   fetch('data.json?t=' + Date.now())
     .then(r => r.json())
-    .then(d => { DATA = d; show('today'); })
+    .then(d => { DATA = d; renderStats(); show('today'); })
     .catch(() => {});
 })();
 </script>
