@@ -720,6 +720,16 @@ body::after{   /* 暗角 */
 <style id="note-style">
 .note{font-size:13px;line-height:1.75;color:var(--dim);margin-top:12px;white-space:pre-wrap}
 </style>
+<style id="hero-grid">
+/* 橙色 Hero 只占 8 列，右边两张小卡各占 4 列一行 */
+#view-today .hero{grid-column:span 8 !important; grid-row:span 2 !important;
+  min-height:clamp(300px,22vw,400px) !important}
+#view-today .mini{grid-column:span 4 !important}
+#view-today .idxBand{grid-column:1 / -1 !important}
+@media (max-width:860px){
+  #view-today .hero,#view-today .mini{grid-column:1 / -1 !important; grid-row:auto !important}
+}
+</style>
 </head>
 <body>
 
