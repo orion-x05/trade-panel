@@ -1659,27 +1659,151 @@ body::after{   /* 暗角 */
       row('更新', (DATA.last_update || '--').slice(5, 16), 'var(--faint)');
   }
 
+  /* 通用详情浮层：卡片的点击已被外层占用，行内点击要 stopPropagation */
+  function openDetail(title, html) {
+    const sh = document.getElementById('detailSheet');
+    const t = document.getElementById('detailTitle');
+    const b = document.getElementById('detailBody');
+    if (!sh || !t || !b) return;
+    t.textContent = title;
+    b.innerHTML = html;
+    sh.classList.add('open');
+  }
+
+  function dline(k, v, col) {
+    return '<div style="display:flex;justify-content:space-between;gap:14px;padding:7px 0;' +
+      'border-bottom:1px solid oklch(1 0 0 / .05)">' +
+      '<span style="color:var(--faint)">' + k + '</span>' +
+      '<span style="color:' + (col || 'var(--txt)') + ';font-weight:600;text-align:right">' + v + '</span></div>';
+  }
+
+  function mktOf(code) {
+    const c = String(code || '');
+    return (/^(6|9)/.test(c) ? 'sh' : (/^(4|8)/.test(c) ? 'bj' : 'sz')) + c;
+  }
+
   function renderHold() {
     if (!DATA) return;
     const ps = DATA.players || [];
+    const rs = DATA.role_stats || {};
+    const rd = DATA.role_drawdown || {};
+
     $('holdRows').innerHTML = ps.map(p => {
       const ret = (p.asset - 100000) / 100000 * 100;
       const c = ret > 0.005 ? 'var(--up)' : ret < -0.005 ? 'var(--down)' : 'var(--faint)';
+      const st = rs[p.id] || {};
+      const wr = st.n ? Math.round((st.win_rate || 0) * 100) + '%' : '—';
+      const dd = rd[p.id] != null ? '−' + (Number(rd[p.id]) * 100).toFixed(1) + '%' : '—';
       return '<div class="row"><span class="dot" style="background:' + c + '"></span>' +
         '<span class="nm">' + p.id + ' ' + (p.name || '') + '</span>' +
-        '<span class="tag">持仓 ' + (p.holdings || []).length + ' 只 · 现金 ' +
-          Math.round(p.cash || 0).toLocaleString() + '</span>' +
+        '<span class="tag">' + (p.holdings || []).length + ' 只 · 胜率 ' + wr + ' · 回撤 ' + dd + '</span>' +
         '<span class="v" style="color:' + c + '">' + (ret >= 0 ? '+' : '−') + Math.abs(ret).toFixed(2) + '%</span></div>';
     }).join('');
 
+    /* 角色行点开 → 权益明细 */
+    Array.prototype.forEach.call($('holdRows').querySelectorAll('.row'), function (el, i) {
+      const p = ps[i];
+      if (!p) return;
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const st = rs[p.id] || {};
+        const ret = (p.asset - 100000) / 100000 * 100;
+        const holdCost = (p.holdings || []).reduce((a, h) => a + (h.qty || 0) * Number(h.buyPrice || h.cost || 0), 0);
+        const mv = (p.holdings || []).reduce((a, h) => {
+          const q = Q[mktOf(h.code)];
+          return a + (h.qty || 0) * (q ? q.price : Number(h.buyPrice || h.cost || 0));
+        }, 0);
+        openDetail(p.id + ' ' + (p.name || ''),
+          dline('总资产', Math.round(p.asset || 0).toLocaleString() + ' 元') +
+          dline('现金', Math.round(p.cash || 0).toLocaleString() + ' 元') +
+          dline('持仓市值', Math.round(mv).toLocaleString() + ' 元') +
+          dline('仓位占比', p.asset ? (mv / p.asset * 100).toFixed(1) + '%' : '—') +
+          dline('累计收益', (ret >= 0 ? '+' : '−') + Math.abs(ret).toFixed(2) + '%',
+            ret >= 0 ? 'var(--up)' : 'var(--down)') +
+          dline('持仓成本', Math.round(holdCost).toLocaleString() + ' 元') +
+          dline('交易笔数', st.n != null ? st.n + ' 笔' : '—') +
+          dline('胜率', st.n ? Math.round((st.win_rate || 0) * 100) + '%' : '—',
+            st.n && st.win_rate > 0.5 ? 'var(--up)' : 'var(--dim)') +
+          dline('净盈亏', st.net_pnl != null ? (st.net_pnl >= 0 ? '+' : '') + Math.round(st.net_pnl).toLocaleString() + ' 元' : '—',
+            st.net_pnl > 0 ? 'var(--up)' : st.net_pnl < 0 ? 'var(--down)' : 'var(--faint)') +
+          dline('最大回撤', rd[p.id] != null ? '−' + (Number(rd[p.id]) * 100).toFixed(2) + '%' : '—', 'var(--down)'));
+      });
+    });
+
+    /* 持仓明细 */
     const lines = [];
+    const need = [];
+    const items = [];
     ps.forEach(p => (p.holdings || []).forEach(h => {
-      const cost = (h.buyPrice || h.cost || 0);
+      const qk = mktOf(h.code);
+      const cost = Number(h.buyPrice || h.cost || 0);
+      const q = Q[qk];
+      const price = q ? q.price : null;
+      const today = q ? q.pct : null;
+      const pnl = (price && cost) ? (price / cost - 1) * 100 : null;
+      const posPct = p.asset ? (h.qty || 0) * (price || cost) / p.asset * 100 : null;
+      const c1 = today == null ? 'var(--faint)' : (today > 0 ? 'var(--up)' : today < 0 ? 'var(--down)' : 'var(--faint)');
+      const c2 = pnl == null ? 'var(--faint)' : (pnl > 0 ? 'var(--up)' : pnl < 0 ? 'var(--down)' : 'var(--faint)');
+      const f = v => (v == null ? '—' : (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%');
+      items.push({ p: p, h: h, cost: cost, price: price, pnl: pnl, posPct: posPct });
       lines.push('<div class="row"><span class="nm">' + (h.name || h.code) + '</span>' +
-        '<span class="tag">' + p.id + ' · ' + (h.qty || 0) + ' 股</span>' +
-        '<span class="v" style="color:var(--dim)">' + cost.toFixed(2) + '</span></div>');
+        '<span class="tag">' + p.id + ' · ' + (h.qty || 0) + ' 股 · 均 ' +
+        (cost ? cost.toFixed(2) : '—') + ' · 仓 ' + (posPct == null ? '—' : posPct.toFixed(1) + '%') + '</span>' +
+        '<span class="v" style="color:' + c1 + '">' + f(today) + '</span>' +
+        '<span class="v" style="color:' + c2 + ';font-weight:500;opacity:.85">' + f(pnl) + '</span></div>');
+      if (!q) need.push(qk);
     }));
-    $('holdDetail').innerHTML = lines.join('') || '<div class="row"><span class="nm" style="color:var(--faint)">当前无持仓</span></div>';
+    $('holdDetail').innerHTML = lines.join('') ||
+      '<div class="row"><span class="nm" style="color:var(--faint)">当前无持仓</span></div>';
+
+    /* 持仓行点开：成本 / 现价 / 仓位 / 买入理由 */
+    Array.prototype.forEach.call($('holdDetail').querySelectorAll('.row'), function (el, i) {
+      const it = items[i];
+      if (!it || !it.h.name) return;
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const h = it.h;
+        const amt = it.price && it.cost ? (it.price - it.cost) * (h.qty || 0) : null;
+        openDetail(h.name + ' ' + (h.code || ''),
+          dline('所属角色', it.p.id + ' ' + (it.p.name || '')) +
+          dline('持仓数量', (h.qty || 0) + ' 股') +
+          dline('成本价', it.cost ? it.cost.toFixed(2) : '—') +
+          dline('现价', it.price ? it.price.toFixed(2) : '待取价') +
+          dline('占角色仓位', it.posPct == null ? '—' : it.posPct.toFixed(1) + '%') +
+          dline('浮动盈亏', it.pnl == null ? '—' : (it.pnl >= 0 ? '+' : '−') + Math.abs(it.pnl).toFixed(2) + '%',
+            it.pnl > 0 ? 'var(--up)' : it.pnl < 0 ? 'var(--down)' : 'var(--faint)') +
+          dline('浮动金额', amt == null ? '—' : (amt >= 0 ? '+' : '') + Math.round(amt).toLocaleString() + ' 元',
+            amt > 0 ? 'var(--up)' : amt < 0 ? 'var(--down)' : 'var(--faint)') +
+          dline('买入时间', String(h.buyTime || '—').replace('T', ' ').slice(0, 16)) +
+          dline('买入评分', h.score != null ? h.score : '—') +
+          (h.reason ? '<div style="margin-top:12px;color:var(--dim);line-height:1.7">' +
+            '<div style="color:var(--faint);margin-bottom:4px">买入原因</div>' + h.reason + '</div>' : ''));
+      });
+    });
+
+    loadQuotes(need);
+  }
+
+  /* 持仓现价：腾讯行情，走 script 标签绕开跨域 */
+  const Q = {}, PENDING = {};
+  function loadQuotes(codes) {
+    codes.filter((c, i) => codes.indexOf(c) === i && !PENDING[c]).forEach(qk => {
+      PENDING[qk] = 1;
+      const old = document.getElementById('hq_' + qk);
+      if (old) old.remove();
+      const sc = document.createElement('script');
+      sc.id = 'hq_' + qk;
+      sc.src = 'https://qt.gtimg.cn/q=' + qk;
+      sc.onload = sc.onerror = function () {
+        delete PENDING[qk];
+        const p = String(window['v_' + qk] || '').split('~');
+        if (p.length > 32 && p[3]) Q[qk] = { price: parseFloat(p[3]), pct: parseFloat(p[32]) };
+        renderHold();
+      };
+      document.head.appendChild(sc);
+    });
   }
 
   function renderStats() {
@@ -1746,12 +1870,14 @@ body::after{   /* 暗角 */
     $('btRows').innerHTML = keys.length ? keys.map(k => {
       const v = rs[k] || {};
       const pnl = v.net_pnl != null ? v.net_pnl : null;
-      const wr = v.win_rate != null ? (v.win_rate * 100).toFixed(0) + '%' : '--';
+      const wr = v.n ? Math.round((v.win_rate || 0) * 100) + '%' : '—';
+      const dd = (DATA.role_drawdown || {})[k];
       const c = pnl == null ? 'var(--faint)' : (pnl >= 0 ? 'var(--up)' : 'var(--down)');
-      return '<div class="row"><span class="nm">' + k + '</span>' +
-        '<span class="tag">' + (v.n != null ? v.n + ' 笔' : '') + ' · 胜率 ' + wr + '</span>' +
+      return '<div class="row"><span class="nm">' + k + ' ' + ((DATA.players || []).filter(x => x.id === k)[0] || {}).name + '</span>' +
+        '<span class="tag">' + (v.n != null ? v.n + ' 笔' : '—') + ' · 胜率 ' + wr +
+        ' · 回撤 ' + (dd != null ? '−' + (dd * 100).toFixed(1) + '%' : '—') + '</span>' +
         '<span class="v" style="color:' + c + '">' +
-        (pnl == null ? '--' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString()) + '</span></div>';
+        (pnl == null ? '—' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString()) + '</span></div>';
     }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无回测数据</span></div>';
 
     const tw = DATA.tuned_weights || {};
