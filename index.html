@@ -930,6 +930,10 @@ body::after{   /* 暗角 */
     <div class="rows" id="rvPerf"></div>
   </section>
   <section class="card" style="grid-column:1/-1">
+    <div class="card-title">角色反思</div>
+    <div class="rows" id="rvReflect"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1">
     <div class="card-title">收盘小结</div>
     <div class="note" id="rvSummary">—</div>
   </section>
@@ -1574,7 +1578,8 @@ body::after{   /* 暗角 */
       const c = ret > 0.005 ? 'var(--up)' : ret < -0.005 ? 'var(--down)' : 'var(--faint)';
       return '<div class="row"><span class="dot" style="background:' + c + '"></span>' +
         '<span class="nm">' + p.id + ' ' + (p.name || '') + '</span>' +
-        '<span class="tag">持仓 ' + (p.holdings || []).length + ' 只</span>' +
+        '<span class="tag">持仓 ' + (p.holdings || []).length + ' 只 · 现金 ' +
+          Math.round(p.cash || 0).toLocaleString() + '</span>' +
         '<span class="v" style="color:' + c + '">' + (ret >= 0 ? '+' : '−') + Math.abs(ret).toFixed(2) + '%</span></div>';
     }).join('');
 
@@ -1647,20 +1652,46 @@ body::after{   /* 暗角 */
 
   function renderReview() {
     if (!DATA) return;
-    const yp = DATA.yesterday_perf || {};
-    const keys = Object.keys(yp);
-    $('rvPerf').innerHTML = keys.length ? keys.map(k => {
-      const v = yp[k];
-      const num = typeof v === 'number' ? v : (v && v.ret) || 0;
-      const c = num > 0 ? 'var(--up)' : num < 0 ? 'var(--down)' : 'var(--faint)';
-      return '<div class="row"><span class="nm">' + k + '</span>' +
-        '<span class="v" style="color:' + c + '">' + (num >= 0 ? '+' : '') + Number(num).toFixed(2) + '%</span></div>';
-    }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无昨日数据</span></div>';
 
+    /* 昨日表现 */
+    const yp = DATA.yesterday_perf;
+    let rows = '';
+    if (yp && typeof yp === 'object') {
+      rows = Object.keys(yp).map(k => {
+        const v = yp[k];
+        const num = typeof v === 'number' ? v : (v && v.ret) || 0;
+        const c = num > 0 ? 'var(--up)' : num < 0 ? 'var(--down)' : 'var(--faint)';
+        return '<div class="row"><span class="nm">' + k + '</span>' +
+          '<span class="v" style="color:' + c + '">' + (num >= 0 ? '+' : '') + Number(num).toFixed(2) + '%</span></div>';
+      }).join('');
+    }
+    if (!rows) {
+      const ds = DATA.dashboard_summary || {};
+      rows = '<div class="row"><span class="nm">组合收益</span><span class="v" style="color:' +
+        ((ds.total_pnl_pct || 0) >= 0 ? 'var(--up)' : 'var(--down)') + '">' +
+        ((ds.total_pnl_pct || 0) * 100 >= 0 ? '+' : '') + ((ds.total_pnl_pct || 0) * 100).toFixed(2) + '%</span></div>' +
+        '<div class="row"><span class="nm">浮动盈亏</span><span class="v" style="color:var(--dim)">' +
+        Math.round(ds.total_pnl || 0).toLocaleString() + ' 元</span></div>';
+    }
+    $('rvPerf').innerHTML = rows;
+
+    /* 角色反思 */
+    const rf = DATA.role_reflect;
+    let rrows = '';
+    if (rf && typeof rf === 'object') {
+      rrows = Object.keys(rf).slice(0, 6).map(k => {
+        const t = typeof rf[k] === 'string' ? rf[k] : (rf[k] && rf[k].text) || '';
+        return '<div class="row"><span class="nm">' + k + '</span>' +
+          '<span class="tag" style="max-width:60%;white-space:normal;text-align:right;color:var(--dim)">' +
+          String(t).slice(0, 40) + '</span></div>';
+      }).join('');
+    }
+    $('rvReflect').innerHTML = rrows || '<div class="row"><span class="nm" style="color:var(--faint)">暂无反思记录</span></div>';
+
+    /* 收盘小结 */
     const sum = DATA.last_summary;
     $('rvSummary').textContent = (typeof sum === 'string' && sum)
-      ? sum
-      : (sum && sum.text) || '暂无收盘小结';
+      ? sum : (sum && sum.text) || '暂无收盘小结';
   }
 
   // tab 绑定
