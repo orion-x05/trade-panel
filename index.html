@@ -1679,10 +1679,14 @@ body::after{   /* 暗角 */
     /* 昨日表现 */
     const yp = DATA.yesterday_perf;
     let rows = '';
+    const META = ['ok','rows','promote','bank','reason','asof','date','updated','version','msg'];
     if (yp && typeof yp === 'object') {
-      rows = Object.keys(yp).map(k => {
+      rows = Object.keys(yp).filter(k => META.indexOf(k) < 0).filter(k => {
         const v = yp[k];
-        const num = typeof v === 'number' ? v : (v && v.ret) || 0;
+        return typeof v === 'number' || (v && typeof v === 'object' && (v.ret != null || v.pnl != null));
+      }).map(k => {
+        const v = yp[k];
+        const num = typeof v === 'number' ? v : ((v && (v.ret ?? v.pnl)) || 0);
         const c = num > 0 ? 'var(--up)' : num < 0 ? 'var(--down)' : 'var(--faint)';
         return '<div class="row"><span class="nm">' + k + '</span>' +
           '<span class="v" style="color:' + c + '">' + (num >= 0 ? '+' : '') + Number(num).toFixed(2) + '%</span></div>';
@@ -1702,11 +1706,12 @@ body::after{   /* 暗角 */
     const rf = DATA.role_reflect;
     let rrows = '';
     if (rf && typeof rf === 'object') {
-      rrows = Object.keys(rf).slice(0, 6).map(k => {
-        const t = typeof rf[k] === 'string' ? rf[k] : (rf[k] && rf[k].text) || '';
+      rrows = Object.keys(rf).slice(0, 8).map(k => {
+        const t = String(typeof rf[k] === 'string' ? rf[k] : (rf[k] && rf[k].text) || '').trim();
+        if (t.length < 3) return '';
         return '<div class="row"><span class="nm">' + k + '</span>' +
-          '<span class="tag" style="max-width:60%;white-space:normal;text-align:right;color:var(--dim)">' +
-          String(t).slice(0, 40) + '</span></div>';
+          '<span class="tag" style="max-width:62%;white-space:normal;text-align:right;color:var(--dim)">' +
+          t.slice(0, 48) + '</span></div>';
       }).join('');
     }
     $('rvReflect').innerHTML = rrows || '<div class="row"><span class="nm" style="color:var(--faint)">暂无反思记录</span></div>';
