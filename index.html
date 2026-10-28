@@ -755,11 +755,11 @@ body::after{   /* 暗角 */
     <div class="brand"><button class="menu" id="menuBtn" aria-label="打开菜单" aria-expanded="false"><i></i></button><span class="mark">O</span>Orion-X</div>
 
     <nav class="tabs" id="tabs"><span class="liq" id="liq"></span>
-      <button class="tab on"><span class="t">今日</span>◎</button>
-      <button class="tab" aria-label="行情">▤</button>
-      <button class="tab" aria-label="扫描">◇</button>
-      <button class="tab" aria-label="盘后">▦</button>
-      <button class="tab" aria-label="回测">⧗</button>
+      <button class="tab on"><span class="t">今日</span>◉</button>
+      <button class="tab" aria-label="行情"><span class="t">行情</span>▤</button>
+      <button class="tab" aria-label="扫描"><span class="t">扫描</span>◇</button>
+      <button class="tab" aria-label="盘后"><span class="t">盘后</span>▦</button>
+      <button class="tab" aria-label="学习"><span class="t">学习</span>◔</button>
     </nav>
 
     <div class="userbar">
@@ -820,7 +820,7 @@ body::after{   /* 暗角 */
 
     
 <section class="card s5 reveal" id="idxBand" style="--d:.18s;grid-column:1/-1">
-  <div class="card-title">大盘 · 实时<button class="chip" id="idxRefresh">刷新</button></div>
+  <div class="card-title">大盘 · 实时<button class="chip" id="idxRefresh" onclick="location.reload()">刷新</button></div>
   <div class="idx-row" id="idxRow"></div>
 </section>
 <section class="card s5 reveal" style="--d:.22s">
@@ -853,7 +853,7 @@ body::after{   /* 暗角 */
   </div>
 <div class="grid view" id="view-market" hidden>
   <section class="card" style="grid-column:1/-1">
-    <div class="card-title">大盘 · 实时<button class="chip" id="mkRefresh">刷新</button></div>
+    <div class="card-title">大盘 · 实时<button class="chip" id="mkRefresh" onclick="location.reload()">刷新</button></div>
     <div class="idx-row" id="mkIdxRow"></div>
   </section>
   <section class="card s5">
@@ -919,10 +919,11 @@ body::after{   /* 暗角 */
 
 <nav class="tabbar" id="tabbar">
   <span class="ind" id="ind"></span>
-  <button class="on" data-v="0"><i>◎</i>今日</button>
+  <button class="on" data-v="0"><i>◉</i>今日</button>
   <button data-v="1"><i>▤</i>行情</button>
   <button data-v="2"><i>◇</i>扫描</button>
-  <button data-v="3"><i>◍</i>我的</button>
+  <button data-v="3"><i>▦</i>盘后</button>
+  <button data-v="4"><i>◔</i>学习</button>
 </nav>
 
 <div class="drawer" id="drawer">
@@ -1337,6 +1338,15 @@ body::after{   /* 暗角 */
   const $ = (id) => document.getElementById(id);
   const fmtPct = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
 
+  function decideFresh(trend, ld, zt, lb, mood) {
+    if (trend === 'bear') return { text: '观望为主', color: 'var(--warn)',
+      sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>大盘趋势 偏弱 · 只留小仓' };
+    if (trend === 'bull') return { text: '可以动手', color: 'var(--down)',
+      sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>大盘趋势 偏强 · 主攻突破' };
+    return { text: '轻仓参与', color: 'var(--down)',
+      sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>震荡格局 · 只做低吸' };
+  }
+
   function decide(d) {
     const lu = d.last_update ? new Date(d.last_update.replace('T', ' ')) : null;
     const mins = lu ? (Date.now() - lu.getTime()) / 60000 : 99999;
@@ -1345,8 +1355,12 @@ body::after{   /* 暗角 */
     const ld = d.limit_decoded || {};
     const zt = ld.zt_count, lb = ld.max_lb, mood = ld.mood || '';
 
-    if (stale) return { text: '不操作', color: 'var(--up)', stale, mins,
-      sub: '数据过期 ' + Math.floor(mins) + ' 分钟 · 结论不可信' };
+    /* 过期时仍按情绪给结论，但显式标注数据时间，不让面板变哑巴 */
+    if (stale) {
+      const base = decideFresh(trend, ld, zt, lb, mood);
+      return { text: base.text, color: base.color, stale, mins,
+        sub: base.sub + '<br><span style="opacity:.7">数据 ' + Math.floor(mins) + ' 分钟前 · 仅供参考</span>' };
+    }
     if (trend === 'bear') return { text: '观望为主', color: 'var(--warn)', stale, mins,
       sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>大盘趋势 偏弱 · 只留 D7 小仓' };
     if (trend === 'bull') return { text: '可以动手', color: 'var(--down)', stale, mins,
@@ -1363,7 +1377,7 @@ body::after{   /* 暗角 */
     $('hSub').innerHTML = v.sub;
 
     // 仓位上限 / 数据状态
-    const cap = v.text === '不操作' ? 0 : (v.text === '可以动手' ? 60 : 25);
+    const cap = v.text === '不操作' ? 0 : (v.text === '可以动手' ? 60 : (v.text === '观望为主' ? 0 : 25));
     $('capVal').textContent = cap;
     $('capVal').style.color = cap === 0 ? 'var(--up)' : 'var(--down)';
     const t = d.last_update ? d.last_update.slice(11, 16) : '--:--';
