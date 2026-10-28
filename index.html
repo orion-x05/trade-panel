@@ -780,10 +780,12 @@ body::after{   /* 暗角 */
 
     <nav class="tabs" id="tabs"><span class="liq" id="liq"></span>
       <button class="tab on"><span class="t">今日</span>◉</button>
-      <button class="tab" aria-label="行情"><span class="t">行情</span>▤</button>
-      <button class="tab" aria-label="扫描"><span class="t">扫描</span>◇</button>
-      <button class="tab" aria-label="盘后"><span class="t">盘后</span>▦</button>
-      <button class="tab" aria-label="学习"><span class="t">学习</span>◔</button>
+      <button class="tab"><span class="t">行情</span>▤</button>
+      <button class="tab"><span class="t">扫描</span>◇</button>
+      <button class="tab"><span class="t">持仓</span>▥</button>
+      <button class="tab"><span class="t">盘后</span>▦</button>
+      <button class="tab"><span class="t">回测</span>⧗</button>
+      <button class="tab"><span class="t">学习</span>◔</button>
     </nav>
 
     <div class="userbar">
@@ -808,80 +810,49 @@ body::after{   /* 暗角 */
 
   <div class="grid view" id="view-today">
 
-    <section class="card hero reveal hello" id="heroCard" style="--d:.02s">
-      <div class="label">今日决策</div>
-      <div class="hero-num" id="hNum">…</div>
-      <div class="hero-sub" id="hSub">数据加载中…</div>
-      <svg class="spark" viewBox="0 0 320 44" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="0,34 32,29 64,31 96,22 128,25 160,15 192,19 224,11 256,14 288,7 320,9"
-                  fill="none" stroke="currentColor" stroke-width="1.6"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div class="hero-foot">
-        <button class="mbtn" id="mbtn" aria-live="polite">
-          <span class="lbl">查看理由</span>
-          <span class="ring">
-            <svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="10.5"/><circle class="prog" cx="12" cy="12" r="10.5"/></svg>
-          </span>
-          <span class="check"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-          <span class="res"><i></i>已生成 3 条理由</span>
-        </button>
-        <button class="btn ghost">今日不动</button>
-      </div>
-    </section>
+  <section class="card hero" id="todayHero">
+    <div class="label">今日决策</div>
+    <div class="hero-num" id="hNum">…</div>
+    <div class="hero-sub" id="hSub">数据加载中…</div>
+    <div class="hero-foot">
+      <button class="btn solid" onclick="document.getElementById('hReason').hidden=false">查看理由</button>
+      <button class="btn ghost" id="heroDismiss">今日不动</button>
+    </div>
+    <div class="hero-reason" id="hReason" hidden></div>
+  </section>
 
-    <section class="card mini reveal" style="--d:.10s"><button class="more" aria-label="查看说明" title="查看说明">···</button>
-      <div class="card-title">仓位上限<span class="badge warn">退潮</span></div>
-      <div class="mini-val"><span id="capVal">–</span><span class="u">%</span></div>
-      <div class="mini-note">该情绪阶段不允许开新仓</div>
-    </section>
+  <section class="card mini">
+    <div class="card-title">仓位上限</div>
+    <div class="mini-val"><span id="capVal">–</span><span class="u">%</span></div>
+    <div class="mini-note">该情绪阶段下的单笔仓位上限</div>
+  </section>
 
-    <section class="card mini reveal" style="--d:.16s"><button class="more" aria-label="刷新数据" title="刷新数据">↻</button>
-      <div class="card-title">数据状态<span class="badge ok" id="dsBadge">正常</span></div>
-      <div class="mini-val" style="font-size:clamp(20px,1.6vw,24px)"><span id="dsTime">--:--</span><span class="u" id="dsHint">–</span></div>
-      <div class="mini-note">腾讯 ✓ · 东财 ✓ · 新浪 ✓</div>
-    </section>
+  <section class="card mini">
+    <div class="card-title">数据状态<span class="badge ok" id="dsBadge">正常</span></div>
+    <div class="mini-val" style="font-size:clamp(20px,1.6vw,24px)"><span id="dsTime">--:--</span><span class="u" id="dsHint">–</span></div>
+    <div class="mini-note">腾讯 · 东财 · 新浪</div>
+  </section>
 
-    
-<section class="card" id="statsBand" style="grid-column:1/-1">
+  <section class="card" id="statsBand">
     <div class="card-title">市场概况</div>
     <div class="idx-row" id="statsRow"></div>
   </section>
-  <section class="card" id="idxBand" style="grid-column:1/-1">
-  <div class="card-title">大盘 · 实时<button class="chip" id="idxRefresh" onclick="location.reload()">刷新</button></div>
-  <div class="idx-row" id="idxRow"></div>
-</section>
-<section class="card s5 reveal" style="--d:.22s">
-      <div class="card-title">情绪温度 · 5 日<button class="chip">近一月</button></div>
-      <div class="tip" id="tip">—</div>
-      <div class="bars">
-        <div class="bar" style="height:38%"><b>21</b></div>
-        <div class="bar" style="height:52%"><b>22</b></div>
-        <div class="bar" style="height:64%"><b>23</b></div>
-        <div class="bar" style="height:46%"><b>24</b></div>
-        <div class="bar hi" style="height:22%"><b>25</b></div>
-      </div>
-    </section>
 
-    <section class="card s4 reveal" style="--d:.28s">
-      <div class="card-title">仓位结构<button class="chip">近一月</button></div>
-      <div class="donut" id="donut"><b id="donutTxt">–</b></div>
-    </section>
+  <section class="card" id="idxBand">
+    <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
+    <div class="idx-row" id="idxRow"></div>
+  </section>
 
-    <section class="card s3 reveal" style="--d:.34s">
-      <div class="card-title">七角色</div>
-      <div class="rows" id="rows">
-        <div class="row"><span class="dot" style="background:var(--down)"></span><span class="nm">D1 锋</span><span class="tag">趋势</span><span class="v down">−2.91%</span></div>
-        <div class="row"><span class="dot" style="background:var(--down)"></span><span class="nm">D2 衡</span><span class="tag">共识</span><span class="v down">−1.40%</span></div>
-        <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="nm">D3 镜</span><span class="tag">辩论</span><span class="v flat">0.00%</span></div>
-        <div class="row"><span class="dot" style="background:var(--down)"></span><span class="nm">D4 啸</span><span class="tag">低吸</span><span class="v up">+3.57%</span></div>
-      </div>
-    </section>
+  <section class="card">
+    <div class="card-title">七角色</div>
+    <div class="rows" id="rows"></div>
+  </section>
 
-  </div>
+</div>
+
 <div class="grid view" id="view-market" hidden>
-  <section class="card" style="grid-column:1/-1">
-    <div class="card-title">大盘 · 实时<button class="chip" id="mkRefresh" onclick="location.reload()">刷新</button></div>
+  <section class="card">
+    <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
     <div class="idx-row" id="mkIdxRow"></div>
   </section>
   <section class="card s5">
@@ -893,49 +864,60 @@ body::after{   /* 暗角 */
     <div class="rows" id="mkLimit"></div>
   </section>
   <section class="card s3">
-    <div class="card-title">情绪温度</div>
+    <div class="card-title">情绪</div>
     <div class="rows" id="mkMood"></div>
   </section>
 </div>
 
-<div class="grid view" id="view-hold" hidden>
-  <section class="card" style="grid-column:1/-1">
-    <div class="card-title">七角色 · 权益与持仓</div>
-    <div class="rows" id="holdRows"></div>
-  </section>
-  <section class="card" style="grid-column:1/-1">
-    <div class="card-title">持仓明细</div>
-    <div class="rows" id="holdDetail"></div>
-  </section>
-</div>
-
 <div class="grid view" id="view-scan" hidden>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">涨停梯队</div>
     <div class="rows" id="scanZT"></div>
   </section>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">题材雷达</div>
     <div class="rows" id="scanTheme"></div>
   </section>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">机构研报</div>
     <div class="rows" id="scanPool"></div>
   </section>
 </div>
 
+<div class="grid view" id="view-hold" hidden>
+  <section class="card">
+    <div class="card-title">七角色 · 权益与持仓</div>
+    <div class="rows" id="holdRows"></div>
+  </section>
+  <section class="card">
+    <div class="card-title">持仓明细</div>
+    <div class="rows" id="holdDetail"></div>
+  </section>
+</div>
+
 <div class="grid view" id="view-review" hidden>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">昨日表现</div>
     <div class="rows" id="rvPerf"></div>
   </section>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">角色反思</div>
     <div class="rows" id="rvReflect"></div>
   </section>
-  <section class="card" style="grid-column:1/-1">
+  <section class="card">
     <div class="card-title">收盘小结</div>
     <div class="note" id="rvSummary">—</div>
+  </section>
+</div>
+
+<div class="grid view" id="view-backtest" hidden>
+  <section class="card">
+    <div class="card-title">策略回测 · 各角色</div>
+    <div class="rows" id="btRows"></div>
+  </section>
+  <section class="card">
+    <div class="card-title">调参权重</div>
+    <div class="rows" id="btWeight"></div>
   </section>
 </div>
 
@@ -948,7 +930,6 @@ body::after{   /* 暗角 */
       <div class="row"><span class="nm">不猜底、不抄底、不追高</span></div>
     </div>
   </section>
-
   <section class="card s4" style="min-height:180px">
     <div class="card-title">止损规则</div>
     <div class="rows">
@@ -957,7 +938,6 @@ body::after{   /* 暗角 */
       <div class="row"><span class="nm">保险丝熔断</span><span class="v down">−12%</span></div>
     </div>
   </section>
-
   <section class="card s4" style="min-height:180px">
     <div class="card-title">仓位规则</div>
     <div class="rows">
@@ -966,23 +946,25 @@ body::after{   /* 暗角 */
       <div class="row"><span class="nm">最小单笔金额</span><span class="v">1 万</span></div>
     </div>
   </section>
-
   <section class="card s4" style="min-height:180px">
     <div class="card-title">口径说明</div>
     <div class="rows">
-      <div class="row"><span class="nm">收益率</span><span class="tag">总资产口径（加权）</span></div>
-      <div class="row"><span class="nm">印花税</span><span class="tag">0.05% 单边（卖出）</span></div>
+      <div class="row"><span class="nm">收益率</span><span class="tag">总资产口径</span></div>
+      <div class="row"><span class="nm">印花税</span><span class="tag">0.05% 单边</span></div>
       <div class="row"><span class="nm">佣金</span><span class="tag">万 1.15，最低 5 元</span></div>
     </div>
   </section>
 </div>
+
 <nav class="tabbar" id="tabbar">
   <span class="ind" id="ind"></span>
   <button class="on" data-v="0"><i>◉</i>今日</button>
   <button data-v="1"><i>▤</i>行情</button>
   <button data-v="2"><i>◇</i>扫描</button>
-  <button data-v="3"><i>▦</i>盘后</button>
-  <button data-v="4"><i>◔</i>学习</button>
+  <button data-v="3"><i>▥</i>持仓</button>
+  <button data-v="4"><i>▦</i>盘后</button>
+  <button data-v="5"><i>⧗</i>回测</button>
+  <button data-v="6"><i>◔</i>学习</button>
 </nav>
 
 <div class="drawer" id="drawer">
@@ -1549,7 +1531,7 @@ body::after{   /* 暗角 */
 /* ===== 视图切换 + 行情/持仓渲染 ===== */
 (function () {
   const $ = (id) => document.getElementById(id);
-  const views = ['today', 'market', 'hold', 'scan', 'review', 'study'];
+  const views = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
   let DATA = null;
 
   function show(v) {
@@ -1557,7 +1539,7 @@ body::after{   /* 暗角 */
       const el = $('view-' + k);
       if (el) el.hidden = (k !== v);
     });
-    const order = ['today', 'market', 'scan', 'review', 'study'];
+    const order = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
     const k = Math.max(0, order.indexOf(v));
     document.querySelectorAll('.tabs .tab').forEach((b, i) => b.classList.toggle('on', i === k));
     document.querySelectorAll('.tabbar button').forEach((b, i) => b.classList.toggle('on', i === k));
@@ -1566,6 +1548,7 @@ body::after{   /* 暗角 */
     if (v === 'hold') renderHold();
     if (v === 'scan') renderScan();
     if (v === 'review') renderReview();
+    if (v === 'backtest') renderBacktest();
   }
 
   function row(label, value, color) {
@@ -1673,6 +1656,31 @@ body::after{   /* 暗角 */
     ).join('') || '<div class="row"><span class="nm" style="color:var(--faint)">暂无研报</span></div>';
   }
 
+  function renderBacktest() {
+    if (!DATA) return;
+    const rs = DATA.role_stats || {};
+    const keys = Object.keys(rs).sort();
+    $('btRows').innerHTML = keys.length ? keys.map(k => {
+      const v = rs[k] || {};
+      const pnl = v.net_pnl != null ? v.net_pnl : null;
+      const wr = v.win_rate != null ? (v.win_rate * 100).toFixed(0) + '%' : '--';
+      const c = pnl == null ? 'var(--faint)' : (pnl >= 0 ? 'var(--up)' : 'var(--down)');
+      return '<div class="row"><span class="nm">' + k + '</span>' +
+        '<span class="tag">' + (v.n != null ? v.n + ' 笔' : '') + ' · 胜率 ' + wr + '</span>' +
+        '<span class="v" style="color:' + c + '">' +
+        (pnl == null ? '--' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString()) + '</span></div>';
+    }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无回测数据</span></div>';
+
+    const tw = DATA.tuned_weights || {};
+    const tk = Object.keys(tw).slice(0, 8);
+    $('btWeight').innerHTML = tk.length ? tk.map(k => {
+      const v = tw[k];
+      const num = typeof v === 'number' ? v : (v && (v.weight ?? v.w)) || 0;
+      return '<div class="row"><span class="nm">' + k + '</span>' +
+        '<span class="v" style="color:var(--dim)">' + Number(num).toFixed(2) + '</span></div>';
+    }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无调参记录</span></div>';
+  }
+
   function renderReview() {
     if (!DATA) return;
 
@@ -1726,7 +1734,7 @@ body::after{   /* 暗角 */
   document.querySelectorAll('.tabs .tab, .tabbar button').forEach((b, i) => {
     const idx = i % 5;
     b.addEventListener('click', () => {
-      const map = ['today', 'market', 'scan', 'review', 'study'];
+      const map = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
       show(map[idx] || 'today');
     });
   });
