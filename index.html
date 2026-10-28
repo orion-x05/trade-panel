@@ -846,8 +846,8 @@ body::after{   /* 暗角 */
       <button class="tab on"><span class="t">今日</span>◉</button>
       <button class="tab"><span class="t">行情</span>▤</button>
       <button class="tab"><span class="t">扫描</span>◇</button>
-      <button class="tab"><span class="t">持仓</span>▥</button>
-      <button class="tab"><span class="t">盘后</span>▦</button>
+      <button class="tab"><span class="t">持仓</span>◆</button>
+      <button class="tab"><span class="t">盘后</span>◑</button>
       <button class="tab"><span class="t">回测</span>⧗</button>
       <button class="tab"><span class="t">学习</span>◔</button>
     </nav>
@@ -1025,8 +1025,8 @@ body::after{   /* 暗角 */
   <button class="on" data-v="0"><i>◉</i>今日</button>
   <button data-v="1"><i>▤</i>行情</button>
   <button data-v="2"><i>◇</i>扫描</button>
-  <button data-v="3"><i>▥</i>持仓</button>
-  <button data-v="4"><i>▦</i>盘后</button>
+  <button data-v="3"><i>◆</i>持仓</button>
+  <button data-v="4"><i>◑</i>盘后</button>
   <button data-v="5"><i>⧗</i>回测</button>
   <button data-v="6"><i>◔</i>学习</button>
 </nav>
@@ -1748,50 +1748,83 @@ body::after{   /* 暗角 */
   function renderReview() {
     if (!DATA) return;
 
-    /* 昨日表现 */
-    const yp = DATA.yesterday_perf;
+    /* 昨日表现：yesterday_perf.rows 是「昨日涨停股 · 今日接力表现」 */
+    const yp = DATA.yesterday_perf || {};
+    const list = Array.isArray(yp.rows) ? yp.rows : [];
     let rows = '';
-    const META = ['ok','rows','promote','bank','reason','asof','date','updated','version','msg'];
-    if (yp && typeof yp === 'object') {
-      rows = Object.keys(yp).filter(k => META.indexOf(k) < 0).filter(k => {
-        const v = yp[k];
-        return typeof v === 'number' || (v && typeof v === 'object' && (v.ret != null || v.pnl != null));
-      }).map(k => {
-        const v = yp[k];
-        const num = typeof v === 'number' ? v : ((v && (v.ret ?? v.pnl)) || 0);
-        const c = num > 0 ? 'var(--up)' : num < 0 ? 'var(--down)' : 'var(--faint)';
-        return '<div class="row"><span class="nm">' + k + '</span>' +
-          '<span class="v" style="color:' + c + '">' + (num >= 0 ? '+' : '') + Number(num).toFixed(2) + '%</span></div>';
+    if (list.length) {
+      const zt = list.filter(r => r && r.is_zt_today).length;
+      const avg = list.reduce((s, r) => s + Number((r && r.today_pct) || 0), 0) / list.length;
+      rows += '<div class="row"><span class="nm" style="color:var(--faint)">昨涨停 ' + list.length +
+        ' 只 · 今日再封 ' + zt + ' 只</span>' +
+        '<span class="v" style="color:' + (avg >= 0 ? 'var(--up)' : 'var(--down)') + '">均 ' +
+        (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%</span></div>';
+      rows += list.slice(0, 8).map(r => {
+        const pct = Number(r.today_pct || 0);
+        const c = pct > 0 ? 'var(--up)' : pct < 0 ? 'var(--down)' : 'var(--faint)';
+        const tb = r.is_zt_today ? (r.lbc_today ? r.lbc_today + ' 板' : '涨停') : '未封';
+        return '<div class="row"><span class="nm">' + (r.name || r.code) + '</span>' +
+          '<span class="tag">昨 ' + (r.yesterday_board_count || 1) + ' 板 → ' + tb + '</span>' +
+          '<span class="v" style="color:' + c + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</span></div>';
       }).join('');
     }
-    if (!rows) {
-      const ds = DATA.dashboard_summary || {};
-      rows = '<div class="row"><span class="nm">组合收益</span><span class="v" style="color:' +
-        ((ds.total_pnl_pct || 0) >= 0 ? 'var(--up)' : 'var(--down)') + '">' +
-        ((ds.total_pnl_pct || 0) * 100 >= 0 ? '+' : '') + ((ds.total_pnl_pct || 0) * 100).toFixed(2) + '%</span></div>' +
-        '<div class="row"><span class="nm">浮动盈亏</span><span class="v" style="color:var(--dim)">' +
-        Math.round(ds.total_pnl || 0).toLocaleString() + ' 元</span></div>';
-    }
-    $('rvPerf').innerHTML = rows;
+    $('rvPerf').innerHTML = rows ||
+      '<div class="row"><span class="nm" style="color:var(--faint)">暂无昨日涨停数据</span></div>';
 
-    /* 角色反思 */
-    const rf = DATA.role_reflect;
+    /* 角色反思：role_reflect 是 各角色的失败标签，不是文本 */
+    const rf = DATA.role_reflect || {};
+    const nmMap = {};
+    (DATA.players || []).forEach(p => { nmMap[p.id] = p.name || ''; });
     let rrows = '';
-    if (rf && typeof rf === 'object') {
-      rrows = Object.keys(rf).slice(0, 8).map(k => {
-        const t = String(typeof rf[k] === 'string' ? rf[k] : (rf[k] && rf[k].text) || '').trim();
-        if (t.length < 3) return '';
-        return '<div class="row"><span class="nm">' + k + '</span>' +
-          '<span class="tag" style="max-width:62%;white-space:normal;text-align:right;color:var(--dim)">' +
-          t.slice(0, 48) + '</span></div>';
+    if (rf && typeof rf === 'object' && !Array.isArray(rf)) {
+      rrows = Object.keys(rf).slice(0, 7).map(k => {
+        const v = rf[k] || {};
+        const parts = [];
+        if (Array.isArray(v.bad_trends) && v.bad_trends.length) parts.push('避开趋势 ' + v.bad_trends.join('/'));
+        if (Array.isArray(v.bad_sectors) && v.bad_sectors.length) parts.push('避开板块 ' + v.bad_sectors.join('/'));
+        if (Array.isArray(v.bad_reasons) && v.bad_reasons.length) parts.push('失败因 ' + v.bad_reasons.slice(0, 3).join('/'));
+        if (typeof rf[k] === 'string') parts.push(rf[k]);
+        const txt = parts.join(' · ').trim();
+        return '<div class="row"><span class="nm">' + k + ' ' + (nmMap[k] || '') + '</span>' +
+          '<span class="tag" style="max-width:64%;white-space:normal;text-align:right;' +
+          (txt ? 'color:var(--warn)' : 'color:var(--faint)') + '">' +
+          (txt || '本轮无负面记录') + '</span></div>';
       }).join('');
     }
-    $('rvReflect').innerHTML = rrows || '<div class="row"><span class="nm" style="color:var(--faint)">暂无反思记录</span></div>';
+    $('rvReflect').innerHTML = rrows ||
+      '<div class="row"><span class="nm" style="color:var(--faint)">暂无反思记录</span></div>';
 
-    /* 收盘小结 */
-    const sum = DATA.last_summary;
-    $('rvSummary').textContent = (typeof sum === 'string' && sum)
-      ? sum : (sum && sum.text) || '暂无收盘小结';
+    /* 收盘小结：last_summary 是 {date,title,content(markdown)}，拆出战绩表 + 明日事项 */
+    const sum = DATA.last_summary || {};
+    const md = (typeof sum === 'string') ? sum : (sum.content || sum.text || '');
+    let html = '';
+    if (md) {
+      if (sum.date || sum.title) {
+        html += '<div class="row"><span class="nm" style="color:var(--faint)">' +
+          (sum.date || '') + ' 收盘复盘</span></div>';
+      }
+      String(md).split(/\r?\n/).forEach(line => {
+        const l = line.trim();
+        const t = l.match(/^\|\s*(?:[🥇🥈🥉]\s*)?(D\d)\s+(\S+)\s*\|\s*([\d.]+)\s*\|\s*([+\-−][\d.]+%)\s*\|\s*(\d+)\s*\|$/u);
+        if (t) {
+          const pct = t[4].replace('−', '-');
+          const c = pct.indexOf('-') === 0 ? 'var(--down)' : (pct === '+0.00%' ? 'var(--faint)' : 'var(--up)');
+          html += '<div class="row"><span class="nm">' + t[1] + ' ' + t[2] + '</span>' +
+            '<span class="tag">' + Math.round(Number(t[3])).toLocaleString() + ' · 持 ' + t[5] + '</span>' +
+            '<span class="v" style="color:' + c + '">' + pct + '</span></div>';
+          return;
+        }
+        const m2 = l.match(/^-\s*(?:⚠️\s*)?\*\*(重大|重要)\*\*\s*(.+)$/);
+        if (m2) {
+          html += '<div class="row"><span class="nm" style="color:var(--dim)">' +
+            m2[2].replace(/\*\*/g, '').slice(0, 46) + '</span>' +
+            '<span class="tag" style="color:' + (m2[1] === '重大' ? 'var(--warn)' : 'var(--faint)') + '">' +
+            m2[1] + '</span></div>';
+        }
+      });
+    }
+    $('rvSummary').innerHTML = html ||
+      '<div class="row"><span class="nm" style="color:var(--faint)">暂无收盘小结</span></div>';
   }
 
   // tab 绑定
