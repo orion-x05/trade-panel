@@ -1795,12 +1795,12 @@ body::after{   /* 暗角 */
   }
 
   // tab 绑定
-  document.querySelectorAll('.tabs .tab, .tabbar button').forEach((b, i) => {
-    const idx = i % 5;
-    b.addEventListener('click', () => {
-      const map = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
-      show(map[idx] || 'today');
-    });
+  const MAP = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
+  document.querySelectorAll('.tabs .tab').forEach((b, i) => {
+    b.addEventListener('click', () => show(MAP[i] || 'today'));
+  });
+  document.querySelectorAll('.tabbar button').forEach((b, i) => {
+    b.addEventListener('click', () => show(MAP[i] || 'today'));
   });
 
   fetch('data.json?t=' + Date.now())
