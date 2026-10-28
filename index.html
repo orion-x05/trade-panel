@@ -1493,6 +1493,44 @@ html.modern ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);bac
   .mk-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:8px !important}
 }
 </style>
+<style id="final-layout">
+/* 1. 底色：去掉蓝绿环境光，统一近黑 */
+html.modern, html.modern body{
+  background:
+    radial-gradient(900px 420px at 50% -10%, rgba(255,190,140,.05), transparent 62%),
+    #08080a !important;
+  background-attachment: fixed;
+}
+/* 2. 左侧栏 → 顶部横向导航 */
+.modern .app-layout{display:block !important; gap:0 !important}
+.modern .sidenav{
+  position:sticky !important; top:0 !important;
+  width:auto !important; height:auto !important; max-height:none !important;
+  display:flex !important; flex-direction:row !important; align-items:center !important;
+  gap:8px; padding:8px 12px !important;
+  border-right:none !important; border-bottom:1px solid var(--border) !important;
+  border-radius:0 0 16px 16px;
+  z-index:900; overflow-x:auto; overflow-y:hidden;
+  background:rgba(10,10,12,.86) !important;
+  backdrop-filter:blur(14px);
+}
+.modern .sidenav-brand{margin:0 10px 0 0 !important; flex:none}
+.modern .sidenav-sub{display:none !important}
+.modern .sidenav-scroll{display:flex !important; flex-direction:row !important;
+  gap:4px; padding:0 !important; overflow:visible !important}
+.modern .sidenav-group{display:none !important}
+.modern .sidenav-footer{display:none !important}
+.modern .main{margin-left:0 !important; padding:14px 16px 80px !important; width:auto !important}
+/* 3. 卡片别挤 */
+.modern .panel{margin-bottom:14px !important}
+.modern .mk-grid{gap:10px !important}
+@media (max-width:900px){
+  html.modern body{padding:0 !important}
+  .modern .main{padding:10px 10px 76px !important}
+  .modern .mk-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px !important}
+  .modern .sidenav{border-radius:0}
+}
+</style>
 </head>
 <body>
 
