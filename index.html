@@ -905,6 +905,7 @@ body::after{   /* 暗角 */
   <section class="card" id="idxBand">
     <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
     <div class="idx-row" id="idxRow"></div>
+    <div class="mini-note" id="idxNote">—</div>
   </section>
 
   <section class="card">
@@ -918,6 +919,7 @@ body::after{   /* 暗角 */
   <section class="card">
     <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
     <div class="idx-row" id="mkIdxRow"></div>
+    <div class="mini-note" id="mkIdxNote">—</div>
   </section>
   <section class="card s5">
     <div class="card-title">涨跌家数</div>
@@ -1550,12 +1552,12 @@ body::after{   /* 暗角 */
     sh000001: '上证指数', sz399001: '深证成指', sz399006: '创业板指',
     sh000688: '科创50', sh000300: '沪深300', sh000905: '中证500'
   };
-  const row = document.getElementById('idxRow');
+  const rows = ['idxRow', 'mkIdxRow'].map(id => document.getElementById(id)).filter(Boolean);
   const btn = document.getElementById('idxRefresh');
-  if (!row) return;
+  if (!rows.length) return;
 
   function paint() {
-    row.innerHTML = Object.keys(MAP).map(k => {
+    const html = Object.keys(MAP).map(k => {
       const raw = window['v_' + k];
       const name = MAP[k];
       if (!raw) return '<div class="idx-item"><div class="n">' + name + '</div><div class="p">—</div><div class="c">—</div></div>';
@@ -1567,6 +1569,23 @@ body::after{   /* 暗角 */
         '<div class="p" style="color:' + color + '">' + price + '</div>' +
         '<div class="c" style="color:' + color + '">' + (up ? '+' : '') + chg + '%</div></div>';
     }).join('');
+    rows.forEach(r => { r.innerHTML = html; });
+
+    /* 数据时间：腾讯 p[30] = yyyymmddHHMMSS，顺手标一下是否收盘 */
+    const raw0 = String(window['v_sh000001'] || '');
+    const t0 = raw0.split('~')[30] || '';
+    let note = '—';
+    if (t0.length >= 14) {
+      const y = t0.slice(0, 4), mo = t0.slice(4, 6), d = t0.slice(6, 8);
+      const hh = t0.slice(8, 10), mi = t0.slice(10, 12);
+      const hhmm = Number(hh) * 60 + Number(mi);
+      const open = hhmm >= 570 && hhmm <= 900;
+      note = y + '-' + mo + '-' + d + ' ' + hh + ':' + mi + ' · ' + (open ? '交易中' : '休市/收盘');
+    }
+    ['idxNote', 'mkIdxNote'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = note === '—' ? '—' : ('数据 ' + note + ' · 腾讯行情');
+    });
   }
 
   function load() {
