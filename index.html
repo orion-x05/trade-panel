@@ -811,6 +811,25 @@ body::after{   /* 暗角 */
   .row{padding:11px 0 !important}
 }
 </style>
+<style id="fullwidth-cards">
+/* 所有屏里的卡片默认占满一行；Hero 和两张小卡例外 */
+.grid > .card{grid-column:1 / -1 !important}
+#view-today > .hero{grid-column:span 8 !important; grid-row:span 2 !important}
+#view-today > .mini{grid-column:span 4 !important}
+
+/* 卡片内部的指标行自己是一个小网格，别被父级压窄 */
+.idx-row{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+#idxRow{grid-template-columns:repeat(6,minmax(0,1fr)) !important}
+#mkIdxRow{grid-template-columns:repeat(6,minmax(0,1fr)) !important}
+.idx-item .n{white-space:normal}
+.idx-item .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media (max-width:860px){
+  #view-today > .hero,#view-today > .mini{grid-column:1 / -1 !important; grid-row:auto !important}
+  .idx-row,#idxRow,#mkIdxRow{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+  #statsRow{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+}
+</style>
 </head>
 <body>
 
