@@ -1459,10 +1459,35 @@ body::after{   /* 暗角 */
       sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>震荡格局 · 只做低吸' };
   }
 
+  /* 数据新鲜度：分「盘中过期」和「收盘/非交易时段」，别半夜也喊已过期 */
+  function dataState(d) {
+    const raw = d.last_update ? String(d.last_update).replace('T', ' ') : '';
+    const lu = raw ? new Date(raw) : null;
+    const now = new Date();
+    const mins = lu ? (now - lu) / 60000 : 1e9;
+    const dow = now.getDay();
+    const t = now.getHours() * 60 + now.getMinutes();
+    const inSession = dow >= 1 && dow <= 5 && t >= 570 && t <= 900;
+    const hhmm = raw ? raw.slice(11, 16) : '--:--';
+    const dayTxt = lu ? (lu.toDateString() === now.toDateString() ? '今日'
+      : (lu.getMonth() + 1) + '/' + lu.getDate()) : '';
+
+    if (inSession) {
+      return mins > 30
+        ? { label: '已过期', hint: Math.floor(mins) + ' 分钟未更新', stale: true }
+        : { label: '正常', hint: '盘中 · ' + hhmm, stale: false };
+    }
+    /* 收盘后/夜里/周末：只要还是最近这份收盘数据，就不算过期 */
+    if (mins > 60 * 24 * 4) {
+      return { label: '已过期', hint: Math.floor(mins / 1440) + ' 天未更新', stale: true };
+    }
+    return { label: '已收盘', hint: (dayTxt + ' ' + hhmm).trim(), stale: false };
+  }
+
   function decide(d) {
-    const lu = d.last_update ? new Date(d.last_update.replace('T', ' ')) : null;
-    const mins = lu ? (Date.now() - lu.getTime()) / 60000 : 99999;
-    const stale = mins > 30;
+    const st = dataState(d);
+    const mins = st.stale ? Math.floor((Date.now() - new Date(String(d.last_update).replace('T', ' '))) / 60000) : 0;
+    const stale = st.stale;
     const trend = d.market_trend || 'range';
     const ld = d.limit_decoded || {};
     const zt = ld.zt_count, lb = ld.max_lb, mood = ld.mood || '';
@@ -1471,13 +1496,14 @@ body::after{   /* 暗角 */
     if (stale) {
       const base = decideFresh(trend, ld, zt, lb, mood);
       return { text: base.text, color: base.color, stale, mins,
-        sub: base.sub + '<br><span style="opacity:.7">数据 ' + Math.floor(mins) + ' 分钟前 · 仅供参考</span>' };
+        label: st.label, hint: st.hint,
+        sub: base.sub + '<br><span style="opacity:.7">数据 ' + mins + ' 分钟前 · 仅供参考</span>' };
     }
-    if (trend === 'bear') return { text: '观望为主', color: 'var(--warn)', stale, mins,
+    if (trend === 'bear') return { text: '观望为主', color: 'var(--warn)', stale, mins, label: st.label, hint: st.hint,
       sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>大盘趋势 偏弱 · 只留 D7 小仓' };
-    if (trend === 'bull') return { text: '可以动手', color: 'var(--down)', stale, mins,
+    if (trend === 'bull') return { text: '可以动手', color: 'var(--down)', stale, mins, label: st.label, hint: st.hint,
       sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>大盘趋势 偏强 · 主攻突破' };
-    return { text: '轻仓参与', color: 'var(--down)', stale, mins,
+    return { text: '轻仓参与', color: 'var(--down)', stale, mins, label: st.label, hint: st.hint,
       sub: (mood ? '情绪' + mood + ' · ' : '') + '涨停 ' + (zt ?? '--') + ' 家 / 最高 ' + (lb ?? '--') + ' 板<br>震荡格局 · 只做低吸' };
   }
 
@@ -1494,11 +1520,11 @@ body::after{   /* 暗角 */
     $('capVal').style.color = cap === 0 ? 'var(--up)' : 'var(--down)';
     const t = d.last_update ? d.last_update.slice(11, 16) : '--:--';
     $('dsTime').textContent = t;
-    $('dsHint').textContent = v.stale ? '已过期' : '正常';
-    $('dsHint').style.color = v.stale ? 'var(--up)' : 'var(--down)';
+    $('dsHint').textContent = v.hint || (v.stale ? '已过期' : '正常');
+    $('dsHint').style.color = v.stale ? 'var(--up)' : 'var(--faint)';
     const bd = $('dsBadge');
     if (bd) {
-      bd.textContent = v.stale ? '已过期' : '正常';
+      bd.textContent = v.label || (v.stale ? '已过期' : '正常');
       bd.className = 'badge ' + (v.stale ? 'bad' : 'ok');
     }
 
