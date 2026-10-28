@@ -760,6 +760,12 @@ body::after{   /* 暗角 */
   .bottom-bar{display:none !important}
 }
 </style>
+<style id="stats-grid">
+#statsRow{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+@media (max-width:860px){
+  #statsRow{grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:8px !important}
+}
+</style>
 </head>
 <body>
 
@@ -1585,17 +1591,23 @@ body::after{   /* 暗角 */
     const ds = DATA.dashboard_summary || {};
     const up = Math.round((ms.breadth ?? 0) * 100);
     const ret = ds.total_pnl_pct != null ? ds.total_pnl_pct * 100 : null;
+    const pnl = ds.total_pnl != null ? ds.total_pnl : null;
     const items = [
       ['涨 / 跌占比', up + '% / ' + (100 - up) + '%', up >= 50 ? 'var(--up)' : 'var(--down)'],
       ['涨停 / 跌停', (ld.zt_count ?? '--') + ' / ' + (ld.dt_count ?? '--'), 'var(--warn)'],
+      ['最高连板', (ld.max_lb ?? '--') + ' 板', 'var(--warn)'],
       ['情绪', ld.mood || '--', 'var(--txt)'],
       ['组合收益', ret == null ? '--' : (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%',
-        ret == null ? 'var(--faint)' : (ret >= 0 ? 'var(--up)' : 'var(--down)')]
+        ret == null ? 'var(--faint)' : (ret >= 0 ? 'var(--up)' : 'var(--down)')],
+      ['浮动盈亏', pnl == null ? '--' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString() + ' 元',
+        pnl == null ? 'var(--faint)' : (pnl >= 0 ? 'var(--up)' : 'var(--down)')],
+      ['总资产', ds.total_assets == null ? '--' : Math.round(ds.total_assets).toLocaleString(), 'var(--txt)'],
+      ['活跃角色 / 交易数', (ds.active_roles ?? '--') + ' / ' + (ds.total_trades ?? '--'), 'var(--dim)']
     ];
     const el = $('statsRow');
     if (el) el.innerHTML = items.map(x =>
       '<div class="idx-item"><div class="n">' + x[0] + '</div>' +
-      '<div class="p" style="color:' + x[2] + ';font-size:clamp(15px,1.3vw,18px)">' + x[1] + '</div></div>'
+      '<div class="p" style="color:' + x[2] + ';font-size:clamp(15px,1.35vw,19px)">' + x[1] + '</div></div>'
     ).join('');
   }
 
