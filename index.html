@@ -903,7 +903,7 @@ body::after{   /* 暗角 */
   </section>
 
   <section class="card" id="idxBand">
-    <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
+    <div class="card-title">大盘 · 实时<button class="chip" onclick="window.OX_REFRESH&&window.OX_REFRESH()">刷新</button></div>
     <div class="idx-row" id="idxRow"></div>
     <div class="mini-note" id="idxNote">—</div>
   </section>
@@ -917,7 +917,7 @@ body::after{   /* 暗角 */
 
 <div class="grid view" id="view-market" hidden>
   <section class="card">
-    <div class="card-title">大盘 · 实时<button class="chip" onclick="location.reload()">刷新</button></div>
+    <div class="card-title">大盘 · 实时<button class="chip" onclick="window.OX_REFRESH&&window.OX_REFRESH()">刷新</button></div>
     <div class="idx-row" id="mkIdxRow"></div>
     <div class="mini-note" id="mkIdxNote">—</div>
   </section>
@@ -1290,11 +1290,15 @@ body::after{   /* 暗角 */
       e.stopPropagation();
       if (btn.classList.contains('spin')) return;
       btn.classList.add('spin');
-      setTimeout(function () {
+      var done = function () {
         btn.classList.remove('spin');
         btn.classList.add('ok');
         setTimeout(function () { btn.classList.remove('ok'); }, 1200);
-      }, 720);
+      };
+      /* 之前这里只有动画、没有真刷新，点了等于没点 */
+      var p = window.OX_REFRESH ? window.OX_REFRESH() : null;
+      if (p && p.then) p.then(done, done);
+      else setTimeout(done, 720);
     });
   })();
 
@@ -1595,13 +1599,14 @@ body::after{   /* 暗角 */
       if (old) old.remove();
       const sc = document.createElement('script');
       sc.id = 'q_' + k;
-      sc.src = 'https://qt.gtimg.cn/q=' + k;
+      sc.src = 'https://qt.gtimg.cn/q=' + k + '&t=' + Date.now();
       sc.onload = sc.onerror = function () { if (--left <= 0) paint(); };
       document.head.appendChild(sc);
     });
     setTimeout(paint, 2500);   // 兜底
   }
 
+  window.OX_IDX = load;
   if (btn) btn.addEventListener('click', load);
   load();
   setInterval(function () {
@@ -1795,7 +1800,7 @@ body::after{   /* 暗角 */
       if (old) old.remove();
       const sc = document.createElement('script');
       sc.id = 'hq_' + qk;
-      sc.src = 'https://qt.gtimg.cn/q=' + qk;
+      sc.src = 'https://qt.gtimg.cn/q=' + qk + '&t=' + Date.now();
       sc.onload = sc.onerror = function () {
         delete PENDING[qk];
         const p = String(window['v_' + qk] || '').split('~');
@@ -2003,10 +2008,30 @@ body::after{   /* 暗角 */
     b.addEventListener('click', () => show(MAP[i] || 'today'));
   });
 
-  fetch('data.json?t=' + Date.now())
-    .then(r => r.json())
-    .then(d => { DATA = d; renderStats(); show('today'); })
-    .catch(() => {});
+  function reloadData() {
+    return fetch('data.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(d => {
+        DATA = d;
+        const cur = views.filter(k => {
+          const el = $('view-' + k);
+          return el && !el.hidden;
+        })[0] || 'today';
+        show(cur);
+        return d;
+      })
+      .catch(() => {});
+  }
+
+  /* 真刷新：数据 + 指数 + 持仓现价，全走一遍 */
+  window.OX_REFRESH = function () {
+    if (window.OX_IDX) window.OX_IDX();
+    Object.keys(Q).forEach(k => { delete Q[k]; });
+    if (DATA) renderHold();
+    return reloadData();
+  };
+
+  reloadData().then(() => show('today'));
 })();
 </script>
 </body>
