@@ -730,6 +730,18 @@ body::after{   /* 暗角 */
   #view-today .hero,#view-today .mini{grid-column:1 / -1 !important; grid-row:auto !important}
 }
 </style>
+<style id="gapfix">
+/* 恢复卡片间距（此前通栏样式把 column-gap 设成 0） */
+#view-today, #view-market, #view-hold, #view-scan, #view-review, #view-study{
+  column-gap:16px !important;
+  row-gap:16px !important;
+}
+@media (max-width:860px){
+  #view-today, #view-market, #view-hold, #view-scan, #view-review, #view-study{
+    column-gap:10px !important; row-gap:10px !important;
+  }
+}
+</style>
 </head>
 <body>
 
