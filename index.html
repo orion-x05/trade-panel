@@ -1718,16 +1718,25 @@ body::after{   /* 暗角 */
     const ps = DATA.players || [];
     const rs = DATA.role_stats || {};
     const rd = DATA.role_drawdown || {};
+    const bm = DATA.benchmark;
+    const bmRow = bm ? '<div class="row bm-row" style="border-bottom:1px dashed oklch(1 0 0/.15);background:oklch(1 0 0/.03)">' +
+      '<span class="dot" style="background:var(--warn)"></span>' +
+      '<span class="nm">上证指数 <span style="opacity:.6;font-size:.78em">' + bm.days + ' 日</span></span>' +
+      '<span class="tag">' + (bm.start_date || '').slice(5) + '~' + (bm.end_date || '').slice(5) + ' · 回撤 −' + Math.abs(bm.max_drawdown).toFixed(1) + '%</span>' +
+      '<span class="v" style="color:' + (bm.ret_pct > 0.005 ? 'var(--up)' : bm.ret_pct < -0.005 ? 'var(--down)' : 'var(--faint)') + '">' +
+      (bm.ret_pct >= 0 ? '+' : '−') + Math.abs(bm.ret_pct).toFixed(2) + '%</span></div>' : '';
 
-    $('holdRows').innerHTML = ps.map(p => {
+    $('holdRows').innerHTML = bmRow + ps.map(p => {
       const ret = (p.asset - 100000) / 100000 * 100;
       const c = ret > 0.005 ? 'var(--up)' : ret < -0.005 ? 'var(--down)' : 'var(--faint)';
       const st = rs[p.id] || {};
       const wr = st.n ? Math.round((st.win_rate || 0) * 100) + '%' : '—';
       const dd = rd[p.id] != null ? '−' + (Number(rd[p.id]) * 100).toFixed(1) + '%' : '—';
+      const ex = (bm && bm.ret_pct != null) ? ret - bm.ret_pct : null;
       return '<div class="row"><span class="dot" style="background:' + c + '"></span>' +
         '<span class="nm">' + p.id + ' ' + (p.name || '') + '</span>' +
-        '<span class="tag">' + (p.holdings || []).length + ' 只 · 胜率 ' + wr + ' · 回撤 ' + dd + '</span>' +
+        '<span class="tag">' + (p.holdings || []).length + ' 只 · 胜率 ' + wr + ' · 回撤 ' + dd +
+        (ex != null ? ' · 超额 ' + (ex >= 0 ? '+' : '') + ex.toFixed(2) + '%' : '') + '</span>' +
         '<span class="v" style="color:' + c + '">' + (ret >= 0 ? '+' : '−') + Math.abs(ret).toFixed(2) + '%</span></div>';
     }).join('');
 
@@ -1752,6 +1761,10 @@ body::after{   /* 暗角 */
           dline('仓位占比', p.asset ? (mv / p.asset * 100).toFixed(1) + '%' : '—') +
           dline('累计收益', (ret >= 0 ? '+' : '−') + Math.abs(ret).toFixed(2) + '%',
             ret >= 0 ? 'var(--up)' : 'var(--down)') +
+          dline('上证同期', bm ? (bm.ret_pct >= 0 ? '+' : '−') + Math.abs(bm.ret_pct).toFixed(2) + '%' : '—',
+            bm ? (bm.ret_pct >= 0 ? 'var(--up)' : 'var(--down)') : 'var(--faint)') +
+          dline('vs 上证指数', (bm && bm.ret_pct != null) ? ((ret - bm.ret_pct) >= 0 ? '+' : '') + (ret - bm.ret_pct).toFixed(2) + '%' : '—',
+            (bm && bm.ret_pct != null) ? ((ret - bm.ret_pct) >= 0 ? 'var(--up)' : 'var(--down)') : 'var(--faint)') +
           dline('持仓成本', Math.round(holdCost).toLocaleString() + ' 元') +
           dline('交易笔数', st.n != null ? st.n + ' 笔' : '—') +
           dline('胜率', st.n ? Math.round((st.win_rate || 0) * 100) + '%' : '—',
@@ -1852,6 +1865,10 @@ body::after{   /* 暗角 */
       ['情绪', ld.mood || '--', 'var(--txt)'],
       ['组合收益', ret == null ? '--' : (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%',
         ret == null ? 'var(--faint)' : (ret >= 0 ? 'var(--up)' : 'var(--down)')],
+      ['上证同期', (DATA.benchmark && DATA.benchmark.ret_pct != null) ? ((DATA.benchmark.ret_pct >= 0 ? '+' : '') + DATA.benchmark.ret_pct.toFixed(2) + '%') : '--',
+        (DATA.benchmark && DATA.benchmark.ret_pct != null) ? (DATA.benchmark.ret_pct >= 0 ? 'var(--up)' : 'var(--down)') : 'var(--faint)'],
+      ['组合超额', (ret != null && DATA.benchmark && DATA.benchmark.ret_pct != null) ? ((ret - DATA.benchmark.ret_pct >= 0 ? '+' : '') + (ret - DATA.benchmark.ret_pct).toFixed(2) + '%') : '--',
+        (ret != null && DATA.benchmark && DATA.benchmark.ret_pct != null) ? (ret - DATA.benchmark.ret_pct >= 0 ? 'var(--up)' : 'var(--down)') : 'var(--faint)'],
       ['浮动盈亏', pnl == null ? '--' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString() + ' 元',
         pnl == null ? 'var(--faint)' : (pnl >= 0 ? 'var(--up)' : 'var(--down)')],
       ['总资产', ds.total_assets == null ? '--' : Math.round(ds.total_assets).toLocaleString(), 'var(--txt)'],
@@ -1897,8 +1914,14 @@ body::after{   /* 暗角 */
   function renderBacktest() {
     if (!DATA) return;
     const rs = DATA.role_stats || {};
+    const bm = DATA.benchmark;
     const keys = Object.keys(rs).sort();
-    $('btRows').innerHTML = keys.length ? keys.map(k => {
+    const bmRow = bm ? '<div class="row bm-row" style="border-bottom:1px dashed oklch(1 0 0/.15);background:oklch(1 0 0/.03)">' +
+      '<span class="nm">上证指数</span>' +
+      '<span class="tag">' + bm.days + ' 日 · 回撤 −' + Math.abs(bm.max_drawdown).toFixed(1) + '%</span>' +
+      '<span class="v" style="color:' + (bm.ret_pct > 0.005 ? 'var(--up)' : bm.ret_pct < -0.005 ? 'var(--down)' : 'var(--faint)') + '">' +
+      (bm.ret_pct >= 0 ? '+' : '−') + Math.abs(bm.ret_pct).toFixed(2) + '%</span></div>' : '';
+    $('btRows').innerHTML = bmRow + (keys.length ? keys.map(k => {
       const v = rs[k] || {};
       const pnl = v.net_pnl != null ? v.net_pnl : null;
       const wr = v.n ? Math.round((v.win_rate || 0) * 100) + '%' : '—';
@@ -1909,7 +1932,7 @@ body::after{   /* 暗角 */
         ' · 回撤 ' + (dd != null ? '−' + (dd * 100).toFixed(1) + '%' : '—') + '</span>' +
         '<span class="v" style="color:' + c + '">' +
         (pnl == null ? '—' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString()) + '</span></div>';
-    }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无回测数据</span></div>';
+    }).join('') : '<div class="row"><span class="nm" style="color:var(--faint)">暂无回测数据</span></div>');
 
     const tw = DATA.tuned_weights || {};
     const tk = Object.keys(tw).slice(0, 8);

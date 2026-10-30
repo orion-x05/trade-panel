@@ -1613,8 +1613,38 @@ def update_role_stats(data):
         }
     data["role_psychology"] = psycho
     build_dashboard_summary(data)
+    # 【上证指数基准】与模拟盘同期的指数收益/回撤，供面板与七角色对比
+    data["benchmark"] = build_benchmark(data) or data.get("benchmark")
     data["data_version"] = 3
     return tuned
+
+
+def build_benchmark(data):
+    """【上证指数基准】取与模拟盘 day_labels 同期的上证指数日K，
+    计算区间收益与最大回撤（收盘口径），作为七角色对比基准。
+    返回 None 表示拉取失败（面板保留旧值或隐藏）。"""
+    try:
+        n = max(len(data.get("day_labels") or []), 5)
+        kl = get_index_kline("sh000001", min(n + 3, 60))
+        if not kl:
+            return None
+        kl = kl[-n:]
+        closes = [k["close"] for k in kl]
+        ret = (closes[-1] / closes[0] - 1) * 100
+        peak = closes[0]
+        mdd = 0.0
+        for c in closes:
+            peak = max(peak, c)
+            mdd = min(mdd, (c / peak - 1) * 100)
+        return {
+            "code": "sh000001", "name": "上证指数",
+            "start_date": kl[0]["date"], "end_date": kl[-1]["date"],
+            "days": len(kl), "start": round(closes[0], 2), "cur": round(closes[-1], 2),
+            "ret_pct": round(ret, 2), "max_drawdown": round(mdd, 2),
+        }
+    except Exception as e:
+        print(f"  上证基准计算失败: {e}")
+        return None
 
 
 def build_dashboard_summary(data):
