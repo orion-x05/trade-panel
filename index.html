@@ -292,9 +292,9 @@ body::after{   /* 暗角 */
     transition:transform .35s var(--spring),opacity .3s;
   }
   .tabbar .ind{
-    position:absolute;top:5px;bottom:5px;width:calc((100% - 10px)/4);
+    position:absolute;top:5px;bottom:5px;width:calc((100% - 10px)/7);
     border-radius:22px;background:oklch(0.28 0.008 260);
-    transition:transform .42s var(--spring);
+    transition:transform .5s cubic-bezier(.24,.9,.28,1.12);
     pointer-events:none;
   }
   .tabbar button{
@@ -1141,15 +1141,15 @@ body::after{   /* 暗角 */
         b.classList.add('on');
         ind.style.transform = 'translateX(' + (i * 100) + '%)';
 
-        // 从点击处扩散
+        // 轻量涟漪：从点击点小圆扩散，快速淡出，不遮挡内容
         var r = document.createElement('div');
         r.className = 'ripple';
-        var size = Math.max(innerWidth, innerHeight) * 2.1;
+        var size = Math.min(innerWidth, innerHeight) * 0.9;
         r.style.width = r.style.height = size + 'px';
         r.style.left = ev.clientX + 'px';
         r.style.top = ev.clientY + 'px';
         document.body.appendChild(r);
-        setTimeout(function () { r.remove(); }, 520);
+        setTimeout(function () { r.remove(); }, 260);
       });
     });
   }
@@ -1168,9 +1168,10 @@ body::after{   /* 暗角 */
   /* 10. 视图切换：原生 View Transition，同级只淡入淡出 */
   document.querySelectorAll('.tabs .tab, .tabbar button').forEach(function (b) {
     b.addEventListener('click', function () {
-      var run = function () { document.querySelectorAll('.reveal').forEach(function (el) {
-        el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }); };
-      if (document.startViewTransition) document.startViewTransition(run); else run();
+      /* 只重播当前可见视图的入场，避免其它视图卡片一起闪；去掉 View Transition 快照撕裂 */
+      document.querySelectorAll('section[hidden=false] .reveal, section:not([hidden]) .reveal').forEach(function (el) {
+        el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+      });
     });
   });
 
@@ -1254,7 +1255,7 @@ body::after{   /* 暗角 */
     else doSwap();
   }
 
-  document.querySelectorAll('.tabs .tab, .tabbar button').forEach(function (b) {
+  document.querySelectorAll('.tabs .tab').forEach(function (b) {
     b.addEventListener('click', function () { switchTab(b); });
   });
 

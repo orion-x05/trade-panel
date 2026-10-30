@@ -1620,15 +1620,23 @@ def update_role_stats(data):
 
 
 def build_benchmark(data):
-    """【上证指数基准】取与模拟盘 day_labels 同期的上证指数日K，
+    """【上证指数基准】区间起点 = 模拟盘最早交易日期（与角色累计收益同口径），
     计算区间收益与最大回撤（收盘口径），作为七角色对比基准。
     返回 None 表示拉取失败（面板保留旧值或隐藏）。"""
     try:
-        n = max(len(data.get("day_labels") or []), 5)
-        kl = get_index_kline("sh000001", min(n + 3, 60))
+        # 起点 = 全角色最早交易日期（角色收益自该日起累计，基准必须同区间才可比）
+        all_dates = []
+        for p in data.get("players", []):
+            for t in p.get("trades", []):
+                ds = (t.get("date") or t.get("time") or "").strip()
+                if ds:
+                    all_dates.append(ds[:10])
+        start_s = min(all_dates) if all_dates else None
+        kl = get_index_kline("sh000001", 60)
         if not kl:
             return None
-        kl = kl[-n:]
+        if start_s:
+            kl = [k for k in kl if k["date"] >= start_s] or kl[-30:]
         closes = [k["close"] for k in kl]
         ret = (closes[-1] / closes[0] - 1) * 100
         peak = closes[0]
