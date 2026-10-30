@@ -1165,15 +1165,7 @@ body::after{   /* 暗角 */
   });
 
 
-  /* 10. 视图切换：原生 View Transition，同级只淡入淡出 */
-  document.querySelectorAll('.tabs .tab, .tabbar button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      /* 只重播当前可见视图的入场，避免其它视图卡片一起闪；去掉 View Transition 快照撕裂 */
-      document.querySelectorAll('section[hidden=false] .reveal, section:not([hidden]) .reveal').forEach(function (el) {
-        el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-      });
-    });
-  });
+
 
 
 
@@ -1237,27 +1229,7 @@ body::after{   /* 暗角 */
     if (sh) sh.classList.add('open');
   });
 
-  /* 16. 卡片整组切换：tab 切换时整块网格一起动 */
-  function switchTab(el) {
-    var grid = document.querySelector('.grid');
-    var name = el.getAttribute('aria-label') || el.textContent.trim() || '今日';
 
-    var doSwap = function () {
-      // 这里换成真正的视图内容；demo 里只改 hero 副标题示意
-      var sub = document.querySelector('.hero-sub');
-      if (sub) sub.innerHTML = '当前视图：' + name + '<br>regime 震荡 · 放行 D3 / D4 / D5 / D7';
-      grid.classList.remove('switching');
-      void grid.offsetWidth;
-      grid.classList.add('switching');
-    };
-
-    if (document.startViewTransition) document.startViewTransition(doSwap);
-    else doSwap();
-  }
-
-  document.querySelectorAll('.tabs .tab').forEach(function (b) {
-    b.addEventListener('click', function () { switchTab(b); });
-  });
 
   /* 17. 点卡片 → 整张卡变形为详情浮层 */
   document.querySelectorAll('.card').forEach(function (card) {
