@@ -2647,5 +2647,109 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v7：盘后复盘卡（梯队 / 后排二波 / 情绪 / 明日预期 / 验证） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-rv{margin-top:4px}
+  .ox-tier{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+  .ox-tier span{font-size:11.5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.05);color:#98a6b8}
+  .ox-tier b{color:#dbe4ee;font-weight:600}
+  .ox-exp{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-top:8px}
+  .ox-exp .dir{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .ox-exp ul{margin:8px 0 0;padding-left:16px;font-size:12.5px;color:#98a6b8;line-height:1.75}
+  .ox-exp .inv{margin-top:8px;font-size:11.5px;color:#e8b339}
+  .ox-watch{font-size:12.5px;color:#98a6b8;margin-top:8px}
+  .ox-watch b{color:#dbe4ee}
+  .ox-hit{font-size:11.5px;color:#8b96a5;margin-top:10px}
+  `;
+  document.head.appendChild(st);
+
+  function card(id, title) {
+    let el = $(id);
+    if (el) return el;
+    const sec = document.createElement('section');
+    sec.className = 'card'; sec.id = id;
+    sec.innerHTML = '<div class="card-title">' + title + '</div><div class="body ox-rv"></div>';
+    const review = $('view-review');
+    (review || document.body).appendChild(sec);
+    return sec;
+  }
+
+  function draw() {
+    const d = window.OX_DATA; if (!d) return;
+    const rv = d.review || {};
+    const mood = rv.mood || {}, ladder = rv.ladder || {}, exp = rv.expect || {};
+
+    /* 1 情绪 + 梯队 */
+    const c1 = card('oxRvMood', '连板梯队 · 情绪');
+    const tiers = ladder.tiers || {};
+    const order = ['4板+', '3板', '2板', '首板'];
+    const tierHtml = order.filter(k => tiers[k] && tiers[k].length).map(k => {
+      const arr = tiers[k];
+      const names = arr.slice(0, 4).map(x => x.name).join('、') + (arr.length > 4 ? '…' : '');
+      return '<div style="font-size:12px;color:#98a6b8;margin:2px 0"><b style="color:#dbe4ee">' + k + '</b> ' +
+             arr.length + ' 只 · ' + names + '</div>';
+    }).join('');
+    c1.querySelector('.body').innerHTML =
+      '<div class="ox-tier">' +
+        '<span>涨停 <b>' + (mood.n_zt || '-') + '</b></span>' +
+        '<span>最高 <b>' + (mood.max_lb || '-') + '</b> 板</span>' +
+        '<span>炸板率 <b>' + (mood.boom_rate == null ? '-' : mood.boom_rate + '%') + '</b></span>' +
+        '<span>首板晋级 <b>' + (mood.rate_1to2 == null ? '-' : mood.rate_1to2 + '%') + '</b></span>' +
+        '<span>二进三 <b>' + (mood.rate_2to3 == null ? '-' : mood.rate_2to3 + '%') + '</b></span>' +
+        '<span>' + (mood.emoji || '') + ' ' + (mood.stage || '-') + '</span>' +
+      '</div>' + (tierHtml || '<div style="font-size:12px;color:#8b96a5">暂无梯队数据</div>');
+
+    /* 2 后排二波 */
+    const c2 = card('oxRvBack', '后排二波 · 补涨候选');
+    const back = ladder.back || [];
+    c2.querySelector('.body').innerHTML = back.length ? back.map(b =>
+      '<div class="row" style="cursor:default"><span class="nm">' + b.name + '</span>' +
+      '<span class="tag">' + (b.hybk || '') + ' · ' + b.lbc + ' 板</span>' +
+      '<span class="v" style="color:#98a6b8">龙头 ' + b.leader + ' ' + b.leader_lb + ' 板</span></div>'
+    ).join('') : '<div style="font-size:12px;color:#8b96a5">今日没有同板块龙头带后排的结构</div>';
+
+    /* 3 明日预期 */
+    const c3 = card('oxRvExpect', '明日预期');
+    const dirColor = exp.dir === '偏强' ? 'var(--up,#f2555a)'
+                   : (exp.dir === '谨慎' ? 'var(--warn,#e8b339)' : '#dbe4ee');
+    c3.querySelector('.body').innerHTML =
+      '<div class="ox-exp">' +
+        '<div class="dir" style="color:' + dirColor + '">' + (exp.dir || '无') + '</div>' +
+        '<ul>' + (exp.why || []).map(x => '<li>' + x + '</li>').join('') + '</ul>' +
+        ((exp.watch || []).length ? '<div class="ox-watch">关注：' + exp.watch.map(x => '<b>' + x + '</b>').join(' · ') + '</div>' : '') +
+        '<div class="inv">失效：' + (exp.invalid || '-') + '</div>' +
+      '</div>';
+
+    /* 4 历史命中 */
+    const c4 = card('oxRvHit', '预期命中率');
+    const hist = d.review_history || {}, stats = d.review_stats || {};
+    const rows = Object.keys(hist).sort().slice(-5).reverse().map(k => {
+      const r = hist[k] || {};
+      const res = r.result;
+      const mark = res ? (res.ok ? '<span style="color:#3ecf8e">✓</span>' : '<span style="color:#e8b339">✗</span>') : '<span style="color:#5f6b7a">待验</span>';
+      const dir = (r.expect || {}).dir || '-';
+      return '<div class="row" style="cursor:default"><span class="nm">' + k.slice(5) + '</span>' +
+             '<span class="tag">预期 ' + dir + '</span><span class="v">' + mark + ' ' +
+             ((res && res.note) ? res.note.replace(/^【.*?】/, '') : '') + '</span></div>';
+    }).join('');
+    const rate = stats.n ? Math.round(stats.hit / stats.n * 100) : null;
+    c4.querySelector('.body').innerHTML = (rows || '<div style="font-size:12px;color:#8b96a5">还没有历史记录，明天开始累积</div>') +
+      '<div class="ox-hit">累计 ' + (stats.n || 0) + ' 次 · 命中 ' + (stats.hit || 0) + ' 次' +
+      (rate === null ? '' : ' · ' + rate + '%') + '</div>';
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
