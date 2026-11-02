@@ -2318,8 +2318,9 @@ def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
     返回 (是否通过, 原因)；D5 回踩可放行'下跌中继'拦截。"""
     if any(h["code"] == code for h in player["holdings"]):
         return False, "已持有"
-    if st["chg"] >= 9.8 or st["chg"] <= -9.8:
-        return False, "涨跌停"
+    _lim = limit_pct(code, st.get("name"))
+    if st["chg"] >= _lim - 0.2 or st["chg"] <= -(_lim - 0.2):
+        return False, f"涨跌停({_lim:.0f}%板)"
     if "ST" in st.get("name", ""):
         return False, "ST"
     if all_players:
@@ -2437,6 +2438,17 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
         # 先打分（自主否决决策需要 score）
         score, reason_parts = role_pick_score(role_id, st, market_trend)
         reason_parts = list(reason_parts)
+        # 【去同质化】同一只票今日已被其他角色买入过 → 降权，逼出分化
+        if all_players:
+            _today = cn_now().strftime("%Y-%m-%d")
+            _bought = any(
+                any((t.get("type") == "buy") and (t.get("time") or "")[:10] == _today
+                    for t in (p.get("trades") or []))
+                for p in all_players if p.get("id") != role_id
+            )
+            if _bought:
+                score -= 12
+                reason_parts.append("今日已被其他角色买入·降权")
         # 【基础过滤+风控闸】与 D7 分支去重；D5 回踩放行下跌中继拦截，避免误杀正常买点
         ok, why = _pass_basic_filter(code, st, player, all_players, allow_pullback=(role_id == "D5"))
         override = False
