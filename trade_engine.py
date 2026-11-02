@@ -2630,6 +2630,61 @@ def compute_sentiment_factor(all_stock_data, data):
     return factor
 
 
+def backfill_review_blocks(data):
+    """【盘后补拉】复盘类数据（涨停池 / 题材雷达 / 涨跌解读 / 昨日表现 / 机构研报）。
+
+    为什么需要：GitHub Actions 的 schedule 常被推迟数小时，实际触发往往已经收盘。
+    原逻辑在非交易时段直接 return，导致这些块永远停在最后一次“盘中成功运行”的日期，
+    面板看着有数据，其实是几天前的（涨停家数、连板数、晋级率全错）。
+
+    幂等：只有当 limit_decoded.asof 落后于最新涨停池归属日时才补拉。
+    """
+    pools = get_limit_pools()
+    if not pools.get("ok"):
+        print("  ⚠ 盘后补拉：涨停池拉不到，跳过")
+        return False
+    pd = pools.get("pool_date") or ""
+    target = f"{pd[:4]}-{pd[4:6]}-{pd[6:]}" if len(pd) == 8 else ""
+    cur = str((data.get("limit_decoded") or {}).get("asof") or "")[:10]
+    if target and cur >= target:
+        print(f"  ✅ 复盘数据已是最新（{cur}），不重复补拉")
+        return False
+
+    zt, dt = pools.get("zt", []), pools.get("dt", [])
+    zt_tc, dt_tc = pools.get("zt_tc") or 0, pools.get("dt_tc") or 0
+    today_key = cn_now().strftime("%Y-%m-%d")
+
+    hist = data.setdefault("theme_history", {})
+    prev_snap = None
+    for k in sorted(hist.keys()):
+        if k < today_key:
+            prev_snap = hist[k]
+    if zt:
+        radar = build_theme_radar(zt, dt, prev_snap, zt_tc=zt_tc, dt_tc=dt_tc)
+        data["theme_radar"] = radar
+        hist[today_key] = {t["name"]: {"n": t["n"], "max_lb": t["max_lb"]} for t in radar["themes"]}
+        for k in sorted(hist.keys())[:-30]:
+            hist.pop(k, None)
+
+    decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
+    data["limit_decoded"] = decoded
+
+    try:
+        data["yesterday_perf"] = build_yesterday_perf(zt, pools.get("pool_date"))
+    except Exception as e:
+        print(f"  ⚠ 昨日表现补拉失败：{e}")
+
+    try:
+        reports = get_research_reports(days=7)
+        surveys = get_org_surveys(days=3)
+        data["research_feed"] = build_research_block(reports, surveys)
+    except Exception as e:
+        print(f"  ⚠ 机构研报补拉失败：{e}")
+
+    print(f"  📈 盘后补拉完成：涨停 {decoded['zt_count']} 家 · 最高 {decoded['max_lb']} 连板 · asof {decoded['asof']}")
+    return True
+
+
 def main():
     print(f"{'='*50}")
     print(f"  AI六角色交易引擎启动 {cn_now().strftime('%Y-%m-%d %H:%M:%S')} (北京时间 UTC+8)")
@@ -2685,6 +2740,11 @@ def main():
         return
 
     if not is_trade_time():
+        # 【盘后补拉】定时任务被推迟到收盘后触发时，这里补一次复盘数据
+        try:
+            backfill_review_blocks(data)
+        except Exception as e:
+            print(f"  ⚠ 盘后补拉异常：{e}")
         # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
         # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
         # 持仓市值被忽略，导致面板与推送口径不一致。
