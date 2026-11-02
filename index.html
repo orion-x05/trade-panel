@@ -2459,5 +2459,125 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v5：评分池点开看 K 线 + 门禁 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:flex;justify-content:flex-end}
+  .ox-mask[hidden]{display:none}
+  .ox-drawer{width:min(560px,96vw);height:100%;overflow:auto;background:#0e1218;border-left:1px solid rgba(255,255,255,.08);padding:18px 18px 40px;box-sizing:border-box}
+  .ox-dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .ox-dh h3{margin:0;font-size:17px;font-weight:600}
+  .ox-dh .x{cursor:pointer;color:#8b96a5;font-size:20px;line-height:1}
+  .ox-sub{font-size:12px;color:#8b96a5;margin-bottom:14px}
+  .ox-kline{width:100%;height:180px;display:block}
+  .ox-gate{margin-top:14px}
+  .ox-gate .g{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .ox-ok{color:#3ecf8e}.ox-no{color:#e8b339}
+  .ox-kv2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+  .ox-kv2 div{background:rgba(255,255,255,.03);border-radius:9px;padding:8px 10px;font-size:12px;color:#98a6b8}
+  .ox-kv2 b{display:block;font-size:15px;color:#dbe4ee;margin-top:3px}
+  `;
+  document.head.appendChild(st);
+
+  const mask = document.createElement('div');
+  mask.className = 'ox-mask'; mask.hidden = true;
+  mask.innerHTML = '<div class="ox-drawer" id="oxDrawer"></div>';
+  document.body.appendChild(mask);
+  mask.addEventListener('click', e => { if (e.target === mask) mask.hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') mask.hidden = true; });
+
+  function tx(code) { return (String(code).startsWith('6') ? 'sh' : 'sz') + code; }
+
+  function candles(rows) {
+    const n = rows.length; if (n < 5) return '<div class="ox-sub">K 线数据不足</div>';
+    const W = 520, H = 180, P = 6, cw = (W - P * 2) / n;
+    const his = rows.map(r => +r[3]), los = rows.map(r => +r[4]);
+    const mx = Math.max.apply(null, his), mn = Math.min.apply(null, los), sp = (mx - mn) || 1;
+    const Y = v => H - P - (v - mn) / sp * (H - 2 * P);
+    let g = '', ma = [], sum = 0;
+    rows.forEach((r, i) => {
+      const o = +r[1], c = +r[2], hi = +r[3], lo = +r[4];
+      const x = P + i * cw + cw / 2;
+      const up = c >= o;
+      const col = up ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
+      g += '<line x1="' + x.toFixed(1) + '" y1="' + Y(hi).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + Y(lo).toFixed(1) + '" stroke="' + col + '" stroke-width="1"/>';
+      const bh = Math.max(1, Math.abs(Y(o) - Y(c)));
+      g += '<rect x="' + (x - cw * 0.32).toFixed(1) + '" y="' + Math.min(Y(o), Y(c)).toFixed(1) + '" width="' + (cw * 0.64).toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="' + col + '" opacity=".85"/>';
+      sum += c;
+      if (i >= 19) { if (i > 19) sum -= +rows[i - 20][2]; ma.push([x, sum / 20]); }
+    });
+    const ml = ma.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + Y(pt[1]).toFixed(1)).join(' ');
+    return '<svg class="ox-kline" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g +
+           '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' + '</svg>';
+  }
+
+  function gate(r) {
+    const p = r.parts || {};
+    const list = [
+      ['涨停基因（有连板）', (r.lbc || 0) >= 1, (r.lbc || 0) + ' 板'],
+      ['题材在热点前五', (p.theme || 0) > 0, (p.theme || 0) + '/15'],
+      ['未炸板', (r.zbc || 0) === 0, '炸 ' + (r.zbc || 0) + ' 次'],
+      ['换手在 5%~30%', (r.hs || 0) >= 5 && (r.hs || 0) <= 30, (r.hs || 0) + '%'],
+      ['有机构共识', (r.consensus || 0) > 0, (r.consensus || 0) + ' 家'],
+    ];
+    const pass = list.filter(x => x[1]).length;
+    return { list, pass, total: list.length };
+  }
+
+  async function open(r) {
+    const g = gate(r);
+    $('oxDrawer').innerHTML =
+      '<div class="ox-dh"><h3>' + (r.name || r.code) + ' <span style="font-size:12px;color:#8b96a5">' + r.code + '</span></h3>' +
+      '<span class="x" id="oxClose">×</span></div>' +
+      '<div class="ox-sub">' + (r.hybk || '') + ' · ' + (r.lbc ? r.lbc + ' 板' : '首板') + ' · 评分 ' + r.score + '</div>' +
+      '<div id="oxKwrap"><div class="ox-sub">K 线加载中…</div></div>' +
+      '<div class="ox-kv2">' +
+        '<div>连板<b>' + (r.lbc || 0) + ' 板</b></div>' +
+        '<div>涨幅<b>' + (r.zdp || 0) + '%</b></div>' +
+        '<div>换手<b>' + (r.hs || 0) + '%</b></div>' +
+        '<div>炸板<b>' + (r.zbc || 0) + ' 次</b></div>' +
+      '</div>' +
+      '<div class="ox-gate"><div class="ox-sub" style="margin:14px 0 6px">门禁 ' + g.pass + '/' + g.total + '</div>' +
+      g.list.map(x => '<div class="g"><span>' + x[0] + '</span><span class="' + (x[1] ? 'ox-ok' : 'ox-no') + '">' +
+        (x[1] ? '✓' : '✗') + ' ' + x[2] + '</span></div>').join('') + '</div>';
+    mask.hidden = false;
+    $('oxClose').onclick = () => { mask.hidden = true; };
+
+    try {
+      const res = await fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + tx(r.code) + ',day,,,80,qfq');
+      const j = await res.json();
+      const obj = (j.data || {})[tx(r.code)] || {};
+      const rows = obj.qfqday || obj.day || [];
+      $('oxKwrap').innerHTML = candles(rows) +
+        '<div class="ox-sub">近 ' + rows.length + ' 个交易日 · 前复权 · 蓝线为 MA20</div>';
+    } catch (e) {
+      $('oxKwrap').innerHTML = '<div class="ox-sub">K 线加载失败：' + e.message + '</div>';
+    }
+  }
+
+  function bind() {
+    const box = $('oxScoreRows'); if (!box || box.dataset.bound) return;
+    box.dataset.bound = '1';
+    box.addEventListener('click', (e) => {
+      const row = e.target.closest('.row'); if (!row) return;
+      const idx = Array.from(box.children).indexOf(row);
+      const d = window.OX_DATA; if (!d || !d.score_pool) return;
+      const r = d.score_pool.rows[idx]; if (r) open(r);
+    });
+    Array.from(box.children).forEach((row) => { row.style.cursor = 'pointer'; });
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if ($('oxScoreRows') && ($('oxScoreRows').children.length)) { bind(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
