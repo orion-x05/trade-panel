@@ -2833,6 +2833,14 @@ def main():
             backfill_review_blocks(data)
         except Exception as e:
             print(f"  ⚠ 盘后补拉异常：{e}")
+        # 【评分池】不依赖补拉是否发生：拿 data 里现有的涨停池/题材/研报直接算
+        try:
+            data["score_pool"] = build_score_pool(data)
+            _sp = data["score_pool"]
+            print(f"  🎯 评分池：{_sp['universe']} 只候选 · 前 {len(_sp['rows'])} 只" +
+                  (f" · 榜首 {_sp['rows'][0]['name']} {_sp['rows'][0]['score']} 分" if _sp["rows"] else ""))
+        except Exception as e:
+            print(f"  ⚠ 评分池计算异常：{e}")
         # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
         # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
         # 持仓市值被忽略，导致面板与推送口径不一致。
