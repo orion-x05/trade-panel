@@ -2438,7 +2438,8 @@ body::after{   /* 暗角 */
         '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + '</span>' +
         '<span class="tag">' + (r.hybk || '') + (r.lbc ? ' · ' + r.lbc + '板' : '') + '</span>' +
         '<span class="v" style="color:' + (chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)') + '">' +
-        r.score + ' 分</span></div>';
+        r.score + ' 分' + (r.gates && r.gates.rr ? '<span style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#5f6b7a') + ';font-size:11px"> · 赔率 ' + r.gates.rr.ratio + '</span>' : '') +
+        '</span></div>';
     }).join('');
     const card = $('oxScoreCard');
     const title = card.querySelector('.card-title');
@@ -2590,6 +2591,12 @@ body::after{   /* 暗角 */
         '<button data-k="all">全部</button></div>' +
       '<div class="ox-kwrap"><div id="oxKbox"><div class="ox-sub">K 线加载中…</div></div></div>' +
       '<div class="ox-sub" id="oxKinfo"></div>' +
+      (r.gates && r.gates.rr ? '<div class="ox-kv2">' +
+        '<div>赔率<b style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#e8b339') + '">' + r.gates.rr.ratio + ' 倍</b></div>' +
+        '<div>目标位<b>' + r.gates.rr.target + '（' + r.gates.rr.upside + '%）</b></div>' +
+        '<div>止损位<b>' + r.gates.rr.stop + '（' + r.gates.rr.downside + '%）</b></div>' +
+        '<div>ATR<b>' + (r.gates.rr.atr || '-') + '</b></div>' +
+      '</div>' : '') +
       '<div class="ox-kv2">' +
         '<div>连板<b>' + (r.lbc || 0) + ' 板</b></div>' +
         '<div>涨幅<b>' + (r.zdp || 0) + '%</b></div>' +
