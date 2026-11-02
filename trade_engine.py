@@ -2689,61 +2689,137 @@ def _rsi(closes, period=6):
 
 
 def eval_gates(code, name, ltsz, score):
-    """六步门禁的逐条判定，口径对齐 README/需求书：
-    1 市值与状态 2 流动性 3 趋势过滤 4 量价触发 5 过热控制 6 评分与风控
-    拿不到数据的条目返回 None（面板显示“未算”），不假装通过。
-    """
+    """六步门禁逐条判定。每条返回 值、阈值、是否通过；拿不到数据 pass=None，不假装通过。"""
     rows = _fetch_kline(code)
     closes = [float(r[2]) for r in rows] if rows else []
     vols = [float(r[5]) for r in rows] if rows else []
     price = closes[-1] if closes else None
-    g = {}
+    items = []
 
     # 1 市值 30~500 亿 + 非 ST
-    g["1"] = bool(ltsz and 30 <= float(ltsz) <= 500) and ("ST" not in str(name).upper())
+    ok1 = bool(ltsz and 30 <= float(ltsz) <= 500) and ("ST" not in str(name).upper())
+    items.append({"k": "1", "name": "市值与状态", "pass": ok1,
+                  "value": (f"{ltsz} 亿" if ltsz else "无数据"),
+                  "rule": "30~500 亿 · 非 ST"})
 
-    # 2 流动性：5 日均额（元）。K 线只给量（手），用 量*收盘*100 粗算
+    # 2 流动性：近 5 日均额（量单位手，×100 折股，再乘收盘粗估成交额）
     if len(closes) >= 5 and len(vols) >= 5:
         amt5 = sum(vols[i] * closes[i] * 100 for i in range(-5, 0)) / 5
-        g["2"] = amt5 >= 5e7
+        items.append({"k": "2", "name": "流动性", "pass": amt5 >= 5e7,
+                      "value": f"{amt5/1e8:.2f} 亿", "rule": "5 日均额 ≥ 0.5 亿"})
     else:
-        g["2"] = None
+        items.append({"k": "2", "name": "流动性", "pass": None, "value": "无数据", "rule": "5 日均额 ≥ 0.5 亿"})
 
-    # 3 趋势：MA20 > MA60 且 收盘 >= MA20
+    # 3 趋势：MA20 > MA60 且 收盘 ≥ MA20
     if len(closes) >= 60:
         ma20 = sum(closes[-20:]) / 20
         ma60 = sum(closes[-60:]) / 60
-        g["3"] = (ma20 > ma60) and (price >= ma20)
+        items.append({"k": "3", "name": "趋势过滤", "pass": (ma20 > ma60) and (price >= ma20),
+                      "value": f"MA20 {ma20:.2f} / MA60 {ma60:.2f}",
+                      "rule": "MA20>MA60 且 收盘≥MA20"})
     elif len(closes) >= 20:
         ma20 = sum(closes[-20:]) / 20
-        g["3"] = price >= ma20
+        items.append({"k": "3", "name": "趋势过滤", "pass": price >= ma20,
+                      "value": f"MA20 {ma20:.2f}（不足 60 日）", "rule": "收盘 ≥ MA20"})
     else:
-        g["3"] = None
+        items.append({"k": "3", "name": "趋势过滤", "pass": None, "value": "K 线不足", "rule": "MA20>MA60 且 收盘≥MA20"})
 
-    # 4 量价触发：今日收盘 > 前 20 日最高收盘（突破），且量比 > 1
+    # 4 量价：收盘突破前 20 日最高收盘，且当日量 > 前 5 日均量
     if len(closes) >= 21 and len(vols) >= 21:
         prev_high = max(closes[-21:-1])
         v5 = sum(vols[-6:-1]) / 5
-        g["4"] = (closes[-1] >= prev_high) and (vols[-1] > v5)
+        items.append({"k": "4", "name": "量价触发", "pass": (closes[-1] >= prev_high) and (vols[-1] > v5),
+                      "value": f"收 {closes[-1]:.2f} / 前高 {prev_high:.2f} · 量 {vols[-1]/max(v5,1e-9):.2f}×",
+                      "rule": "收盘≥前 20 日最高收盘 · 量>前 5 日均量"})
     else:
-        g["4"] = None
+        items.append({"k": "4", "name": "量价触发", "pass": None, "value": "K 线不足", "rule": "突破前高 + 放量"})
 
-    # 5 过热：RSI6 在 45~76
+    # 5 过热：RSI6 45~76
     r6 = _rsi(closes, 6)
-    g["5"] = (r6 is not None and 45 <= r6 <= 76)
+    items.append({"k": "5", "name": "过热控制", "pass": (r6 is not None and 45 <= r6 <= 76),
+                  "value": (f"RSI6 {r6}" if r6 is not None else "无数据"), "rule": "RSI6 45~76"})
 
-    # 6 评分与风控：本池评分 ≥50（涨停股普遍偏低，70 会全灭）
-    g["6"] = score >= 50
+    # 6 评分与风控
+    items.append({"k": "6", "name": "评分与风控", "pass": score >= 50,
+                  "value": f"评分 {score}", "rule": "评分 ≥ 50 · 单笔 ≤25%"})
 
-    tags = {
-        "1": "市值与状态", "2": "流动性", "3": "趋势过滤",
-        "4": "量价触发", "5": "过热控制", "6": "评分与风控",
-    }
-    items = [{"k": k, "name": tags[k], "pass": g[k]} for k in ("1", "2", "3", "4", "5", "6")]
     passed = sum(1 for it in items if it["pass"] is True)
     known = sum(1 for it in items if it["pass"] is not None)
-    return {"items": items, "passed": passed, "known": known,
-            "rsi6": r6, "price": price}
+    return {"items": items, "passed": passed, "known": known, "rsi6": r6, "price": price}
+
+
+def _batch_quotes(codes):
+    """腾讯批量报价：一次请求拿多只，返回 {code: 现价}。"""
+    out = {}
+    codes = [c for c in codes if c][:60]
+    if not codes:
+        return out
+    try:
+        q = ",".join(("sh" if str(c).startswith("6") else "sz") + str(c) for c in codes)
+        r = requests.get("https://qt.gtimg.cn/q=" + q, timeout=10)
+        r.encoding = "gbk"
+        for line in r.text.strip().split(";"):
+            if "~" not in line:
+                continue
+            arr = line.split("~")
+            if len(arr) > 4 and float(arr[3] or 0) > 0:
+                code = arr[0].split("_")[-1][2:]
+                out[code] = float(arr[3])
+    except Exception:
+        pass
+    return out
+
+
+def update_gate_track(data, pool):
+    """门禁命中率追踪：记录每次判定 + 次日回填涨跌。
+
+    结构：
+      gate_history: {YYYY-MM-DD: [{code,name,score,gates:{k:bool},close}]}  最多 30 个交易日
+      gate_stats:   {k: {n, win, sum_ret}}  累积统计（按门禁条目分别算）
+    回填口径：用最近一个历史日期的记录，取现价 / 记录时收盘 - 1 作为次日涨跌。
+    """
+    hist = data.setdefault("gate_history", {})
+    stats = data.setdefault("gate_stats", {})
+    today = cn_now().strftime("%Y-%m-%d")
+
+    # 1) 回填：上一个有记录且未回填的日期
+    past = [d for d in sorted(hist.keys()) if d < today and any("ret" not in x for x in hist[d])]
+    if past:
+        d0 = past[-1]
+        rows = hist[d0]
+        need = [x for x in rows if "ret" not in x and x.get("close")]
+        quotes = _batch_quotes([x["code"] for x in need])
+        filled = 0
+        for x in need:
+            px = quotes.get(str(x["code"]))
+            if not px or not x.get("close"):
+                continue
+            ret = (px / float(x["close"]) - 1) * 100
+            x["ret"] = round(ret, 2)
+            filled += 1
+            for k, v in (x.get("gates") or {}).items():
+                if v is None:
+                    continue
+                st = stats.setdefault(k, {"n": 0, "win": 0, "sum_ret": 0.0})
+                st["n"] += 1
+                st["win"] += 1 if ret > 0 else 0
+                st["sum_ret"] = round(st["sum_ret"] + ret, 2)
+        if filled:
+            print(f"  🎯 门禁回填 {d0}：{filled} 只，已累计 {sum(v['n'] for v in stats.values())} 条样本")
+
+    # 2) 记录今天
+    rows = []
+    for r in (pool.get("rows") or [])[:20]:
+        g = r.get("gates") or {}
+        rows.append({
+            "code": r.get("code"), "name": r.get("name"), "score": r.get("score"),
+            "close": (g.get("price") or None),
+            "gates": {it["k"]: it["pass"] for it in (g.get("items") or [])} or None,
+        })
+    if rows:
+        hist[today] = rows
+    for d in sorted(hist.keys())[:-30]:
+        hist.pop(d, None)
 
 
 def build_score_pool(data, top_n=40):
@@ -3021,6 +3097,10 @@ def main():
         data["research_feed"] = build_research_block(reports, surveys)
         print(f"  📚 机构研报：近7日 {len(reports)} 篇 · 共识标的 {len(data['research_feed']['consensus'])} 只 · 调研 {len(surveys)} 条")
         data["score_pool"] = build_score_pool(data)
+        try:
+            update_gate_track(data, data["score_pool"])
+        except Exception as e:
+            print(f"  ⚠ 门禁追踪异常：{e}")
         _sp = data["score_pool"]
         if _sp["rows"]:
             _top = _sp["rows"][0]
