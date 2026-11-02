@@ -2700,6 +2700,45 @@ def _rsi(closes, period=6):
     return round(100 - 100 / (1 + rs), 1)
 
 
+def _atr(rows, n=14):
+    """ATR(n)：真实波幅均值，用于设止损与目标位。rows: [date,o,c,h,l,v]"""
+    if len(rows) < n + 1:
+        return None
+    trs = []
+    for i in range(len(rows) - n, len(rows)):
+        h, l = float(rows[i][3]), float(rows[i][4])
+        pc = float(rows[i - 1][2])
+        trs.append(max(h - l, abs(h - pc), abs(l - pc)))
+    return sum(trs) / len(trs)
+
+
+def calc_rr(rows, price=None):
+    """赔率 = (目标位 − 现价) / (现价 − 止损位)。
+
+    目标位取「前 20 日最高收盘」与「现价 + 2×ATR」中较高者；
+    止损位取「近 5 日最低」与「现价 − 1.5×ATR」中较低者。
+    赔率 < 2 视为不值得动手（用赔率换容错，见低吸铁律）。
+    """
+    if not rows or len(rows) < 20:
+        return None
+    closes = [float(r[2]) for r in rows]
+    lows = [float(r[4]) for r in rows]
+    px = price or closes[-1]
+    atr = _atr(rows)
+    hi20 = max(closes[-20:])
+    lo5 = min(lows[-5:])
+    target = max(hi20, px + 2 * atr) if atr else hi20
+    stop = min(lo5, px - 1.5 * atr) if atr else lo5
+    if px - stop <= 0:
+        return None
+    ratio = round((target - px) / (px - stop), 2)
+    return {"ratio": ratio, "target": round(target, 2), "stop": round(stop, 2),
+            "atr": round(atr, 2) if atr else None,
+            "upside": round((target / px - 1) * 100, 1),
+            "downside": round((stop / px - 1) * 100, 1),
+            "ok": ratio >= 2}
+
+
 def eval_gates(code, name, ltsz, score, lbc=0):
     """六步门禁：每条按「优选 2 分 / 可接受 1 分 / 超出 0 分」打分，满分 12。
 
@@ -2794,7 +2833,8 @@ def eval_gates(code, name, ltsz, score, lbc=0):
     pts = sum(2 if it["level"] == "ok" else (1 if it["level"] == "warn" else 0)
               for it in items if it["level"] is not None)
     known = sum(1 for it in items if it["level"] is not None)
-    return {"items": items, "points": pts, "max_points": known * 2,
+    rr = calc_rr(rows, price)
+    return {"items": items, "points": pts, "max_points": known * 2, "rr": rr,
             "passed": sum(1 for it in items if it["level"] == "ok"),
             "known": known, "rsi6": r6, "price": price}
 
