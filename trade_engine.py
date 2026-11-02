@@ -3124,6 +3124,20 @@ def main():
                   (f" · 榜首 {_sp['rows'][0]['name']} {_sp['rows'][0]['score']} 分" if _sp["rows"] else ""))
         except Exception as e:
             print(f"  ⚠ 评分池计算异常：{e}")
+        # 【复盘闭环】生成明日预期并验证昨日预期
+        try:
+            data["review"] = build_review_block(data)
+            update_review_verify(data)
+            _rv = data["review"]
+            print(f"  🧭 复盘：{_rv['mood']['emoji']} {_rv['mood']['stage']} · 涨停 {_rv['mood']['n_zt']} · "
+                  f"最高 {_rv['mood']['max_lb']} 板 · 明日预期「{_rv['expect']['dir']}」 · "
+                  f"后排 {len(_rv['ladder']['back'])} 只")
+            try:
+                update_gate_track(data, data["score_pool"])
+            except Exception as e:
+                print(f"  ⚠ 门禁追踪异常：{e}")
+        except Exception as e:
+            print(f"  ⚠ 复盘块异常：{e}")
         # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
         # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
         # 持仓市值被忽略，导致面板与推送口径不一致。
