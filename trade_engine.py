@@ -2658,6 +2658,94 @@ def compute_sentiment_factor(all_stock_data, data):
     return factor
 
 
+
+def _fetch_kline(code, n=140):
+    """拉前复权日 K（腾讯 ifzq），返回 [[date, open, close, high, low, volume], ...]。失败返回 []。"""
+    sym = ("sh" if str(code).startswith("6") else "sz") + str(code)
+    try:
+        url = (f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+               f"?param={sym},day,,,{n},qfq")
+        j = requests.get(url, timeout=10).json()
+        obj = (j.get("data") or {}).get(sym) or {}
+        return obj.get("qfqday") or obj.get("day") or []
+    except Exception:
+        return []
+
+
+def _rsi(closes, period=6):
+    if len(closes) <= period:
+        return None
+    gains = losses = 0.0
+    for i in range(-period, 0):
+        diff = closes[i] - closes[i - 1]
+        if diff >= 0:
+            gains += diff
+        else:
+            losses -= diff
+    if losses == 0:
+        return 100.0
+    rs = (gains / period) / (losses / period)
+    return round(100 - 100 / (1 + rs), 1)
+
+
+def eval_gates(code, name, ltsz, score):
+    """六步门禁的逐条判定，口径对齐 README/需求书：
+    1 市值与状态 2 流动性 3 趋势过滤 4 量价触发 5 过热控制 6 评分与风控
+    拿不到数据的条目返回 None（面板显示“未算”），不假装通过。
+    """
+    rows = _fetch_kline(code)
+    closes = [float(r[2]) for r in rows] if rows else []
+    vols = [float(r[5]) for r in rows] if rows else []
+    price = closes[-1] if closes else None
+    g = {}
+
+    # 1 市值 30~500 亿 + 非 ST
+    g["1"] = bool(ltsz and 30 <= float(ltsz) <= 500) and ("ST" not in str(name).upper())
+
+    # 2 流动性：5 日均额（元）。K 线只给量（手），用 量*收盘*100 粗算
+    if len(closes) >= 5 and len(vols) >= 5:
+        amt5 = sum(vols[i] * closes[i] * 100 for i in range(-5, 0)) / 5
+        g["2"] = amt5 >= 5e7
+    else:
+        g["2"] = None
+
+    # 3 趋势：MA20 > MA60 且 收盘 >= MA20
+    if len(closes) >= 60:
+        ma20 = sum(closes[-20:]) / 20
+        ma60 = sum(closes[-60:]) / 60
+        g["3"] = (ma20 > ma60) and (price >= ma20)
+    elif len(closes) >= 20:
+        ma20 = sum(closes[-20:]) / 20
+        g["3"] = price >= ma20
+    else:
+        g["3"] = None
+
+    # 4 量价触发：今日收盘 > 前 20 日最高收盘（突破），且量比 > 1
+    if len(closes) >= 21 and len(vols) >= 21:
+        prev_high = max(closes[-21:-1])
+        v5 = sum(vols[-6:-1]) / 5
+        g["4"] = (closes[-1] >= prev_high) and (vols[-1] > v5)
+    else:
+        g["4"] = None
+
+    # 5 过热：RSI6 在 45~76
+    r6 = _rsi(closes, 6)
+    g["5"] = (r6 is not None and 45 <= r6 <= 76)
+
+    # 6 评分与风控：本池评分 ≥50（涨停股普遍偏低，70 会全灭）
+    g["6"] = score >= 50
+
+    tags = {
+        "1": "市值与状态", "2": "流动性", "3": "趋势过滤",
+        "4": "量价触发", "5": "过热控制", "6": "评分与风控",
+    }
+    items = [{"k": k, "name": tags[k], "pass": g[k]} for k in ("1", "2", "3", "4", "5", "6")]
+    passed = sum(1 for it in items if it["pass"] is True)
+    known = sum(1 for it in items if it["pass"] is not None)
+    return {"items": items, "passed": passed, "known": known,
+            "rsi6": r6, "price": price}
+
+
 def build_score_pool(data, top_n=40):
     """【研究评分池】把涨停梯队 + 题材热度 + 机构共识合成 0-100 分。
 
@@ -2702,17 +2790,24 @@ def build_score_pool(data, top_n=40):
         rows.append({
             "code": s.get("code"), "name": s.get("name"), "hybk": hy,
             "lbc": int(s.get("lbc") or 0), "zdp": s.get("zdp"),
-            "hs": round(hs, 1), "zbc": int(s.get("zbc") or 0),
+            "hs": round(hs, 1), "zbc": int(s.get("zbc") or 0), "ltsz": s.get("ltsz"),
             "consensus": len((c or {}).get("orgs") or []),
             "score": score, "parts": parts,
         })
     rows.sort(key=lambda r: -r["score"])
+    out = rows[:top_n]
+    # 只给前 20 只算真门禁（每只要拉一次 K 线），避免 Actions 跑太久
+    for r in out[:20]:
+        try:
+            r["gates"] = eval_gates(r["code"], r["name"], None if r.get("ltsz") is None else r.get("ltsz"), r["score"])
+        except Exception:
+            r["gates"] = None
     return {
         "ok": bool(rows),
         "asof": ld.get("asof"),
         "universe": len(zt),
         "basis": "涨停梯队 + 题材热度 + 机构共识",
-        "rows": rows[:top_n],
+        "rows": out,
     }
 
 
