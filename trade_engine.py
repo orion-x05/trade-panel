@@ -3134,6 +3134,21 @@ def abnormal_rule(code, name=""):
     return 20.0, "连3日累计偏离 ≥20%（主板）"
 
 
+def abnormal_rule_10(code, name=""):
+    """严重异常波动阈值（%）：连续 10 个交易日累计涨跌幅偏离值。
+
+    主板/创业板/科创板一般按 100% 认定「严重异常波动」，ST 收紧到 50%，北交所 150%。
+    触发后通常进入重点监控，且可能被要求停牌核查——比 3 日异动重得多。
+    """
+    n = str(name or "").upper().replace(" ", "")
+    if "ST" in n:
+        return 50.0, "连10日累计偏离 ≥50%（ST）"
+    c = str(code or "")
+    if c.startswith(("4", "8", "92")):
+        return 150.0, "连10日累计偏离 ≥150%（北交所）"
+    return 100.0, "连10日累计偏离 ≥100%"
+
+
 def is_paozi(price):
     """豹子顶：价格去掉小数点后全是同一个数字（6.66 / 8.88 / 11.11 / 66.66）。
 
@@ -3165,8 +3180,25 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
     ret20 = round((closes[-1] / closes[-20] - 1) * 100, 1) if len(closes) >= 20 else 0.0
     high_pos = ret20 >= 30
     paozi = high_pos and (is_paozi(closes[-1]) or is_paozi(max(float(r[3]) for r in rows[-3:])))
+    # 10 日口径（严重异常波动）
+    if len(closes) >= 11:
+        dev10 = round((closes[-1] / closes[-11] - 1) * 100 - idx_dev * 3, 2)
+    else:
+        dev10 = None
+    limit10, rule10 = abnormal_rule_10(code, name)
+    remain10 = round(limit10 - dev10, 2) if dev10 is not None else None
+    if remain10 is None:
+        risk10 = None
+    elif remain10 <= 10:
+        risk10 = "高"
+    elif remain10 <= 30:
+        risk10 = "中"
+    else:
+        risk10 = "低"
     return {"dev3": dev3, "idx3": idx_dev, "dev": dev, "limit": limit,
             "remain": remain, "risk": risk, "rule": rule,
+            "dev10": dev10, "limit10": limit10, "remain10": remain10,
+            "risk10": risk10, "rule10": rule10,
             "ret20": ret20, "paozi": bool(paozi)}
 
 
