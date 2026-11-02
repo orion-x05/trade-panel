@@ -2175,6 +2175,32 @@ body::after{   /* 暗角 */
     box.querySelector('.body').innerHTML = html || '<div class="ox-kv"><span>暂无角色状态数据</span></div>';
   }
 
+  /* ---------- 数据新鲜度标注 ---------- */
+  function drawAsOf() {
+    const d = window.OX_DATA; if (!d) return;
+    const pairs = [
+      ['scanZT', d.limit_decoded], ['scanTheme', d.theme_radar],
+      ['scanPool', d.research_feed], ['rvPerf', d.yesterday_perf], ['mkLimit', d.limit_decoded]
+    ];
+    const today = new Date();
+    pairs.forEach(([id, blk]) => {
+      const box = $(id); if (!box || !blk) return;
+      const card = box.closest('.card'); if (!card) return;
+      const title = card.querySelector('.card-title'); if (!title || title.dataset.asofDone) return;
+      const asof = blk.asof || '';
+      if (!asof) return;
+      const day = asof.slice(0, 10);
+      const diff = Math.floor((new Date(day) - new Date(today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0'))) / 86400000);
+      const bad = diff <= -2;
+      const sp = document.createElement('span');
+      sp.textContent = (bad ? '⚠ ' : '') + '截至 ' + day.slice(5) + (bad ? '（' + (-diff) + ' 天前）' : '');
+      sp.style.cssText = 'margin-left:8px;font-size:11px;font-weight:400;color:' + (bad ? 'var(--warn,#e8b339)' : 'var(--faint,#8b96a5)');
+      sp.title = '数据时间：' + asof;
+      title.appendChild(sp);
+      title.dataset.asofDone = '1';
+    });
+  }
+
   /* ---------- 挂卡片 ---------- */
   function mountCards() {
     const today = $('view-today');
@@ -2243,7 +2269,7 @@ body::after{   /* 暗角 */
   const timer = setInterval(() => {
     mountCards();
     if (window.OX_DATA) {
-      drawChart(); drawRoleState();
+      drawChart(); drawRoleState(); drawAsOf();
       if (++tries > 4) clearInterval(timer);
     } else if (++tries > 40) { clearInterval(timer); }
   }, 400);
