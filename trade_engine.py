@@ -2841,6 +2841,48 @@ def build_ladder(zt):
     return {"tiers": tiers, "lead": lead, "back": back[:15]}
 
 
+def build_lhb(days_back=0, top_n=12):
+    """【龙虎榜】东财每日榜：净买额排序，标注机构/游资席位。
+
+    额外收益：接口自带 D1/D2/D5 后续涨跌，可用于回看“上榜后是否真有溢价”。
+    """
+    d = cn_now() - timedelta(days=days_back)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    ds = d.strftime("%Y-%m-%d")
+    url = ("https://datacenter-web.eastmoney.com/api/data/v1/get"
+           "?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=ALL"
+           "&pageNumber=1&pageSize=80"
+           f"&filter=(TRADE_DATE%3D%27{ds}%27)")
+    try:
+        j = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12).json()
+        rows = ((j.get("result") or {}).get("data")) or []
+    except Exception as e:
+        print(f"  ⚠ 龙虎榜拉取失败：{e}")
+        return {"ok": False, "asof": ds, "rows": []}
+
+    out = []
+    for r in rows:
+        seat = (r.get("EXPLAIN") or "")
+        out.append({
+            "code": r.get("SECURITY_CODE"),
+            "name": r.get("SECURITY_NAME_ABBR"),
+            "chg": round(float(r.get("CHANGE_RATE") or 0), 2),
+            "net": round(float(r.get("BILLBOARD_NET_AMT") or 0) / 1e8, 2),      # 亿
+            "buy": round(float(r.get("BILLBOARD_BUY_AMT") or 0) / 1e8, 2),
+            "sell": round(float(r.get("BILLBOARD_SELL_AMT") or 0) / 1e8, 2),
+            "deal_amt": round(float(r.get("BILLBOARD_DEAL_AMT") or 0) / 1e8, 2),
+            "explain": seat,
+            "inst": ("机构" in seat) or ("机构专用" in (r.get("BUY_SEAT") or "")),
+            "d1": r.get("D1_CLOSE_ADJCHRATE"),
+            "d2": r.get("D2_CLOSE_ADJCHRATE"),
+            "d5": r.get("D5_CLOSE_ADJCHRATE"),
+        })
+    out.sort(key=lambda x: -x["net"])
+    return {"ok": bool(out), "asof": ds, "count": len(rows),
+            "rows": out[:top_n], "top_net": out[:top_n]}
+
+
 def build_review_block(data):
     """收盘复盘 + 明日预期（规则式，可回测）。
 
@@ -2898,8 +2940,16 @@ def build_review_block(data):
                            for b in ladder["back"][:3]]
     expect["invalid"] = (f"若明日涨停数跌破 {max(20, n_zt // 2)} 家，或最高标断板，则本预期作废")
 
+    lhb = build_lhb()
+    if lhb.get("rows"):
+        hot_lhb = [r for r in lhb["rows"][:6] if r["net"] > 0]
+        for r in hot_lhb[:3]:
+            tag = "（机构）" if r.get("inst") else ""
+            expect["watch"].append(f"龙虎榜净买 {r['name']}{tag} +{r['net']} 亿")
+
     return {
         "asof": ld.get("asof"),
+        "lhb": lhb,
         "ladder": ladder,
         "mood": {"n_zt": n_zt, "max_lb": max_lb, "boom": boom,
                  "boom_rate": boom_rate, "rate_1to2": rate1, "rate_2to3": rate2,
