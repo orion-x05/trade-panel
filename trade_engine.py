@@ -3044,6 +3044,105 @@ def update_review_verify(data):
     return
 
 
+def _kline_ohlc(code, n=60):
+    """取前复权日 K 的 OHLCV 数值列，供低吸判定用。"""
+    rows = _fetch_kline(code, n)
+    if not rows:
+        return []
+    out = []
+    for r in rows:
+        try:
+            out.append({"d": r[0], "o": float(r[1]), "c": float(r[2]),
+                        "h": float(r[3]), "l": float(r[4]), "v": float(r[5])})
+        except Exception:
+            continue
+    return out
+
+
+def classify_dip(k, lbc=0, hybk=""):
+    """五类低吸位置判定（全部用日 K 可算的量，不猜）。
+
+    返回 (类型, 理由) 或 (None, "")。
+      龙头首阴     连板≥4，今日首根真阴且缩量
+      假阴真阳     收<开 但 涨幅>0，且放量
+      龙头回踩     连板≥4，回踩 MA10/MA20 一带（±2.5%）
+      中军回踩     非最高板但成交额靠前，回踩 MA10
+      后排二波     1~2 板，回踩不破最近涨停日最低价
+    """
+    if len(k) < 25:
+        return None, ""
+    last, prev = k[-1], k[-2]
+    closes = [x["c"] for x in k]
+    vols = [x["v"] for x in k]
+    ma10 = sum(closes[-10:]) / 10
+    ma20 = sum(closes[-20:]) / 20
+    v5 = sum(vols[-6:-1]) / 5 if len(vols) >= 6 else vols[-1]
+    vr = last["v"] / max(v5, 1e-9)
+    chg = (last["c"] / prev["c"] - 1) * 100
+    is_yin = last["c"] < last["o"]
+    is_real_yin = is_yin and chg < 0
+    dist_ma20 = (last["c"] / ma20 - 1) * 100
+    dist_ma10 = (last["c"] / ma10 - 1) * 100
+
+    # 1 龙头首阴
+    if lbc >= 4 and is_real_yin and vr < 1.5:
+        return "龙头首阴", f"{lbc}板后首根阴线，缩量 {vr:.2f}×，等次日不破今低"
+    # 2 假阴真阳
+    if is_yin and chg > 0 and vr >= 1.5:
+        return "假阴真阳", f"收 {last['c']:.2f} 低于开盘 {last['o']:.2f}，但涨幅 {chg:+.1f}%，放量 {vr:.2f}×"
+    # 3 龙头回踩
+    if lbc >= 4 and (-2.5 <= dist_ma10 <= 2.5 or -2.5 <= dist_ma20 <= 2.5):
+        return "龙头回踩", f"{lbc}板龙头回踩均线（距MA10 {dist_ma10:+.1f}% / MA20 {dist_ma20:+.1f}%）"
+    # 4 中军回踩
+    if 2 <= lbc <= 3 and -2.5 <= dist_ma10 <= 2.5:
+        return "中军回踩", f"{lbc}板回踩MA10（{dist_ma10:+.1f}%），板块内非最高标"
+    # 5 后排二波
+    if 1 <= lbc <= 2:
+        # 最近一根涨停日的最低价
+        zt_lows = [x["l"] for i, x in enumerate(k) if i > 0 and x["c"] / k[i - 1]["c"] - 1 >= 0.095]
+        if zt_lows and last["l"] >= min(zt_lows) * 0.99:
+            return "后排二波", f"{lbc}板，回踩未破最近涨停日最低 {min(zt_lows):.2f}"
+    return None, ""
+
+
+def build_dip_pool(data, limit=24):
+    """【低吸池】按五类位置筛票，并用回调位算赔率。
+
+    与主池分开：这里不看"六步门禁"，只看位置是否成立 + 赔率是否够。
+    """
+    ld = data.get("limit_decoded") or {}
+    zt = ld.get("zt_rows") or []
+    if not zt:
+        return {"ok": False, "asof": ld.get("asof"), "rows": []}
+
+    # 先按板块排序，保证同板块的票挨着，方便看中军/后排
+    cand = sorted(zt, key=lambda s: (-int(s.get("lbc") or 0), -(float(s.get("fund") or 0))))[:40]
+
+    rows = []
+    for s in cand:
+        code = s.get("code")
+        k = _kline_ohlc(code, 60)
+        typ, why = classify_dip(k, int(s.get("lbc") or 0), s.get("hybk") or "")
+        if not typ:
+            continue
+        px = k[-1]["c"] if k else None
+        rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px) if k else None
+        rows.append({
+            "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
+            "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
+            "price": round(px, 2) if px else None,
+            "rr": rr,
+        })
+        if len(rows) >= limit:
+            break
+
+    # 赔率够的排前面，其次按类型分组稳定排序
+    rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
+                             -((r.get("rr") or {}).get("ratio") or 0)))
+    return {"ok": bool(rows), "asof": ld.get("asof"), "rows": rows,
+            "basis": "五类低吸位置 + 回调位赔率（与主池门禁无关）"}
+
+
 def build_score_pool(data, top_n=40):
     """【研究评分池】把涨停梯队 + 题材热度 + 机构共识合成 0-100 分。
 
@@ -3243,6 +3342,13 @@ def main():
         except Exception as e:
             print(f"  ⚠ 龙虎榜异常：{e}")
         # 【复盘闭环】生成明日预期并验证昨日预期
+        try:
+            data["dip_pool"] = build_dip_pool(data)
+            _dp = data["dip_pool"]
+            print(f"  🎣 低吸池：{len(_dp['rows'])} 只 · " +
+                  ("、".join(f"{r['name']}({r['type']})" for r in _dp["rows"][:4]) if _dp["rows"] else "今日无符合位置"))
+        except Exception as e:
+            print(f"  ⚠ 低吸池异常：{e}")
         try:
             data["review"] = build_review_block(data)
             update_review_verify(data)
