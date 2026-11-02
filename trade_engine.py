@@ -2658,6 +2658,64 @@ def compute_sentiment_factor(all_stock_data, data):
     return factor
 
 
+def build_score_pool(data, top_n=40):
+    """【研究评分池】把涨停梯队 + 题材热度 + 机构共识合成 0-100 分。
+
+    不额外拉接口：全部基于同一次运行已经拿到的三份数据。
+    评分口径（满分 100，超出部分截断）：
+      连板 30  · 封单/资金 20 · 换手健康 15 · 题材热度 15 · 机构共识 20
+      炸板惩罚 -3/次
+    """
+    ld = data.get("limit_decoded") or {}
+    zt = ld.get("zt_rows") or []
+    radar = data.get("theme_radar") or {}
+    themes = radar.get("themes") or []
+    feed = data.get("research_feed") or {}
+    cons = {str(r.get("code")): r for r in (feed.get("consensus") or [])}
+    hot = {t.get("name"): i for i, t in enumerate(themes[:5])}
+
+    rows = []
+    for s in zt:
+        parts = {}
+        # 连板
+        lb = parts["board"] = round(min(int(s.get("lbc") or 0), 7) / 7 * 30, 1)
+        # 封单/资金（fund 单位：亿）
+        parts["seal"] = round(min(float(s.get("fund") or 0), 2.0) / 2.0 * 20, 1)
+        # 换手健康：15% 附近最好，偏离越大越低
+        hs = float(s.get("hs") or 0)
+        parts["turn"] = round(max(0.0, 1 - abs(hs - 15) / 30) * 15, 1)
+        # 题材热度：命中前五热点板块
+        hy = s.get("hybk") or ""
+        rank = hot.get(hy)
+        parts["theme"] = round(max(0.0, (5 - rank) / 5) * 15, 1) if rank is not None else 0.0
+        # 机构共识
+        c = cons.get(str(s.get("code")))
+        if c:
+            orgs = len(c.get("orgs") or [])
+            parts["inst"] = round(min(1.0, 0.4 + orgs / 5 * 0.6) * 20, 1)
+        else:
+            parts["inst"] = 0.0
+        # 炸板惩罚
+        parts["penalty"] = -3.0 * int(s.get("zbc") or 0)
+        score = round(sum(parts.values()), 1)
+        score = max(0.0, min(100.0, score))
+        rows.append({
+            "code": s.get("code"), "name": s.get("name"), "hybk": hy,
+            "lbc": int(s.get("lbc") or 0), "zdp": s.get("zdp"),
+            "hs": round(hs, 1), "zbc": int(s.get("zbc") or 0),
+            "consensus": len((c or {}).get("orgs") or []),
+            "score": score, "parts": parts,
+        })
+    rows.sort(key=lambda r: -r["score"])
+    return {
+        "ok": bool(rows),
+        "asof": ld.get("asof"),
+        "universe": len(zt),
+        "basis": "涨停梯队 + 题材热度 + 机构共识",
+        "rows": rows[:top_n],
+    }
+
+
 def backfill_review_blocks(data):
     """【盘后补拉】复盘类数据（涨停池 / 题材雷达 / 涨跌解读 / 昨日表现 / 机构研报）。
 
@@ -2709,7 +2767,9 @@ def backfill_review_blocks(data):
     except Exception as e:
         print(f"  ⚠ 机构研报补拉失败：{e}")
 
-    print(f"  📈 盘后补拉完成：涨停 {decoded['zt_count']} 家 · 最高 {decoded['max_lb']} 连板 · asof {decoded['asof']}")
+    data["score_pool"] = build_score_pool(data)
+    print(f"  📈 盘后补拉完成：涨停 {decoded['zt_count']} 家 · 最高 {decoded['max_lb']} 连板 · asof {decoded['asof']}"
+          f" · 评分池 {len(data['score_pool']['rows'])} 只")
     return True
 
 
@@ -2857,6 +2917,11 @@ def main():
         surveys = get_org_surveys(days=3)
         data["research_feed"] = build_research_block(reports, surveys)
         print(f"  📚 机构研报：近7日 {len(reports)} 篇 · 共识标的 {len(data['research_feed']['consensus'])} 只 · 调研 {len(surveys)} 条")
+        data["score_pool"] = build_score_pool(data)
+        _sp = data["score_pool"]
+        if _sp["rows"]:
+            _top = _sp["rows"][0]
+            print(f"  🎯 评分池：{_sp['universe']} 只候选 · 榜首 {_top['name']} {_top['score']} 分")
     except Exception as e:
         print(f"  [warn] 涨跌解读/题材雷达/机构研报生成失败: {e}")
 
