@@ -2122,25 +2122,30 @@ body::after{   /* 暗角 */
       card.querySelector('.body').innerHTML = '<div class="ox-note"><span>可用天数不足，画不了曲线</span><span>' + days.length + ' 天</span></div>';
       return;
     }
-    const L = Math.max.apply(null, ps.map(p => (p.asset_history || []).length));
-    const sum = days.map((_, i) => ps.reduce((a, p) => {
-      const arr = p.asset_history || [], off = L - arr.length, k = i - off;
-      return a + (k >= 0 && k < arr.length ? (arr[k] || 0) : 0);
+    // 只取所有角色都有数据的重叠区间，避免短的被当成 0
+    const lens = ps.map(p => (p.asset_history || []).length).filter(n => n > 0);
+    if (!lens.length) { card.querySelector('.body').innerHTML = '<div class="ox-note"><span>没有历史数据</span></div>'; return; }
+    const N = Math.min.apply(null, lens);
+    const skip = Math.max(0, days.length - N);
+    const sum = days.slice(skip).map((_, i) => ps.reduce((a, p) => {
+      const arr = p.asset_history || [];
+      return a + (arr[arr.length - N + i] || 0);
     }, 0));
+    const view = days.slice(skip);
     const W = 600, H = 110, P = 4;
     const mn = Math.min.apply(null, sum), mx = Math.max.apply(null, sum), sp = (mx - mn) || 1;
-    const X = i => P + i * (W - 2 * P) / (days.length - 1);
+    const X = i => P + i * (W - 2 * P) / (view.length - 1);
     const Y = v => H - P - (v - mn) / sp * (H - 2 * P);
     let ln = '', ar = '';
     sum.forEach((v, i) => { ln += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1) + ' '; });
-    ar = ln + 'L' + X(days.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + X(0).toFixed(1) + ' ' + (H - P) + ' Z';
+    ar = ln + 'L' + X(view.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + X(0).toFixed(1) + ' ' + (H - P) + ' Z';
     const first = sum[0], last = sum[sum.length - 1];
     const chg = ((last - first) / (first || 1) * 100);
     const col = chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
     card.querySelector('.body').innerHTML =
       '<svg class="ox-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       '<path class="ar" d="' + ar + '"/><path class="ln" d="' + ln + '"/></svg>' +
-      '<div class="ox-note"><span>' + days[0] + ' → ' + days[days.length - 1] + ' · ' + days.length + ' 个交易日</span>' +
+      '<div class="ox-note"><span>' + view[0] + ' → ' + view[view.length - 1] + ' · ' + view.length + ' 个交易日（重叠段）</span>' +
       '<span style="color:' + col + '">' + (last / 10000).toFixed(1) + ' 万 · ' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</span></div>';
   }
 
