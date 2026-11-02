@@ -2870,7 +2870,8 @@ def build_lhb(days_back=0, top_n=12):
 
     out = []
     for r in rows:
-        seat = (r.get("EXPLAIN") or "")
+        seat = str(r.get("EXPLAIN") or "")
+        buy_seat = str(r.get("BUY_SEAT") or "")
         out.append({
             "code": r.get("SECURITY_CODE"),
             "name": r.get("SECURITY_NAME_ABBR"),
@@ -2880,7 +2881,7 @@ def build_lhb(days_back=0, top_n=12):
             "sell": round(float(r.get("BILLBOARD_SELL_AMT") or 0) / 1e8, 2),
             "deal_amt": round(float(r.get("BILLBOARD_DEAL_AMT") or 0) / 1e8, 2),
             "explain": seat,
-            "inst": ("机构" in seat) or ("机构专用" in (r.get("BUY_SEAT") or "")),
+            "inst": ("机构" in seat) or ("机构专用" in buy_seat),
             "d1": r.get("D1_CLOSE_ADJCHRATE"),
             "d2": r.get("D2_CLOSE_ADJCHRATE"),
             "d5": r.get("D5_CLOSE_ADJCHRATE"),
