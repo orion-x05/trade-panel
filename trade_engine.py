@@ -2689,144 +2689,102 @@ def _rsi(closes, period=6):
 
 
 def eval_gates(code, name, ltsz, score, lbc=0):
-    """六步门禁逐条判定。每条返回 值、阈值、是否通过；拿不到数据 pass=None，不假装通过。"""
+    """六步门禁：每条按「优选 2 分 / 可接受 1 分 / 超出 0 分」打分，满分 12。
+
+    不用死阈值：涨停股天然过热、天然放量，硬卡一刀切会全灭。
+    拿不到数据的条目 level=None，不计入分母，也不假装通过。
+    """
     rows = _fetch_kline(code)
     closes = [float(r[2]) for r in rows] if rows else []
     vols = [float(r[5]) for r in rows] if rows else []
     price = closes[-1] if closes else None
     items = []
 
-    # 1 市值 30~500 亿 + 非 ST
-    ok1 = bool(ltsz and 30 <= float(ltsz) <= 500) and ("ST" not in str(name).upper())
-    items.append({"k": "1", "name": "市值与状态", "pass": ok1,
-                  "value": (f"{ltsz} 亿" if ltsz else "无数据"),
-                  "rule": "30~500 亿 · 非 ST"})
+    def add(k, nm, level, value, rule):
+        items.append({"k": k, "name": nm, "level": level,
+                      "pass": None if level is None else level != "no",
+                      "value": value, "rule": rule})
 
-    # 2 流动性：近 5 日均额（量单位手，×100 折股，再乘收盘粗估成交额）
+    # 1 市值与状态
+    st_ok = "ST" not in str(name).upper()
+    if ltsz and st_ok:
+        v = float(ltsz)
+        lv = "ok" if 30 <= v <= 300 else ("warn" if 20 <= v <= 800 else "no")
+    elif not st_ok:
+        lv = "no"
+    else:
+        lv = None
+    add("1", "市值与状态", lv, (f"{ltsz} 亿" if ltsz else "无数据") + ("" if st_ok else " · ST"),
+        "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST")
+
+    # 2 流动性
     if len(closes) >= 5 and len(vols) >= 5:
         amt5 = sum(vols[i] * closes[i] * 100 for i in range(-5, 0)) / 5
-        items.append({"k": "2", "name": "流动性", "pass": amt5 >= 5e7,
-                      "value": f"{amt5/1e8:.2f} 亿", "rule": "5 日均额 ≥ 0.5 亿"})
+        lv = "ok" if amt5 >= 2e8 else ("warn" if amt5 >= 8e7 else "no")
+        add("2", "流动性", lv, f"5 日均额 {amt5/1e8:.2f} 亿", "优选 ≥2 亿 / 可接受 ≥0.8 亿")
     else:
-        items.append({"k": "2", "name": "流动性", "pass": None, "value": "无数据", "rule": "5 日均额 ≥ 0.5 亿"})
+        add("2", "流动性", None, "无数据", "优选 ≥2 亿 / 可接受 ≥0.8 亿")
 
-    # 3 趋势：MA20 > MA60 且 收盘 ≥ MA20
+    # 3 趋势
     if len(closes) >= 60:
         ma20 = sum(closes[-20:]) / 20
         ma60 = sum(closes[-60:]) / 60
-        items.append({"k": "3", "name": "趋势过滤", "pass": (ma20 > ma60) and (price >= ma20),
-                      "value": f"MA20 {ma20:.2f} / MA60 {ma60:.2f}",
-                      "rule": "MA20>MA60 且 收盘≥MA20"})
+        if ma20 > ma60 and price >= ma20 * 1.02:
+            lv = "ok"
+        elif price >= ma20:
+            lv = "warn"
+        else:
+            lv = "no"
+        add("3", "趋势过滤", lv, f"MA20 {ma20:.2f} / MA60 {ma60:.2f} · 收 {price:.2f}",
+            "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20")
     elif len(closes) >= 20:
         ma20 = sum(closes[-20:]) / 20
-        items.append({"k": "3", "name": "趋势过滤", "pass": price >= ma20,
-                      "value": f"MA20 {ma20:.2f}（不足 60 日）", "rule": "收盘 ≥ MA20"})
+        add("3", "趋势过滤", ("warn" if price >= ma20 else "no"),
+            f"MA20 {ma20:.2f}（不足 60 日）", "可接受 收盘≥MA20")
     else:
-        items.append({"k": "3", "name": "趋势过滤", "pass": None, "value": "K 线不足", "rule": "MA20>MA60 且 收盘≥MA20"})
+        add("3", "趋势过滤", None, "K 线不足", "MA20>MA60")
 
-    # 4 量价：收盘突破前 20 日最高收盘，且当日量 > 前 5 日均量
+    # 4 量价
     if len(closes) >= 21 and len(vols) >= 21:
         prev_high = max(closes[-21:-1])
         v5 = sum(vols[-6:-1]) / 5
-        items.append({"k": "4", "name": "量价触发", "pass": (closes[-1] >= prev_high) and (vols[-1] > v5),
-                      "value": f"收 {closes[-1]:.2f} / 前高 {prev_high:.2f} · 量 {vols[-1]/max(v5,1e-9):.2f}×",
-                      "rule": "收盘≥前 20 日最高收盘 · 量>前 5 日均量"})
+        ratio = vols[-1] / max(v5, 1e-9)
+        if closes[-1] >= prev_high and 1.2 <= ratio <= 3:
+            lv = "ok"
+        elif closes[-1] >= prev_high:
+            lv = "warn"
+        else:
+            lv = "no"
+        add("4", "量价触发", lv, f"收 {closes[-1]:.2f} / 前高 {prev_high:.2f} · 量 {ratio:.2f}×",
+            "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量")
     else:
-        items.append({"k": "4", "name": "量价触发", "pass": None, "value": "K 线不足", "rule": "突破前高 + 放量"})
+        add("4", "量价触发", None, "K 线不足", "突破前高 + 放量 1.2~3 倍")
 
-    # 5 过热：涨停股不看 RSI6（连板必然 90+），改用 5 日累计涨幅 + 连板高度
+    # 5 过热（涨停股不用 RSI6）
     r6 = _rsi(closes, 6)
     if len(closes) >= 6:
         ret5 = (closes[-1] / closes[-6] - 1) * 100
-        ok5 = (ret5 <= 35) and ((lbc or 0) <= 5)
-        items.append({"k": "5", "name": "过热控制", "pass": ok5,
-                      "value": f"5日 {ret5:+.1f}% · {lbc or 0} 板",
-                      "rule": "5日涨幅 ≤35% · 连板 ≤5"})
+        if ret5 <= 25 and (lbc or 0) <= 4:
+            lv = "ok"
+        elif ret5 <= 35 and (lbc or 0) <= 6:
+            lv = "warn"
+        else:
+            lv = "no"
+        add("5", "过热控制", lv, f"5日 {ret5:+.1f}% · {lbc or 0} 板",
+            "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板")
     else:
-        items.append({"k": "5", "name": "过热控制", "pass": None,
-                      "value": "K 线不足", "rule": "5日涨幅 ≤35% · 连板 ≤5"})
+        add("5", "过热控制", None, "K 线不足", "5日涨幅 + 连板高度")
 
     # 6 评分与风控
-    items.append({"k": "6", "name": "评分与风控", "pass": score >= 50,
-                  "value": f"评分 {score}", "rule": "评分 ≥ 50 · 单笔 ≤25%"})
+    lv = "ok" if score >= 60 else ("warn" if score >= 45 else "no")
+    add("6", "评分与风控", lv, f"评分 {score}", "优选 ≥60 / 可接受 ≥45")
 
-    passed = sum(1 for it in items if it["pass"] is True)
-    known = sum(1 for it in items if it["pass"] is not None)
-    return {"items": items, "passed": passed, "known": known, "rsi6": r6, "price": price}
-
-
-def _batch_quotes(codes):
-    """腾讯批量报价：一次请求拿多只，返回 {code: 现价}。"""
-    out = {}
-    codes = [c for c in codes if c][:60]
-    if not codes:
-        return out
-    try:
-        q = ",".join(("sh" if str(c).startswith("6") else "sz") + str(c) for c in codes)
-        r = requests.get("https://qt.gtimg.cn/q=" + q, timeout=10)
-        r.encoding = "gbk"
-        for line in r.text.strip().split(";"):
-            if "~" not in line:
-                continue
-            arr = line.split("~")
-            if len(arr) > 4 and float(arr[3] or 0) > 0:
-                code = arr[0].split("_")[-1][2:]
-                out[code] = float(arr[3])
-    except Exception:
-        pass
-    return out
-
-
-def update_gate_track(data, pool):
-    """门禁命中率追踪：记录每次判定 + 次日回填涨跌。
-
-    结构：
-      gate_history: {YYYY-MM-DD: [{code,name,score,gates:{k:bool},close}]}  最多 30 个交易日
-      gate_stats:   {k: {n, win, sum_ret}}  累积统计（按门禁条目分别算）
-    回填口径：用最近一个历史日期的记录，取现价 / 记录时收盘 - 1 作为次日涨跌。
-    """
-    hist = data.setdefault("gate_history", {})
-    stats = data.setdefault("gate_stats", {})
-    today = cn_now().strftime("%Y-%m-%d")
-
-    # 1) 回填：上一个有记录且未回填的日期
-    past = [d for d in sorted(hist.keys()) if d < today and any("ret" not in x for x in hist[d])]
-    if past:
-        d0 = past[-1]
-        rows = hist[d0]
-        need = [x for x in rows if "ret" not in x and x.get("close")]
-        quotes = _batch_quotes([x["code"] for x in need])
-        filled = 0
-        for x in need:
-            px = quotes.get(str(x["code"]))
-            if not px or not x.get("close"):
-                continue
-            ret = (px / float(x["close"]) - 1) * 100
-            x["ret"] = round(ret, 2)
-            filled += 1
-            for k, v in (x.get("gates") or {}).items():
-                if v is None:
-                    continue
-                st = stats.setdefault(k, {"n": 0, "win": 0, "sum_ret": 0.0})
-                st["n"] += 1
-                st["win"] += 1 if ret > 0 else 0
-                st["sum_ret"] = round(st["sum_ret"] + ret, 2)
-        if filled:
-            print(f"  🎯 门禁回填 {d0}：{filled} 只，已累计 {sum(v['n'] for v in stats.values())} 条样本")
-
-    # 2) 记录今天
-    rows = []
-    for r in (pool.get("rows") or [])[:20]:
-        g = r.get("gates") or {}
-        rows.append({
-            "code": r.get("code"), "name": r.get("name"), "score": r.get("score"),
-            "close": (g.get("price") or None),
-            "gates": {it["k"]: it["pass"] for it in (g.get("items") or [])} or None,
-        })
-    if rows:
-        hist[today] = rows
-    for d in sorted(hist.keys())[:-30]:
-        hist.pop(d, None)
+    pts = sum(2 if it["level"] == "ok" else (1 if it["level"] == "warn" else 0)
+              for it in items if it["level"] is not None)
+    known = sum(1 for it in items if it["level"] is not None)
+    return {"items": items, "points": pts, "max_points": known * 2,
+            "passed": sum(1 for it in items if it["level"] == "ok"),
+            "known": known, "rsi6": r6, "price": price}
 
 
 def build_score_pool(data, top_n=40):
