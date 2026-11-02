@@ -2787,6 +2787,153 @@ def eval_gates(code, name, ltsz, score, lbc=0):
             "known": known, "rsi6": r6, "price": price}
 
 
+def build_ladder(zt):
+    """连板梯队 + 后排二波候选。
+
+    梯队：按连板高度分组（≥4 / 3 / 2 / 首板）。
+    后排二波：同板块里有 ≥3 板龙头的，1~2 板的同板块票视为补涨候选（卡位/接力）。
+    """
+    tiers = {}
+    for s in zt:
+        lb = int(s.get("lbc") or 1)
+        key = "4板+" if lb >= 4 else ("3板" if lb == 3 else ("2板" if lb == 2 else "首板"))
+        tiers.setdefault(key, []).append({"code": s.get("code"), "name": s.get("name"),
+                                          "lbc": lb, "hybk": s.get("hybk") or "",
+                                          "fbt": s.get("fbt"), "zbc": s.get("zbc")})
+    for k in tiers:
+        tiers[k].sort(key=lambda x: (x["zbc"] or 0, x["fbt"] or "99:99"))
+
+    # 板块龙头
+    lead = {}
+    for s in zt:
+        hy = s.get("hybk") or "其他"
+        lb = int(s.get("lbc") or 1)
+        if hy not in lead or lb > lead[hy]["lbc"]:
+            lead[hy] = {"code": s.get("code"), "name": s.get("name"), "lbc": lb}
+
+    # 后排：龙头≥3 板，同板块 1~2 板
+    back = []
+    for s in zt:
+        hy = s.get("hybk") or "其他"
+        L = lead.get(hy)
+        lb = int(s.get("lbc") or 1)
+        if L and L["lbc"] >= 3 and 1 <= lb <= 2 and s.get("code") != L["code"]:
+            gap = L["lbc"] - lb
+            back.append({
+                "code": s.get("code"), "name": s.get("name"), "hybk": hy,
+                "lbc": lb, "leader": L["name"], "leader_lb": L["lbc"], "gap": gap,
+                "hs": s.get("hs"), "zbc": s.get("zbc"), "fbt": s.get("fbt"),
+            })
+    # 越接近龙头、炸板越少、换手越健康，越优先
+    back.sort(key=lambda x: (x["gap"], x["zbc"] or 0, abs((x["hs"] or 0) - 15)))
+    return {"tiers": tiers, "lead": lead, "back": back[:15]}
+
+
+def build_review_block(data):
+    """收盘复盘 + 明日预期（规则式，可回测）。
+
+    输出：
+      ladder   连板梯队（含后排二波候选）
+      mood     情绪指标（涨停数 / 最高板 / 炸板率 / 昨日晋级率）
+      expect   明日预期：方向、关键观察、关注标的、失效条件
+    """
+    ld = data.get("limit_decoded") or {}
+    zt = ld.get("zt_rows") or []
+    yp = data.get("yesterday_perf") or {}
+    ladder = build_ladder(zt) if zt else {"tiers": {}, "lead": {}, "back": []}
+
+    n_zt = int(ld.get("zt_count") or len(zt) or 0)
+    max_lb = int(ld.get("max_lb") or 0)
+    boom = sum(int(s.get("zbc") or 0) for s in zt) if zt else 0
+    zbc_rows = sum(1 for s in zt if int(s.get("zbc") or 0) > 0)
+    boom_rate = round(zbc_rows / len(zt) * 100, 1) if zt else None
+
+    pr = (yp.get("promote") or {})
+    b1, h1 = int(pr.get("base_1to2") or 0), int(pr.get("hit_1to2") or 0)
+    b2, h2 = int(pr.get("base_2to3") or 0), int(pr.get("hit_2to3") or 0)
+    rate1 = round(h1 / b1 * 100, 1) if b1 else None
+    rate2 = round(h2 / b2 * 100, 1) if b2 else None
+
+    # 情绪档位
+    if n_zt >= 80 and max_lb >= 5:
+        stage, emoji = "亢奋", "🔥"
+    elif n_zt >= 50:
+        stage, emoji = "偏暖", "🌤"
+    elif n_zt >= 30:
+        stage, emoji = "分化", "⛅"
+    else:
+        stage, emoji = "退潮", "🌧"
+
+    # 明日预期（规则）：只用当日可观测的量，写清楚失效条件
+    expect = {"dir": "", "why": [], "watch": [], "invalid": ""}
+    if rate1 is not None and rate1 < 25:
+        expect["dir"] = "谨慎"
+        expect["why"].append(f"首板晋级率 {rate1}%（<25%），接力效应弱")
+    elif stage in ("亢奋",) and (boom_rate or 0) > 35:
+        expect["dir"] = "高位分歧"
+        expect["why"].append(f"涨停 {n_zt} 家但炸板率 {boom_rate}%，情绪透支")
+    elif stage in ("偏暖", "分化") and rate1 is not None and rate1 >= 40:
+        expect["dir"] = "偏强"
+        expect["why"].append(f"首板晋级率 {rate1}%，接力有效")
+    else:
+        expect["dir"] = "观察"
+        expect["why"].append(f"涨停 {n_zt} 家 · 最高 {max_lb} 板 · 晋级率 {rate1 if rate1 is not None else '无数据'}")
+
+    if max_lb >= 5:
+        expect["why"].append(f"最高标 {max_lb} 板，空间由它决定，断板则梯队塌")
+    if ladder["back"]:
+        expect["watch"] = [f"{b['name']}（{b['hybk']} 后排，龙头 {b['leader']} {b['leader_lb']} 板）"
+                           for b in ladder["back"][:3]]
+    expect["invalid"] = (f"若明日涨停数跌破 {max(20, n_zt // 2)} 家，或最高标断板，则本预期作废")
+
+    return {
+        "asof": ld.get("asof"),
+        "ladder": ladder,
+        "mood": {"n_zt": n_zt, "max_lb": max_lb, "boom": boom,
+                 "boom_rate": boom_rate, "rate_1to2": rate1, "rate_2to3": rate2,
+                 "stage": stage, "emoji": emoji},
+        "expect": expect,
+    }
+
+
+def update_review_verify(data):
+    """次日验证：昨日写的预期，今天拿实际数据对照，累积命中率。"""
+    hist = data.setdefault("review_history", {})
+    today = cn_now().strftime("%Y-%m-%d")
+    cur = data.get("review") or {}
+    if not cur or not cur.get("asof"):
+        return
+    d0 = str(cur["asof"])[:10]
+    if d0 >= today or d0 in hist:
+        return
+    # 昨日预期快照
+    hist[d0] = {"expect": cur.get("expect"), "mood": cur.get("mood")}
+    # 用今天的数据回看
+    today_mood = (data.get("review") or {}).get("mood") or {}
+    rec = hist[d0]
+    e = rec.get("expect") or {}
+    m = rec.get("mood") or {}
+    ok = None
+    note = ""
+    if e.get("dir") == "谨慎":
+        ok = (today_mood.get("n_zt") or 0) <= (m.get("n_zt") or 0)
+        note = f"预期谨慎 → 今日涨停 {today_mood.get('n_zt')}（昨 {m.get('n_zt')}）"
+    elif e.get("dir") in ("偏强",):
+        ok = (today_mood.get("n_zt") or 0) >= (m.get("n_zt") or 0) * 0.9
+        note = f"预期偏强 → 今日涨停 {today_mood.get('n_zt')}（昨 {m.get('n_zt')}）"
+    elif e.get("dir") == "高位分歧":
+        ok = (today_mood.get("max_lb") or 0) < (m.get("max_lb") or 0)
+        note = f"预期分歧 → 最高板 {today_mood.get('max_lb')}（昨 {m.get('max_lb')}）"
+    if ok is not None:
+        rec["result"] = {"ok": bool(ok), "note": note}
+        st = data.setdefault("review_stats", {"n": 0, "hit": 0})
+        st["n"] += 1
+        st["hit"] += 1 if ok else 0
+    for k in sorted(hist.keys())[:-30]:
+        hist.pop(k, None)
+    return
+
+
 def build_score_pool(data, top_n=40):
     """【研究评分池】把涨停梯队 + 题材热度 + 机构共识合成 0-100 分。
 
@@ -3062,6 +3209,11 @@ def main():
         data["research_feed"] = build_research_block(reports, surveys)
         print(f"  📚 机构研报：近7日 {len(reports)} 篇 · 共识标的 {len(data['research_feed']['consensus'])} 只 · 调研 {len(surveys)} 条")
         data["score_pool"] = build_score_pool(data)
+        try:
+            data["review"] = build_review_block(data)
+            update_review_verify(data)
+        except Exception as e:
+            print(f"  ⚠ 复盘块异常：{e}")
         try:
             update_gate_track(data, data["score_pool"])
         except Exception as e:
