@@ -631,7 +631,7 @@
       ]
     }
   ],
-  "last_update": "2026-11-02T23:35:19.964371",
+  "last_update": "2026-11-02T23:38:12.426432",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -996,7 +996,7 @@
     "active_roles": 4,
     "total_trades": 9,
     "roles_count": 7,
-    "last_update": "2026-11-02T23:18:31.584715"
+    "last_update": "2026-11-02T23:35:19.964371"
   },
   "data_version": 3,
   "theme_history": {
@@ -5715,5 +5715,773 @@
     "ret_pct": -7.9,
     "max_drawdown": -8.93
   },
-  "last_month_push": "2026-10"
+  "last_month_push": "2026-10",
+  "score_pool": {
+    "ok": true,
+    "asof": "2026-11-02 21:59",
+    "universe": 125,
+    "basis": "涨停梯队 + 题材热度 + 机构共识",
+    "rows": [
+      {
+        "code": "001219",
+        "name": "青岛食品",
+        "hybk": "休闲食品",
+        "lbc": 6,
+        "zdp": 9.98,
+        "hs": 19.7,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 60.6,
+        "parts": {
+          "board": 25.7,
+          "seal": 7.2,
+          "turn": 12.7,
+          "theme": 15.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "600261",
+        "name": "阳光照明",
+        "hybk": "照明设备",
+        "lbc": 3,
+        "zdp": 10.02,
+        "hs": 1.4,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 50.1,
+        "parts": {
+          "board": 12.9,
+          "seal": 20.0,
+          "turn": 8.2,
+          "theme": 9.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002086",
+        "name": "东方海洋",
+        "hybk": "农产品加",
+        "lbc": 3,
+        "zdp": 9.89,
+        "hs": 11.0,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 48.9,
+        "parts": {
+          "board": 12.9,
+          "seal": 20.0,
+          "turn": 13.0,
+          "theme": 6.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "002275",
+        "name": "桂林三金",
+        "hybk": "中药Ⅱ",
+        "lbc": 3,
+        "zdp": 10.01,
+        "hs": 1.9,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 43.7,
+        "parts": {
+          "board": 12.9,
+          "seal": 19.3,
+          "turn": 8.5,
+          "theme": 3.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002172",
+        "name": "澳洋健康",
+        "hybk": "医疗服务",
+        "lbc": 4,
+        "zdp": 9.98,
+        "hs": 25.1,
+        "zbc": 2,
+        "consensus": 0,
+        "score": 40.1,
+        "parts": {
+          "board": 17.1,
+          "seal": 7.1,
+          "turn": 9.9,
+          "theme": 12.0,
+          "inst": 0.0,
+          "penalty": -6.0
+        }
+      },
+      {
+        "code": "000995",
+        "name": "皇台酒业",
+        "hybk": "白酒Ⅱ",
+        "lbc": 2,
+        "zdp": 10.01,
+        "hs": 7.2,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 35.7,
+        "parts": {
+          "board": 8.6,
+          "seal": 16.0,
+          "turn": 11.1,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "001230",
+        "name": "劲旅环境",
+        "hybk": "环境治理",
+        "lbc": 1,
+        "zdp": 10.01,
+        "hs": 2.4,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 33.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 20.0,
+          "turn": 8.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002827",
+        "name": "高争民爆",
+        "hybk": "化学制品",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 0.4,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 32.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 20.0,
+          "turn": 7.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "000525",
+        "name": "红太阳",
+        "hybk": "农化制品",
+        "lbc": 2,
+        "zdp": 10.02,
+        "hs": 1.4,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 29.6,
+        "parts": {
+          "board": 8.6,
+          "seal": 12.8,
+          "turn": 8.2,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "300413",
+        "name": "芒果超媒",
+        "hybk": "数字媒体",
+        "lbc": 1,
+        "zdp": 20.0,
+        "hs": 7.8,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 28.7,
+        "parts": {
+          "board": 4.3,
+          "seal": 13.0,
+          "turn": 11.4,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "000417",
+        "name": "合百集团",
+        "hybk": "一般零售",
+        "lbc": 2,
+        "zdp": 10.0,
+        "hs": 10.0,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 28.3,
+        "parts": {
+          "board": 8.6,
+          "seal": 7.2,
+          "turn": 12.5,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "601099",
+        "name": "太平洋",
+        "hybk": "证券Ⅱ",
+        "lbc": 1,
+        "zdp": 9.94,
+        "hs": 5.2,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 27.9,
+        "parts": {
+          "board": 4.3,
+          "seal": 13.5,
+          "turn": 10.1,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "600715",
+        "name": "文投控股",
+        "hybk": "游戏Ⅱ",
+        "lbc": 1,
+        "zdp": 9.8,
+        "hs": 15.6,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 25.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.2,
+          "turn": 14.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "603533",
+        "name": "掌阅科技",
+        "hybk": "数字媒体",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 12.5,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 24.8,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.7,
+          "turn": 13.8,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "300085",
+        "name": "银之杰",
+        "hybk": "软件开发",
+        "lbc": 1,
+        "zdp": 20.02,
+        "hs": 11.8,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 24.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 9.8,
+          "turn": 13.4,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "301262",
+        "name": "海看股份",
+        "hybk": "广告营销",
+        "lbc": 1,
+        "zdp": 20.0,
+        "hs": 20.3,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 24.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 7.9,
+          "turn": 12.3,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "300377",
+        "name": "赢时胜",
+        "hybk": "软件开发",
+        "lbc": 1,
+        "zdp": 20.0,
+        "hs": 11.0,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 24.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.7,
+          "turn": 13.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "300556",
+        "name": "丝路视觉",
+        "hybk": "软件开发",
+        "lbc": 1,
+        "zdp": 19.99,
+        "hs": 17.8,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 23.4,
+        "parts": {
+          "board": 4.3,
+          "seal": 8.5,
+          "turn": 13.6,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "600109",
+        "name": "国金证券",
+        "hybk": "证券Ⅱ",
+        "lbc": 1,
+        "zdp": 10.03,
+        "hs": 1.7,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 22.8,
+        "parts": {
+          "board": 4.3,
+          "seal": 10.2,
+          "turn": 8.3,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "600892",
+        "name": "大晟文化",
+        "hybk": "游戏Ⅱ",
+        "lbc": 1,
+        "zdp": 10.08,
+        "hs": 10.3,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 22.1,
+        "parts": {
+          "board": 4.3,
+          "seal": 8.1,
+          "turn": 12.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "301218",
+        "name": "华是科技",
+        "hybk": "IT服务Ⅱ",
+        "lbc": 1,
+        "zdp": 19.99,
+        "hs": 22.6,
+        "zbc": 2,
+        "consensus": 0,
+        "score": 22.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 12.5,
+          "turn": 11.2,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -6.0
+        }
+      },
+      {
+        "code": "002949",
+        "name": "华阳国际",
+        "hybk": "工程咨询",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 18.0,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 21.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.4,
+          "turn": 13.5,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "605577",
+        "name": "龙版传媒",
+        "hybk": "出版",
+        "lbc": 1,
+        "zdp": 9.98,
+        "hs": 5.1,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 21.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.7,
+          "turn": 10.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002558",
+        "name": "巨人网络",
+        "hybk": "游戏Ⅱ",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 3.7,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 20.9,
+        "parts": {
+          "board": 4.3,
+          "seal": 10.3,
+          "turn": 9.3,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "600865",
+        "name": "百大集团",
+        "hybk": "一般零售",
+        "lbc": 1,
+        "zdp": 9.99,
+        "hs": 10.5,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 20.7,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.6,
+          "turn": 12.8,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "600570",
+        "name": "恒生电子",
+        "hybk": "软件开发",
+        "lbc": 1,
+        "zdp": 10.02,
+        "hs": 2.5,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 20.4,
+        "parts": {
+          "board": 4.3,
+          "seal": 10.4,
+          "turn": 8.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "002187",
+        "name": "广百股份",
+        "hybk": "一般零售",
+        "lbc": 1,
+        "zdp": 10.06,
+        "hs": 6.7,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 20.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.0,
+          "turn": 10.9,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002362",
+        "name": "汉王科技",
+        "hybk": "软件开发",
+        "lbc": 1,
+        "zdp": 9.98,
+        "hs": 6.2,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 20.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.3,
+          "turn": 10.6,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "605189",
+        "name": "富春染织",
+        "hybk": "纺织制造",
+        "lbc": 1,
+        "zdp": 10.02,
+        "hs": 7.0,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 20.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 4.7,
+          "turn": 11.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002929",
+        "name": "润建股份",
+        "hybk": "通信服务",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 11.4,
+        "zbc": 3,
+        "consensus": 0,
+        "score": 20.0,
+        "parts": {
+          "board": 4.3,
+          "seal": 11.5,
+          "turn": 13.2,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -9.0
+        }
+      },
+      {
+        "code": "688518",
+        "name": "联赢激光",
+        "hybk": "自动化设",
+        "lbc": 1,
+        "zdp": 20.02,
+        "hs": 4.9,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 19.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.3,
+          "turn": 9.9,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "600293",
+        "name": "三峡新材",
+        "hybk": "玻璃玻纤",
+        "lbc": 1,
+        "zdp": 9.97,
+        "hs": 11.6,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 19.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 4.9,
+          "turn": 13.3,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "600576",
+        "name": "祥源文旅",
+        "hybk": "旅游及景",
+        "lbc": 1,
+        "zdp": 9.98,
+        "hs": 4.5,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 19.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.4,
+          "turn": 9.8,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "003019",
+        "name": "宸展光电",
+        "hybk": "光学光电",
+        "lbc": 1,
+        "zdp": 9.99,
+        "hs": 2.6,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 19.1,
+        "parts": {
+          "board": 4.3,
+          "seal": 6.0,
+          "turn": 8.8,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002983",
+        "name": "芯瑞达",
+        "hybk": "光学光电",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 2.8,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 19.1,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.9,
+          "turn": 8.9,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "603171",
+        "name": "税友股份",
+        "hybk": "IT服务Ⅱ",
+        "lbc": 1,
+        "zdp": 10.01,
+        "hs": 2.2,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 18.8,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.9,
+          "turn": 8.6,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "002292",
+        "name": "奥飞娱乐",
+        "hybk": "文娱用品",
+        "lbc": 1,
+        "zdp": 9.97,
+        "hs": 8.3,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 18.7,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.7,
+          "turn": 11.7,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "601595",
+        "name": "上海电影",
+        "hybk": "影视院线",
+        "lbc": 1,
+        "zdp": 10.0,
+        "hs": 3.0,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 18.5,
+        "parts": {
+          "board": 4.3,
+          "seal": 5.2,
+          "turn": 9.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      },
+      {
+        "code": "300508",
+        "name": "维宏股份",
+        "hybk": "计算机设",
+        "lbc": 1,
+        "zdp": 20.0,
+        "hs": 14.9,
+        "zbc": 1,
+        "consensus": 0,
+        "score": 18.4,
+        "parts": {
+          "board": 4.3,
+          "seal": 2.1,
+          "turn": 15.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -3.0
+        }
+      },
+      {
+        "code": "000037",
+        "name": "深南电A",
+        "hybk": "电力",
+        "lbc": 1,
+        "zdp": 10.03,
+        "hs": 3.0,
+        "zbc": 0,
+        "consensus": 0,
+        "score": 18.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 4.9,
+          "turn": 9.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        }
+      }
+    ]
+  }
 }
