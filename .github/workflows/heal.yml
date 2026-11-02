@@ -1,0 +1,48 @@
+name: 交易引擎自愈检查
+
+# 每个交易日上午 9:40（北京时间）检查一次：若 9:35 的定时任务没触发成功，自动补跑一次，
+# 防止 GitHub 定时器偶发跳票导致盘中数据不更新
+on:
+  schedule:
+    - cron: '40 1 * * 1-5'   # 北京时间 09:40，周一至周五
+  workflow_dispatch:
+
+permissions:
+  actions: write   # 需要权限手动触发交易引擎 workflow
+
+jobs:
+  heal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查今天是否已跑过交易引擎，没跑则自动补跑
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, urllib.request, datetime, os
+          tok = os.environ["GH_TOKEN"]
+          base = "https://api.github.com/repos/orion-x05/trade-panel"
+          def gh(url):
+              req = urllib.request.Request(base + url, headers={"Authorization": "token " + tok, "Accept": "application/vnd.github+json"})
+              with urllib.request.urlopen(req) as r:
+                  return json.loads(r.read().decode())
+          # 用 GitHub 服务器同款 UTC 日期判断"今天"
+          today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+          # 查今天的所有 run，筛出交易引擎 workflow（按名字匹配，排除本检查任务和 Pages 构建）
+          runs = gh("/actions/runs?created=>=" + today + "&per_page=100").get("workflow_runs", [])
+          trade_runs = [r for r in runs if r.get("name") == "AI交易引擎定时任务"]
+          if trade_runs:
+              latest = trade_runs[0]
+              print("✅ 今天(UTC " + today + ")已触发交易任务，无需补跑")
+              print("   最新 run:", latest["id"], "状态:", latest["status"], "结果:", latest.get("conclusion"), "触发时间:", latest["created_at"])
+              raise SystemExit(0)
+          # 今天还没跑过 → 手动补跑一次（force_summary 传 false，不强制发推送，与定时触发行为一致）
+          print("⚠️ 今天(UTC " + today + ")尚未触发交易任务，自动补跑一次")
+          req = urllib.request.Request(
+              base + "/actions/workflows/trade.yml/dispatches",
+              data=json.dumps({"ref": "main", "inputs": {"force_summary": "false"}}).encode(),
+              headers={"Authorization": "token " + tok, "Content-Type": "application/json", "Accept": "application/vnd.github+json"},
+              method="POST")
+          with urllib.request.urlopen(req) as r:
+              print("✅ 补跑已提交，HTTP", r.status)
+          PYEOF
