@@ -2751,5 +2751,52 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v8：龙虎榜卡 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  function draw() {
+    const d = window.OX_DATA; if (!d) return;
+    const lhb = (d.review || {}).lhb || d.lhb;
+    if (!lhb) return;
+    let sec = $('oxLhbCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxLhbCard';
+      sec.innerHTML = '<div class="card-title">龙虎榜 · 净买前列</div><div class="body rows"></div>';
+      const rv = $('view-review'); (rv || document.body).appendChild(sec);
+    }
+    const rows = lhb.rows || [];
+    if (!rows.length) {
+      sec.querySelector('.body').innerHTML = '<div style="font-size:12px;color:#8b96a5">今日龙虎榜暂不可得</div>';
+      return;
+    }
+    sec.querySelector('.body').innerHTML = rows.slice(0, 10).map(r => {
+      const net = Number(r.net || 0);
+      const col = net >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
+      const inst = r.inst ? '<span class="tag" style="color:#4d9fff">机构</span>' : '';
+      const d1 = (r.d1 === null || r.d1 === undefined) ? '' : ' · 次日 ' + Number(r.d1).toFixed(1) + '%';
+      return '<div class="row" style="cursor:default">' +
+        '<span class="nm">' + r.name + '</span>' + inst +
+        '<span class="tag">' + (r.chg >= 0 ? '+' : '') + r.chg + '%' + d1 + '</span>' +
+        '<span class="v" style="color:' + col + '">' + (net >= 0 ? '+' : '') + net.toFixed(2) + ' 亿</span></div>';
+    }).join('');
+    const title = sec.querySelector('.card-title');
+    if (title && !title.dataset.done && lhb.asof) {
+      const sp = document.createElement('span');
+      sp.textContent = ' ' + lhb.asof + ' · 共 ' + (lhb.count || rows.length) + ' 只上榜';
+      sp.style.cssText = 'margin-left:8px;font-size:11px;font-weight:400;color:var(--faint,#8b96a5)';
+      title.appendChild(sp); title.dataset.done = '1';
+    }
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
