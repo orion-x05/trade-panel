@@ -2688,7 +2688,7 @@ def _rsi(closes, period=6):
     return round(100 - 100 / (1 + rs), 1)
 
 
-def eval_gates(code, name, ltsz, score):
+def eval_gates(code, name, ltsz, score, lbc=0):
     """六步门禁逐条判定。每条返回 值、阈值、是否通过；拿不到数据 pass=None，不假装通过。"""
     rows = _fetch_kline(code)
     closes = [float(r[2]) for r in rows] if rows else []
@@ -2734,10 +2734,17 @@ def eval_gates(code, name, ltsz, score):
     else:
         items.append({"k": "4", "name": "量价触发", "pass": None, "value": "K 线不足", "rule": "突破前高 + 放量"})
 
-    # 5 过热：RSI6 45~76
+    # 5 过热：涨停股不看 RSI6（连板必然 90+），改用 5 日累计涨幅 + 连板高度
     r6 = _rsi(closes, 6)
-    items.append({"k": "5", "name": "过热控制", "pass": (r6 is not None and 45 <= r6 <= 76),
-                  "value": (f"RSI6 {r6}" if r6 is not None else "无数据"), "rule": "RSI6 45~76"})
+    if len(closes) >= 6:
+        ret5 = (closes[-1] / closes[-6] - 1) * 100
+        ok5 = (ret5 <= 35) and ((lbc or 0) <= 5)
+        items.append({"k": "5", "name": "过热控制", "pass": ok5,
+                      "value": f"5日 {ret5:+.1f}% · {lbc or 0} 板",
+                      "rule": "5日涨幅 ≤35% · 连板 ≤5"})
+    else:
+        items.append({"k": "5", "name": "过热控制", "pass": None,
+                      "value": "K 线不足", "rule": "5日涨幅 ≤35% · 连板 ≤5"})
 
     # 6 评分与风控
     items.append({"k": "6", "name": "评分与风控", "pass": score >= 50,
@@ -2875,7 +2882,7 @@ def build_score_pool(data, top_n=40):
     # 只给前 20 只算真门禁（每只要拉一次 K 线），避免 Actions 跑太久
     for r in out[:20]:
         try:
-            r["gates"] = eval_gates(r["code"], r["name"], None if r.get("ltsz") is None else r.get("ltsz"), r["score"])
+            r["gates"] = eval_gates(r["code"], r["name"], r.get("ltsz"), r["score"], r.get("lbc") or 0)
         except Exception:
             r["gates"] = None
     return {
