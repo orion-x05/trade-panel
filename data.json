@@ -631,7 +631,7 @@
       ]
     }
   ],
-  "last_update": "2026-11-03T02:49:39.184694",
+  "last_update": "2026-11-03T02:59:56.500234",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -996,7 +996,7 @@
     "active_roles": 4,
     "total_trades": 9,
     "roles_count": 7,
-    "last_update": "2026-11-03T02:10:55.999665"
+    "last_update": "2026-11-03T02:49:39.184694"
   },
   "data_version": 3,
   "theme_history": {
@@ -6264,6 +6264,17 @@
             "downside": -33.8,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 33.07,
+            "idx3": 2.03,
+            "dev": 31.04,
+            "limit": 20.0,
+            "remain": -11.04,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 70.0,
+            "paozi": false
+          },
           "passed": 5,
           "known": 6,
           "rsi6": 100.0,
@@ -6350,6 +6361,17 @@
             "upside": 9.6,
             "downside": -28.4,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 33.14,
+            "idx3": 2.03,
+            "dev": 31.11,
+            "limit": 20.0,
+            "remain": -11.11,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 37.6,
+            "paozi": false
           },
           "passed": 2,
           "known": 6,
@@ -6438,6 +6460,17 @@
             "downside": -27.7,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 32.91,
+            "idx3": 2.03,
+            "dev": 30.88,
+            "limit": 20.0,
+            "remain": -10.88,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 55.5,
+            "paozi": false
+          },
           "passed": 3,
           "known": 6,
           "rsi6": 95.5,
@@ -6524,6 +6557,17 @@
             "upside": 5.9,
             "downside": -26.9,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 33.12,
+            "idx3": 2.03,
+            "dev": 31.09,
+            "limit": 20.0,
+            "remain": -11.09,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 36.5,
+            "paozi": false
           },
           "passed": 1,
           "known": 6,
@@ -6612,6 +6656,17 @@
             "downside": -36.0,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 33.2,
+            "idx3": 2.03,
+            "dev": 31.17,
+            "limit": 20.0,
+            "remain": -11.17,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 18.4,
+            "paozi": false
+          },
           "passed": 4,
           "known": 6,
           "rsi6": 100.0,
@@ -6698,6 +6753,17 @@
             "upside": 18.9,
             "downside": -19.0,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 14.62,
+            "idx3": 2.03,
+            "dev": 12.59,
+            "limit": 20.0,
+            "remain": 7.41,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 38.3,
+            "paozi": false
           },
           "passed": 3,
           "known": 6,
@@ -6786,6 +6852,17 @@
             "downside": -12.2,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 6.76,
+            "idx3": 2.03,
+            "dev": 4.73,
+            "limit": 20.0,
+            "remain": 15.27,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": -1.9,
+            "paozi": false
+          },
           "passed": 1,
           "known": 6,
           "rsi6": 75.0,
@@ -6872,6 +6949,17 @@
             "upside": 39.4,
             "downside": -16.6,
             "ok": true
+          },
+          "abnormal": {
+            "dev3": 5.34,
+            "idx3": 2.03,
+            "dev": 3.31,
+            "limit": 20.0,
+            "remain": 16.69,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": -19.8,
+            "paozi": false
           },
           "passed": 3,
           "known": 6,
@@ -6960,6 +7048,17 @@
             "downside": -20.4,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 23.19,
+            "idx3": 2.03,
+            "dev": 21.16,
+            "limit": 20.0,
+            "remain": -1.16,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 12.5,
+            "paozi": false
+          },
           "passed": 2,
           "known": 6,
           "rsi6": 77.7,
@@ -7046,6 +7145,17 @@
             "upside": 17.9,
             "downside": -17.6,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 8.25,
+            "idx3": 2.03,
+            "dev": 6.22,
+            "limit": 30.0,
+            "remain": 23.78,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+            "ret20": 35.2,
+            "paozi": false
           },
           "passed": 4,
           "known": 6,
@@ -7134,6 +7244,17 @@
             "downside": -17.9,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 19.2,
+            "idx3": 2.03,
+            "dev": 17.17,
+            "limit": 20.0,
+            "remain": 2.83,
+            "risk": "中",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 10.8,
+            "paozi": false
+          },
           "passed": 3,
           "known": 6,
           "rsi6": 90.6,
@@ -7220,6 +7341,17 @@
             "upside": 6.7,
             "downside": -10.5,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 7.93,
+            "idx3": 2.03,
+            "dev": 5.9,
+            "limit": 20.0,
+            "remain": 14.1,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 2.3,
+            "paozi": false
           },
           "passed": 3,
           "known": 6,
@@ -7308,6 +7440,17 @@
             "downside": -24.6,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 8.74,
+            "idx3": 2.03,
+            "dev": 6.71,
+            "limit": 20.0,
+            "remain": 13.29,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 35.8,
+            "paozi": false
+          },
           "passed": 3,
           "known": 6,
           "rsi6": 74.8,
@@ -7394,6 +7537,17 @@
             "upside": 21.0,
             "downside": -15.7,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": -4.67,
+            "idx3": 2.03,
+            "dev": -6.7,
+            "limit": 20.0,
+            "remain": 26.7,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 13.0,
+            "paozi": false
           },
           "passed": 3,
           "known": 6,
@@ -7482,6 +7636,17 @@
             "downside": -17.1,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 5.96,
+            "idx3": 2.03,
+            "dev": 3.93,
+            "limit": 30.0,
+            "remain": 26.07,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+            "ret20": -9.9,
+            "paozi": false
+          },
           "passed": 3,
           "known": 6,
           "rsi6": 45.4,
@@ -7568,6 +7733,17 @@
             "upside": 15.9,
             "downside": -17.8,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 7.57,
+            "idx3": 2.03,
+            "dev": 5.54,
+            "limit": 30.0,
+            "remain": 24.46,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+            "ret20": 14.4,
+            "paozi": false
           },
           "passed": 3,
           "known": 6,
@@ -7656,6 +7832,17 @@
             "downside": -16.8,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 10.05,
+            "idx3": 2.03,
+            "dev": 8.02,
+            "limit": 30.0,
+            "remain": 21.98,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+            "ret20": -2.2,
+            "paozi": false
+          },
           "passed": 3,
           "known": 6,
           "rsi6": 48.7,
@@ -7742,6 +7929,17 @@
             "upside": 14.4,
             "downside": -19.0,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": 7.2,
+            "idx3": 2.03,
+            "dev": 5.17,
+            "limit": 30.0,
+            "remain": 24.83,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+            "ret20": 20.7,
+            "paozi": false
           },
           "passed": 4,
           "known": 6,
@@ -7830,6 +8028,17 @@
             "downside": -9.5,
             "ok": false
           },
+          "abnormal": {
+            "dev3": 7.51,
+            "idx3": 2.03,
+            "dev": 5.48,
+            "limit": 20.0,
+            "remain": 14.52,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 4.6,
+            "paozi": false
+          },
           "passed": 2,
           "known": 6,
           "rsi6": 72.4,
@@ -7916,6 +8125,17 @@
             "upside": 17.8,
             "downside": -13.4,
             "ok": false
+          },
+          "abnormal": {
+            "dev3": -2.46,
+            "idx3": 2.03,
+            "dev": -4.49,
+            "limit": 20.0,
+            "remain": 24.49,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "ret20": 5.0,
+            "paozi": false
           },
           "passed": 2,
           "known": 6,
@@ -10371,6 +10591,17 @@
           "upside": 28.0,
           "downside": -9.6,
           "ok": true
+        },
+        "abnormal": {
+          "dev3": 0.75,
+          "idx3": 2.03,
+          "dev": -1.28,
+          "limit": 20.0,
+          "remain": 21.28,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -21.9,
+          "paozi": false
         }
       },
       {
@@ -10389,6 +10620,17 @@
           "upside": 50.8,
           "downside": -20.1,
           "ok": true
+        },
+        "abnormal": {
+          "dev3": -5.59,
+          "idx3": 2.03,
+          "dev": -7.62,
+          "limit": 20.0,
+          "remain": 27.62,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -12.2,
+          "paozi": false
         }
       },
       {
@@ -10407,6 +10649,17 @@
           "upside": 39.4,
           "downside": -16.6,
           "ok": true
+        },
+        "abnormal": {
+          "dev3": 5.34,
+          "idx3": 2.03,
+          "dev": 3.31,
+          "limit": 20.0,
+          "remain": 16.69,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -19.8,
+          "paozi": false
         }
       },
       {
@@ -10425,6 +10678,17 @@
           "upside": 24.1,
           "downside": -10.2,
           "ok": true
+        },
+        "abnormal": {
+          "dev3": 2.5,
+          "idx3": 2.03,
+          "dev": 0.47,
+          "limit": 20.0,
+          "remain": 19.53,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -16.4,
+          "paozi": false
         }
       },
       {
@@ -10443,6 +10707,17 @@
           "upside": 16.8,
           "downside": -12.6,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": -3.04,
+          "idx3": 2.03,
+          "dev": -5.07,
+          "limit": 20.0,
+          "remain": 25.07,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 15.1,
+          "paozi": false
         }
       },
       {
@@ -10461,6 +10736,17 @@
           "upside": 23.1,
           "downside": -17.3,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 16.44,
+          "idx3": 2.03,
+          "dev": 14.41,
+          "limit": 20.0,
+          "remain": 5.59,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 67.2,
+          "paozi": false
         }
       },
       {
@@ -10479,6 +10765,17 @@
           "upside": 17.8,
           "downside": -13.4,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": -2.46,
+          "idx3": 2.03,
+          "dev": -4.49,
+          "limit": 20.0,
+          "remain": 24.49,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 5.0,
+          "paozi": false
         }
       },
       {
@@ -10497,6 +10794,17 @@
           "upside": 10.3,
           "downside": -9.4,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 2.22,
+          "idx3": 2.03,
+          "dev": 0.19,
+          "limit": 20.0,
+          "remain": 19.81,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -6.5,
+          "paozi": false
         }
       },
       {
@@ -10515,6 +10823,17 @@
           "upside": 17.9,
           "downside": -17.6,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 8.25,
+          "idx3": 2.03,
+          "dev": 6.22,
+          "limit": 30.0,
+          "remain": 23.78,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "ret20": 35.2,
+          "paozi": false
         }
       },
       {
@@ -10533,6 +10852,17 @@
           "upside": 18.9,
           "downside": -19.0,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 14.62,
+          "idx3": 2.03,
+          "dev": 12.59,
+          "limit": 20.0,
+          "remain": 7.41,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 38.3,
+          "paozi": false
         }
       },
       {
@@ -10551,6 +10881,17 @@
           "upside": 15.9,
           "downside": -17.8,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 7.57,
+          "idx3": 2.03,
+          "dev": 5.54,
+          "limit": 30.0,
+          "remain": 24.46,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "ret20": 14.4,
+          "paozi": false
         }
       },
       {
@@ -10569,6 +10910,17 @@
           "upside": 10.3,
           "downside": -12.2,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 6.76,
+          "idx3": 2.03,
+          "dev": 4.73,
+          "limit": 20.0,
+          "remain": 15.27,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": -1.9,
+          "paozi": false
         }
       },
       {
@@ -10587,6 +10939,17 @@
           "upside": 13.6,
           "downside": -17.1,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 5.96,
+          "idx3": 2.03,
+          "dev": 3.93,
+          "limit": 30.0,
+          "remain": 26.07,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "ret20": -9.9,
+          "paozi": false
         }
       },
       {
@@ -10605,6 +10968,17 @@
           "upside": 7.2,
           "downside": -9.2,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 5.17,
+          "idx3": 2.03,
+          "dev": 3.14,
+          "limit": 20.0,
+          "remain": 16.86,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 7.7,
+          "paozi": false
         }
       },
       {
@@ -10623,6 +10997,17 @@
           "upside": 14.4,
           "downside": -19.0,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 7.2,
+          "idx3": 2.03,
+          "dev": 5.17,
+          "limit": 30.0,
+          "remain": 24.83,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "ret20": 20.7,
+          "paozi": false
         }
       },
       {
@@ -10641,6 +11026,17 @@
           "upside": 6.7,
           "downside": -10.5,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 7.93,
+          "idx3": 2.03,
+          "dev": 5.9,
+          "limit": 20.0,
+          "remain": 14.1,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 2.3,
+          "paozi": false
         }
       },
       {
@@ -10659,6 +11055,17 @@
           "upside": 19.2,
           "downside": -31.2,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 25.54,
+          "idx3": 2.03,
+          "dev": 23.51,
+          "limit": 30.0,
+          "remain": 6.49,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "ret20": 35.3,
+          "paozi": false
         }
       },
       {
@@ -10677,6 +11084,17 @@
           "upside": 11.2,
           "downside": -20.5,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 21.35,
+          "idx3": 2.03,
+          "dev": 19.32,
+          "limit": 20.0,
+          "remain": 0.68,
+          "risk": "高",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 7.9,
+          "paozi": false
         }
       },
       {
@@ -10695,6 +11113,17 @@
           "upside": 13.6,
           "downside": -26.2,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 12.95,
+          "idx3": 2.03,
+          "dev": 10.92,
+          "limit": 20.0,
+          "remain": 9.08,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 69.7,
+          "paozi": false
         }
       },
       {
@@ -10713,6 +11142,17 @@
           "upside": 4.6,
           "downside": -9.5,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 7.51,
+          "idx3": 2.03,
+          "dev": 5.48,
+          "limit": 20.0,
+          "remain": 14.52,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 4.6,
+          "paozi": false
         }
       },
       {
@@ -10731,6 +11171,17 @@
           "upside": 8.5,
           "downside": -20.3,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 16.57,
+          "idx3": 2.03,
+          "dev": 14.54,
+          "limit": 20.0,
+          "remain": 5.46,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 15.0,
+          "paozi": false
         }
       },
       {
@@ -10749,6 +11200,17 @@
           "upside": 8.4,
           "downside": -20.4,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 23.19,
+          "idx3": 2.03,
+          "dev": 21.16,
+          "limit": 20.0,
+          "remain": -1.16,
+          "risk": "高",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 12.5,
+          "paozi": false
         }
       },
       {
@@ -10767,6 +11229,17 @@
           "upside": 7.3,
           "downside": -17.9,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 19.2,
+          "idx3": 2.03,
+          "dev": 17.17,
+          "limit": 20.0,
+          "remain": 2.83,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 10.8,
+          "paozi": false
         }
       },
       {
@@ -10785,6 +11258,17 @@
           "upside": 6.5,
           "downside": -18.1,
           "ok": false
+        },
+        "abnormal": {
+          "dev3": 18.84,
+          "idx3": 2.03,
+          "dev": 16.81,
+          "limit": 20.0,
+          "remain": 3.19,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "ret20": 16.1,
+          "paozi": false
         }
       }
     ],
