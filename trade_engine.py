@@ -2844,21 +2844,28 @@ def build_ladder(zt):
 def build_lhb(days_back=0, top_n=12):
     """【龙虎榜】东财每日榜：净买额排序，标注机构/游资席位。
 
-    额外收益：接口自带 D1/D2/D5 后续涨跌，可用于回看“上榜后是否真有溢价”。
+    跨零点时“今天”还没有榜数据，自动往前回退最多 5 个交易日。
+    接口自带 D1/D2/D5 后续涨跌，可回看“上榜后是否真有溢价”。
     """
-    d = cn_now() - timedelta(days=days_back)
-    while d.weekday() >= 5:
-        d -= timedelta(days=1)
-    ds = d.strftime("%Y-%m-%d")
-    url = ("https://datacenter-web.eastmoney.com/api/data/v1/get"
-           "?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=ALL"
-           "&pageNumber=1&pageSize=80"
-           f"&filter=(TRADE_DATE%3D%27{ds}%27)")
-    try:
-        j = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12).json()
-        rows = ((j.get("result") or {}).get("data")) or []
-    except Exception as e:
-        print(f"  ⚠ 龙虎榜拉取失败：{e}")
+    rows, ds = [], None
+    for k in range(days_back, days_back + 6):
+        d = cn_now() - timedelta(days=k)
+        if d.weekday() >= 5:
+            continue
+        ds = d.strftime("%Y-%m-%d")
+        url = ("https://datacenter-web.eastmoney.com/api/data/v1/get"
+               "?reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=ALL"
+               "&pageNumber=1&pageSize=80"
+               f"&filter=(TRADE_DATE%3D%27{ds}%27)")
+        try:
+            j = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12).json()
+            rows = ((j.get("result") or {}).get("data")) or []
+        except Exception as e:
+            print(f"  ⚠ 龙虎榜拉取失败（{ds}）：{e}")
+            rows = []
+        if rows:
+            break
+    if not rows:
         return {"ok": False, "asof": ds, "rows": []}
 
     out = []
@@ -2868,7 +2875,7 @@ def build_lhb(days_back=0, top_n=12):
             "code": r.get("SECURITY_CODE"),
             "name": r.get("SECURITY_NAME_ABBR"),
             "chg": round(float(r.get("CHANGE_RATE") or 0), 2),
-            "net": round(float(r.get("BILLBOARD_NET_AMT") or 0) / 1e8, 2),      # 亿
+            "net": round(float(r.get("BILLBOARD_NET_AMT") or 0) / 1e8, 2),
             "buy": round(float(r.get("BILLBOARD_BUY_AMT") or 0) / 1e8, 2),
             "sell": round(float(r.get("BILLBOARD_SELL_AMT") or 0) / 1e8, 2),
             "deal_amt": round(float(r.get("BILLBOARD_DEAL_AMT") or 0) / 1e8, 2),
