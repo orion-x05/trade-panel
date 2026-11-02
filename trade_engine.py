@@ -2947,7 +2947,7 @@ def build_review_block(data):
                            for b in ladder["back"][:3]]
     expect["invalid"] = (f"若明日涨停数跌破 {max(20, n_zt // 2)} 家，或最高标断板，则本预期作废")
 
-    lhb = build_lhb()
+    lhb = data.get("lhb") or build_lhb()
     if lhb.get("rows"):
         hot_lhb = [r for r in lhb["rows"][:6] if r["net"] > 0]
         for r in hot_lhb[:3]:
@@ -3193,6 +3193,14 @@ def main():
                   (f" · 榜首 {_sp['rows'][0]['name']} {_sp['rows'][0]['score']} 分" if _sp["rows"] else ""))
         except Exception as e:
             print(f"  ⚠ 评分池计算异常：{e}")
+        # 【龙虎榜】独立字段，单独算单独落盘，便于排查
+        try:
+            data["lhb"] = build_lhb()
+            _l = data["lhb"]
+            print(f"  🐯 龙虎榜：{_l.get('asof')} · {_l.get('count', 0)} 只上榜 · 净买榜首 "
+                  f"{(_l['rows'][0]['name'] + ' ' + str(_l['rows'][0]['net']) + '亿') if _l.get('rows') else '无'}")
+        except Exception as e:
+            print(f"  ⚠ 龙虎榜异常：{e}")
         # 【复盘闭环】生成明日预期并验证昨日预期
         try:
             data["review"] = build_review_block(data)
