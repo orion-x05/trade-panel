@@ -2406,5 +2406,58 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v4：研究评分池 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  function mount() {
+    const scan = $('view-scan');
+    if (!scan || $('oxScoreCard')) return;
+    const sec = document.createElement('section');
+    sec.className = 'card';
+    sec.id = 'oxScoreCard';
+    sec.innerHTML = '<div class="card-title">研究评分池</div><div class="rows" id="oxScoreRows"></div>';
+    scan.appendChild(sec);
+  }
+  function render() {
+    const d = window.OX_DATA; const box = $('oxScoreRows');
+    if (!d || !box) return;
+    const sp = d.score_pool;
+    if (!sp || !sp.rows || !sp.rows.length) {
+      box.innerHTML = '<div class="row"><span class="nm" style="color:var(--faint,#8b96a5)">暂无评分池数据（等下一次引擎运行）</span></div>';
+      return;
+    }
+    const rows = sp.rows.slice(0, 12);
+    box.innerHTML = rows.map((r, i) => {
+      const p = r.parts || {};
+      const tip = '连板 ' + (p.board || 0) + ' · 封单 ' + (p.seal || 0) + ' · 换手 ' + (p.turn || 0) +
+                  ' · 题材 ' + (p.theme || 0) + ' · 机构 ' + (p.inst || 0) + ' · 炸板 ' + (p.penalty || 0);
+      const chg = Number(r.zdp || 0);
+      return '<div class="row" title="' + tip + '">' +
+        '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + '</span>' +
+        '<span class="tag">' + (r.hybk || '') + (r.lbc ? ' · ' + r.lbc + '板' : '') + '</span>' +
+        '<span class="v" style="color:' + (chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)') + '">' +
+        r.score + ' 分</span></div>';
+    }).join('');
+    const card = $('oxScoreCard');
+    const title = card.querySelector('.card-title');
+    if (title && !title.dataset.asofDone && sp.asof) {
+      const spn = document.createElement('span');
+      spn.textContent = '截至 ' + String(sp.asof).slice(5, 10) + ' · ' + sp.universe + ' 只候选';
+      spn.style.cssText = 'margin-left:8px;font-size:11px;font-weight:400;color:var(--faint,#8b96a5)';
+      title.appendChild(spn);
+      title.dataset.asofDone = '1';
+    }
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    mount();
+    if (window.OX_DATA) { render(); clearInterval(t); }
+    if (++n > 60) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
