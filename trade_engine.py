@@ -2118,6 +2118,9 @@ def check_sell_signals(player, stock_data):
     for hold in player["holdings"]:
         if hold["code"] not in stock_data or not can_sell_t1(hold): continue
         st = stock_data[hold["code"]]
+        # 【封板闸】跌停封死卖不掉，别在模拟里假装成交了
+        if is_limit_down(st):
+            continue
         # 【W2·第2批处理】两段式建仓的次日确认先于一切卖出判定——
         # 补仓/放弃是建仓计划的延续，与当日止盈止损信号互不干扰。
         process_second_tranche(player, hold, st)
@@ -2383,6 +2386,28 @@ def global_guard(st, allow_pullback=False):
             return False, "下跌中继反抽·需企稳K线（缩量+长下影）才买"
     return True, ""
 
+def limit_pct(code, name=""):
+    """A股涨跌停幅度（%）：ST 5、创业板/科创板 20、北交所 30、其余主板 10。"""
+    n = str(name or "").upper().replace(" ", "")
+    if "ST" in n:
+        return 5.0
+    c = str(code or "")
+    if c.startswith(("30", "68")):
+        return 20.0
+    if c.startswith(("4", "8", "92")):
+        return 30.0
+    return 10.0
+
+
+def is_limit_up(st):
+    """是否已封涨停。留 0.2 个点容差：涨跌停价四舍五入到分，边界会差一点。"""
+    return (st.get("chg") or 0) >= limit_pct(st.get("code"), st.get("name")) - 0.2
+
+
+def is_limit_down(st):
+    return (st.get("chg") or 0) <= -(limit_pct(st.get("code"), st.get("name")) - 0.2)
+
+
 def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecutive_losses, strong_sectors, all_players=None):
     role_id = player["id"]
     # 【连续亏损熔断】连续3笔亏损，冷却
@@ -2401,6 +2426,9 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
 
     candidates = []
     for code, st in all_codes_data.items():
+        # 【封板闸】涨停买不进：真实盘口要在板上排队，模拟盘若照价成交会让突破类策略收益虚高
+        if is_limit_up(st):
+            continue
         industry = STOCK_INDUSTRY.get(code, "其他")
         # 【反思记忆·回避】候选属该角色近期反复栽过的板块 → 跳过（除非恰是强势板块）
         refl = _ROLE_REFLECT.get(role_id, {})
