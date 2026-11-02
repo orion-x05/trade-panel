@@ -1481,6 +1481,7 @@ body::after{   /* 暗角 */
   }
 
   function render(d) {
+    window.OX_DATA = d; window.OX_DAYS = d.day_labels || [];
     const v = decide(d);
     // Hero
     $('hNum').textContent = v.text;
@@ -1608,8 +1609,14 @@ body::after{   /* 暗角 */
   window.OX_IDX = load;
   if (btn) btn.addEventListener('click', load);
   load();
+  function __inSession() {
+    const d = new Date(), w = d.getDay();
+    if (w === 0 || w === 6) return false;
+    const m = d.getHours() * 60 + d.getMinutes();
+    return (m >= 570 && m < 690) || (m >= 780 && m < 900);
+  }
   setInterval(function () {
-    if (document.visibilityState === 'visible') load();
+    if (document.visibilityState === 'visible' && __inSession()) load();
   }, 30000);                   // 盘中 30 秒一刷，切走不刷
 })();
 </script>
@@ -2056,5 +2063,184 @@ body::after{   /* 暗角 */
   reloadData().then(() => show('today'));
 })();
 </script>
+
+<script>
+/* ===== 补充层 v1：权益曲线 / 角色状态 / 路由记忆 / 命令面板 ===== */
+(function () {
+  const V = ['today', 'market', 'scan', 'hold', 'review', 'backtest', 'study'];
+  const LABEL = {today:'今日', market:'行情', scan:'扫描', hold:'持仓', review:'盘后', backtest:'回测', study:'学习'};
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- 样式 ---------- */
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-chart{width:100%;height:110px;display:block;overflow:visible}
+  .ox-chart .ln{fill:none;stroke:var(--accent,#4d9fff);stroke-width:1.6;vector-effect:non-scaling-stroke}
+  .ox-chart .ar{fill:var(--accent,#4d9fff);opacity:.12;stroke:none}
+  .ox-note{font-size:11.5px;color:var(--faint,#8b96a5);margin-top:6px;display:flex;justify-content:space-between}
+  .ox-kv{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid oklch(1 0 0/.05)}
+  .ox-kv:last-child{border-bottom:0}
+  .cmdk{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:999}
+  .cmdk[hidden]{display:none}
+  .cmdk-box{width:min(540px,92vw);background:#12161c;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;backdrop-filter:blur(20px) saturate(160%);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .cmdk input{width:100%;box-sizing:border-box;border:0;padding:14px 16px;background:transparent;color:inherit;font-size:15px;outline:none;border-bottom:1px solid rgba(255,255,255,.06)}
+  .cmdk ul{list-style:none;margin:0;padding:6px;max-height:46vh;overflow:auto}
+  .cmdk li{padding:9px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;font-size:13.5px}
+  .cmdk li.on{background:rgba(255,255,255,.08)}
+  .cmdk .k{color:#8b96a5;font-size:11.5px}
+  `;
+  document.head.appendChild(st);
+
+  /* ---------- 路由记忆 ---------- */
+  function tabButtons() { return Array.from(document.querySelectorAll('.tabs .tab')); }
+  function go(v) {
+    const i = V.indexOf(v); if (i < 0) return;
+    const b = tabButtons()[i]; if (b) b.click();
+    try { localStorage.setItem('ox.tab', v); } catch (e) {}
+    if (location.hash !== '#' + v) history.replaceState(null, '', '#' + v);
+  }
+  tabButtons().forEach((b, i) => b.addEventListener('click', () => {
+    try { localStorage.setItem('ox.tab', V[i]); } catch (e) {}
+    if (location.hash !== '#' + V[i]) history.replaceState(null, '', '#' + V[i]);
+  }));
+  window.addEventListener('hashchange', () => go((location.hash || '').slice(1)));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const h = (location.hash || '').slice(1);
+    let v = V.indexOf(h) >= 0 ? h : null;
+    if (!v) { try { v = localStorage.getItem('ox.tab'); } catch (e) {} }
+    if (v && V.indexOf(v) >= 0 && v !== 'today') setTimeout(() => go(v), 60);
+  });
+
+  /* ---------- 权益曲线 ---------- */
+  function drawChart() {
+    const d = window.OX_DATA; if (!d) return;
+    const card = $('oxEquityCard');
+    if (!card) return;
+    const days = d.day_labels || [];
+    const ps = d.players || [];
+    if (days.length < 2 || !ps.length) {
+      card.querySelector('.body').innerHTML = '<div class="ox-note"><span>可用天数不足，画不了曲线</span><span>' + days.length + ' 天</span></div>';
+      return;
+    }
+    const sum = days.map((_, i) => ps.reduce((a, p) => a + ((p.asset_history || [])[i] || 0), 0));
+    const W = 600, H = 110, P = 4;
+    const mn = Math.min.apply(null, sum), mx = Math.max.apply(null, sum), sp = (mx - mn) || 1;
+    const X = i => P + i * (W - 2 * P) / (days.length - 1);
+    const Y = v => H - P - (v - mn) / sp * (H - 2 * P);
+    let ln = '', ar = '';
+    sum.forEach((v, i) => { ln += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1) + ' '; });
+    ar = ln + 'L' + X(days.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + X(0).toFixed(1) + ' ' + (H - P) + ' Z';
+    const first = sum[0], last = sum[sum.length - 1];
+    const chg = ((last - first) / (first || 1) * 100);
+    const col = chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
+    card.querySelector('.body').innerHTML =
+      '<svg class="ox-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+      '<path class="ar" d="' + ar + '"/><path class="ln" d="' + ln + '"/></svg>' +
+      '<div class="ox-note"><span>' + days[0] + ' → ' + days[days.length - 1] + ' · ' + days.length + ' 个交易日</span>' +
+      '<span style="color:' + col + '">' + (last / 10000).toFixed(1) + ' 万 · ' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</span></div>';
+  }
+
+  /* ---------- 角色状态（情绪/心理/连亏/调参） ---------- */
+  function drawRoleState() {
+    const d = window.OX_DATA; if (!d) return;
+    const box = $('oxRoleState'); if (!box) return;
+    const mood = d.role_mood || {}, psy = d.role_psychology || {},
+          streak = d.consecutive_losses || {}, tuned = d.tuned_roles || {};
+    const ids = ['D1','D2','D3','D4','D5','D6','D7'];
+    let html = '';
+    ids.forEach(id => {
+      const m = mood[id], p = psy[id], s = streak[id], t = tuned[id];
+      const txt = (typeof m === 'string' ? m : (m && (m.text || m.mood)) || '') || '';
+      const pv = (typeof p === 'string' ? p : (p && (p.state || p.text)) || '') || '';
+      const parts = [];
+      if (txt) parts.push(txt);
+      if (pv) parts.push(pv);
+      if (s) parts.push('连亏 ' + s);
+      if (t) parts.push('调参 ' + (typeof t === 'string' ? t : JSON.stringify(t)).slice(0, 18));
+      if (!parts.length) return;
+      html += '<div class="ox-kv"><span>' + id + '</span><span class="k">' + parts.join(' · ').slice(0, 46) + '</span></div>';
+    });
+    box.querySelector('.body').innerHTML = html || '<div class="ox-kv"><span>暂无角色状态数据</span></div>';
+  }
+
+  /* ---------- 挂卡片 ---------- */
+  function mountCards() {
+    const today = $('view-today');
+    if (today && !$('oxEquityCard')) {
+      const sec = document.createElement('section');
+      sec.className = 'card s3';
+      sec.id = 'oxEquityCard';
+      sec.innerHTML = '<div class="card-title">组合权益曲线</div><div class="body"><div class="ox-note"><span>加载中…</span></div></div>';
+      today.appendChild(sec);
+    }
+    if (today && !$('oxRoleState')) {
+      const sec = document.createElement('section');
+      sec.className = 'card s3';
+      sec.id = 'oxRoleState';
+      sec.innerHTML = '<div class="card-title">角色状态</div><div class="body"></div>';
+      today.appendChild(sec);
+    }
+  }
+
+  /* ---------- 命令面板 ---------- */
+  function buildCmdk() {
+    if ($('oxCmdk')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'cmdk'; wrap.id = 'oxCmdk'; wrap.hidden = true;
+    wrap.innerHTML = '<div class="cmdk-box"><input id="oxCmdkInput" placeholder="跳转：今日 / 行情 / 扫描 / 持仓 / 盘后 / 回测 / 学习"><ul id="oxCmdkList"></ul></div>';
+    document.body.appendChild(wrap);
+
+    const input = wrap.querySelector('#oxCmdkInput'), list = wrap.querySelector('#oxCmdkList');
+    let items = [], cur = 0;
+
+    function paint() {
+      const q = input.value.trim().toLowerCase();
+      items = V.filter(v => !q || v.indexOf(q) >= 0 || LABEL[v].indexOf(q) >= 0);
+      cur = 0;
+      list.innerHTML = items.map((v, i) =>
+        '<li data-v="' + v + '" class="' + (i === 0 ? 'on' : '') + '"><span>' + LABEL[v] + '</span><span class="k">#' + v + '</span></li>'
+      ).join('') || '<li><span>没有匹配</span></li>';
+    }
+    function pick() { const v = items[cur]; if (v) { wrap.hidden = true; go(v); } }
+
+    input.addEventListener('input', paint);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { cur = Math.min(cur + 1, items.length - 1); }
+      else if (e.key === 'ArrowUp') { cur = Math.max(cur - 1, 0); }
+      else if (e.key === 'Enter') { pick(); return; }
+      else if (e.key === 'Escape') { wrap.hidden = true; return; }
+      else return;
+      e.preventDefault();
+      Array.from(list.children).forEach((li, i) => li.classList.toggle('on', i === cur));
+    });
+    list.addEventListener('click', (e) => {
+      const li = e.target.closest('li'); if (li && li.dataset.v) { wrap.hidden = true; go(li.dataset.v); }
+    });
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) wrap.hidden = true; });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); wrap.hidden = false; input.value = ''; paint(); input.focus();
+      } else if (e.key === 'Escape' && !wrap.hidden) { wrap.hidden = true; }
+    });
+    paint();
+  }
+
+  /* ---------- 数据到达后再画 ---------- */
+  let tries = 0;
+  const timer = setInterval(() => {
+    mountCards();
+    if (window.OX_DATA) {
+      drawChart(); drawRoleState();
+      if (++tries > 4) clearInterval(timer);
+    } else if (++tries > 40) { clearInterval(timer); }
+  }, 400);
+
+  document.addEventListener('DOMContentLoaded', () => { buildCmdk(); });
+  if (document.readyState !== 'loading') buildCmdk();
+})();
+</script>
+
 </body>
 </html>
