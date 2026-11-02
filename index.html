@@ -2516,16 +2516,18 @@ body::after{   /* 暗角 */
   }
 
   function gate(r) {
+    const g = r.gates;
+    if (g && g.items && g.items.length) {
+      const list = g.items.map(it => [it.name, it.pass, it.pass === null ? '未算' : (it.pass ? '通过' : '未过')]);
+      return { list, pass: g.passed, total: g.known || g.items.length, real: true };
+    }
     const p = r.parts || {};
     const list = [
       ['涨停基因（有连板）', (r.lbc || 0) >= 1, (r.lbc || 0) + ' 板'],
       ['题材在热点前五', (p.theme || 0) > 0, (p.theme || 0) + '/15'],
       ['未炸板', (r.zbc || 0) === 0, '炸 ' + (r.zbc || 0) + ' 次'],
-      ['换手在 5%~30%', (r.hs || 0) >= 5 && (r.hs || 0) <= 30, (r.hs || 0) + '%'],
-      ['有机构共识', (r.consensus || 0) > 0, (r.consensus || 0) + ' 家'],
     ];
-    const pass = list.filter(x => x[1]).length;
-    return { list, pass, total: list.length };
+    return { list, pass: list.filter(x => x[1]).length, total: list.length, real: false };
   }
 
   async function open(r) {
@@ -2542,8 +2544,14 @@ body::after{   /* 暗角 */
         '<div>炸板<b>' + (r.zbc || 0) + ' 次</b></div>' +
       '</div>' +
       '<div class="ox-gate"><div class="ox-sub" style="margin:14px 0 6px">门禁 ' + g.pass + '/' + g.total + '</div>' +
-      g.list.map(x => '<div class="g"><span>' + x[0] + '</span><span class="' + (x[1] ? 'ox-ok' : 'ox-no') + '">' +
-        (x[1] ? '✓' : '✗') + ' ' + x[2] + '</span></div>').join('') + '</div>';
+      g.list.map(x => {
+        const cls = x[1] === null ? '' : (x[1] ? 'ox-ok' : 'ox-no');
+        const mark = x[1] === null ? '·' : (x[1] ? '✓' : '✗');
+        const col = x[1] === null ? 'color:#5f6b7a' : '';
+        return '<div class="g"><span>' + x[0] + '</span><span class="' + cls + '" style="' + col + '">' +
+               mark + ' ' + x[2] + '</span></div>';
+      }).join('') + '</div>' +
+      (g.real ? '' : '<div class="ox-sub" style="margin-top:8px">⚠ 引擎还没算这批真门禁，先显示简化三条</div>');
     mask.hidden = false;
     $('oxClose').onclick = () => { mask.hidden = true; };
 
