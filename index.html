@@ -2805,5 +2805,59 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v9：低吸池（五类位置 + 赔率） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-dip .row{cursor:default;align-items:flex-start}
+  .ox-dip .tp{font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(77,159,255,.14);color:#9dc6ff;margin-left:6px}
+  .ox-dip .why{display:block;font-size:11px;color:#6f7c8c;margin-top:3px;line-height:1.5}
+  `;
+  document.head.appendChild(st);
+
+  function draw() {
+    const d = window.OX_DATA; if (!d) return;
+    const dp = d.dip_pool; if (!dp) return;
+    let sec = $('oxDipCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxDipCard';
+      sec.innerHTML = '<div class="card-title">低吸池 · 五类位置</div><div class="rows ox-dip"></div>';
+      const scan = $('view-scan'); (scan || document.body).appendChild(sec);
+    }
+    const box = sec.querySelector('.rows');
+    const rows = dp.rows || [];
+    if (!rows.length) {
+      box.innerHTML = '<div class="row"><span class="nm" style="color:#8b96a5">今日没有符合位置条件的票</span></div>';
+      return;
+    }
+    box.innerHTML = rows.slice(0, 12).map(r => {
+      const rr = r.rr || {};
+      const ok = rr.ok;
+      return '<div class="row">' +
+        '<span class="nm">' + r.name + '<span class="tp">' + r.type + '</span>' +
+        '<span class="why">' + (r.why || '') + '</span></span>' +
+        '<span class="v" style="color:' + (ok ? '#3ecf8e' : '#5f6b7a') + '">' +
+        (rr.ratio != null ? '赔率 ' + rr.ratio : '赔率 -') + '</span></div>';
+    }).join('');
+    const title = sec.querySelector('.card-title');
+    if (title && !title.dataset.done) {
+      const sp = document.createElement('span');
+      sp.textContent = ' ' + (dp.asof || '').slice(5, 10) + ' · 与主池门禁分开算';
+      sp.style.cssText = 'margin-left:8px;font-size:11px;font-weight:400;color:#8b96a5';
+      title.appendChild(sp); title.dataset.done = '1';
+    }
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
