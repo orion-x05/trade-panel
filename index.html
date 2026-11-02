@@ -2278,5 +2278,133 @@ body::after{   /* 暗角 */
   if (document.readyState !== 'loading') buildCmdk();
 })();
 </script>
+
+<script>
+/* ===== 补充层 v3：深链接 / 骨架屏 / 曲线刻度 / 收盘慢刷 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const V = ['today','market','scan','hold','review','backtest','study'];
+
+  /* ---- 样式 ---- */
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-sk{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.12) 37%,rgba(255,255,255,.05) 63%);background-size:400% 100%;animation:oxsk 1.4s ease infinite;margin:8px 0}
+  @keyframes oxsk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+  .ox-axis{font-size:9.5px;fill:currentColor;opacity:.45}
+  .ox-grid{stroke:currentColor;opacity:.10;stroke-width:.5}
+  .ox-tip{position:fixed;pointer-events:none;z-index:60;padding:5px 8px;border-radius:7px;background:rgba(10,12,16,.92);border:1px solid rgba(255,255,255,.1);font-size:11.5px;color:#dbe4ee;transform:translate(-50%,-130%);display:none;white-space:nowrap}
+  .ox-new{position:fixed;right:14px;bottom:64px;z-index:60;padding:9px 14px;border-radius:999px;background:var(--accent,#4d9fff);color:#07101c;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);display:none}
+  `;
+  document.head.appendChild(st);
+
+  /* ---- 骨架屏 ---- */
+  function skeleton() {
+    const today = $('view-today'); if (!today || $('oxSk')) return;
+    const box = document.createElement('section');
+    box.className = 'card'; box.id = 'oxSk';
+    box.innerHTML = '<div class="ox-sk" style="width:38%"></div>' +
+                    '<div class="ox-sk" style="width:72%;height:34px"></div>' +
+                    '<div class="ox-sk" style="width:54%"></div>' +
+                    '<div class="ox-sk" style="width:66%"></div>';
+    today.insertBefore(box, today.firstChild);
+  }
+  function dropSkeleton() { const e = $('oxSk'); if (e) e.remove(); }
+
+  /* ---- 深链接：#scan/涨停梯队 ---- */
+  function locate(hash) {
+    const raw = (hash || '').replace(/^#/, '');
+    if (!raw) return;
+    const [tab, anchor] = raw.split('/');
+    const i = V.indexOf(tab);
+    if (i < 0) return;
+    document.querySelectorAll('.tabs .tab')[i].click();
+    if (!anchor) return;
+    const key = decodeURIComponent(anchor);
+    setTimeout(() => {
+      const cards = Array.from(document.querySelectorAll('.view:not([hidden]) .card, #view-' + tab + ' .card'));
+      const hit = cards.find(c => (c.querySelector('.card-title') || {}).textContent
+                      && c.querySelector('.card-title').textContent.indexOf(key) >= 0);
+      if (hit) hit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 160);
+  }
+  window.addEventListener('hashchange', () => locate(location.hash));
+  document.addEventListener('DOMContentLoaded', () => { if (location.hash.indexOf('/') > 0) locate(location.hash); });
+
+  /* ---- 曲线刻度 + hover ---- */
+  const tip = document.createElement('div'); tip.className = 'ox-tip'; document.body.appendChild(tip);
+  let tipData = null;
+
+  function decorateChart() {
+    const svg = document.querySelector('#oxEquityCard svg.ox-chart');
+    if (!svg || svg.dataset.done) return;
+    const d = window.OX_DATA; if (!d) return;
+    const days = (d.day_labels || []);
+    const lens = (d.players || []).map(p => (p.asset_history || []).length).filter(n => n > 0);
+    if (!lens.length) return;
+    const N = Math.min.apply(null, lens), skip = Math.max(0, days.length - N);
+    const view = days.slice(skip);
+    const seq = view.map((_, i) => (d.players || []).reduce((a, p) => {
+      const arr = p.asset_history || []; return a + (arr[arr.length - N + i] || 0);
+    }, 0));
+    const W = 600, H = 110, P = 4;
+    const mn = Math.min.apply(null, seq), mx = Math.max.apply(null, seq), sp = (mx - mn) || 1;
+    const Y = v => H - P - (v - mn) / sp * (H - 2 * P);
+    // 三条参考线 + 右侧刻度
+    let g = '';
+    [0, 0.5, 1].forEach(r => {
+      const val = mx - (mx - mn) * r, y = Y(val);
+      g += '<line class="ox-grid" x1="0" y1="' + y.toFixed(1) + '" x2="' + W + '" y2="' + y.toFixed(1) + '"/>' +
+           '<text class="ox-axis" x="' + (W - 2) + '" y="' + (y - 2).toFixed(1) + '" text-anchor="end">' + (val / 10000).toFixed(1) + '万</text>';
+    });
+    svg.insertAdjacentHTML('afterbegin', g);
+    svg.dataset.done = '1';
+    tipData = { W, H, P, view, seq, mn, mx };
+    svg.style.cursor = 'crosshair';
+    svg.addEventListener('mousemove', (e) => {
+      const r = svg.getBoundingClientRect();
+      const rel = (e.clientX - r.left) / r.width;
+      const idx = Math.max(0, Math.min(tipData.seq.length - 1, Math.round(rel * (tipData.seq.length - 1))));
+      const v = tipData.seq[idx];
+      tip.style.display = 'block';
+      tip.style.left = e.clientX + 'px';
+      tip.style.top = e.clientY + 'px';
+      tip.textContent = tipData.view[idx] + '　' + (v / 10000).toFixed(2) + ' 万';
+    });
+    svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  }
+
+  /* ---- 收盘后慢刷：有新数据给个按钮，不硬刷页面 ---- */
+  let lastSeen = null, newBtn = null;
+  function pollAfterClose() {
+    if (!newBtn) {
+      newBtn = document.createElement('div');
+      newBtn.className = 'ox-new';
+      newBtn.textContent = '有新数据 · 点我刷新';
+      newBtn.onclick = () => location.reload();
+      document.body.appendChild(newBtn);
+    }
+    setInterval(() => {
+      const now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+      const closed = now.getDay() === 0 || now.getDay() === 6 || m >= 900 || m < 570;
+      if (!closed) return;
+      fetch('data.json?t=' + Date.now()).then(r => r.json()).then(d => {
+        if (lastSeen && d.last_update && d.last_update !== lastSeen) newBtn.style.display = 'block';
+        lastSeen = d.last_update;
+      }).catch(() => {});
+    }, 600000);
+  }
+
+  /* ---- 轮询等数据 ---- */
+  let n = 0;
+  const t = setInterval(() => {
+    if (!window.OX_DATA) { skeleton(); }
+    else { dropSkeleton(); decorateChart(); clearInterval(t); }
+    if (++n > 60) clearInterval(t);
+  }, 400);
+
+  pollAfterClose();
+})();
+</script>
+
 </body>
 </html>
