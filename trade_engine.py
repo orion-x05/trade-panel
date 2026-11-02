@@ -2834,7 +2834,8 @@ def eval_gates(code, name, ltsz, score, lbc=0):
               for it in items if it["level"] is not None)
     known = sum(1 for it in items if it["level"] is not None)
     rr = calc_rr(rows, price)
-    return {"items": items, "points": pts, "max_points": known * 2, "rr": rr,
+    ab = calc_abnormal(rows, code, name, _index_dev(3)) if rows else None
+    return {"items": items, "points": pts, "max_points": known * 2, "rr": rr, "abnormal": ab,
             "passed": sum(1 for it in items if it["level"] == "ok"),
             "known": known, "rsi6": r6, "price": price}
 
@@ -3105,6 +3106,70 @@ def classify_dip(k, lbc=0, hybk=""):
     return None, ""
 
 
+def _index_dev(days=3):
+    """上证指数最近 N 日累计涨跌幅（%），用于算个股偏离值。"""
+    rows = _fetch_kline("000001", 20)
+    if not rows:
+        return 0.0
+    closes = [float(r[2]) for r in rows]
+    if len(closes) <= days:
+        return 0.0
+    return round((closes[-1] / closes[-1 - days] - 1) * 100, 2)
+
+
+def abnormal_rule(code, name=""):
+    """异动阈值（%）：主板 20、创业板/科创板 30、ST 15、北交所 40。
+
+    规则：连续 3 个交易日累计涨跌幅偏离大盘达到阈值，即触发「股票交易异常波动」，
+    交易所要求披露核查公告，主力通常会主动卡住涨幅。所以这里给的是「还剩多少空间」。
+    """
+    n = str(name or "").upper().replace(" ", "")
+    if "ST" in n:
+        return 15.0, "连3日累计偏离 ≥15%（ST）"
+    c = str(code or "")
+    if c.startswith(("30", "68")):
+        return 30.0, "连3日累计偏离 ≥30%（创业板/科创板）"
+    if c.startswith(("4", "8", "92")):
+        return 40.0, "连3日累计偏离 ≥40%（北交所）"
+    return 20.0, "连3日累计偏离 ≥20%（主板）"
+
+
+def is_paozi(price):
+    """豹子顶：价格去掉小数点后全是同一个数字（6.66 / 8.88 / 11.11 / 66.66）。
+
+    高位出现这种整齐数字，常被视为多头把价位「做圆」的痕迹，追高要谨慎。
+    """
+    try:
+        s = f"{float(price):.2f}".replace(".", "")
+        return len(set(s)) == 1 and len(s) >= 3
+    except Exception:
+        return False
+
+
+def calc_abnormal(rows, code, name="", idx_dev=0.0):
+    """算 3 日累计偏离、阈值、剩余空间与风险等级。"""
+    if not rows or len(rows) < 5:
+        return None
+    closes = [float(r[2]) for r in rows]
+    dev3 = round((closes[-1] / closes[-4] - 1) * 100, 2)          # 个股 3 日累计
+    dev = round(dev3 - idx_dev, 2)                                 # 减大盘同期 → 偏离值
+    limit, rule = abnormal_rule(code, name)
+    remain = round(limit - dev, 2)
+    if remain <= 2:
+        risk = "高"
+    elif remain <= 6:
+        risk = "中"
+    else:
+        risk = "低"
+    # 豹子顶：高位（近 20 日涨幅 >30%）且收盘/最高价是整数字
+    ret20 = round((closes[-1] / closes[-20] - 1) * 100, 1) if len(closes) >= 20 else 0.0
+    high_pos = ret20 >= 30
+    paozi = high_pos and (is_paozi(closes[-1]) or is_paozi(max(float(r[3]) for r in rows[-3:])))
+    return {"dev3": dev3, "idx3": idx_dev, "dev": dev, "limit": limit,
+            "remain": remain, "risk": risk, "rule": rule,
+            "ret20": ret20, "paozi": bool(paozi)}
+
+
 def build_dip_pool(data, limit=24):
     """【低吸池】按五类位置筛票，并用回调位算赔率。
 
@@ -3116,6 +3181,7 @@ def build_dip_pool(data, limit=24):
         return {"ok": False, "asof": ld.get("asof"), "rows": []}
 
     # 先按板块排序，保证同板块的票挨着，方便看中军/后排
+    idx_dev = _index_dev(3)
     cand = sorted(zt, key=lambda s: (-int(s.get("lbc") or 0), -(float(s.get("fund") or 0))))[:40]
 
     rows = []
@@ -3127,11 +3193,13 @@ def build_dip_pool(data, limit=24):
             continue
         px = k[-1]["c"] if k else None
         rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px) if k else None
+        ab = calc_abnormal([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k],
+                           code, s.get("name"), idx_dev) if k else None
         rows.append({
             "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
             "price": round(px, 2) if px else None,
-            "rr": rr,
+            "rr": rr, "abnormal": ab,
         })
         if len(rows) >= limit:
             break
