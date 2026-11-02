@@ -2461,19 +2461,24 @@ body::after{   /* 暗角 */
 
 
 <script>
-/* ===== 补充层 v5：评分池点开看 K 线 + 门禁 ===== */
+/* ===== 补充层 v5b：评分池 → K 线（可缩放/拖拽）+ 门禁 ===== */
 (function () {
   const $ = (id) => document.getElementById(id);
   const st = document.createElement('style');
   st.textContent = `
   .ox-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:flex;justify-content:flex-end}
   .ox-mask[hidden]{display:none}
-  .ox-drawer{width:min(560px,96vw);height:100%;overflow:auto;background:#0e1218;border-left:1px solid rgba(255,255,255,.08);padding:18px 18px 40px;box-sizing:border-box}
+  .ox-drawer{width:min(600px,96vw);height:100%;overflow:auto;background:#0e1218;border-left:1px solid rgba(255,255,255,.08);padding:18px 18px 40px;box-sizing:border-box}
   .ox-dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
   .ox-dh h3{margin:0;font-size:17px;font-weight:600}
   .ox-dh .x{cursor:pointer;color:#8b96a5;font-size:20px;line-height:1}
-  .ox-sub{font-size:12px;color:#8b96a5;margin-bottom:14px}
-  .ox-kline{width:100%;height:180px;display:block}
+  .ox-sub{font-size:12px;color:#8b96a5;margin-bottom:10px}
+  .ox-kwrap{position:relative;user-select:none}
+  .ox-kline{width:100%;height:200px;display:block;cursor:grab;touch-action:none}
+  .ox-kline:active{cursor:grabbing}
+  .ox-zoom{display:flex;gap:6px;margin:8px 0 4px}
+  .ox-zoom button{font:inherit;font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#98a6b8;cursor:pointer}
+  .ox-zoom button.on{background:rgba(77,159,255,.16);border-color:rgba(77,159,255,.5);color:#cfe4ff}
   .ox-gate{margin-top:14px}
   .ox-gate .g{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)}
   .ox-ok{color:#3ecf8e}.ox-no{color:#e8b339}
@@ -2490,15 +2495,22 @@ body::after{   /* 暗角 */
   mask.addEventListener('click', e => { if (e.target === mask) mask.hidden = true; });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') mask.hidden = true; });
 
-  function tx(code) { return (String(code).startsWith('6') ? 'sh' : 'sz') + code; }
+  const tx = code => (String(code).startsWith('6') ? 'sh' : 'sz') + code;
 
-  function candles(rows) {
-    const n = rows.length; if (n < 5) return '<div class="ox-sub">K 线数据不足</div>';
-    const W = 520, H = 180, P = 6, cw = (W - P * 2) / n;
-    const his = rows.map(r => +r[3]), los = rows.map(r => +r[4]);
-    const mx = Math.max.apply(null, his), mn = Math.min.apply(null, los), sp = (mx - mn) || 1;
+  let ALL = [], VIEW = { end: 0, count: 60 };
+
+  function drawK() {
+    const box = $('oxKbox'); if (!box || !ALL.length) return;
+    const n = ALL.length;
+    VIEW.count = Math.max(20, Math.min(VIEW.count, n));
+    VIEW.end = Math.max(VIEW.count, Math.min(VIEW.end || n, n));
+    const rows = ALL.slice(VIEW.end - VIEW.count, VIEW.end);
+    const W = 560, H = 200, P = 6, cw = (W - P * 2) / rows.length;
+    const mx = Math.max.apply(null, rows.map(r => +r[3]));
+    const mn = Math.min.apply(null, rows.map(r => +r[4]));
+    const sp = (mx - mn) || 1;
     const Y = v => H - P - (v - mn) / sp * (H - 2 * P);
-    let g = '', ma = [], sum = 0;
+    let g = '';
     rows.forEach((r, i) => {
       const o = +r[1], c = +r[2], hi = +r[3], lo = +r[4];
       const x = P + i * cw + cw / 2;
@@ -2506,13 +2518,51 @@ body::after{   /* 暗角 */
       const col = up ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
       g += '<line x1="' + x.toFixed(1) + '" y1="' + Y(hi).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + Y(lo).toFixed(1) + '" stroke="' + col + '" stroke-width="1"/>';
       const bh = Math.max(1, Math.abs(Y(o) - Y(c)));
-      g += '<rect x="' + (x - cw * 0.32).toFixed(1) + '" y="' + Math.min(Y(o), Y(c)).toFixed(1) + '" width="' + (cw * 0.64).toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="' + col + '" opacity=".85"/>';
-      sum += c;
-      if (i >= 19) { if (i > 19) sum -= +rows[i - 20][2]; ma.push([x, sum / 20]); }
+      g += '<rect x="' + (x - cw * 0.32).toFixed(1) + '" y="' + Math.min(Y(o), Y(c)).toFixed(1) + '" width="' + Math.max(1, cw * 0.64).toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="' + col + '" opacity=".85"/>';
     });
+    // MA20（用窗口内的完整序列算，边界用 ALL 里的前 19 根）
+    const base = VIEW.end - VIEW.count;
+    let ma = [];
+    for (let i = 0; i < VIEW.count; i++) {
+      const idx = base + i;
+      if (idx >= 19) {
+        let s = 0; for (let k = idx - 19; k <= idx; k++) s += +ALL[k][2];
+        ma.push([P + i * cw + cw / 2, s / 20]);
+      }
+    }
     const ml = ma.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + Y(pt[1]).toFixed(1)).join(' ');
-    return '<svg class="ox-kline" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g +
-           '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' + '</svg>';
+    $('oxKbox').innerHTML =
+      '<svg class="ox-kline" id="oxKsvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g +
+      (ml ? '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' : '') + '</svg>';
+    const f = rows[0][0], t = rows[rows.length - 1][0];
+    $('oxKinfo').textContent = f + ' → ' + t + ' · ' + rows.length + ' 根 · 滚轮缩放，拖动平移';
+  }
+
+  function bindK() {
+    const box = $('oxKbox'); if (!box) return;
+    box.onwheel = (e) => {
+      e.preventDefault();
+      VIEW.count = Math.round(VIEW.count * (e.deltaY > 0 ? 1.15 : 0.87));
+      drawK();
+    };
+    let drag = null;
+    box.onpointerdown = (e) => { drag = { x: e.clientX, end: VIEW.end }; box.setPointerCapture(e.pointerId); };
+    box.onpointermove = (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      const perBar = box.clientWidth / VIEW.count;
+      VIEW.end = drag.end - Math.round(dx / perBar);
+      drawK();
+    };
+    box.onpointerup = box.onpointercancel = () => { drag = null; };
+  }
+
+  function setRange(k) {
+    if (k === 'all') { VIEW.count = ALL.length; VIEW.end = ALL.length; }
+    else { VIEW.count = k; VIEW.end = ALL.length; }
+    Array.from(document.querySelectorAll('.ox-zoom button')).forEach(b =>
+      b.classList.toggle('on', b.dataset.k === String(k)));
+    drawK();
   }
 
   function gate(r) {
@@ -2536,7 +2586,11 @@ body::after{   /* 暗角 */
       '<div class="ox-dh"><h3>' + (r.name || r.code) + ' <span style="font-size:12px;color:#8b96a5">' + r.code + '</span></h3>' +
       '<span class="x" id="oxClose">×</span></div>' +
       '<div class="ox-sub">' + (r.hybk || '') + ' · ' + (r.lbc ? r.lbc + ' 板' : '首板') + ' · 评分 ' + r.score + '</div>' +
-      '<div id="oxKwrap"><div class="ox-sub">K 线加载中…</div></div>' +
+      '<div class="ox-zoom">' +
+        [20, 40, 60, 120].map(k => '<button data-k="' + k + '">' + k + '日</button>').join('') +
+        '<button data-k="all">全部</button></div>' +
+      '<div class="ox-kwrap"><div id="oxKbox"><div class="ox-sub">K 线加载中…</div></div></div>' +
+      '<div class="ox-sub" id="oxKinfo"></div>' +
       '<div class="ox-kv2">' +
         '<div>连板<b>' + (r.lbc || 0) + ' 板</b></div>' +
         '<div>涨幅<b>' + (r.zdp || 0) + '%</b></div>' +
@@ -2548,22 +2602,26 @@ body::after{   /* 暗角 */
         const cls = x[1] === null ? '' : (x[1] ? 'ox-ok' : 'ox-no');
         const mark = x[1] === null ? '·' : (x[1] ? '✓' : '✗');
         const col = x[1] === null ? 'color:#5f6b7a' : '';
-        return '<div class="g"><span>' + x[0] + '</span><span class="' + cls + '" style="' + col + '">' +
-               mark + ' ' + x[2] + '</span></div>';
+        return '<div class="g"><span>' + x[0] + '</span><span class="' + cls + '" style="' + col + '">' + mark + ' ' + x[2] + '</span></div>';
       }).join('') + '</div>' +
-      (g.real ? '' : '<div class="ox-sub" style="margin-top:8px">⚠ 引擎还没算这批真门禁，先显示简化三条</div>');
+      (g.real ? '' : '<div class="ox-sub" style="margin-top:8px">⚠ 这只引擎还没算真门禁，先显示简化三条</div>');
     mask.hidden = false;
     $('oxClose').onclick = () => { mask.hidden = true; };
+    Array.from(document.querySelectorAll('.ox-zoom button')).forEach(b => {
+      b.onclick = () => { const k = b.dataset.k; setRange(k === 'all' ? 'all' : +k); };
+    });
 
     try {
-      const res = await fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + tx(r.code) + ',day,,,80,qfq');
+      const res = await fetch('https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + tx(r.code) + ',day,,,250,qfq');
       const j = await res.json();
       const obj = (j.data || {})[tx(r.code)] || {};
-      const rows = obj.qfqday || obj.day || [];
-      $('oxKwrap').innerHTML = candles(rows) +
-        '<div class="ox-sub">近 ' + rows.length + ' 个交易日 · 前复权 · 蓝线为 MA20</div>';
+      ALL = obj.qfqday || obj.day || [];
+      VIEW = { end: ALL.length, count: Math.min(60, ALL.length) };
+      drawK(); bindK();
+      Array.from(document.querySelectorAll('.ox-zoom button')).forEach(b =>
+        b.classList.toggle('on', Number(b.dataset.k) === VIEW.count));
     } catch (e) {
-      $('oxKwrap').innerHTML = '<div class="ox-sub">K 线加载失败：' + e.message + '</div>';
+      $('oxKbox').innerHTML = '<div class="ox-sub">K 线加载失败：' + e.message + '</div>';
     }
   }
 
