@@ -514,7 +514,7 @@ def _fetch_pools_one_day(date_str, pagesize):
 
     def _fetch_pool(url, sort, max_pages=25):
         """翻页拉全某个池子，返回 (原始行列表, tc全市场总数)。按代码去重防翻页重叠。"""
-        rows, seen, tc = [], set(), 0
+        rows, seen, tc, qdate = [], set(), 0, None
         for page in range(max_pages):
             j = _em_json(url, params={
                 "ut": "7eea3edcaed734bea9cbfc24409ed989", "dpt": "wz.ztzt",
@@ -523,6 +523,7 @@ def _fetch_pools_one_day(date_str, pagesize):
                 break
             d = j["data"]
             tc = int(d.get("tc") or 0)
+            qdate = d.get("qdate") or qdate
             pool = d.get("pool") or []
             fresh = 0
             for p in pool:
@@ -535,9 +536,9 @@ def _fetch_pools_one_day(date_str, pagesize):
             # 拉满 tc、或本页无新增/空页 → 收工
             if not pool or fresh == 0 or (tc and len(rows) >= tc):
                 break
-        return rows, tc
+        return rows, tc, qdate
 
-    zt_raw, out["zt_tc"] = _fetch_pool("https://push2ex.eastmoney.com/getTopicZTPool", "fbt:asc")
+    zt_raw, out["zt_tc"], qdate = _fetch_pool("https://push2ex.eastmoney.com/getTopicZTPool", "fbt:asc")
     for p in zt_raw:
         fbt = p.get("fbt") or 0
         lbc = int(p.get("lbc") or 0)
@@ -553,7 +554,7 @@ def _fetch_pools_one_day(date_str, pagesize):
             "fbt": "%02d:%02d" % (fbt // 10000, (fbt // 100) % 100) if fbt else "--",
             "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),          # 流通市值(亿)
         })
-    dt_raw, out["dt_tc"] = _fetch_pool("https://push2ex.eastmoney.com/getTopicDTPool", "fund:asc")
+    dt_raw, out["dt_tc"], _ = _fetch_pool("https://push2ex.eastmoney.com/getTopicDTPool", "fund:asc")
     for p in dt_raw:
         out["dt"].append({
             "code": p.get("c", ""), "name": p.get("n", ""),
@@ -563,6 +564,13 @@ def _fetch_pools_one_day(date_str, pagesize):
             "hybk": p.get("hybk") or "其他",
             "ltsz": round(float(p.get("ltsz") or 0) / 1e8, 1),
         })
+    # 【关键校验】东财对无数据/未来日期会兜底返回最近一天，但 qdate 写明真实归属日。
+    # 不校验就会把“昨天”的数据当成“今天”，导致昨日池与今日池自比、晋级率恒 0。
+    out["qdate"] = str(qdate) if qdate else date_str
+    if qdate and str(qdate) != date_str:
+        out["ok"] = False
+        out["mismatch"] = True
+        return out
     out["ok"] = bool(out["zt"] or out["dt"])
     return out
 
@@ -580,7 +588,7 @@ def get_limit_pools(pagesize=80):
             continue  # 周末：东财兜底数据归属上一交易日，不当成池日期
         last = _fetch_pools_one_day(ds, pagesize)
         if last["ok"]:
-            last["pool_date"] = ds
+            last["pool_date"] = str(last.get("qdate") or ds)
             return last
     return last
 
