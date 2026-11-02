@@ -619,6 +619,14 @@ def build_yesterday_perf(zt_today, pool_date=None):
     if not prev_zt:
         out["reason"] = "昨日涨停池不可得（回退5天均无数据）"
         return out
+    # 【完整性校验】昨日池与今日池完全相同 → 说明取到了同一个交易日的数据，
+    # 自比自会让晋级率恒 0，必须判为不可用，而不是给一个假数字。
+    today_codes = {s["code"] for s in (zt_today or [])}
+    prev_codes = {s["code"] for s in prev_zt}
+    if today_codes and today_codes == prev_codes:
+        out["reason"] = "昨日池与今日池完全相同（同一交易日），晋级率不可用"
+        return out
+
     codes = [s["code"] for s in prev_zt]
     quotes = {}
     for i in range(0, len(codes), 50):  # 腾讯批量报价分批，防URL过长
@@ -642,8 +650,11 @@ def build_yesterday_perf(zt_today, pool_date=None):
         return out
     base1 = [s for s in prev_zt if s["lbc"] == 1]
     base2 = [s for s in prev_zt if s["lbc"] == 2]
-    hit1 = sum(1 for s in base1 if today_map.get(s["code"], {}).get("lbc", 0) >= 2)
-    hit2 = sum(1 for s in base2 if today_map.get(s["code"], {}).get("lbc", 0) >= 3)
+    def _upgraded(s, need):
+        lb = (today_map.get(s["code"]) or {}).get("lbc") or 0
+        return lb >= need and lb > (s.get("lbc") or 0)
+    hit1 = sum(1 for s in base1 if _upgraded(s, 2))
+    hit2 = sum(1 for s in base2 if _upgraded(s, 3))
     out.update({"ok": True, "rows": rows,
                 "promote": {"base_1to2": len(base1), "hit_1to2": hit1,
                             "base_2to3": len(base2), "hit_2to3": hit2},
@@ -2989,6 +3000,15 @@ def build_review_block(data):
                            for b in ladder["back"][:3]]
     expect["invalid"] = (f"若明日涨停数跌破 {max(20, n_zt // 2)} 家，或最高标断板，则本预期作废")
 
+    # 板块聚集度：同板块涨停家数排名，前三才是主线，其余算扩散
+    radar = data.get("theme_radar") or {}
+    _th = sorted(radar.get("themes") or [], key=lambda t: (-(t.get("n") or 0), -(t.get("max_lb") or 0)))
+    cluster = [{"name": t.get("name"), "n": t.get("n"), "max_lb": t.get("max_lb"),
+                "stage": t.get("stage")} for t in _th[:5]]
+    if cluster:
+        expect["why"].append(
+            "主线：" + "、".join(f"{c['name']}{c['n']}家" for c in cluster[:3]))
+
     lhb = data.get("lhb") or build_lhb()
     if lhb.get("rows"):
         hot_lhb = [r for r in lhb["rows"][:6] if r["net"] > 0]
@@ -2998,6 +3018,7 @@ def build_review_block(data):
 
     return {
         "asof": ld.get("asof"),
+        "cluster": cluster,
         "lhb": lhb,
         "ladder": ladder,
         "mood": {"n_zt": n_zt, "max_lb": max_lb, "boom": boom,
