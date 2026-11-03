@@ -3810,8 +3810,21 @@ def backfill_review_blocks(data):
         return False
     pd = pools.get("pool_date") or ""
     target = f"{pd[:4]}-{pd[4:6]}-{pd[6:]}" if len(pd) == 8 else ""
-    cur = str((data.get("limit_decoded") or {}).get("asof") or "")[:10]
-    if target and cur >= target:
+    _ld = data.get("limit_decoded") or {}
+    cur = str(_ld.get("asof") or "")[:10]
+    cur_full = str(_ld.get("asof") or "")
+    # 【收盘口径修正】盘中抓到的池子是快照（炸板/尾盘封板都没算），
+    # 收盘后就算日期相同也必须重拉一次，否则涨停家数和梯队永远是 13:30 的样子。
+    need_close_refresh = False
+    if target and cur == target:
+        try:
+            _hr = int(cur_full.split(" ")[1].split(":")[0])
+        except Exception:
+            _hr = 15
+        if cn_now().hour >= 15 and _hr < 15:
+            need_close_refresh = True
+            print(f"  🔄 asof {cur_full} 是盘中快照，收盘后重拉一次涨停池")
+    if target and cur >= target and not need_close_refresh:
         print(f"  ✅ 复盘数据已是最新（{cur}），不重复补拉")
         return False
 
