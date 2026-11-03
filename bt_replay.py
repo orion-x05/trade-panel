@@ -61,6 +61,24 @@ def fetch_kline(code, n=BARS):
     return []
 
 
+def index_regime_map():
+    """返回 {日期: '多'/'空'/'震'}，按上证指数收盘与 MA20/MA60 关系逐日判定。
+
+    口径简单可解释：收盘在两条均线之上=多；之下=空；夹在中间=震。
+    """
+    k = fetch_kline("000001", BARS)
+    if not k:
+        return {}
+    out = {}
+    closes = [x["c"] for x in k]
+    for i in range(60, len(k)):
+        c = closes[i]
+        m20 = sum(closes[i - 19:i + 1]) / 20
+        m60 = sum(closes[i - 59:i + 1]) / 60
+        out[k[i]["d"]] = "多" if c > m20 and c > m60 else ("空" if c < m20 and c < m60 else "震")
+    return out
+
+
 def hot_universe(days=45, limit=60):
     """从最近若干个交易日的涨停池里挑“最常涨停”的票，作为短线类策略的标的池。
 
@@ -207,7 +225,7 @@ def signal(role, k, i):
 
 
 def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
-             stop=-7.0, take=8.0, max_hold=20, max_pos=5, pos_pct=0.2):
+             max_hold=20, max_pos=5, pos_pct=0.2, stop_mult=1.0, regime_map=None):
     """组合口径回放：与实盘一致——最多 5 只、单只 20% 仓位、逐日遍历。
 
     每个交易日先处理离场，再按信号补仓（现金够、仓位未满才买）。
@@ -242,7 +260,8 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
                 fee = max(gross * fee_rate, 5e-5) + gross * stamp
                 cash += gross - fee
                 net_ret = ((gross - fee) / h["cost"] - 1) * 100
-                trades.append({"code": c, "ret": round(net_ret, 2), "reason": reason, "days": h["day"]})
+                trades.append({"code": c, "ret": round(net_ret, 2), "reason": reason,
+                               "days": h["day"], "regime": h.get("regime")})
                 holdings.pop(c)
 
         # 2) 补仓
@@ -265,7 +284,9 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
                 stop_pct = max(3.0, min(12.0, sl_mult * ap))          # 3%~12% 夹住，防 ATR 极端
                 take_pct = stop_pct * ROLE_RR.get(role, 2.0)
                 holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee,
-                               "stop": stop_pct, "take": take_pct, "atr": round(ap, 2)}
+                               "stop": stop_pct * stop_mult, "take": take_pct * stop_mult,
+                               "atr": round(ap, 2),
+                               "regime": (regime_map or {}).get(data[c][idx]["d"], "?")}
 
         # 3) 记净值
         mv = sum(h["shares"] * data[c][offs[c] + t]["c"] for c, h in holdings.items())
@@ -280,7 +301,17 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
             mdd = max(mdd, (peak - v) / peak)
     rets = [x["ret"] for x in trades]
     wins = [r for r in rets if r > 0]
-    return {"n": len(trades),
+    by_reg = {}
+    for t in trades:
+        g = t.get("regime") or "?"
+        d = by_reg.setdefault(g, {"n": 0, "win": 0, "sum": 0.0})
+        d["n"] += 1
+        d["win"] += 1 if t["ret"] > 0 else 0
+        d["sum"] = round(d["sum"] + t["ret"], 2)
+    for g, d in by_reg.items():
+        d["avg"] = round(d["sum"] / d["n"], 2) if d["n"] else None
+        d["win_rate"] = round(d["win"] / d["n"], 3) if d["n"] else None
+    return {"n": len(trades), "regime": by_reg,
             "win_rate": round(len(wins) / len(trades), 3) if trades else None,
             "avg": round(sum(rets) / len(rets), 2) if trades else None,
             "total": round((equity[-1] - 1) * 100, 2),
@@ -289,34 +320,74 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
 
 
 def main():
-    universe = hot_universe()
-    if universe:
-        print(f"短线标的池（历史涨停热票）{len(universe)} 只")
-    else:
-        universe = load_universe()
-        print(f"涨停池不可得，退回固定池 {len(universe)} 只")
-    print(f"回测标的 {len(universe)} 只 · 每只 {BARS} 根日 K")
-    data = {}
-    for code in universe:
-        k = fetch_kline(code)
-        if len(k) >= 80:
-            data[code] = k
-    if not data:
-        print("⚠ 没有可用 K 线，退出")
+    regime_map = index_regime_map()
+    print(f"大盘环境覆盖 {len(regime_map)} 个交易日")
+
+    pools = {}
+    hot = hot_universe()
+    if hot:
+        pools["涨停热票"] = hot
+    big = load_universe()
+    if big:
+        pools["大盘股"] = big
+    if hot and big:
+        pools["合并"] = sorted(set(hot) | set(big))[:110]
+    if not pools:
+        print("⚠ 没有可用标的池")
         return
-    days = min(len(k) for k in data.values())
-    print(f"可用 {len(data)} 只 · 最短 {days} 根")
-    roles = {}
-    for r in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"] + DIP_TYPES:
-        res = run_role(r, data)
-        roles[r] = {k: v for k, v in res.items() if k != "trades"}
-        print(f"  {r}: {res['n']} 笔 · 胜率 {res['win_rate']} · 累计 {res['total']}% · 回撤 {res['maxdd']}%")
+
+    all_data = {}
+    for name, codes in pools.items():
+        data = {}
+        for code in codes:
+            if code in all_data:
+                k = all_data[code]
+            else:
+                k = fetch_kline(code)
+                all_data[code] = k
+            if len(k) >= 80:
+                data[code] = k
+        pools[name] = data
+        print(f"池 {name}：{len(data)} 只有效 K 线")
+
+    ROLES_ALL = ["D1", "D2", "D3", "D4", "D5", "D6", "D7"] + DIP_TYPES
     out = {"generated_by": "bt_replay.py", "asof": time.strftime("%Y-%m-%d %H:%M"),
-           "universe": len(data), "bars": days, "roles": roles,
-           "note": "简化规则复刻，不含 AI 判断与滑点；单票满仓，扣双边费用"}
+           "bars": BARS, "pools": {}, "sensitivity": {}, "regime_days": len(regime_map),
+           "note": "简化规则复刻，不含 AI 判断与滑点；组合口径最多5只/单只20%；止损止盈按 ATR 动态"}
+
+    for name, data in pools.items():
+        if not data:
+            continue
+        res = {}
+        print(f"\n== 池 {name}（{len(data)} 只）==")
+        for r in ROLES_ALL:
+            v = run_role(r, data, regime_map=regime_map)
+            res[r] = v
+            wr = "—" if v["win_rate"] is None else f"{v['win_rate']:.0%}"
+            print(f"  {r}: {v['n']:3} 笔 · 胜率 {wr} · 组合 {v['total']:>7}% · 回撤 {v['maxdd']}%")
+            reg = v.get("regime") or {}
+            if reg:
+                print("      环境分层: " + " · ".join(
+                    f"{g} {d['n']}笔 均{d['avg']}%" for g, d in sorted(reg.items()) if d.get('n')))
+        out["pools"][name] = {"universe": len(data), "roles": res}
+
+    # 参数敏感性：止损止盈整体 ×0.8 / ×1.0 / ×1.2，看结论会不会翻
+    sens = {}
+    focus = ["D2", "D4", "D7"] + DIP_TYPES
+    for name, data in pools.items():
+        if not data:
+            continue
+        for r in focus:
+            row = {}
+            for m in (0.8, 1.0, 1.2):
+                v = run_role(r, data, regime_map=regime_map, stop_mult=m)
+                row[f"x{m}"] = v["total"]
+            sens.setdefault(r, {})[name] = row
+    out["sensitivity"] = sens
+
     with open("bt_result.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    print("💾 已生成 bt_result.json")
+    print("\n💾 已生成 bt_result.json（含分池 / 环境分层 / 参数敏感性）")
 
 
 if __name__ == "__main__":
