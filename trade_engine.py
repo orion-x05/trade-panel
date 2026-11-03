@@ -2657,6 +2657,19 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     if BULL_ONLY and trend != "bull":
         print(f"  🌥 非多头环境（{trend}）· BULL_ONLY 开关生效，跳过买入 {st.get('name')}")
         return
+
+    # 【大模型闸】规则过了，再让角色模型判断要不要下手；模型不可用则跳过（降级为纯规则）
+    _ctx = (f"标的：{st.get('name')}({code})\n"
+            f"现价：{st.get('price')}  今日涨幅：{st.get('chg', 0):+.2f}%  量比：{st.get('vol_ratio') or '-'}\n"
+            f"MA5：{st.get('ma5') or '-'}  MA20：{st.get('ma20') or '-'}  MA60：{st.get('ma60') or '-'}\n"
+            f"连板数：{st.get('lbc') or 0}  换手：{st.get('turnover') or '-'}%\n"
+            f"大盘环境：{trend}\n"
+            f"规则给出的买入理由：{reason}")
+    _dec = llm_decide(player["id"], _ctx)
+    llm_log(None, player["id"], {"code": code, "name": st.get("name")}, _dec)
+    if _dec and _dec["action"] == "pass":
+        print(f"  🧠 {player['id']} 模型否决 {st.get('name')}：{_dec['reason']}（信心{_dec['confidence']}）")
+        return
     # 【W1·仓位公式】风险由仓位控制，不由止损距离控制（补丁二）：
     #   单笔风险预算 = 权益 × 1%；止损距离 = sl_atr × ATR%（无ATR按默认2%波动率）
     #   预算 = min(权益×1% ÷ 止损距离, 权益×25%)；波动越大买越少，风险恒定 1%
@@ -3910,6 +3923,8 @@ def main():
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     data["bull_only"] = bool(BULL_ONLY)
+    if LLM_LOG:
+        data["llm_log"] = LLM_LOG[-40:]
     _ld0 = data.get("limit_decoded") or {}
     data["trade_date"] = _ld0.get("trade_date") or (str(_ld0.get("asof"))[:10] if _ld0.get("asof") else None)
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
