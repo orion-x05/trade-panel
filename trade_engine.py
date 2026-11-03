@@ -3568,6 +3568,69 @@ def build_dip_pool(data, limit=24):
             "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"}
 
 
+# ============ 大模型决策层（DeepSeek） ============
+# 规则先过闸，模型只做最后一道「要不要下手」的判断。
+# 设计原则：模型挂了不影响交易（降级为纯规则），不阻塞主流程。
+LLM_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+LLM_URL = "https://api.deepseek.com/chat/completions"
+LLM_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+LLM_LOG = []
+
+ROLE_BRIEF = {
+    "D1": "你是锋，锐意进取的突破手。只做趋势突破：均线多头、放量创阶段新高。你接受较高波动，但不追已经连续大涨的票。",
+    "D2": "你是衡，均衡稳健的多头共识派。看均线排列、量价配合、板块共振，宁可错过也不追高。",
+    "D3": "你是镜，辩证中立。你先问「这个位置如果错了，亏多少」，再看能赚多少，赔率不合适就不做。",
+    "D4": "你是啸，做假阴真阳和强势回调。你在别人恐慌时买，但必须有支撑位和明确止损。",
+    "D5": "你是渊，逆向耐心型。你等回踩到位、缩量、不破关键位才出手，从不追涨。",
+    "D6": "你是焰，专注涨停回调。你在连板股回踩不破时介入，赚二次启动的溢价，时间窗口只有一到两天。",
+    "D7": "你是沉，做深跌反转。你只在跌透、缩量、出现止跌信号时出手，胜率低但赔率高。",
+}
+
+
+def llm_decide(role, ctx, timeout=15):
+    """让角色模型判断是否出手。返回 {action, confidence, reason} 或 None（失败即降级）。"""
+    if not LLM_KEY:
+        return None
+    brief = ROLE_BRIEF.get(role, "你是短线交易员。")
+    system = (brief + "\n只输出一行 JSON，不要任何其他文字："
+              '{"action":"buy"或"pass","confidence":0-100的整数,"reason":"不超过30字的中文理由"}')
+    try:
+        r = requests.post(LLM_URL, timeout=timeout,
+                          headers={"Authorization": "Bearer " + LLM_KEY, "Content-Type": "application/json"},
+                          json={"model": LLM_MODEL, "temperature": 0.3, "max_tokens": 120,
+                                "messages": [{"role": "system", "content": system},
+                                             {"role": "user", "content": ctx}]})
+        if r.status_code != 200:
+            print(f"  ⚠ LLM {role} 返回 {r.status_code}")
+            return None
+        txt = (r.json()["choices"][0]["message"]["content"] or "").strip()
+        s, e = txt.find("{"), txt.rfind("}")
+        if s < 0 or e < 0:
+            return None
+        obj = json.loads(txt[s:e + 1])
+        act = str(obj.get("action", "")).lower()
+        if act not in ("buy", "pass"):
+            return None
+        return {"action": act, "confidence": int(obj.get("confidence") or 0),
+                "reason": str(obj.get("reason") or "")[:40]}
+    except Exception as ex:
+        print(f"  ⚠ LLM {role} 调用失败：{ex}")
+        return None
+
+
+def llm_log(data, role, stock, decision):
+    """记录模型判断，供面板复盘。"""
+    entry = {"time": cn_now().strftime("%m-%d %H:%M"), "role": role,
+             "code": stock.get("code"), "name": stock.get("name"),
+             "action": (decision or {}).get("action", "skip"),
+             "conf": (decision or {}).get("confidence"),
+             "reason": (decision or {}).get("reason", "降级：模型不可用")}
+    LLM_LOG.append(entry)
+    del LLM_LOG[:-40]
+    if isinstance(data, dict):
+        data["llm_log"] = LLM_LOG[-40:]
+
+
 def classify_board_roles(zt_rows):
     """【板块角色】按板块内部给每只票定位：龙头/中军/卡位/助攻/补涨/跟风。
 
