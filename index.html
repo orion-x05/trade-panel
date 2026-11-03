@@ -3250,5 +3250,94 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v15：已清仓（盈亏 + K线） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function closedList() {
+    const d = window.OX_DATA || {};
+    const out = [];
+    (d.players || []).forEach(p => {
+      const tr = p.trades || [];
+      tr.forEach(t => {
+        if (t.type !== 'sell') return;
+        // 找同一角色、同一代码、时间不晚于卖出的最近一次买入，用来算成本
+        const buys = tr.filter(x => x.type === 'buy' && String(x.code) === String(t.code)
+          && (!t.time || !x.time || String(x.time) <= String(t.time)));
+        const b = buys.length ? buys[buys.length - 1] : null;
+        const cost = b ? Number(b.price) : null;
+        const sellQty = Number(t.qty || 0);
+        const ret = (cost && t.price) ? (Number(t.price) - cost) / cost * 100 : null;
+        out.push({
+          role: p.id, code: String(t.code), name: t.name,
+          qty: sellQty, sellPrice: Number(t.price || 0),
+          cost: cost, ret: ret,
+          pnl: (t.profit != null ? Number(t.profit) : null),
+          time: String(t.time || '').slice(0, 16),
+          reason: t.reason || ''
+        });
+      });
+    });
+    out.sort((a, b) => String(b.time).localeCompare(String(a.time)));
+    return out;
+  }
+
+  function draw() {
+    const hold = $('view-hold'); if (!hold) return;
+    let sec = $('oxClosedCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxClosedCard';
+      sec.innerHTML = '<div class="card-title">已清仓<span style="margin-left:8px;font-size:11px;font-weight:400;color:#5f6b7a">点「K线」看买卖点</span></div><div class="body rows"></div>';
+      hold.appendChild(sec);
+      sec.querySelector('.body').addEventListener('click', (e) => {
+        const chip = e.target.closest('.ox-kchip');
+        if (!chip || !window.OX_openKline) return;
+        const code = chip.dataset.code;
+        const d = window.OX_DATA || {};
+        const list = closedList();
+        const item = list.find(x => String(x.code) === String(code));
+        if (!item) return;
+        const marks = [];
+        (d.players || []).forEach(p => (p.trades || []).forEach(t => {
+          if (String(t.code) !== String(code)) return;
+          marks.push({ date: String(t.time || '').slice(0, 10), side: t.type === 'buy' ? 'B' : 'S' });
+        }));
+        window.OX_openKline({ code: item.code, name: item.name, hybk: '已清仓 · ' + item.role,
+                              score: null, lbc: 0, zdp: null, hs: null, zbc: 0 }, marks);
+      });
+    }
+    const list = closedList();
+    const box = sec.querySelector('.body');
+    if (!list.length) {
+      box.innerHTML = '<div class="row"><span class="nm" style="color:#8b96a5">还没有清仓记录</span></div>';
+      return;
+    }
+    const total = list.reduce((a, x) => a + (x.pnl || 0), 0);
+    box.innerHTML = list.slice(0, 20).map(x => {
+      const pnl = x.pnl;
+      const col = pnl == null ? '#98a6b8' : (pnl >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)');
+      const pct = x.ret == null ? '—' : (x.ret >= 0 ? '+' : '') + x.ret.toFixed(2) + '%';
+      const amt = pnl == null ? '—' : (pnl >= 0 ? '+' : '') + Math.round(pnl).toLocaleString();
+      return '<div class="row" style="cursor:default">' +
+        '<span class="nm">' + x.name + '<span style="font-size:10.5px;color:#5f6b7a"> ' + x.role + ' · ' + x.time.slice(5, 10) + '</span>' +
+          '<span class="ox-kchip" data-code="' + x.code + '">K线</span></span>' +
+        '<span class="tag">' + (x.cost ? x.cost.toFixed(2) + ' → ' + x.sellPrice.toFixed(2) : x.sellPrice.toFixed(2)) + '</span>' +
+        '<span class="v" style="color:' + col + '">' + amt + ' · ' + pct + '</span></div>';
+    }).join('') +
+    '<div style="font-size:11px;color:#5f6b7a;margin-top:8px">合计已实现 ' +
+      (total >= 0 ? '+' : '') + Math.round(total).toLocaleString() + ' 元 · 共 ' + list.length + ' 笔</div>';
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 450);
+})();
+</script>
+
 </body>
 </html>
