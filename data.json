@@ -826,7 +826,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-03T16:34:07.757640",
+  "last_update": "2026-11-03T16:42:22.840414",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1217,9 +1217,9 @@
     }
   },
   "dashboard_summary": {
-    "total_assets": 700626.79,
-    "total_pnl": 626.79,
-    "total_pnl_pct": 0.0009,
+    "total_assets": 702742.79,
+    "total_pnl": 2742.79,
+    "total_pnl_pct": 0.0039,
     "best_role": {
       "id": "D4",
       "name": "啸",
@@ -1233,7 +1233,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-03T13:30:53.060610"
+    "last_update": "2026-11-03T16:34:07.757640"
   },
   "data_version": 3,
   "theme_history": {
@@ -9679,7 +9679,7 @@
       }
     ],
     "stat": {
-      "cand": 155,
+      "cand": 158,
       "no_k": 0,
       "sealed": 49,
       "no_type": 4
@@ -9689,7 +9689,7 @@
   "trade_date": "2026-11-03",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-03 16:34",
+    "asof": "2026-11-03 16:42",
     "amt": 17034.0,
     "amt_est": null,
     "amt_used": 17034.0,
@@ -9992,5 +9992,6 @@
   },
   "gate_stats": {},
   "last_margin_push": "2026-11-03",
-  "last_margin_level": "bottom"
+  "last_margin_level": "bottom",
+  "bull_only": true
 }
