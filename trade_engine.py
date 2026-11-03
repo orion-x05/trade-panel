@@ -346,6 +346,10 @@ def load_bt_tune():
 
 
 def save_data(data):
+    try:
+        update_role_metrics(data)
+    except Exception as e:
+        print(f"  ⚠ 指标计算失败：{e}")
     data["last_update"] = cn_now().isoformat()
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -3597,6 +3601,42 @@ def backfill_review_blocks(data):
     return True
 
 
+def update_role_metrics(data):
+    """补算每个角色的 胜率 / 盈亏比 / 夏普 / 最大回撤（此前恒为 None，面板显示为空）。"""
+    for p in data.get("players", []):
+        trades = p.get("trades") or []
+        sells = [t for t in trades if t.get("type") == "sell" and t.get("profit") is not None]
+        if sells:
+            wins = [t for t in sells if (t.get("profit") or 0) > 0]
+            p["winRate"] = round(len(wins) / len(sells), 3)
+            gains = [(t.get("profit") or 0) for t in sells if (t.get("profit") or 0) > 0]
+            losses = [abs(t.get("profit") or 0) for t in sells if (t.get("profit") or 0) < 0]
+            if gains and losses:
+                p["plRatio"] = round((sum(gains) / len(gains)) / (sum(losses) / len(losses)), 2)
+            elif gains:
+                p["plRatio"] = round(sum(gains) / len(gains), 2)
+        else:
+            p.setdefault("winRate", 0.0)
+            p.setdefault("plRatio", 0.0)
+
+        hist = [float(x) for x in (p.get("asset_history") or []) if x]
+        if len(hist) >= 3:
+            rets = [hist[i] / hist[i - 1] - 1 for i in range(1, len(hist)) if hist[i - 1]]
+            if rets:
+                mean = sum(rets) / len(rets)
+                sd = (sum((r - mean) ** 2 for r in rets) / len(rets)) ** 0.5
+                p["sharpe"] = round((mean / sd) * (252 ** 0.5), 2) if sd > 0 else 0.0
+            peak, mdd = hist[0], 0.0
+            for v in hist:
+                peak = max(peak, v)
+                if peak > 0:
+                    mdd = max(mdd, (peak - v) / peak)
+            p["maxDrawdown"] = round(mdd, 4)
+        else:
+            p["sharpe"] = p.get("sharpe") or 0.0
+            p["maxDrawdown"] = p.get("maxDrawdown") or 0.0
+
+
 def apply_force_close(data):
     """执行一次性清仓指令（data["force_close"] = ["603906", ...]）。
 
@@ -3653,6 +3693,8 @@ def main():
     update_role_stats(data)     # 角色表现记忆 → 动态权重 + 市况自适应倍率
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
+    _ld0 = data.get("limit_decoded") or {}
+    data["trade_date"] = _ld0.get("trade_date") or (str(_ld0.get("asof"))[:10] if _ld0.get("asof") else None)
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
     print(f"\n🌐 大盘趋势：{trend_text}")
     
