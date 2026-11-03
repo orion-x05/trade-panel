@@ -61,6 +61,47 @@ def fetch_kline(code, n=BARS):
     return []
 
 
+def hot_universe(days=45, limit=60):
+    """从最近若干个交易日的涨停池里挑“最常涨停”的票，作为短线类策略的标的池。
+
+    为什么需要：龙头首阴/龙头回踩/中军回踩都要求连板≥4，用大盘股池一笔都跑不出来。
+    涨停池按日拉（每个交易日 1 次请求），按出现次数排序取前 N 只，控制请求量。
+    """
+    import datetime as _dt
+    from collections import Counter
+    hit = Counter()
+    base = _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=8))).replace(tzinfo=None)
+    ok_days = 0
+    for k in range(days):
+        d = base - _dt.timedelta(days=k)
+        if d.weekday() >= 5:
+            continue
+        ds = d.strftime("%Y%m%d")
+        url = ("https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9cbfc24409ed989"
+               "&dpt=wz.ztzt&Pageindex=0&pagesize=100&sort=fbt:asc&date=" + ds)
+        try:
+            req_ = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            j = json.loads(urllib.request.urlopen(req_, timeout=12).read().decode("utf-8"))
+            data_ = j.get("data") or {}
+            qdate = str(data_.get("qdate") or "")
+            if qdate and qdate < ds:      # 兜底返回了更早的数据，跳过该日
+                continue
+            pool = data_.get("pool") or []
+            if not pool:
+                continue
+            ok_days += 1
+            for s in pool:
+                c = s.get("c")
+                if c:
+                    hit[c] += 1
+        except Exception:
+            continue
+    if not hit:
+        return []
+    print(f"  历史涨停池：扫了 {ok_days} 个交易日，覆盖 {len(hit)} 只票")
+    return [c for c, _ in hit.most_common(limit)]
+
+
 def load_universe():
     """从 trade_engine.py 里抠 STOCK_POOL；失败用兜底池。"""
     try:
@@ -248,7 +289,12 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
 
 
 def main():
-    universe = load_universe()
+    universe = hot_universe()
+    if universe:
+        print(f"短线标的池（历史涨停热票）{len(universe)} 只")
+    else:
+        universe = load_universe()
+        print(f"涨停池不可得，退回固定池 {len(universe)} 只")
     print(f"回测标的 {len(universe)} 只 · 每只 {BARS} 根日 K")
     data = {}
     for code in universe:
