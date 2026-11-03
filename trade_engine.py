@@ -3468,7 +3468,14 @@ def build_dip_pool(data, limit=24):
         return {"ok": False, "asof": today_asof, "rows": []}
 
     idx_dev = _index_dev(3)
-    _role_map = classify_board_roles((data.get("limit_decoded") or {}).get("zt_rows") or [])
+    # 低吸票今天没涨停，要用它「涨停那天的池子」来判梯队角色
+    _role_map = {}
+    _by_day = {}
+    for s in cand:
+        _by_day.setdefault(s.get("pool_ds"), []).append(s)
+    for ds, rows_ in _by_day.items():
+        for k_, v_ in classify_board_roles(rows_).items():
+            _role_map[k_] = v_
     rows = []
     _stat = {"cand": len(cand), "no_k": 0, "sealed": 0, "no_type": 0}
     for s in cand[:120]:
@@ -3553,7 +3560,9 @@ def classify_board_roles(zt_rows):
         for s in arr:
             c = str(s.get("code"))
             lb = _lb(s)
-            if c == str(leader.get("code")):
+            if len(arr) < 3:
+                role = "独苗"          # 板块里就一两只，谈不上梯队，别硬封龙头
+            elif c == str(leader.get("code")):
                 role = "龙头"
             elif lb == max_lb:
                 role = "卡位"
