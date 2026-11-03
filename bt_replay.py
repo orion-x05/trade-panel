@@ -138,6 +138,25 @@ def ma(vals, n):
     return sum(vals[-n:]) / n if len(vals) >= n else None
 
 
+def rr_at_entry(k, i):
+    """开仓时的赔率：目标位取前 20 日最高收盘与 price+2ATR 的较大者，止损取 price-1.5ATR。"""
+    if i < 25:
+        return None
+    closes = [x["c"] for x in k[:i + 1]]
+    px = closes[-1]
+    trs = []
+    for j in range(i - 13, i + 1):
+        h_, l_, pc_ = k[j]["h"], k[j]["l"], k[j - 1]["c"]
+        trs.append(max(h_ - l_, abs(h_ - pc_), abs(l_ - pc_)))
+    atr = sum(trs) / len(trs)
+    hi20 = max(closes[-20:])
+    target = max(hi20, px + 2 * atr)
+    stop = px - 1.5 * atr
+    if px - stop <= 0:
+        return None
+    return round((target - px) / (px - stop), 2)
+
+
 def board_count(k, i):
     """从第 i 根往前数连续涨停天数（≥9.5% 视为涨停，主板口径近似）。"""
     n = 0
@@ -261,7 +280,7 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
                 cash += gross - fee
                 net_ret = ((gross - fee) / h["cost"] - 1) * 100
                 trades.append({"code": c, "ret": round(net_ret, 2), "reason": reason,
-                               "days": h["day"], "regime": h.get("regime")})
+                               "days": h["day"], "regime": h.get("regime"), "rr": h.get("rr")})
                 holdings.pop(c)
 
         # 2) 补仓
@@ -283,7 +302,8 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
                 sl_mult = ROLE_SL_ATR.get(role, 2.0)
                 stop_pct = max(3.0, min(12.0, sl_mult * ap))          # 3%~12% 夹住，防 ATR 极端
                 take_pct = stop_pct * ROLE_RR.get(role, 2.0)
-                holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee,
+                rr_in = rr_at_entry(data[c], idx)
+                holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee, "rr": rr_in,
                                "stop": stop_pct * stop_mult, "take": take_pct * stop_mult,
                                "atr": round(ap, 2),
                                "regime": (regime_map or {}).get(data[c][idx]["d"], "?")}
@@ -311,7 +331,22 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
     for g, d in by_reg.items():
         d["avg"] = round(d["sum"] / d["n"], 2) if d["n"] else None
         d["win_rate"] = round(d["win"] / d["n"], 3) if d["n"] else None
-    return {"n": len(trades), "regime": by_reg,
+    # 赔率分档：高赔率到底好不好
+    buckets = {"<2": {"n": 0, "win": 0, "sum": 0.0}, "2-3": {"n": 0, "win": 0, "sum": 0.0},
+               "3-4": {"n": 0, "win": 0, "sum": 0.0}, ">4": {"n": 0, "win": 0, "sum": 0.0}}
+    for t in trades:
+        rr = t.get("rr")
+        if rr is None:
+            continue
+        key = "<2" if rr < 2 else ("2-3" if rr < 3 else ("3-4" if rr < 4 else ">4"))
+        b = buckets[key]
+        b["n"] += 1
+        b["win"] += 1 if t["ret"] > 0 else 0
+        b["sum"] = round(b["sum"] + t["ret"], 2)
+    for k2, b in buckets.items():
+        b["avg"] = round(b["sum"] / b["n"], 2) if b["n"] else None
+        b["win_rate"] = round(b["win"] / b["n"], 3) if b["n"] else None
+    return {"n": len(trades), "regime": by_reg, "rr_buckets": buckets,
             "win_rate": round(len(wins) / len(trades), 3) if trades else None,
             "avg": round(sum(rets) / len(rets), 2) if trades else None,
             "total": round((equity[-1] - 1) * 100, 2),
