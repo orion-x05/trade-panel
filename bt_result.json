@@ -1,57 +1,64 @@
 {
   "generated_by": "bt_replay.py",
-  "asof": "2026-11-03 12:05",
+  "asof": "2026-11-03 12:09",
   "universe": 40,
   "bars": 251,
   "roles": {
     "D1": {
-      "n": 67,
-      "win_rate": 0.209,
-      "avg": -2.37,
-      "total": -81.37,
-      "maxdd": 81.37
+      "n": 60,
+      "win_rate": 0.2,
+      "avg": -2.17,
+      "total": -24.39,
+      "maxdd": 26.9,
+      "days": 190
     },
     "D2": {
-      "n": 139,
-      "win_rate": 0.216,
-      "avg": -1.79,
-      "total": -92.86,
-      "maxdd": 93.97
+      "n": 100,
+      "win_rate": 0.2,
+      "avg": -1.56,
+      "total": -30.98,
+      "maxdd": 32.54,
+      "days": 190
     },
     "D3": {
-      "n": 199,
-      "win_rate": 0.296,
-      "avg": -0.79,
-      "total": -84.31,
-      "maxdd": 86.7
+      "n": 111,
+      "win_rate": 0.279,
+      "avg": -0.23,
+      "total": -3.58,
+      "maxdd": 11.5,
+      "days": 190
     },
     "D4": {
-      "n": 26,
-      "win_rate": 0.269,
-      "avg": -0.61,
-      "total": -17.58,
-      "maxdd": 26.2
+      "n": 27,
+      "win_rate": 0.296,
+      "avg": 0.11,
+      "total": 0.59,
+      "maxdd": 6.44,
+      "days": 190
     },
     "D5": {
-      "n": 189,
-      "win_rate": 0.254,
-      "avg": -1.05,
-      "total": -87.88,
-      "maxdd": 90.28
+      "n": 129,
+      "win_rate": 0.256,
+      "avg": -0.81,
+      "total": -20.13,
+      "maxdd": 22.63,
+      "days": 190
     },
     "D6": {
-      "n": 21,
-      "win_rate": 0.143,
-      "avg": -3.39,
-      "total": -52.58,
-      "maxdd": 56.05
+      "n": 24,
+      "win_rate": 0.167,
+      "avg": -2.44,
+      "total": -11.73,
+      "maxdd": 13.05,
+      "days": 190
     },
     "D7": {
-      "n": 50,
-      "win_rate": 0.46,
-      "avg": -0.28,
-      "total": -20.39,
-      "maxdd": 41.05
+      "n": 60,
+      "win_rate": 0.333,
+      "avg": -0.8,
+      "total": -9.59,
+      "maxdd": 11.97,
+      "days": 190
     }
   },
   "note": "简化规则复刻，不含 AI 判断与滑点；单票满仓，扣双边费用"
