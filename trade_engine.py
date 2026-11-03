@@ -3430,18 +3430,22 @@ def build_dip_pool(data, limit=24):
 
     idx_dev = _index_dev(3)
     rows = []
+    _stat = {"cand": len(cand), "no_k": 0, "sealed": 0, "no_type": 0}
     for s in cand[:120]:
         code = s.get("code")
         k = _kline_ohlc(code, 60)
         if len(k) < 25:
+            _stat["no_k"] += 1
             continue
         last, prev = k[-1], k[-2]
         chg = (last["c"] / prev["c"] - 1) * 100
         # 今日已经封板的，属于打板区间，不进低吸池
         if chg >= limit_pct(code, s.get("name")) - 1.0:
+            _stat["sealed"] += 1
             continue
         typ, why = classify_dip(k, int(s.get("lbc") or 0), s.get("hybk") or "")
         if not typ:
+            _stat["no_type"] += 1
             continue
         px = last["c"]
         rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px)
@@ -3458,7 +3462,9 @@ def build_dip_pool(data, limit=24):
 
     rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
                              -((r.get("rr") or {}).get("ratio") or 0)))
-    return {"ok": bool(rows), "asof": today_asof, "rows": rows,
+    print(f"  🎣 低吸池筛选：候选 {_stat['cand']} → K线不足 {_stat['no_k']} · 今日仍封板 {_stat['sealed']} · "
+          f"位置不符 {_stat['no_type']} → 入选 {len(rows)}")
+    return {"ok": bool(rows), "asof": today_asof, "rows": rows, "stat": _stat,
             "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"}
 
 
