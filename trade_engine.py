@@ -2952,6 +2952,67 @@ def build_lhb(days_back=0, top_n=12):
             "rows": out[:top_n], "top_net": out[:top_n]}
 
 
+def build_env_gate(data):
+    """【环境闸】决定今天该不该出手，比选哪只票更重要。
+
+    三条规则（来自实盘总结）：
+      两市成交额 < 1.9 万亿 → 总仓压到 5 成内
+      上涨家数占比 < 45%    → 总仓压到 5 成内
+      涨停 < 40 家          → 直接空仓
+    盘中成交额按已交易时间线性外推到全天再比较。
+    """
+    url = ("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2"
+           "&secids=1.000001,0.399001&fields=f2,f3,f6,f104,f105,f106")
+    try:
+        j = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12).json()
+        diff = (j.get("data") or {}).get("diff") or []
+    except Exception as e:
+        print(f"  ⚠ 环境闸取数失败：{e}")
+        return None
+    if len(diff) < 2:
+        return None
+    up = sum(int(x.get("f104") or 0) for x in diff)
+    down = sum(int(x.get("f105") or 0) for x in diff)
+    flat = sum(int(x.get("f106") or 0) for x in diff)
+    amt = sum(float(x.get("f6") or 0) for x in diff) / 1e8        # 亿
+    tot = up + down + flat
+    breadth = round(up / tot, 3) if tot else None
+
+    # 盘中成交额外推：9:30-11:30 + 13:00-15:00 = 240 分钟
+    now = cn_now()
+    m = now.hour * 60 + now.minute
+    if m < 570:
+        elapsed = 0
+    elif m <= 690:
+        elapsed = m - 570
+    elif m < 780:
+        elapsed = 120
+    else:
+        elapsed = 120 + min(m - 780, 120)
+    est = round(amt / elapsed * 240, 0) if elapsed >= 30 else None
+    amt_for_gate = est if (elapsed and elapsed < 240) else amt
+
+    zt = int((data.get("limit_decoded") or {}).get("zt_count") or 0)
+    flags, cap = [], 1.0
+    if amt_for_gate and amt_for_gate < 19000:
+        flags.append(f"成交额 {amt_for_gate/10000:.2f} 万亿 < 1.9 万亿")
+        cap = min(cap, 0.5)
+    if breadth is not None and breadth < 0.45:
+        flags.append(f"上涨家数占比 {breadth*100:.0f}% < 45%")
+        cap = min(cap, 0.5)
+    if zt and zt < 40:
+        flags.append(f"涨停 {zt} 家 < 40 家")
+        cap = 0.0
+    if flags and cap == 1.0:
+        cap = 0.5
+
+    return {"ok": True, "asof": cn_now().strftime("%Y-%m-%d %H:%M"),
+            "amt": round(amt, 0), "amt_est": est, "amt_used": round(amt_for_gate or 0, 0),
+            "up": up, "down": down, "flat": flat, "breadth": breadth,
+            "zt": zt, "flags": flags, "pos_cap": cap,
+            "pass": (cap >= 1.0)}
+
+
 def build_review_block(data):
     """收盘复盘 + 明日预期（规则式，可回测）。
 
@@ -3017,6 +3078,12 @@ def build_review_block(data):
     if cluster:
         expect["why"].append(
             "主线：" + "、".join(f"{c['name']}{c['n']}家" for c in cluster[:3]))
+
+    env = build_env_gate(data)
+    if env:
+        data["env_gate"] = env
+        if env["flags"]:
+            expect["why"].append("环境闸：" + "；".join(env["flags"]) + f" → 总仓 ≤{int(env['pos_cap']*100)}%")
 
     lhb = data.get("lhb") or build_lhb()
     if lhb.get("rows"):
