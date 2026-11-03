@@ -2482,11 +2482,19 @@ body::after{   /* 暗角 */
         '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + flag + '</span>' +
         '<span class="tag">' + (r.hybk || '') + (r.lbc ? ' · ' + r.lbc + '板' : '') + '</span>' +
         '<span class="v" style="color:' + (chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)') + '">' +
-        r.score + ' 分' + (r.gates && r.gates.rr ? '<span style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#5f6b7a') + ';font-size:11px"> · 赔率 ' + r.gates.rr.ratio + '</span>' : '') +
+        r.score + ' 分' + (r.gates && r.gates.rr
+          ? '<span style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#5f6b7a') + ';font-size:11px"> · 赔率 ' + r.gates.rr.ratio + '</span>'
+          : '<span style="color:#5f6b7a;font-size:11px"> · 未算门禁</span>') +
         '</span></div>';
     }).join('');
     const card = $('oxScoreCard');
     const title = card.querySelector('.card-title');
+    if (title && !title.dataset.note) {
+      const sp2 = document.createElement('span');
+      sp2.textContent = ' 前 20 只算门禁与赔率（每只要拉 K 线）';
+      sp2.style.cssText = 'margin-left:8px;font-size:11px;font-weight:400;color:#5f6b7a';
+      title.appendChild(sp2); title.dataset.note = '1';
+    }
     if (title && !title.dataset.asofDone && sp.asof) {
       const spn = document.createElement('span');
       spn.textContent = '截至 ' + String(sp.asof).slice(5, 10) + ' · ' + sp.universe + ' 只候选';
