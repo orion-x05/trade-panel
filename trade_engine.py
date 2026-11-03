@@ -2527,6 +2527,66 @@ def check_buy_signals(player, stock_data, all_codes_data, market_trend, consecut
     b = candidates[0]
     return (b[0], b[1], b[2], b[4], b[5])
 
+# 低吸位置 → 角色分工：每类位置只交给最对口的角色，避免七个角色抢同一个买点
+DIP_ROLE = {
+    "龙头首阴": "D7",   # 沉：反趋势，收阴后分批建仓
+    "假阴真阳": "D4",   # 啸：假突破低吸，专吃骗线
+    "龙头回踩": "D5",   # 渊：趋势回踩，耐心等支撑
+    "中军回踩": "D2",   # 衡：多头共识，只碰资金认的中军
+    "后排二波": "D6",   # 焰：涨停回调，做梯队后排补涨
+}
+
+
+def check_dip_buys(data, all_players, ntf=1.0, trend="neutral"):
+    """把低吸池分给对口角色执行。硬条件：赔率≥2、异动还有余量、不重复持有。"""
+    dp = data.get("dip_pool") or {}
+    rows = dp.get("rows") or []
+    if not rows:
+        return 0
+    by_role = {}
+    for r in rows:
+        rid = DIP_ROLE.get(r.get("type"))
+        if not rid:
+            continue
+        rr = r.get("rr") or {}
+        ab = r.get("abnormal") or {}
+        if not rr.get("ok"):                       # 赔率不够，不做
+            continue
+        if ab.get("remain") is not None and ab.get("remain") <= 0:   # 异动已超限，不做
+            continue
+        if not r.get("price"):
+            continue
+        by_role.setdefault(rid, []).append(r)
+
+    done = 0
+    for p in all_players:
+        rid = p.get("id")
+        cand = by_role.get(rid) or []
+        if not cand:
+            continue
+        if len(p.get("holdings") or []) >= MAX_POS:
+            continue
+        cand.sort(key=lambda x: -((x.get("rr") or {}).get("ratio") or 0))
+        for r in cand[:2]:
+            code = r["code"]
+            if any(h["code"] == code for h in (p.get("holdings") or [])):
+                continue
+            held = sum(1 for q in all_players if any(h["code"] == code for h in (q.get("holdings") or [])))
+            if held >= MAX_OVERLAP:
+                continue
+            st = {"code": code, "name": r.get("name"), "price": r.get("price"),
+                  "atr_pct": ((r.get("rr") or {}).get("atr") or 0) / max(r.get("price") or 1, 0.01) * 100}
+            score = min(100.0, 55 + ((r.get("rr") or {}).get("ratio") or 0) * 10)
+            reason = f"低吸·{r.get('type')}：{r.get('why')}（赔率{(r.get('rr') or {}).get('ratio')}）"
+            print(f"  🎣 {rid} 低吸 {r.get('name')}({code}) {r.get('type')} · 赔率{(r.get('rr') or {}).get('ratio')}")
+            try:
+                do_buy(p, code, st, score, reason, ntf, trend)
+                done += 1
+            except Exception as e:
+                print(f"  ⚠ {rid} 低吸买入失败：{e}")
+    return done
+
+
 def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=False):
     """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
     # 【W1·仓位公式】风险由仓位控制，不由止损距离控制（补丁二）：
@@ -3666,6 +3726,10 @@ def main():
         decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
         try:
+            data["dip_pool"] = build_dip_pool(data)
+        except Exception as _e:
+            print(f"  ⚠ 盘中低吸池计算失败：{_e}")
+        try:
             _e2 = build_env_gate(data)
             if _e2:
                 data["env_gate"] = _e2
@@ -3729,6 +3793,14 @@ def main():
             code, st, score, reason, override = buy_signal
             do_buy(player, code, st, score, reason, ntf * sentiment_factor, market_trend, override=override)
     
+    # 【低吸通道】按位置分工，只有对口角色会动，且必须赔率够、异动有余量
+    try:
+        _n = check_dip_buys(data, data["players"], ntf, market_trend)
+        if _n:
+            print(f"  🎣 本轮低吸建仓 {_n} 笔")
+    except Exception as e:
+        print(f"  ⚠ 低吸通道异常：{e}")
+
     print(f"\n💰 更新资产...")
     # 资产曲线口径：每个交易日只记一条（与前端「每日收盘记录一次」及后台收盘分支一致）。
     # 此前每次运行都 append——盘内 9 个 cron 会让曲线每日 +9 条、x 轴标签重复，日报表失真。
