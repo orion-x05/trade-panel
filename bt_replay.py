@@ -79,8 +79,55 @@ def ma(vals, n):
     return sum(vals[-n:]) / n if len(vals) >= n else None
 
 
+def board_count(k, i):
+    """从第 i 根往前数连续涨停天数（≥9.5% 视为涨停，主板口径近似）。"""
+    n = 0
+    j = i
+    while j > 0:
+        if k[j]["c"] / k[j - 1]["c"] - 1 >= 0.095:
+            n += 1
+            j -= 1
+        else:
+            break
+    return n
+
+
+DIP_TYPES = ["龙头首阴", "假阴真阳", "龙头回踩", "中军回踩", "后排二波"]
+
+
+def dip_signal(name, k, i):
+    """五类低吸位置的可量化复刻（只用 i 及之前的数据）。"""
+    if i < 30:
+        return False
+    cur, prev = k[i], k[i - 1]
+    closes = [x["c"] for x in k[:i + 1]]
+    vols = [x["v"] for x in k[:i + 1]]
+    m5, m10, m20 = ma(closes, 5), ma(closes, 10), ma(closes, 20)
+    if None in (m10, m20):
+        return False
+    chg = (cur["c"] / prev["c"] - 1) * 100
+    vr = cur["v"] / (sum(vols[-6:-1]) / 5) if len(vols) >= 6 and sum(vols[-6:-1]) else 0
+    bc = board_count(k, i - 1)                     # 截至昨日的连板数
+    zt_lows = [k[j]["l"] for j in range(max(0, i - 10), i)
+               if j > 0 and k[j]["c"] / k[j - 1]["c"] - 1 >= 0.095]
+
+    if name == "龙头首阴":
+        return bc >= 4 and cur["c"] < cur["o"] and chg < 0 and vr < 1.5
+    if name == "假阴真阳":
+        return cur["c"] < cur["o"] and chg > 0 and vr >= 1.5
+    if name == "龙头回踩":
+        return bc >= 4 and (abs(cur["c"] / m10 - 1) <= 0.025 or abs(cur["c"] / m20 - 1) <= 0.025)
+    if name == "中军回踩":
+        return 2 <= bc <= 3 and abs(cur["c"] / m10 - 1) <= 0.025
+    if name == "后排二波":
+        return 1 <= bc <= 2 and bool(zt_lows) and cur["l"] >= min(zt_lows) * 0.99 and cur["c"] > cur["o"]
+    return False
+
+
 def signal(role, k, i):
     """第 i 根 K 线的开仓信号（只用 i 及之前的数据，防未来函数）。"""
+    if role in DIP_TYPES:
+        return dip_signal(role, k, i)
     if i < 61:
         return False
     closes = [x["c"] for x in k[:i + 1]]
@@ -214,7 +261,7 @@ def main():
     days = min(len(k) for k in data.values())
     print(f"可用 {len(data)} 只 · 最短 {days} 根")
     roles = {}
-    for r in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"]:
+    for r in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"] + DIP_TYPES:
         res = run_role(r, data)
         roles[r] = {k: v for k, v in res.items() if k != "trades"}
         print(f"  {r}: {res['n']} 笔 · 胜率 {res['win_rate']} · 累计 {res['total']}% · 回撤 {res['maxdd']}%")
