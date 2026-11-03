@@ -801,7 +801,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-03T12:10:54.019722",
+  "last_update": "2026-11-03T12:14:39.767986",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1208,7 +1208,7 @@
     "active_roles": 4,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-03T12:06:47.927786"
+    "last_update": "2026-11-03T12:10:54.019722"
   },
   "data_version": 3,
   "theme_history": {
@@ -9014,6 +9014,42 @@
         }
       },
       {
+        "code": "002095",
+        "name": "生 意 宝",
+        "hybk": "服装家纺",
+        "lbc": 2,
+        "type": "中军回踩",
+        "why": "2板回踩MA10（-0.5%），板块内非最高标",
+        "price": 15.2,
+        "chg": -0.72,
+        "pool_ds": "20261102",
+        "rr": {
+          "ratio": 1.33,
+          "target": 17.3,
+          "stop": 13.62,
+          "atr": 1.05,
+          "upside": 13.8,
+          "downside": -10.4,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": -0.91,
+          "idx3": 1.13,
+          "dev": -2.04,
+          "limit": 20.0,
+          "remain": 22.04,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": -6.2,
+          "limit10": 100.0,
+          "remain10": 106.2,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 0.1,
+          "paozi": false
+        }
+      },
+      {
         "code": "001266",
         "name": "宏英智能",
         "hybk": "自动化设",
@@ -9554,42 +9590,6 @@
         }
       },
       {
-        "code": "603587",
-        "name": "地素时尚",
-        "hybk": "服装家纺",
-        "lbc": 2,
-        "type": "后排二波",
-        "why": "2板，回踩未破最近涨停日最低 12.03",
-        "price": 13.67,
-        "chg": -3.66,
-        "pool_ds": "20261102",
-        "rr": {
-          "ratio": 0.49,
-          "target": 14.67,
-          "stop": 11.62,
-          "atr": 0.5,
-          "upside": 7.3,
-          "downside": -15.0,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 16.54,
-          "idx3": 1.13,
-          "dev": 15.41,
-          "limit": 20.0,
-          "remain": 4.59,
-          "risk": "中",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 6.15,
-          "limit10": 100.0,
-          "remain10": 93.85,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 10.0,
-          "paozi": false
-        }
-      },
-      {
         "code": "000417",
         "name": "合百集团",
         "hybk": "一般零售",
@@ -9735,7 +9735,7 @@
       }
     ],
     "stat": {
-      "cand": 157,
+      "cand": 156,
       "no_k": 0,
       "sealed": 53,
       "no_type": 2
@@ -9745,7 +9745,7 @@
   "trade_date": "2026-11-03",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-03 12:10",
+    "asof": "2026-11-03 12:14",
     "amt": 9926.0,
     "amt_est": 19852.0,
     "amt_used": 19852.0,
