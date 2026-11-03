@@ -2386,11 +2386,6 @@ def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
         overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
         if overlap >= MAX_OVERLAP:
             return False, "跨角色重合超限"
-    # 【同板块集中度】同一角色在同一板块最多持 2 只：同板块同涨同跌，押 3 只等于放大的同一注
-    _sec = STOCK_INDUSTRY.get(code, "其他")
-    _same = sum(1 for h in player["holdings"] if STOCK_INDUSTRY.get(h["code"], "其他") == _sec)
-    if _same >= 2:
-        return False, f"{_sec}板块已持 {_same} 只，集中度超限"
     guard_ok, guard_why = global_guard(st, allow_pullback=allow_pullback)
     if not guard_ok:
         return False, f"风控闸:{guard_why}"
