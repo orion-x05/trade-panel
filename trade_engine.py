@@ -3027,6 +3027,7 @@ def build_lhb(days_back=0, top_n=12):
             "code": r.get("SECURITY_CODE"),
             "name": r.get("SECURITY_NAME_ABBR"),
             "chg": round(float(r.get("CHANGE_RATE") or 0), 2),
+            "price": round(float(r.get("CLOSE_PRICE") or 0), 2),
             "net": round(float(r.get("BILLBOARD_NET_AMT") or 0) / 1e8, 2),
             "buy": round(float(r.get("BILLBOARD_BUY_AMT") or 0) / 1e8, 2),
             "sell": round(float(r.get("BILLBOARD_SELL_AMT") or 0) / 1e8, 2),
@@ -3171,9 +3172,11 @@ def build_review_block(data):
 
     if max_lb >= 5:
         expect["why"].append(f"最高标 {max_lb} 板，空间由它决定，断板则梯队塌")
-    if ladder["back"]:
-        expect["watch"] = [f"{b['name']}（{b['hybk']} 后排，龙头 {b['leader']} {b['leader_lb']} 板）"
-                           for b in ladder["back"][:3]]
+    watch_items = []
+    for b in (ladder["back"] or [])[:3]:
+        expect["watch"].append(f"{b['name']}（{b['hybk']} 后排，龙头 {b['leader']} {b['leader_lb']} 板）")
+        watch_items.append({"code": b["code"], "name": b["name"], "basis": "后排二波",
+                            "ref": b.get("price") or None})
     expect["invalid"] = (f"若明日涨停数跌破 {max(20, n_zt // 2)} 家，或最高标断板，则本预期作废")
 
     # 板块聚集度：同板块涨停家数排名，前三才是主线，其余算扩散
@@ -3197,12 +3200,15 @@ def build_review_block(data):
         for r in hot_lhb[:3]:
             tag = "（机构）" if r.get("inst") else ""
             expect["watch"].append(f"龙虎榜净买 {r['name']}{tag} +{r['net']} 亿")
+            watch_items.append({"code": r["code"], "name": r["name"],
+                                "basis": "龙虎榜净买", "ref": r.get("price") or None})
 
     return {
         "asof": ld.get("asof"),
         "cluster": cluster,
         "lhb": lhb,
         "ladder": ladder,
+        "watch_items": watch_items,
         "mood": {"n_zt": n_zt, "max_lb": max_lb, "boom": boom,
                  "boom_rate": boom_rate, "rate_1to2": rate1, "rate_2to3": rate2,
                  "stage": stage, "emoji": emoji},
@@ -3221,7 +3227,8 @@ def update_review_verify(data):
     if d0 >= today or d0 in hist:
         return
     # 昨日预期快照
-    hist[d0] = {"expect": cur.get("expect"), "mood": cur.get("mood")}
+    hist[d0] = {"expect": cur.get("expect"), "mood": cur.get("mood"),
+                "watch": cur.get("watch_items") or []}
     # 用今天的数据回看
     today_mood = (data.get("review") or {}).get("mood") or {}
     rec = hist[d0]
@@ -3238,6 +3245,22 @@ def update_review_verify(data):
     elif e.get("dir") == "高位分歧":
         ok = (today_mood.get("max_lb") or 0) < (m.get("max_lb") or 0)
         note = f"预期分歧 → 最高板 {today_mood.get('max_lb')}（昨 {m.get('max_lb')}）"
+    # 【关注标的次日表现】按记录时的参考价 vs 现价算涨跌，累积命中
+    items = [x for x in (rec.get("watch") or []) if x.get("code")]
+    if items:
+        quotes = _batch_quotes([x["code"] for x in items])
+        wstats = data.setdefault("watch_stats", {"n": 0, "win": 0, "sum_ret": 0.0})
+        for x in items:
+            px = quotes.get(str(x["code"]))
+            ref = x.get("ref")
+            if not px or not ref:
+                continue
+            ret = (px / float(ref) - 1) * 100
+            x["ret"] = round(ret, 2)
+            wstats["n"] += 1
+            wstats["win"] += 1 if ret > 0 else 0
+            wstats["sum_ret"] = round(wstats["sum_ret"] + ret, 2)
+
     if ok is not None:
         rec["result"] = {"ok": bool(ok), "note": note}
         st = data.setdefault("review_stats", {"n": 0, "hit": 0})
