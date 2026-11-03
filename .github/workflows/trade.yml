@@ -103,6 +103,34 @@ jobs:
       - name: 运行回测生成 bt_tune.json
         run: python backtest.py
 
+      - name: 历史 K 线回放回测（bt_result.json）
+        run: python bt_replay.py || echo "回放回测失败，跳过"
+
+      - name: 提交 bt_result.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f bt_result.json ]; then echo "无 bt_result.json，跳过提交"; exit 0; fi
+          python3 - <<'PYEOF'
+          import json,base64,urllib.request,os
+          tok=os.environ["GH_TOKEN"]
+          base="https://api.github.com/repos/orion-x05/trade-panel"
+          def gh(method,url,payload=None):
+              req=urllib.request.Request(base+url, method=method,
+                  headers={"Authorization":"token "+tok,"Content-Type":"application/json","Accept":"application/vnd.github+json"})
+              data=json.dumps(payload).encode() if payload is not None else None
+              with urllib.request.urlopen(req,data=data) as r:
+                  return json.loads(r.read().decode())
+          try:
+              meta=gh("GET","/contents/bt_result.json?ref=main")
+          except Exception:
+              meta=None
+          payload={"message":"auto: 历史回放回测结果","content":base64.b64encode(open("bt_result.json","rb").read()).decode(),"branch":"main"}
+          if meta: payload["sha"]=meta.get("sha")
+          gh("PUT","/contents/bt_result.json",payload)
+          print("✅ bt_result.json 已更新")
+          PYEOF
+
       - name: 提交 bt_tune.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
