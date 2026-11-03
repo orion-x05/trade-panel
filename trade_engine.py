@@ -3770,12 +3770,22 @@ def main():
     margin = get_margin_data()
     msig = margin_risk_signal(margin)
     data["margin_leverage"] = {"signal": msig, "latest": margin.get("latest") if margin.get("ok") else None}
-    if msig.get("level") == "overheat":
+    # 【推送去重】融资杠杆是日频指标，一天只推一次；否则盘中每轮 cron 都会重复轰炸
+    _today_m = cn_now().strftime("%Y-%m-%d")
+    _m_dup = (data.get("last_margin_push") == _today_m and
+              data.get("last_margin_level") == msig.get("level"))
+    if _m_dup:
+        print(f"  ℹ️ 融资杠杆（{msig.get('title')}）今日已推送过，跳过重复提醒")
+    if msig.get("level") == "overheat" and not _m_dup:
         print(f"  🔴 融资杠杆：{msig['title']}｜{msig['advice']}")
         push_report(f"🔴 融资杠杆提醒 · {msig['title']}", msig["advice"])
-    elif msig.get("level") == "bottom":
+        data["last_margin_push"] = _today_m
+        data["last_margin_level"] = msig.get("level")
+    elif msig.get("level") == "bottom" and not _m_dup:
         print(f"  🟢 融资杠杆：{msig['title']}｜{msig['advice']}")
         push_report(f"🟢 融资杠杆提醒 · {msig['title']}", msig["advice"])
+        data["last_margin_push"] = _today_m
+        data["last_margin_level"] = msig.get("level")
     elif msig.get("level") not in ("na", None):
         print(f"  💰 融资杠杆：占流通市值 {msig.get('rzyezb')}%（{msig.get('pct_zb')}分位）· {msig.get('title')}")
 
