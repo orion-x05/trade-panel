@@ -3196,5 +3196,54 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v14：历史回放回测结果（bt_result.json） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const NAME = { D1:'锋·趋势突破', D2:'衡·多头共识', D3:'镜·多空辩论', D4:'啸·假突破低吸',
+                 D5:'渊·趋势回踩', D6:'焰·涨停回调', D7:'沉·周线反转' };
+
+  function draw() {
+    const bt = $('view-backtest'); if (!bt) return;
+    let sec = $('oxBtReplayCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxBtReplayCard';
+      sec.innerHTML = '<div class="card-title">历史回放回测</div><div class="body rows"></div>';
+      bt.insertBefore(sec, bt.firstChild);
+    }
+    fetch('bt_result.json?t=' + Date.now())
+      .then(r => { if (!r.ok) throw new Error('无文件'); return r.json(); })
+      .then(j => {
+        const roles = j.roles || {};
+        const ks = Object.keys(roles).sort();
+        const rows = ks.map(k => {
+          const v = roles[k] || {};
+          const total = Number(v.total || 0);
+          const col = total > 0 ? 'var(--up,#f2555a)' : total < 0 ? 'var(--down,#3ecf8e)' : '#98a6b8';
+          const wr = v.win_rate == null ? '—' : Math.round(v.win_rate * 100) + '%';
+          return '<div class="row" style="cursor:default"><span class="nm">' + (NAME[k] || k) + '</span>' +
+            '<span class="tag">' + (v.n || 0) + ' 笔 · 胜率 ' + wr + ' · 回撤 ' + (v.maxdd || 0) + '%</span>' +
+            '<span class="v" style="color:' + col + '">' + (total >= 0 ? '+' : '') + total + '%</span></div>';
+        }).join('');
+        sec.querySelector('.body').innerHTML = rows +
+          '<div style="font-size:11px;color:#5f6b7a;line-height:1.7;margin-top:8px">' +
+          j.universe + ' 只标的 · ' + j.bars + ' 个交易日 · 最多持 5 只、单只 20% 仓位 · 止损止盈按 ATR 动态 · ' +
+          '生成于 ' + j.asof + '<br>' + (j.note || '') + '</div>';
+      })
+      .catch(() => {
+        sec.querySelector('.body').innerHTML =
+          '<div style="font-size:12px;color:#8b96a5">还没有回放结果，等下一次周日回测任务。</div>';
+      });
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    if ($('view-backtest')) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 500);
+})();
+</script>
+
 </body>
 </html>
