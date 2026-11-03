@@ -23,6 +23,21 @@ UNIVERSE_FALLBACK = [
 ]
 BARS = 250
 
+# 各角色的 ATR 止损倍数与盈亏比（与引擎 sl_atr 思路一致：波动大的票止损更宽）
+ROLE_SL_ATR = {"D1": 2.0, "D2": 2.0, "D3": 2.2, "D4": 1.8, "D5": 2.0, "D6": 2.5, "D7": 2.5}
+ROLE_RR = {"D1": 2.0, "D2": 2.0, "D3": 2.0, "D4": 2.5, "D5": 2.0, "D6": 2.0, "D7": 3.0}
+
+
+def atr_pct(k, i, n=14):
+    """第 i 根处的 ATR 占价格百分比。"""
+    if i < n + 1:
+        return 2.0
+    trs = []
+    for j in range(i - n + 1, i + 1):
+        h, l, pc = k[j]["h"], k[j]["l"], k[j - 1]["c"]
+        trs.append(max(h - l, abs(h - pc), abs(l - pc)))
+    return (sum(trs) / len(trs)) / k[i]["c"] * 100
+
 
 def fetch_kline(code, n=BARS):
     sym = ("sh" if str(code).startswith("6") else "sz") + str(code)
@@ -126,9 +141,9 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
             ret = (cur["c"] / h["buy"] - 1) * 100
             m10 = ma([x["c"] for x in data[c][:idx + 1]], 10)
             reason = None
-            if ret <= stop:
+            if ret <= -h.get("stop", 7.0):
                 reason = "止损"
-            elif ret >= take:
+            elif ret >= h.get("take", 8.0):
                 reason = "止盈"
             elif h["day"] >= 3 and m10 and cur["c"] < m10:
                 reason = "破MA10"
@@ -157,7 +172,12 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
                 shares = budget / px
                 fee = max(budget * fee_rate, 5e-5)
                 cash -= (budget + fee)
-                holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee}
+                ap = atr_pct(data[c], idx)
+                sl_mult = ROLE_SL_ATR.get(role, 2.0)
+                stop_pct = max(3.0, min(12.0, sl_mult * ap))          # 3%~12% 夹住，防 ATR 极端
+                take_pct = stop_pct * ROLE_RR.get(role, 2.0)
+                holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee,
+                               "stop": stop_pct, "take": take_pct, "atr": round(ap, 2)}
 
         # 3) 记净值
         mv = sum(h["shares"] * data[c][offs[c] + t]["c"] for c, h in holdings.items())
