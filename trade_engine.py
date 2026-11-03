@@ -572,6 +572,7 @@ def _fetch_pools_one_day(date_str, pagesize):
         out["mismatch"] = True
         return out
     out["ok"] = bool(out["zt"] or out["dt"])
+    out["trade_date"] = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
     return out
 
 def get_limit_pools(pagesize=80):
@@ -3375,6 +3376,9 @@ def backfill_review_blocks(data):
 
     decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
     data["limit_decoded"] = decoded
+    if pd and len(str(pd)) == 8:
+        data["trade_date"] = f"{str(pd)[:4]}-{str(pd)[4:6]}-{str(pd)[6:]}"
+        decoded["trade_date"] = data["trade_date"]
 
     try:
         data["yesterday_perf"] = build_yesterday_perf(zt, pools.get("pool_date"))
@@ -3562,6 +3566,10 @@ def main():
                 print(f"  🛰 题材雷达：{top['emoji']} {top['name']}（{top['n']}家涨停/最高{top['max_lb']}板/{top['stage']}）")
         decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
+        if pools.get("pool_date") and len(str(pools["pool_date"])) == 8:
+            _pd = str(pools["pool_date"])
+            data["trade_date"] = f"{_pd[:4]}-{_pd[4:6]}-{_pd[6:]}"
+            decoded["trade_date"] = data["trade_date"]
         print(f"  📈 涨跌解读：全市场涨停 {decoded['zt_tc']} 家（实拉 {decoded['zt_count']}）· 跌停 {decoded['dt_tc']} 家（实拉 {decoded['dt_count']}）· 最高 {decoded['max_lb']} 连板 · 情绪{decoded['mood']}")
         # 情绪梯队数据层：昨日涨停今日表现 + 真实晋级率（缺失 → ok=False，前端 unknown）
         yperf = build_yesterday_perf(zt, pools.get("pool_date"))
