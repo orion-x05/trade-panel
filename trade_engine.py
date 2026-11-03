@@ -4113,7 +4113,7 @@ def main():
         # 【角色圆桌】收盘后让七个角色对榜首表态（每轮只跑一次，避免重复刷模型）
         try:
             _today = cn_now().strftime("%Y-%m-%d")
-            if cn_now().hour >= 15 and (data.get("llm_observe_day") != _today):
+            if (cn_now().hour >= 15 or cn_now().hour < 9) and (data.get("llm_observe_day") != _today):
                 llm_observe(data, data.get("market_trend") or "neutral")
                 data["llm_observe_day"] = _today
         except Exception as e:
