@@ -2152,6 +2152,20 @@ def effective_sl_tp(role_id, st):
     return round(sl_eff, 2), round(tp_eff, 2), round(rr, 2)
 
 
+TREND_ROLES = {"D2", "D3", "D5"}   # 趋势波段组：分批减仓 + 移动止盈 + 时间止损
+
+
+def _hold_days(hold):
+    """持有自然日数（按买入时间算，缺时间返回 0）。"""
+    try:
+        bt = hold.get("buyTime")
+        if not bt:
+            return 0
+        return max(0, (cn_now() - datetime.fromisoformat(bt)).days)
+    except Exception:
+        return 0
+
+
 def check_sell_signals(player, stock_data):
     signals = []
     role = ROLES[player["id"]]
@@ -2194,6 +2208,21 @@ def check_sell_signals(player, stock_data):
                 signals.append((hold, f"移动止损锁利{chg:+.1f}%", 1.0)); continue
         elif chg <= -sl_eff:
             signals.append((hold, f"止损-{abs(chg):.1f}%(自适应·ATR)", 1.0)); continue
+        # 【趋势组·分批减仓】涨停封住不动，未封板才分批兑现
+        if player["id"] in TREND_ROLES:
+            sealed = st.get("chg", 0) >= 9.5 or st.get("sealed")
+            _ma10 = st.get("ma10") or 0
+            if chg >= 8 and not hold.get("t1_done") and not sealed:
+                hold["t1_done"] = True
+                signals.append((hold, f"首批止盈+{chg:.1f}%（涨8%未封板，卖出1/3）", 0.34)); continue
+            if hold.get("t1_done") and not hold.get("t2_done"):
+                if chg >= 15 or (_ma10 and st["price"] < _ma10):
+                    hold["t2_done"] = True
+                    signals.append((hold, f"二批止盈+{chg:.1f}%（破MA10或达15%，再卖1/3）", 0.34)); continue
+            # 时间止损：持满 20 天仍无起色，腾位置
+            if _hold_days(hold) >= 20 and chg < 3:
+                signals.append((hold, f"时间止损：持有20天仅{chg:+.1f}%", 1.0)); continue
+
         if chg >= tp_eff: signals.append((hold, f"止盈+{chg:.1f}%(自适应·ATR)", 1.0)); continue
         if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]:
             # 【噪声过滤】复盘发现 -0.21%/-1.37% 这类浅位止损多由均线信号触发，属噪声。
