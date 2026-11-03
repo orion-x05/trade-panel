@@ -2348,9 +2348,13 @@ body::after{   /* 暗角 */
     if (!anchor) return;
     const key = decodeURIComponent(anchor);
     setTimeout(() => {
-      const cards = Array.from(document.querySelectorAll('.view:not([hidden]) .card, #view-' + tab + ' .card'));
-      const hit = cards.find(c => (c.querySelector('.card-title') || {}).textContent
-                      && c.querySelector('.card-title').textContent.indexOf(key) >= 0);
+      const byId = document.getElementById(key);
+      if (byId) { byId.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      const cards = Array.from(document.querySelectorAll('#view-' + tab + ' .card'));
+      const hit = cards.find(c => {
+        const t = c.querySelector('.card-title');
+        return t && t.textContent.indexOf(key) >= 0;
+      });
       if (hit) hit.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 160);
   }
@@ -2401,7 +2405,7 @@ body::after{   /* 暗角 */
   }
 
   /* ---- 收盘后慢刷：有新数据给个按钮，不硬刷页面 ---- */
-  let lastSeen = null, newBtn = null;
+  let lastSeen = null, newBtn = null, lastShown = 0;
   function pollAfterClose() {
     if (!newBtn) {
       newBtn = document.createElement('div');
@@ -2415,8 +2419,12 @@ body::after{   /* 暗角 */
       const closed = now.getDay() === 0 || now.getDay() === 6 || m >= 900 || m < 570;
       if (!closed) return;
       fetch('data.json?t=' + Date.now()).then(r => r.json()).then(d => {
-        if (lastSeen && d.last_update && d.last_update !== lastSeen) newBtn.style.display = 'block';
-        lastSeen = d.last_update;
+        const lu = d.last_update;
+        if (lastSeen && lu && lu !== lastSeen && document.visibilityState === 'visible') {
+          const gap = (Date.now() - (lastShown || 0)) / 60000;
+          if (gap >= 15) { newBtn.style.display = 'block'; lastShown = Date.now(); }
+        }
+        lastSeen = lu;
       }).catch(() => {});
     }, 600000);
   }
@@ -2465,8 +2473,11 @@ body::after{   /* 暗角 */
       const ab = (r.gates && r.gates.abnormal) || null;
       const bad = rr && rr.ratio < 2;
       const over = ab && ab.remain != null && ab.remain <= 0;
+      const dipCodes = window.__oxDipCodes || (window.__oxDipCodes = new Set());
+      const inDip = dipCodes.has(String(r.code));
       const flag = (over ? '<span class="tag" style="color:#e8b339">异动超限</span>' : '') +
-                   (bad ? '<span class="tag" style="color:#5f6b7a">赔率不足</span>' : '');
+                   (bad ? '<span class="tag" style="color:#5f6b7a">赔率不足</span>' : '') +
+                   (inDip ? '<span class="tag" style="color:#4d9fff">低吸池亦有</span>' : '');
       return '<div class="row" title="' + tip + '"' + (bad && over ? ' style="opacity:.55"' : '') + '>' +
         '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + flag + '</span>' +
         '<span class="tag">' + (r.hybk || '') + (r.lbc ? ' · ' + r.lbc + '板' : '') + '</span>' +
@@ -2877,6 +2888,7 @@ body::after{   /* 暗角 */
     }
     const box = sec.querySelector('.rows');
     const rows = dp.rows || [];
+    window.__oxDipCodes = new Set(rows.map(x => String(x.code)));
     if (!rows.length) {
       box.innerHTML = '<div class="row"><span class="nm" style="color:#8b96a5">今日没有符合位置条件的票</span></div>';
       return;
@@ -2946,6 +2958,49 @@ body::after{   /* 暗角 */
       ((e.flags || []).length
         ? '<span class="flag">⚠ ' + e.flags.join('；') + '</span>'
         : '<span class="pass">✓ 三项环境条件都达标，可以正常仓位</span>');
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
+
+<script>
+/* ===== 补充层 v11：门禁命中率（历史累积） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const NAMES = { '1': '市值与状态', '2': '流动性', '3': '趋势过滤', '4': '量价触发', '5': '过热控制', '6': '评分与风控' };
+  function draw() {
+    const d = window.OX_DATA; if (!d) return;
+    const st = d.gate_stats; const hist = d.gate_history;
+    if (!st && !hist) return;
+    let sec = $('oxGateStatCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxGateStatCard';
+      sec.innerHTML = '<div class="card-title">门禁命中率</div><div class="body rows"></div>';
+      const rv = $('view-review'); (rv || document.body).appendChild(sec);
+    }
+    const box = sec.querySelector('.body');
+    const ks = Object.keys(st || {}).sort();
+    if (!ks.length) {
+      box.innerHTML = '<div class="row"><span class="nm" style="color:#8b96a5">还没有样本，明天开始累积</span></div>';
+      return;
+    }
+    box.innerHTML = ks.map(k => {
+      const s = st[k] || {};
+      const n = s.n || 0, win = s.win || 0;
+      const rate = n ? Math.round(win / n * 100) : 0;
+      const avg = n ? (s.sum_ret / n) : 0;
+      const col = rate >= 55 ? '#3ecf8e' : (rate >= 45 ? '#e8b339' : '#ef5f5f');
+      return '<div class="row" style="cursor:default"><span class="nm">' + (NAMES[k] || ('第' + k + '条')) + '</span>' +
+        '<span class="tag">' + n + ' 次</span>' +
+        '<span class="v" style="color:' + col + '">胜率 ' + rate + '% · 均 ' + (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%</span></div>';
+    }).join('') +
+    '<div class="ox-note" style="font-size:11px;color:#8b96a5;margin-top:8px">统计口径：门禁通过次日的涨跌，样本还少，先看趋势别看小数。</div>';
   }
   let n = 0;
   const t = setInterval(() => {
