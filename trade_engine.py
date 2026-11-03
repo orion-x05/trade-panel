@@ -34,6 +34,9 @@ MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁�
 _ENV_CAP = 1.0
 _ENV_NOTE = ""
 
+# 当日涨停池快照：code → {fund 封单亿, zbc 炸板次数, fbt 首封时间}。用于判断“排队买得到吗”
+_ZT_MAP = {}
+
 # ===== WxPusher 推送配置（唯一推送通道）=====
 # 在仓库 Settings → Secrets and variables → Actions 添加：
 #   WXPUSHER_APP_TOKEN = AT_xxxxx
@@ -2343,8 +2346,19 @@ def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
     if any(h["code"] == code for h in player["holdings"]):
         return False, "已持有"
     _lim = limit_pct(code, st.get("name"))
-    if st["chg"] >= _lim - 0.2 or st["chg"] <= -(_lim - 0.2):
-        return False, f"涨跌停({_lim:.0f}%板)"
+    if st["chg"] >= _lim - 0.2:
+        # 【涨停排单】涨停不是一律买不到：封单薄或当日炸过板的，排单大概率成交；
+        # 强封（封单厚且没开过板）才视为买不到，避免把“板上排队”算成自由成交。
+        info = _ZT_MAP.get(code) or {}
+        fund = float(info.get("fund") or 0)
+        zbc = int(info.get("zbc") or 0)
+        if not info:
+            return False, f"涨停({_lim:.0f}%板)·无封板数据，视为买不到"
+        if fund > 0.3 and zbc == 0:
+            return False, f"涨停强封（封单{fund:.2f}亿·未开板），买不到"
+        # 弱封放行：按涨停价成交，仓位由环境闸与信号强度约束
+    elif st["chg"] <= -(_lim - 0.2):
+        return False, f"跌停({_lim:.0f}%)"
     if "ST" in st.get("name", ""):
         return False, "ST"
     if all_players:
@@ -3749,6 +3763,12 @@ def main():
                 print(f"  🛰 题材雷达：{top['emoji']} {top['name']}（{top['n']}家涨停/最高{top['max_lb']}板/{top['stage']}）")
         decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
+        global _ZT_MAP
+        try:
+            _ZT_MAP = {str(s.get("code")): {"fund": s.get("fund"), "zbc": s.get("zbc"), "fbt": s.get("fbt")}
+                       for s in (decoded.get("zt_rows") or [])}
+        except Exception:
+            _ZT_MAP = {}
         try:
             data["dip_pool"] = build_dip_pool(data)
         except Exception as _e:
