@@ -2908,5 +2908,52 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v10：环境闸卡 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-env{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline}
+  .ox-env .k{font-size:11.5px;color:#8b96a5}
+  .ox-env .v{font-size:15px;font-weight:600}
+  .ox-env .flag{display:block;width:100%;font-size:12px;color:#e8b339;margin-top:6px}
+  .ox-env .pass{display:block;width:100%;font-size:12px;color:#3ecf8e;margin-top:6px}
+  `;
+  document.head.appendChild(st);
+
+  function draw() {
+    const d = window.OX_DATA; if (!d) return;
+    const e = d.env_gate; if (!e) return;
+    let sec = $('oxEnvCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxEnvCard';
+      sec.innerHTML = '<div class="card-title">环境闸</div><div class="body ox-env"></div>';
+      const today = $('view-today');
+      (today || document.body).insertBefore(sec, (today || document.body).firstChild.nextSibling);
+    }
+    const cap = Math.round((e.pos_cap || 0) * 100);
+    const capColor = cap === 0 ? '#ef5f5f' : (cap < 100 ? '#e8b339' : '#3ecf8e');
+    const breadth = e.breadth == null ? '-' : (e.breadth * 100).toFixed(0) + '%';
+    const amt = e.amt_used ? (e.amt_used / 10000).toFixed(2) + ' 万亿' : '-';
+    sec.querySelector('.body').innerHTML =
+      '<div><div class="k">仓位上限</div><div class="v" style="color:' + capColor + '">' + cap + '%</div></div>' +
+      '<div><div class="k">两市成交额' + (e.amt_est && e.amt_used !== e.amt ? '（外推）' : '') + '</div><div class="v">' + amt + '</div></div>' +
+      '<div><div class="k">上涨家数</div><div class="v">' + breadth + '</div></div>' +
+      '<div><div class="k">涨停</div><div class="v">' + (e.zt || '-') + ' 家</div></div>' +
+      ((e.flags || []).length
+        ? '<span class="flag">⚠ ' + e.flags.join('；') + '</span>'
+        : '<span class="pass">✓ 三项环境条件都达标，可以正常仓位</span>');
+  }
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { draw(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
+})();
+</script>
+
 </body>
 </html>
