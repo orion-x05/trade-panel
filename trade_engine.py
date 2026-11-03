@@ -34,6 +34,10 @@ MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁�
 _ENV_CAP = 1.0
 _ENV_NOTE = ""
 
+# 【只在多头环境出手】回测结论：同一套规则在多头环境全赚、空头全亏，且三个标的池一致。
+# 这是唯一经得起交叉验证的结论，所以默认开启：market_trend 不是 bull 就不开新仓。
+BULL_ONLY = True
+
 # 当日涨停池快照：code → {fund 封单亿, zbc 炸板次数, fbt 首封时间}。用于判断“排队买得到吗”
 _ZT_MAP = {}
 
@@ -2611,6 +2615,10 @@ def check_dip_buys(data, all_players, ntf=1.0, trend="neutral"):
 
 def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=False):
     """执行买入（含仓位动态调整：胜率高的角色加仓，胜率低的减仓；ntf=国家队仓位系数）"""
+    # 【只在多头环境出手】market_trend 由调用方传入；不是 bull 直接不开新仓
+    if BULL_ONLY and trend != "bull":
+        print(f"  🌥 非多头环境（{trend}）· BULL_ONLY 开关生效，跳过买入 {st.get('name')}")
+        return
     # 【W1·仓位公式】风险由仓位控制，不由止损距离控制（补丁二）：
     #   单笔风险预算 = 权益 × 1%；止损距离 = sl_atr × ATR%（无ATR按默认2%波动率）
     #   预算 = min(权益×1% ÷ 止损距离, 权益×25%)；波动越大买越少，风险恒定 1%
@@ -3784,6 +3792,7 @@ def main():
     update_role_stats(data)     # 角色表现记忆 → 动态权重 + 市况自适应倍率
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
+    data["bull_only"] = bool(BULL_ONLY)
     _ld0 = data.get("limit_decoded") or {}
     data["trade_date"] = _ld0.get("trade_date") or (str(_ld0.get("asof"))[:10] if _ld0.get("asof") else None)
     trend_text = "多头📈" if market_trend == "bull" else "空头📉" if market_trend == "bear" else "震荡🔄"
