@@ -84,8 +84,9 @@ def signal(role, k, i):
         return up_trend and cur["c"] >= hi20 and vr >= 1.2 and chg > 1
     if role == "D2":      # 多头共识：均线多头排列且当日收红
         return up_trend and cur["c"] > m5 > m20 and chg > 0
-    if role == "D3":      # 多空辩论（简化）：站上 MA20 且近三日不破
-        return cur["c"] > m20 and min(x["c"] for x in k[i - 2:i + 1]) > m20 * 0.98
+    if role == "D3":      # 多空辩论（简化）：站上 MA20、近三日不破、且当日有力度
+        return (cur["c"] > m20 and min(x["c"] for x in k[i - 2:i + 1]) > m20 * 0.98
+                and chg > 1.5 and vr >= 1.2)
     if role == "D4":      # 假阴真阳：收<开但收>昨收，且放量
         return cur["c"] < cur["o"] and chg > 0 and vr >= 1.5
     if role == "D5":      # 趋势回踩：多头趋势 + 贴近 MA20 + 收阳
@@ -106,11 +107,15 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005, stop=-7.0, take=8.0, ma
     """单角色逐日回放：满仓单票，-7% 止损 / +8% 或跌破 MA10 止盈。"""
     trades = []
     pos = None
+    pos_cooldown = {}
     for code, k in data.items():
         i = 61
         while i < len(k) - 1:
             if pos is None:
                 if signal(role, k, i):
+                    if pos_cooldown.get(code, -99) > i - 3:
+                        i += 1
+                        continue
                     px = k[i]["c"]
                     pos = {"code": code, "i": i, "buy": px, "day": 0}
                 i += 1
@@ -126,7 +131,7 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005, stop=-7.0, take=8.0, ma
                 exit_reason = "止损"
             elif ret >= take:
                 exit_reason = "止盈"
-            elif m10 and cur["c"] < m10:
+            elif pos["day"] >= 3 and m10 and cur["c"] < m10:
                 exit_reason = "破MA10"
             elif pos["day"] >= max_hold:
                 exit_reason = "超时"
@@ -137,6 +142,7 @@ def run_role(role, data, fee_rate=0.00025, stamp=0.0005, stop=-7.0, take=8.0, ma
                 trades.append({"code": code, "buy": pos["buy"], "sell": sell,
                                "ret": round(net * 100, 2), "reason": exit_reason,
                                "days": pos["day"]})
+                pos_cooldown[code] = i
                 pos = None
         if pos is not None:   # 期末未平仓，按最后收盘算
             cur = k[-1]
