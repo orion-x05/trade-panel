@@ -2584,9 +2584,20 @@ body::after{   /* 暗角 */
       }
     }
     const ml = ma.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + Y(pt[1]).toFixed(1)).join(' ');
+    // 买卖点：按日期对齐到对应 K 线，B 画在下方、S 画在上方
+    let mk = '';
+    (MARKERS || []).forEach(m => {
+      const idx = rows.findIndex(x => String(x[0]) === String(m.date));
+      if (idx < 0) return;
+      const x = P + idx * cw + cw / 2;
+      const y = m.side === 'B' ? Y(rows[idx][4]) + 10 : Y(rows[idx][3]) - 10;
+      const col = m.side === 'B' ? '#3ecf8e' : '#ef5f5f';
+      mk += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + col +
+            '" font-size="10" font-weight="700" text-anchor="middle">' + m.side + '</text>';
+    });
     $('oxKbox').innerHTML =
       '<svg class="ox-kline" id="oxKsvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g +
-      (ml ? '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' : '') + '</svg>';
+      (ml ? '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' : '') + mk + '</svg>';
     const f = rows[0][0], t = rows[rows.length - 1][0];
     $('oxKinfo').textContent = f + ' → ' + t + ' · ' + rows.length + ' 根 · 滚轮缩放，拖动平移';
   }
@@ -2632,7 +2643,9 @@ body::after{   /* 暗角 */
     return { real: false, points: items.filter(i => i.level === 'ok').length * 2, max: items.length * 2, items };
   }
 
-  async function open(r) {
+  let MARKERS = [];
+  async function open(r, markers) {
+    MARKERS = markers || [];
     const g = gate(r);
     $('oxDrawer').innerHTML =
       '<div class="ox-dh"><h3>' + (r.name || r.code) + ' <span style="font-size:12px;color:#8b96a5">' + r.code + '</span></h3>' +
@@ -2707,6 +2720,8 @@ body::after{   /* 暗角 */
     });
     Array.from(box.children).forEach((row) => { row.style.cursor = 'pointer'; });
   }
+
+  window.OX_openKline = open;
 
   let n = 0;
   const t = setInterval(() => {
@@ -3015,6 +3030,96 @@ body::after{   /* 暗角 */
     if (window.OX_DATA) { draw(); clearInterval(t); }
     if (++n > 80) clearInterval(t);
   }, 400);
+})();
+</script>
+
+
+<script>
+/* ===== 补充层 v12：低吸池/持仓行 → K 线（持仓带 B/S 买卖点） ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const st = document.createElement('style');
+  st.textContent = `
+  .ox-kchip{display:inline-block;margin-left:8px;font-size:10.5px;padding:1px 7px;border-radius:999px;
+    border:1px solid rgba(77,159,255,.45);color:#9dc6ff;cursor:pointer}
+  .ox-kchip:hover{background:rgba(77,159,255,.14)}
+  `;
+  document.head.appendChild(st);
+
+  function tradesOf(code) {
+    const d = window.OX_DATA || {};
+    const out = [];
+    (d.players || []).forEach(p => (p.trades || []).forEach(t => {
+      if (String(t.code) !== String(code)) return;
+      out.push({ date: String(t.time || '').slice(0, 10), side: t.type === 'buy' ? 'B' : 'S',
+                 price: t.price, role: p.id });
+    }));
+    return out;
+  }
+
+  /* 低吸池：整行点击看 K 线 */
+  function bindDip() {
+    const box = document.querySelector('#oxDipCard .rows');
+    if (!box || box.dataset.kbound) return;
+    box.dataset.kbound = '1';
+    box.addEventListener('click', (e) => {
+      const row = e.target.closest('.row'); if (!row) return;
+      const idx = Array.from(box.children).indexOf(row);
+      const d = window.OX_DATA || {};
+      const r = ((d.dip_pool || {}).rows || [])[idx];
+      if (r && window.OX_openKline) window.OX_openKline(r, tradesOf(r.code));
+    });
+    Array.from(box.children).forEach(r => { r.style.cursor = 'pointer'; });
+  }
+
+  /* 持仓明细：每行加一个 K 线小按钮（不去抢原来的点击） */
+  function decorateHold() {
+    const box = $('holdDetail');
+    if (!box) return;
+    if (!box.dataset.kclick) {
+      box.dataset.kclick = '1';
+      box.addEventListener('click', (e) => {
+        const chip = e.target.closest('.ox-kchip');
+        if (!chip) return;
+        e.stopPropagation();
+        const code = chip.dataset.code;
+        const d = window.OX_DATA || {};
+        const p = (d.players || []).find(x => (x.holdings || []).some(h => String(h.code) === String(code)));
+        const h = p && (p.holdings || []).find(x => String(x.code) === String(code));
+        if (!h || !window.OX_openKline) return;
+        window.OX_openKline({ code: h.code, name: h.name, hybk: '持仓 · ' + p.id,
+                              score: h.score, lbc: 0,
+                              zdp: null, hs: null, zbc: 0 }, tradesOf(code));
+      }, true);
+    }
+    Array.from(box.querySelectorAll('.row')).forEach(row => {
+      if (row.dataset.kdone) return;
+      row.dataset.kdone = '1';
+      const nm = row.querySelector('.nm');
+      if (!nm) return;
+      const text = nm.textContent || '';
+      const chip = document.createElement('span');
+      chip.className = 'ox-kchip';
+      chip.textContent = 'K线';
+      chip.dataset.code = '';
+      nm.appendChild(chip);
+    });
+    // 代码从 data 里对齐（按行顺序与 OX_DATA 的持仓顺序一致）
+    const d = window.OX_DATA || {};
+    const all = [];
+    (d.players || []).forEach(p => (p.holdings || []).forEach(h => all.push(h)));
+    Array.from(box.querySelectorAll('.ox-kchip')).forEach((chip, i) => {
+      if (all[i]) chip.dataset.code = all[i].code;
+    });
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) {
+      bindDip(); decorateHold();
+      if (++n > 12) clearInterval(t);
+    } else if (++n > 80) clearInterval(t);
+  }, 500);
 })();
 </script>
 
