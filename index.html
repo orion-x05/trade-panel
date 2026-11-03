@@ -886,7 +886,7 @@ body::after{   /* 暗角 */
   </section>
 
   <section class="card mini">
-    <div class="card-title">仓位上限</div>
+    <div class="card-title">单笔上限 · 情绪阶段</div>
     <div class="mini-val"><span id="capVal">–</span><span class="u">%</span></div>
     <div class="mini-note">该情绪阶段下的单笔仓位上限</div>
   </section>
@@ -2974,13 +2974,25 @@ body::after{   /* 暗角 */
     const breadth = e.breadth == null ? '-' : (e.breadth * 100).toFixed(0) + '%';
     const amt = e.amt_used ? (e.amt_used / 10000).toFixed(2) + ' 万亿' : '-';
     sec.querySelector('.body').innerHTML =
-      '<div><div class="k">仓位上限</div><div class="v" style="color:' + capColor + '">' + cap + '%</div></div>' +
+      '<div><div class="k">总仓上限 · 大盘环境</div><div class="v" style="color:' + capColor + '">' + cap + '%</div></div>' +
       '<div><div class="k">两市成交额' + (e.amt_est && e.amt_used !== e.amt ? '（外推）' : '') + '</div><div class="v">' + amt + '</div></div>' +
       '<div><div class="k">上涨家数</div><div class="v">' + breadth + '</div></div>' +
       '<div><div class="k">涨停</div><div class="v">' + (e.zt || '-') + ' 家</div></div>' +
       ((e.flags || []).length
         ? '<span class="flag">⚠ ' + e.flags.join('；') + '</span>'
         : '<span class="pass">✓ 三项环境条件都达标，可以正常仓位</span>') +
+      (function () {
+        // 合成口径：真正能动的仓位 = min(总仓上限, 单笔上限×可持数量)
+        const capEl = document.getElementById('capVal');
+        const per = capEl ? parseFloat(capEl.textContent) : null;
+        const total = e.pos_cap != null ? e.pos_cap * 100 : null;
+        if (per == null || total == null) return '';
+        const maxPos = 5;
+        const eff = Math.min(total, per * maxPos);
+        return '<span style="display:block;width:100%;font-size:11.5px;color:#8b96a5;margin-top:4px">' +
+          '合成：总仓 ' + Math.round(total) + '% 与 单笔 ' + Math.round(per) + '%×5 取小 → ' +
+          '<b style="color:#dbe4ee">实际可动 ' + Math.round(eff) + '%</b></span>';
+      })() +
       ((window.OX_DATA && window.OX_DATA.bull_only)
         ? '<span style="display:block;width:100%;font-size:11.5px;color:#5f6b7a;margin-top:6px">' +
           'BULL_ONLY 开关：只在多头环境开新仓（当前大盘 ' +
