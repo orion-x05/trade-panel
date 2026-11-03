@@ -3637,6 +3637,74 @@ def update_role_metrics(data):
             p["maxDrawdown"] = p.get("maxDrawdown") or 0.0
 
 
+def _batch_quotes(codes):
+    """腾讯批量报价：一次请求拿多只，返回 {code: 现价}。"""
+    out = {}
+    codes = [c for c in codes if c][:60]
+    if not codes:
+        return out
+    try:
+        q = ",".join(("sh" if str(c).startswith("6") else "sz") + str(c) for c in codes)
+        r = requests.get("https://qt.gtimg.cn/q=" + q, timeout=10)
+        r.encoding = "gbk"
+        for line in r.text.strip().split(";"):
+            if "~" not in line:
+                continue
+            arr = line.split("~")
+            if len(arr) > 4 and float(arr[3] or 0) > 0:
+                out[arr[0].split("_")[-1][2:]] = float(arr[3])
+    except Exception:
+        pass
+    return out
+
+
+def update_gate_track(data, pool):
+    """门禁命中率追踪：每天记录前 20 名的判定与收盘价，次日回填涨跌。
+
+    gate_history: {YYYY-MM-DD: [{code,name,score,close,gates:{k:level}}]}  最多 30 天
+    gate_stats:   {k: {n, win, sum_ret}}
+    """
+    hist = data.setdefault("gate_history", {})
+    stats = data.setdefault("gate_stats", {})
+    today = cn_now().strftime("%Y-%m-%d")
+
+    past = [d for d in sorted(hist.keys()) if d < today and any("ret" not in x for x in hist[d])]
+    if past:
+        d0 = past[-1]
+        need = [x for x in hist[d0] if "ret" not in x and x.get("close")]
+        quotes = _batch_quotes([x["code"] for x in need])
+        filled = 0
+        for x in need:
+            px = quotes.get(str(x["code"]))
+            if not px or not x.get("close"):
+                continue
+            ret = (px / float(x["close"]) - 1) * 100
+            x["ret"] = round(ret, 2)
+            filled += 1
+            for k, lv in (x.get("gates") or {}).items():
+                if lv is None:
+                    continue
+                st = stats.setdefault(k, {"n": 0, "win": 0, "sum_ret": 0.0})
+                st["n"] += 1
+                st["win"] += 1 if ret > 0 else 0
+                st["sum_ret"] = round(st["sum_ret"] + ret, 2)
+        if filled:
+            print(f"  🎯 门禁回填 {d0}：{filled} 只 · 累计样本 {sum(v['n'] for v in stats.values())}")
+
+    rows = []
+    for r in (pool.get("rows") or [])[:20]:
+        g = r.get("gates") or {}
+        rows.append({
+            "code": r.get("code"), "name": r.get("name"), "score": r.get("score"),
+            "close": g.get("price"),
+            "gates": {it["k"]: it.get("level") for it in (g.get("items") or [])} or None,
+        })
+    if rows:
+        hist[today] = rows
+    for d in sorted(hist.keys())[:-30]:
+        hist.pop(d, None)
+
+
 def apply_force_close(data):
     """执行一次性清仓指令（data["force_close"] = ["603906", ...]）。
 
