@@ -574,7 +574,11 @@ def _fetch_pools_one_day(date_str, pagesize):
     # 【关键校验】东财对无数据/未来日期会兜底返回最近一天，但 qdate 写明真实归属日。
     # 不校验就会把“昨天”的数据当成“今天”，导致昨日池与今日池自比、晋级率恒 0。
     out["qdate"] = str(qdate) if qdate else date_str
-    if qdate and str(qdate) != date_str:
+    # qdate 是「查询上下文日」，不是数据归属日：
+    #   请求未来/无数据日 → 东财兜底返回最近一天，此时 qdate < 请求日（这才是拿旧数据顶包）
+    #   请求历史日     → qdate 会等于当前日（> 请求日），数据本身仍是对应那天的
+    # 所以只在 qdate 比请求日还早时才判无效。
+    if qdate and str(qdate) < str(date_str):
         out["ok"] = False
         out["mismatch"] = True
         return out
