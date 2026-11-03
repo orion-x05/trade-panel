@@ -103,68 +103,81 @@ def signal(role, k, i):
     return False
 
 
-def run_role(role, data, fee_rate=0.00025, stamp=0.0005, stop=-7.0, take=8.0, max_hold=20):
-    """单角色逐日回放：满仓单票，-7% 止损 / +8% 或跌破 MA10 止盈。"""
-    trades = []
-    pos = None
-    pos_cooldown = {}
-    for code, k in data.items():
-        i = 61
-        while i < len(k) - 1:
-            if pos is None:
-                if signal(role, k, i):
-                    if pos_cooldown.get(code, -99) > i - 3:
-                        i += 1
-                        continue
-                    px = k[i]["c"]
-                    pos = {"code": code, "i": i, "buy": px, "day": 0}
-                i += 1
-                continue
-            # 持仓中：次日开始判断离场
-            i += 1
-            cur = k[i]
-            pos["day"] += 1
-            ret = (cur["c"] / pos["buy"] - 1) * 100
-            m10 = ma([x["c"] for x in k[:i + 1]], 10)
-            exit_reason = None
-            if ret <= stop:
-                exit_reason = "止损"
-            elif ret >= take:
-                exit_reason = "止盈"
-            elif pos["day"] >= 3 and m10 and cur["c"] < m10:
-                exit_reason = "破MA10"
-            elif pos["day"] >= max_hold:
-                exit_reason = "超时"
-            if exit_reason:
-                sell = cur["c"]
-                gross = (sell - pos["buy"]) / pos["buy"]
-                net = gross - fee_rate * 2 - stamp
-                trades.append({"code": code, "buy": pos["buy"], "sell": sell,
-                               "ret": round(net * 100, 2), "reason": exit_reason,
-                               "days": pos["day"]})
-                pos_cooldown[code] = i
-                pos = None
-        if pos is not None:   # 期末未平仓，按最后收盘算
-            cur = k[-1]
-            gross = (cur["c"] - pos["buy"]) / pos["buy"]
-            net = gross - fee_rate * 2 - stamp
-            trades.append({"code": code, "buy": pos["buy"], "sell": cur["c"],
-                           "ret": round(net * 100, 2), "reason": "期末平仓", "days": pos["day"]})
-            pos = None
+def run_role(role, data, fee_rate=0.00025, stamp=0.0005,
+             stop=-7.0, take=8.0, max_hold=20, max_pos=5, pos_pct=0.2):
+    """组合口径回放：与实盘一致——最多 5 只、单只 20% 仓位、逐日遍历。
 
-    if not trades:
-        return {"n": 0, "win_rate": None, "avg": None, "total": 0.0, "maxdd": 0.0, "trades": []}
-    rets = [t["ret"] for t in trades]
+    每个交易日先处理离场，再按信号补仓（现金够、仓位未满才买）。
+    净值按「现金 + 持仓市值」逐日计算，避免满仓单票的复利失真。
+    """
+    codes = list(data.keys())
+    n_days = min(len(v) for v in data.values())
+    offs = {c: len(data[c]) - n_days for c in codes}   # 右对齐到同一末端
+    cash, holdings = 1.0, {}                            # holdings: code -> {shares, buy, day, cost}
+    trades, equity = [], []
+
+    for t in range(61, n_days):
+        # 1) 离场
+        for c in list(holdings.keys()):
+            h = holdings[c]
+            idx = offs[c] + t
+            cur = data[c][idx]
+            h["day"] += 1
+            ret = (cur["c"] / h["buy"] - 1) * 100
+            m10 = ma([x["c"] for x in data[c][:idx + 1]], 10)
+            reason = None
+            if ret <= stop:
+                reason = "止损"
+            elif ret >= take:
+                reason = "止盈"
+            elif h["day"] >= 3 and m10 and cur["c"] < m10:
+                reason = "破MA10"
+            elif h["day"] >= max_hold:
+                reason = "超时"
+            if reason:
+                gross = h["shares"] * cur["c"]
+                fee = max(gross * fee_rate, 5e-5) + gross * stamp
+                cash += gross - fee
+                net_ret = ((gross - fee) / h["cost"] - 1) * 100
+                trades.append({"code": c, "ret": round(net_ret, 2), "reason": reason, "days": h["day"]})
+                holdings.pop(c)
+
+        # 2) 补仓
+        for c in codes:
+            if len(holdings) >= max_pos or cash < pos_pct * 0.9:
+                continue
+            if c in holdings:
+                continue
+            idx = offs[c] + t
+            if idx < 61:
+                continue
+            if signal(role, data[c], idx):
+                px = data[c][idx]["c"]
+                budget = min(cash, pos_pct)
+                shares = budget / px
+                fee = max(budget * fee_rate, 5e-5)
+                cash -= (budget + fee)
+                holdings[c] = {"shares": shares, "buy": px, "day": 0, "cost": budget + fee}
+
+        # 3) 记净值
+        mv = sum(h["shares"] * data[c][offs[c] + t]["c"] for c, h in holdings.items())
+        equity.append(cash + mv)
+
+    if not equity:
+        return {"n": 0, "win_rate": None, "avg": None, "total": 0.0, "maxdd": 0.0, "days": 0}
+    peak, mdd = equity[0], 0.0
+    for v in equity:
+        peak = max(peak, v)
+        if peak > 0:
+            mdd = max(mdd, (peak - v) / peak)
+    rets = [x["ret"] for x in trades]
     wins = [r for r in rets if r > 0]
-    eq, peak, mdd = 1.0, 1.0, 0.0
-    for r in rets:
-        eq *= (1 + r / 100)
-        peak = max(peak, eq)
-        mdd = max(mdd, (peak - eq) / peak)
-    return {"n": len(trades), "win_rate": round(len(wins) / len(trades), 3),
-            "avg": round(sum(rets) / len(rets), 2),
-            "total": round((eq - 1) * 100, 2), "maxdd": round(mdd * 100, 2),
-            "trades": trades[-20:]}
+    return {"n": len(trades),
+            "win_rate": round(len(wins) / len(trades), 3) if trades else None,
+            "avg": round(sum(rets) / len(rets), 2) if trades else None,
+            "total": round((equity[-1] - 1) * 100, 2),
+            "maxdd": round(mdd * 100, 2),
+            "days": len(equity)}
 
 
 def main():
