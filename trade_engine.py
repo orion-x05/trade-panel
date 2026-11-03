@@ -3384,44 +3384,68 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
 
 
 def build_dip_pool(data, limit=24):
-    """【低吸池】按五类位置筛票，并用回调位算赔率。
+    """【低吸池】候选来自「前几天涨停、今天回调还没封板」的票。
 
-    与主池分开：这里不看"六步门禁"，只看位置是否成立 + 赔率是否够。
+    关键修正：不能从今天的涨停池里选——当天已经涨停的票买的是板价，
+    那是打板不是低吸，也违反我们自己的封板闸。
+    现在的口径：近 3 个交易日曾涨停 → 今日涨幅 <8%（还没封）→ 位置成立 → 算赔率。
     """
     ld = data.get("limit_decoded") or {}
-    zt = ld.get("zt_rows") or []
-    if not zt:
-        return {"ok": False, "asof": ld.get("asof"), "rows": []}
+    today_asof = ld.get("asof")
 
-    # 先按板块排序，保证同板块的票挨着，方便看中军/后排
+    # 1) 近 3 个交易日涨停池（含今天，今天涨停的会被后面的涨幅条件挡掉）
+    cand, seen = [], set()
+    for k in range(0, 5):
+        d = cn_now() - timedelta(days=k)
+        if d.weekday() >= 5:
+            continue
+        ds = d.strftime("%Y%m%d")
+        p = _fetch_pools_one_day(ds, 100)
+        if not p.get("ok"):
+            continue
+        for s in p.get("zt") or []:
+            code = s.get("code")
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            cand.append({**s, "pool_ds": ds})
+        if len(cand) >= 120:
+            break
+    if not cand:
+        return {"ok": False, "asof": today_asof, "rows": []}
+
     idx_dev = _index_dev(3)
-    cand = sorted(zt, key=lambda s: (-int(s.get("lbc") or 0), -(float(s.get("fund") or 0))))[:40]
-
     rows = []
-    for s in cand:
+    for s in cand[:120]:
         code = s.get("code")
         k = _kline_ohlc(code, 60)
+        if len(k) < 25:
+            continue
+        last, prev = k[-1], k[-2]
+        chg = (last["c"] / prev["c"] - 1) * 100
+        # 今日已经封板的，属于打板区间，不进低吸池
+        if chg >= limit_pct(code, s.get("name")) - 1.0:
+            continue
         typ, why = classify_dip(k, int(s.get("lbc") or 0), s.get("hybk") or "")
         if not typ:
             continue
-        px = k[-1]["c"] if k else None
-        rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px) if k else None
+        px = last["c"]
+        rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px)
         ab = calc_abnormal([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k],
-                           code, s.get("name"), idx_dev) if k else None
+                           code, s.get("name"), idx_dev)
         rows.append({
             "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
-            "price": round(px, 2) if px else None,
+            "price": round(px, 2), "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
         })
         if len(rows) >= limit:
             break
 
-    # 赔率够的排前面，其次按类型分组稳定排序
     rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
                              -((r.get("rr") or {}).get("ratio") or 0)))
-    return {"ok": bool(rows), "asof": ld.get("asof"), "rows": rows,
-            "basis": "五类低吸位置 + 回调位赔率（与主池门禁无关）"}
+    return {"ok": bool(rows), "asof": today_asof, "rows": rows,
+            "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"}
 
 
 def build_score_pool(data, top_n=40):
