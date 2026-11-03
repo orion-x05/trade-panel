@@ -2197,7 +2197,7 @@ body::after{   /* 暗角 */
       const box = $(id); if (!box || !blk) return;
       const card = box.closest('.card'); if (!card) return;
       const title = card.querySelector('.card-title'); if (!title || title.dataset.asofDone) return;
-      const asof = blk.asof || '';
+      const asof = (window.OX_DATA && window.OX_DATA.trade_date) || blk.asof || '';
       if (!asof) return;
       const day = asof.slice(0, 10);
       const diff = Math.floor((new Date(day) - new Date(today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0'))) / 86400000);
@@ -2241,15 +2241,31 @@ body::after{   /* 暗角 */
     const input = wrap.querySelector('#oxCmdkInput'), list = wrap.querySelector('#oxCmdkList');
     let items = [], cur = 0;
 
+    function poolRows() {
+      const d = window.OX_DATA || {};
+      const out = [];
+      ((d.score_pool || {}).rows || []).slice(0, 20).forEach(r =>
+        out.push({ label: (r.name || r.code) + ' · 评分 ' + r.score, go: () => go('scan'), key: (r.name || '') + r.code }));
+      ((d.dip_pool || {}).rows || []).slice(0, 20).forEach(r =>
+        out.push({ label: (r.name || r.code) + ' · ' + r.type, go: () => go('scan'), key: (r.name || '') + r.code }));
+      ((d.players || [])).forEach(p => (p.holdings || []).forEach(h =>
+        out.push({ label: (h.name || h.code) + ' · 持仓', go: () => go('hold'), key: (h.name || '') + h.code })));
+      return out;
+    }
     function paint() {
       const q = input.value.trim().toLowerCase();
-      items = V.filter(v => !q || v.indexOf(q) >= 0 || LABEL[v].indexOf(q) >= 0);
+      const tabs = V.filter(v => !q || v.indexOf(q) >= 0 || LABEL[v].indexOf(q) >= 0)
+                    .map(v => ({ label: LABEL[v], hint: '#' + v, go: () => go(v) }));
+      const stocks = q ? poolRows().filter(x => (x.key || '').toLowerCase().indexOf(q) >= 0)
+                               .slice(0, 6)
+                               .map(x => ({ label: x.label, hint: '股票', go: x.go })) : [];
+      items = tabs.concat(stocks);
       cur = 0;
-      list.innerHTML = items.map((v, i) =>
-        '<li data-v="' + v + '" class="' + (i === 0 ? 'on' : '') + '"><span>' + LABEL[v] + '</span><span class="k">#' + v + '</span></li>'
+      list.innerHTML = items.map((it, i) =>
+        '<li data-i="' + i + '" class="' + (i === 0 ? 'on' : '') + '"><span>' + it.label + '</span><span class="k">' + (it.hint || '') + '</span></li>'
       ).join('') || '<li><span>没有匹配</span></li>';
     }
-    function pick() { const v = items[cur]; if (v) { wrap.hidden = true; go(v); } }
+    function pick() { const it = items[cur]; if (it) { wrap.hidden = true; it.go(); } }
 
     input.addEventListener('input', paint);
     input.addEventListener('keydown', (e) => {
@@ -2262,7 +2278,8 @@ body::after{   /* 暗角 */
       Array.from(list.children).forEach((li, i) => li.classList.toggle('on', i === cur));
     });
     list.addEventListener('click', (e) => {
-      const li = e.target.closest('li'); if (li && li.dataset.v) { wrap.hidden = true; go(li.dataset.v); }
+      const li = e.target.closest('li');
+      if (li && li.dataset.i != null) { const it = items[+li.dataset.i]; if (it) { wrap.hidden = true; it.go(); } }
     });
     wrap.addEventListener('click', (e) => { if (e.target === wrap) wrap.hidden = true; });
 
