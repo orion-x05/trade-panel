@@ -2989,8 +2989,24 @@ def build_env_gate(data):
         elapsed = 120
     else:
         elapsed = 120 + min(m - 780, 120)
-    est = round(amt / elapsed * 240, 0) if elapsed >= 30 else None
-    amt_for_gate = est if (elapsed and elapsed < 240) else amt
+    # 【成交额外推】不能线性：开盘半小时的成交占比远高于平均（U 型分布）。
+    # 用经验曲线（已交易分钟 → 占全天比例）插值，误差比线性小得多。
+    CURVE = [(0, 0.0), (15, 0.13), (30, 0.24), (60, 0.35), (90, 0.43), (120, 0.50),
+             (150, 0.60), (180, 0.70), (210, 0.82), (240, 1.0)]
+    def _ratio(minutes):
+        if minutes <= 0:
+            return None
+        for i in range(1, len(CURVE)):
+            x0, y0 = CURVE[i - 1]
+            x1, y1 = CURVE[i]
+            if minutes <= x1:
+                if x1 == x0:
+                    return y1
+                return y0 + (y1 - y0) * (minutes - x0) / (x1 - x0)
+        return 1.0
+    r_ = _ratio(elapsed)
+    est = round(amt / r_, 0) if (r_ and r_ > 0.1 and elapsed < 240) else None
+    amt_for_gate = est if est else amt
 
     zt = int((data.get("limit_decoded") or {}).get("zt_count") or 0)
     flags, cap = [], 1.0
