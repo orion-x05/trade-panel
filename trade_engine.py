@@ -3587,6 +3587,40 @@ def backfill_review_blocks(data):
     return True
 
 
+def apply_force_close(data):
+    """执行一次性清仓指令（data["force_close"] = ["603906", ...]）。
+
+    用途：口径错误或人工判定要撤掉的持仓。按成本价平仓、零盈亏，
+    成交记录写明原因，执行完清空指令，避免反复触发。
+    """
+    codes = data.get("force_close") or []
+    if not codes:
+        return
+    codes = {str(c) for c in codes}
+    done = 0
+    for p in data["players"]:
+        keep = []
+        for h in (p.get("holdings") or []):
+            if str(h.get("code")) in codes:
+                cost = float(h.get("buyPrice") or h.get("cost") or 0)
+                qty = int(h.get("qty") or 0)
+                p["cash"] = round(p["cash"] + cost * qty, 2)
+                p.setdefault("trades", []).append({
+                    "type": "sell", "code": h.get("code"), "name": h.get("name"),
+                    "qty": qty, "price": round(cost, 2), "fee": 0,
+                    "time": cn_now().isoformat(),
+                    "reason": "人工指令平仓：按成本价清掉（零盈亏）",
+                })
+                done += 1
+                print(f"  🧹 清仓 {p['id']} {h.get('name')}({h.get('code')}) {qty}股 @{cost:.2f}（零盈亏）")
+            else:
+                keep.append(h)
+        p["holdings"] = keep
+    data["force_close"] = []
+    if done:
+        print(f"  ✅ 清仓完成 {done} 笔")
+
+
 def main():
     print(f"{'='*50}")
     print(f"  AI六角色交易引擎启动 {cn_now().strftime('%Y-%m-%d %H:%M:%S')} (北京时间 UTC+8)")
@@ -3601,6 +3635,10 @@ def main():
         _ENV_NOTE = "；".join(_eg.get("flags") or []) if _eg else ""
     except Exception:
         pass
+    try:
+        apply_force_close(data)
+    except Exception as e:
+        print(f"  ⚠ 清仓指令执行失败：{e}")
     bt_notes = load_bt_tune()   # 回测调参（bt_tune.json）优先于出厂值，adaptive_tune 再在其基础上微调
     update_role_stats(data)     # 角色表现记忆 → 动态权重 + 市况自适应倍率
     market_trend = get_market_trend()
