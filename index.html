@@ -2980,7 +2980,12 @@ body::after{   /* 暗角 */
       '<div><div class="k">涨停</div><div class="v">' + (e.zt || '-') + ' 家</div></div>' +
       ((e.flags || []).length
         ? '<span class="flag">⚠ ' + e.flags.join('；') + '</span>'
-        : '<span class="pass">✓ 三项环境条件都达标，可以正常仓位</span>');
+        : '<span class="pass">✓ 三项环境条件都达标，可以正常仓位</span>') +
+      ((window.OX_DATA && window.OX_DATA.bull_only)
+        ? '<span style="display:block;width:100%;font-size:11.5px;color:#5f6b7a;margin-top:6px">' +
+          'BULL_ONLY 开关：只在多头环境开新仓（当前大盘 ' +
+          (window.OX_DATA.market_trend === 'bull' ? '多头 ✓' : '非多头 → 只卖不买') + '）</span>'
+        : '');
   }
   let n = 0;
   const t = setInterval(() => {
