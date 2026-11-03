@@ -978,7 +978,7 @@ body::after{   /* 暗角 */
 
 <div class="grid view" id="view-backtest" hidden>
   <section class="card">
-    <div class="card-title">策略回测 · 各角色</div>
+    <div class="card-title">模拟盘实绩 · 各角色<span style="margin-left:8px;font-size:11px;font-weight:400;color:#5f6b7a">真实成交统计</span></div>
     <div class="rows" id="btRows"></div>
   </section>
   <section class="card">
@@ -3120,6 +3120,79 @@ body::after{   /* 暗角 */
       if (++n > 12) clearInterval(t);
     } else if (++n > 80) clearInterval(t);
   }, 500);
+})();
+</script>
+
+
+<script>
+/* ===== 补充层 v13：参数评估 + 昨日关注表现 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function paramCard() {
+    let sec = $('oxBtTuneCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxBtTuneCard';
+      sec.innerHTML = '<div class="card-title">参数评估 · 回测产出</div><div class="body rows"></div>';
+      const bt = $('view-backtest'); (bt || document.body).appendChild(sec);
+    }
+    fetch('bt_tune.json?t=' + Date.now())
+      .then(r => { if (!r.ok) throw new Error('无文件'); return r.json(); })
+      .then(j => {
+        const roles = j.roles || {};
+        const ks = Object.keys(roles);
+        if (!ks.length) throw new Error('空');
+        sec.querySelector('.body').innerHTML = ks.map(k => {
+          const v = roles[k] || {};
+          return '<div class="row" style="cursor:default"><span class="nm">' + k + '</span>' +
+            '<span class="tag">止损 ' + v.sl + '% · 止盈 ' + v.tp + '% · 单笔 ' + v.pos_cap + '%</span>' +
+            '<span class="v" style="color:#98a6b8">' + (v.tune_note || '') + '</span></div>';
+        }).join('') + '<div style="font-size:11px;color:#5f6b7a;margin-top:8px">来源 backtest.py：按历史成交做参数敏感性评估，样本不足（单角色 <8 笔卖出）不生成</div>';
+      })
+      .catch(() => {
+        sec.querySelector('.body').innerHTML =
+          '<div style="font-size:12px;color:#8b96a5;line-height:1.7">还没有回测产出。<br>' +
+          'backtest.py 要求单角色至少 8 笔卖出样本，现在只有 1~3 笔，样本不够它就不生成。</div>';
+      });
+  }
+
+  function watchCard() {
+    const d = window.OX_DATA; if (!d) return;
+    const hist = d.review_history || {}, wst = d.watch_stats || {};
+    const days = Object.keys(hist).sort().slice(-3).reverse();
+    let sec = $('oxWatchCard');
+    if (!sec) {
+      sec = document.createElement('section');
+      sec.className = 'card'; sec.id = 'oxWatchCard';
+      sec.innerHTML = '<div class="card-title">昨日关注 · 今天怎么样</div><div class="body rows"></div>';
+      const rv = $('view-review'); (rv || document.body).appendChild(sec);
+    }
+    const box = sec.querySelector('.body');
+    const blocks = days.map(day => {
+      const items = ((hist[day] || {}).watch) || [];
+      const judged = items.filter(x => x.ret != null);
+      if (!judged.length) return '';
+      return '<div style="font-size:11.5px;color:#5f6b7a;margin:6px 0 2px">' + day.slice(5) + '</div>' +
+        judged.map(x => {
+          const col = x.ret >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)';
+          return '<div class="row" style="cursor:default"><span class="nm">' + x.name +
+            '<span style="font-size:10.5px;color:#5f6b7a"> ' + (x.basis || '') + '</span></span>' +
+            '<span class="tag">参考 ' + (x.ref != null ? x.ref : '—') + '</span>' +
+            '<span class="v" style="color:' + col + '">' + (x.ret >= 0 ? '+' : '') + x.ret + '%</span></div>';
+        }).join('');
+    }).filter(Boolean).join('');
+    const rate = wst.n ? Math.round(wst.win / wst.n * 100) : null;
+    box.innerHTML = (blocks || '<div class="row"><span class="nm" style="color:#8b96a5">还没有历史样本，明天开始回看</span></div>') +
+      '<div style="font-size:11px;color:#5f6b7a;margin-top:8px">累计 ' + (wst.n || 0) + ' 只 · 上涨 ' + (wst.win || 0) + ' 只' +
+      (rate === null ? '' : ' · ' + rate + '%') + (wst.n ? ' · 平均 ' + (wst.sum_ret / wst.n).toFixed(2) + '%' : '') + '</div>';
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) { paramCard(); watchCard(); clearInterval(t); }
+    if (++n > 80) clearInterval(t);
+  }, 400);
 })();
 </script>
 
