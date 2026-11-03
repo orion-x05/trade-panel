@@ -1,6 +1,6 @@
 {
   "generated_by": "bt_replay.py",
-  "asof": "2026-11-03 19:53",
+  "asof": "2026-11-03 21:10",
   "bars": 250,
   "pools": {
     "涨停热票": {
@@ -29,6 +29,36 @@
               "sum": 14.36,
               "avg": 0.55,
               "win_rate": 0.346
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 72,
+              "win": 15,
+              "sum": -162.2,
+              "avg": -2.25,
+              "win_rate": 0.208
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.208,
@@ -62,6 +92,36 @@
               "win_rate": 0.294
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 99,
+              "win": 24,
+              "sum": -77.52,
+              "avg": -0.78,
+              "win_rate": 0.242
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.242,
           "avg": -0.78,
           "total": -6.87,
@@ -91,6 +151,36 @@
               "sum": -4.62,
               "avg": -0.13,
               "win_rate": 0.306
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 89,
+              "win": 19,
+              "sum": -261.82,
+              "avg": -2.94,
+              "win_rate": 0.213
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.213,
@@ -124,6 +214,36 @@
               "win_rate": 0.286
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 37,
+              "win": 8,
+              "sum": -63.3,
+              "avg": -1.71,
+              "win_rate": 0.216
+            },
+            "2-3": {
+              "n": 4,
+              "win": 0,
+              "sum": -21.91,
+              "avg": -5.48,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 4,
+              "win": 0,
+              "sum": -16.82,
+              "avg": -4.21,
+              "win_rate": 0.0
+            },
+            ">4": {
+              "n": 1,
+              "win": 0,
+              "sum": -0.37,
+              "avg": -0.37,
+              "win_rate": 0.0
+            }
+          },
           "win_rate": 0.174,
           "avg": -2.23,
           "total": -20.5,
@@ -153,6 +273,36 @@
               "sum": 5.71,
               "avg": 0.16,
               "win_rate": 0.429
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 110,
+              "win": 31,
+              "sum": -170.14,
+              "avg": -1.55,
+              "win_rate": 0.282
+            },
+            "2-3": {
+              "n": 1,
+              "win": 0,
+              "sum": -7.72,
+              "avg": -7.72,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.279,
@@ -186,6 +336,36 @@
               "win_rate": 0.414
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 81,
+              "win": 22,
+              "sum": -210.61,
+              "avg": -2.6,
+              "win_rate": 0.272
+            },
+            "2-3": {
+              "n": 1,
+              "win": 1,
+              "sum": 16.15,
+              "avg": 16.15,
+              "win_rate": 1.0
+            },
+            "3-4": {
+              "n": 1,
+              "win": 0,
+              "sum": -7.62,
+              "avg": -7.62,
+              "win_rate": 0.0
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.277,
           "avg": -2.43,
           "total": -35.24,
@@ -217,6 +397,36 @@
               "win_rate": 0.344
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 4,
+              "win": 1,
+              "sum": 34.21,
+              "avg": 8.55,
+              "win_rate": 0.25
+            },
+            "2-3": {
+              "n": 28,
+              "win": 11,
+              "sum": 33.57,
+              "avg": 1.2,
+              "win_rate": 0.393
+            },
+            "3-4": {
+              "n": 33,
+              "win": 10,
+              "sum": -91.09,
+              "avg": -2.76,
+              "win_rate": 0.303
+            },
+            ">4": {
+              "n": 24,
+              "win": 6,
+              "sum": -44.54,
+              "avg": -1.86,
+              "win_rate": 0.25
+            }
+          },
           "win_rate": 0.315,
           "avg": -0.76,
           "total": -8.98,
@@ -226,6 +436,36 @@
         "龙头首阴": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -257,6 +497,36 @@
               "win_rate": 0.316
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 37,
+              "win": 8,
+              "sum": -96.52,
+              "avg": -2.61,
+              "win_rate": 0.216
+            },
+            "2-3": {
+              "n": 4,
+              "win": 0,
+              "sum": -21.91,
+              "avg": -5.48,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 4,
+              "win": 0,
+              "sum": -16.82,
+              "avg": -4.21,
+              "win_rate": 0.0
+            },
+            ">4": {
+              "n": 1,
+              "win": 0,
+              "sum": -0.37,
+              "avg": -0.37,
+              "win_rate": 0.0
+            }
+          },
           "win_rate": 0.174,
           "avg": -2.95,
           "total": -27.14,
@@ -266,6 +536,36 @@
         "龙头回踩": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -288,6 +588,36 @@
               "sum": -13.86,
               "avg": -13.86,
               "win_rate": 0.0
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 2,
+              "win": 0,
+              "sum": -19.98,
+              "avg": -9.99,
+              "win_rate": 0.0
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.0,
@@ -319,6 +649,36 @@
               "sum": 150.41,
               "avg": 4.42,
               "win_rate": 0.5
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 70,
+              "win": 24,
+              "sum": 44.67,
+              "avg": 0.64,
+              "win_rate": 0.343
+            },
+            "2-3": {
+              "n": 1,
+              "win": 1,
+              "sum": 25.48,
+              "avg": 25.48,
+              "win_rate": 1.0
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.352,
@@ -357,6 +717,36 @@
               "win_rate": 0.241
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 57,
+              "win": 9,
+              "sum": -138.5,
+              "avg": -2.43,
+              "win_rate": 0.158
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.158,
           "avg": -2.43,
           "total": -25.58,
@@ -386,6 +776,36 @@
               "sum": -20.64,
               "avg": -0.54,
               "win_rate": 0.237
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 90,
+              "win": 20,
+              "sum": -115.42,
+              "avg": -1.28,
+              "win_rate": 0.222
+            },
+            "2-3": {
+              "n": 2,
+              "win": 0,
+              "sum": -3.78,
+              "avg": -1.89,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.217,
@@ -419,6 +839,36 @@
               "win_rate": 0.308
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 96,
+              "win": 26,
+              "sum": -22.66,
+              "avg": -0.24,
+              "win_rate": 0.271
+            },
+            "2-3": {
+              "n": 1,
+              "win": 0,
+              "sum": -1.39,
+              "avg": -1.39,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.268,
           "avg": -0.25,
           "total": -2.51,
@@ -448,6 +898,36 @@
               "sum": 10.56,
               "avg": 0.66,
               "win_rate": 0.312
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 19,
+              "win": 6,
+              "sum": 11.88,
+              "avg": 0.63,
+              "win_rate": 0.316
+            },
+            "2-3": {
+              "n": 4,
+              "win": 0,
+              "sum": -7.78,
+              "avg": -1.95,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 2,
+              "win": 1,
+              "sum": 2.8,
+              "avg": 1.4,
+              "win_rate": 0.5
+            },
+            ">4": {
+              "n": 1,
+              "win": 1,
+              "sum": 5.41,
+              "avg": 5.41,
+              "win_rate": 1.0
             }
           },
           "win_rate": 0.308,
@@ -481,6 +961,36 @@
               "win_rate": 0.18
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 109,
+              "win": 29,
+              "sum": -103.89,
+              "avg": -0.95,
+              "win_rate": 0.266
+            },
+            "2-3": {
+              "n": 8,
+              "win": 1,
+              "sum": -8.07,
+              "avg": -1.01,
+              "win_rate": 0.125
+            },
+            "3-4": {
+              "n": 1,
+              "win": 0,
+              "sum": -0.39,
+              "avg": -0.39,
+              "win_rate": 0.0
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.254,
           "avg": -0.95,
           "total": -21.69,
@@ -510,6 +1020,36 @@
               "sum": -3.46,
               "avg": -3.46,
               "win_rate": 0.0
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 20,
+              "win": 3,
+              "sum": -58.03,
+              "avg": -2.9,
+              "win_rate": 0.15
+            },
+            "2-3": {
+              "n": 4,
+              "win": 1,
+              "sum": -1.98,
+              "avg": -0.49,
+              "win_rate": 0.25
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.167,
@@ -543,6 +1083,36 @@
               "win_rate": 0.5
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 3,
+              "win": 1,
+              "sum": 13.55,
+              "avg": 4.52,
+              "win_rate": 0.333
+            },
+            "2-3": {
+              "n": 6,
+              "win": 1,
+              "sum": -2.17,
+              "avg": -0.36,
+              "win_rate": 0.167
+            },
+            "3-4": {
+              "n": 24,
+              "win": 9,
+              "sum": -39.96,
+              "avg": -1.67,
+              "win_rate": 0.375
+            },
+            ">4": {
+              "n": 23,
+              "win": 9,
+              "sum": -18.92,
+              "avg": -0.82,
+              "win_rate": 0.391
+            }
+          },
           "win_rate": 0.357,
           "avg": -0.85,
           "total": -7.74,
@@ -552,6 +1122,36 @@
         "龙头首阴": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -583,6 +1183,36 @@
               "win_rate": 0.312
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 19,
+              "win": 6,
+              "sum": 9.5,
+              "avg": 0.5,
+              "win_rate": 0.316
+            },
+            "2-3": {
+              "n": 4,
+              "win": 0,
+              "sum": -7.78,
+              "avg": -1.95,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 2,
+              "win": 1,
+              "sum": 2.8,
+              "avg": 1.4,
+              "win_rate": 0.5
+            },
+            ">4": {
+              "n": 1,
+              "win": 1,
+              "sum": 5.41,
+              "avg": 5.41,
+              "win_rate": 1.0
+            }
+          },
           "win_rate": 0.308,
           "avg": 0.38,
           "total": 1.99,
@@ -592,6 +1222,36 @@
         "龙头回踩": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -601,6 +1261,36 @@
         "中军回踩": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -630,6 +1320,36 @@
               "sum": -12.64,
               "avg": -6.32,
               "win_rate": 0.0
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 8,
+              "win": 2,
+              "sum": -21.35,
+              "avg": -2.67,
+              "win_rate": 0.25
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.25,
@@ -668,6 +1388,36 @@
               "win_rate": 0.357
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 95,
+              "win": 23,
+              "sum": -125.26,
+              "avg": -1.32,
+              "win_rate": 0.242
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.242,
           "avg": -1.32,
           "total": -15.77,
@@ -697,6 +1447,36 @@
               "sum": 31.29,
               "avg": 0.89,
               "win_rate": 0.286
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 100,
+              "win": 22,
+              "sum": -134.81,
+              "avg": -1.35,
+              "win_rate": 0.22
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.22,
@@ -730,6 +1510,36 @@
               "win_rate": 0.341
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 105,
+              "win": 30,
+              "sum": -96.03,
+              "avg": -0.91,
+              "win_rate": 0.286
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.286,
           "avg": -0.91,
           "total": -17.75,
@@ -759,6 +1569,36 @@
               "sum": 47.92,
               "avg": 1.5,
               "win_rate": 0.312
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 52,
+              "win": 13,
+              "sum": -46.04,
+              "avg": -0.89,
+              "win_rate": 0.25
+            },
+            "2-3": {
+              "n": 7,
+              "win": 0,
+              "sum": -26.63,
+              "avg": -3.8,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 6,
+              "win": 1,
+              "sum": -14.02,
+              "avg": -2.34,
+              "win_rate": 0.167
+            },
+            ">4": {
+              "n": 2,
+              "win": 1,
+              "sum": 5.04,
+              "avg": 2.52,
+              "win_rate": 0.5
             }
           },
           "win_rate": 0.224,
@@ -792,6 +1632,36 @@
               "win_rate": 0.196
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 127,
+              "win": 33,
+              "sum": -56.11,
+              "avg": -0.44,
+              "win_rate": 0.26
+            },
+            "2-3": {
+              "n": 6,
+              "win": 2,
+              "sum": -7.41,
+              "avg": -1.24,
+              "win_rate": 0.333
+            },
+            "3-4": {
+              "n": 1,
+              "win": 0,
+              "sum": -0.4,
+              "avg": -0.4,
+              "win_rate": 0.0
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": 0.261,
           "avg": -0.48,
           "total": -11.9,
@@ -821,6 +1691,36 @@
               "sum": 65.83,
               "avg": 1.94,
               "win_rate": 0.382
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 93,
+              "win": 23,
+              "sum": -201.44,
+              "avg": -2.17,
+              "win_rate": 0.247
+            },
+            "2-3": {
+              "n": 5,
+              "win": 1,
+              "sum": 9.22,
+              "avg": 1.84,
+              "win_rate": 0.2
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.245,
@@ -854,6 +1754,36 @@
               "win_rate": 0.333
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 5,
+              "win": 1,
+              "sum": 28.84,
+              "avg": 5.77,
+              "win_rate": 0.2
+            },
+            "2-3": {
+              "n": 25,
+              "win": 8,
+              "sum": -33.91,
+              "avg": -1.36,
+              "win_rate": 0.32
+            },
+            "3-4": {
+              "n": 32,
+              "win": 13,
+              "sum": -34.67,
+              "avg": -1.08,
+              "win_rate": 0.406
+            },
+            ">4": {
+              "n": 43,
+              "win": 9,
+              "sum": -73.46,
+              "avg": -1.71,
+              "win_rate": 0.209
+            }
+          },
           "win_rate": 0.295,
           "avg": -1.08,
           "total": -15.61,
@@ -863,6 +1793,36 @@
         "龙头首阴": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -894,6 +1854,36 @@
               "win_rate": 0.333
             }
           },
+          "rr_buckets": {
+            "<2": {
+              "n": 52,
+              "win": 13,
+              "sum": -81.64,
+              "avg": -1.57,
+              "win_rate": 0.25
+            },
+            "2-3": {
+              "n": 7,
+              "win": 0,
+              "sum": -26.63,
+              "avg": -3.8,
+              "win_rate": 0.0
+            },
+            "3-4": {
+              "n": 6,
+              "win": 1,
+              "sum": -14.02,
+              "avg": -2.34,
+              "win_rate": 0.167
+            },
+            ">4": {
+              "n": 2,
+              "win": 1,
+              "sum": 5.04,
+              "avg": 2.52,
+              "win_rate": 0.5
+            }
+          },
           "win_rate": 0.224,
           "avg": -1.75,
           "total": -23.46,
@@ -903,6 +1893,36 @@
         "龙头回踩": {
           "n": 0,
           "regime": {},
+          "rr_buckets": {
+            "<2": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            }
+          },
           "win_rate": null,
           "avg": null,
           "total": 0.0,
@@ -925,6 +1945,36 @@
               "sum": -13.86,
               "avg": -13.86,
               "win_rate": 0.0
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 2,
+              "win": 0,
+              "sum": -19.98,
+              "avg": -9.99,
+              "win_rate": 0.0
+            },
+            "2-3": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.0,
@@ -956,6 +2006,36 @@
               "sum": 228.01,
               "avg": 6.33,
               "win_rate": 0.556
+            }
+          },
+          "rr_buckets": {
+            "<2": {
+              "n": 70,
+              "win": 25,
+              "sum": 68.88,
+              "avg": 0.98,
+              "win_rate": 0.357
+            },
+            "2-3": {
+              "n": 1,
+              "win": 1,
+              "sum": 25.48,
+              "avg": 25.48,
+              "win_rate": 1.0
+            },
+            "3-4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
+            },
+            ">4": {
+              "n": 0,
+              "win": 0,
+              "sum": 0.0,
+              "avg": null,
+              "win_rate": null
             }
           },
           "win_rate": 0.366,
