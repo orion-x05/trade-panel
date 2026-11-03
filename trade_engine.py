@@ -30,6 +30,10 @@ INIT_CASH = 100000
 MAX_POS = 5
 MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁止六角色持仓大幅重复
 
+# 环境闸系数：1.0=正常，0.5=半仓，0=空仓。每轮由 build_env_gate 刷新，do_buy 读它压仓位。
+_ENV_CAP = 1.0
+_ENV_NOTE = ""
+
 # ===== WxPusher 推送配置（唯一推送通道）=====
 # 在仓库 Settings → Secrets and variables → Actions 添加：
 #   WXPUSHER_APP_TOKEN = AT_xxxxx
@@ -2545,8 +2549,12 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     equity = player["cash"] + sum(
         (h.get("price") or h.get("buyPrice") or 0) * h.get("qty", 0)
         for h in player.get("holdings", []))
+    # 【环境闸】大盘量能/广度不达标时，整个环境压仓位；0 直接不开新仓
+    if _ENV_CAP <= 0:
+        print(f"  🚧 环境闸：{_ENV_NOTE or '未达标'} → 空仓，跳过 {st['name']}")
+        return
     budget_risk = equity * RISK_PER_TRADE / (stop_dist_pct / 100.0)
-    budget_cap = equity * (cap if cap else MAX_SINGLE_PCT)
+    budget_cap = equity * (cap if cap else MAX_SINGLE_PCT) * _ENV_CAP
     position_ratio = min(budget_risk, budget_cap) / max(player["cash"], 1)
     position_ratio = min(position_ratio, 1.0)
     # 【信号强度仓位】评分越高仓位越重（弱信号降仓控回撤）；回测调参 cap 优先时不叠加
@@ -3487,6 +3495,14 @@ def main():
     print(f"{'='*50}")
     
     data = load_data()
+    # 【环境闸】先用上一轮结果兜底，交易前会用最新数据再刷一次
+    try:
+        global _ENV_CAP, _ENV_NOTE
+        _eg = data.get("env_gate") or {}
+        _ENV_CAP = float(_eg.get("pos_cap", 1.0) if _eg else 1.0)
+        _ENV_NOTE = "；".join(_eg.get("flags") or []) if _eg else ""
+    except Exception:
+        pass
     bt_notes = load_bt_tune()   # 回测调参（bt_tune.json）优先于出厂值，adaptive_tune 再在其基础上微调
     update_role_stats(data)     # 角色表现记忆 → 动态权重 + 市况自适应倍率
     market_trend = get_market_trend()
@@ -3649,6 +3665,16 @@ def main():
                 print(f"  🛰 题材雷达：{top['emoji']} {top['name']}（{top['n']}家涨停/最高{top['max_lb']}板/{top['stage']}）")
         decoded = build_limit_decoded(zt, dt, zt_tc=zt_tc, dt_tc=dt_tc)
         data["limit_decoded"] = decoded
+        try:
+            _e2 = build_env_gate(data)
+            if _e2:
+                data["env_gate"] = _e2
+                _ENV_CAP = float(_e2.get("pos_cap", 1.0))
+                _ENV_NOTE = "；".join(_e2.get("flags") or [])
+                print(f"  🚧 环境闸：仓位上限 {int(_ENV_CAP*100)}% · 成交额 {( _e2.get('amt_used') or 0)/10000:.2f} 万亿 · 上涨占比 "
+                      f"{( _e2.get('breadth') or 0)*100:.0f}%" + (f" · {_ENV_NOTE}" if _ENV_NOTE else ""))
+        except Exception as _e:
+            print(f"  ⚠ 环境闸刷新失败：{_e}")
         if pools.get("pool_date") and len(str(pools["pool_date"])) == 8:
             _pd = str(pools["pool_date"])
             data["trade_date"] = f"{_pd[:4]}-{_pd[4:6]}-{_pd[6:]}"
