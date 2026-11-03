@@ -2159,7 +2159,17 @@ body::after{   /* 暗角 */
     let html = '';
     ids.forEach(id => {
       const m = mood[id], p = psy[id], s = streak[id], t = tuned[id];
-      const txt = (typeof m === 'string' ? m : (m && (m.text || m.mood)) || '') || '';
+      // role_mood 是 -1~1 的数值，转成人话，别把 -0.423 直接怼给用户看
+      const moodWord = (v) => {
+        const n = Number(v);
+        if (!isFinite(n)) return '';
+        if (n >= 0.4) return '手风顺';
+        if (n >= 0.1) return '偏积极';
+        if (n > -0.1) return '中性';
+        if (n > -0.4) return '偏谨慎';
+        return '心态差';
+      };
+      const txt = (typeof m === 'number') ? moodWord(m) : ((typeof m === 'string' ? m : '') || '');
       const pv = (typeof p === 'string' ? p : (p && (p.state || p.text)) || '') || '';
       const parts = [];
       if (txt) parts.push(txt);
@@ -2434,8 +2444,14 @@ body::after{   /* 暗角 */
       const tip = '连板 ' + (p.board || 0) + ' · 封单 ' + (p.seal || 0) + ' · 换手 ' + (p.turn || 0) +
                   ' · 题材 ' + (p.theme || 0) + ' · 机构 ' + (p.inst || 0) + ' · 炸板 ' + (p.penalty || 0);
       const chg = Number(r.zdp || 0);
-      return '<div class="row" title="' + tip + '">' +
-        '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + '</span>' +
+      const rr = (r.gates && r.gates.rr) || null;
+      const ab = (r.gates && r.gates.abnormal) || null;
+      const bad = rr && rr.ratio < 2;
+      const over = ab && ab.remain != null && ab.remain <= 0;
+      const flag = (over ? '<span class="tag" style="color:#e8b339">异动超限</span>' : '') +
+                   (bad ? '<span class="tag" style="color:#5f6b7a">赔率不足</span>' : '');
+      return '<div class="row" title="' + tip + '"' + (bad && over ? ' style="opacity:.55"' : '') + '>' +
+        '<span class="nm">' + (i + 1) + '. ' + (r.name || r.code) + flag + '</span>' +
         '<span class="tag">' + (r.hybk || '') + (r.lbc ? ' · ' + r.lbc + '板' : '') + '</span>' +
         '<span class="v" style="color:' + (chg >= 0 ? 'var(--up,#f2555a)' : 'var(--down,#3ecf8e)') + '">' +
         r.score + ' 分' + (r.gates && r.gates.rr ? '<span style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#5f6b7a') + ';font-size:11px"> · 赔率 ' + r.gates.rr.ratio + '</span>' : '') +
@@ -2591,6 +2607,16 @@ body::after{   /* 暗角 */
         '<button data-k="all">全部</button></div>' +
       '<div class="ox-kwrap"><div id="oxKbox"><div class="ox-sub">K 线加载中…</div></div></div>' +
       '<div class="ox-sub" id="oxKinfo"></div>' +
+      (r.gates && r.gates.abnormal ? (function(){
+        const a = r.gates.abnormal;
+        const c3 = a.risk === '高' ? '#e8b339' : '#98a6b8';
+        const c10 = a.risk10 === '高' ? '#e8b339' : '#98a6b8';
+        return '<div class="ox-kv2">' +
+          '<div>3日偏离<b style="color:' + c3 + '">' + (a.dev == null ? '-' : a.dev + '%') + ' · 余量 ' + (a.remain == null ? '-' : a.remain + '%') + '</b></div>' +
+          '<div>10日偏离<b style="color:' + c10 + '">' + (a.dev10 == null ? '-' : a.dev10 + '%') + ' · 余量 ' + (a.remain10 == null ? '-' : a.remain10 + '%') + '</b></div>' +
+          (a.paozi ? '<div style="color:#e8b339">豹子顶<b style="color:#e8b339">高位整齐价</b></div>' : '') +
+        '</div>';
+      })() : '') +
       (r.gates && r.gates.rr ? '<div class="ox-kv2">' +
         '<div>赔率<b style="color:' + (r.gates.rr.ok ? '#3ecf8e' : '#e8b339') + '">' + r.gates.rr.ratio + ' 倍</b></div>' +
         '<div>目标位<b>' + r.gates.rr.target + '（' + r.gates.rr.upside + '%）</b></div>' +
@@ -2709,7 +2735,11 @@ body::after{   /* 暗角 */
         '<span>首板晋级 <b>' + (mood.rate_1to2 == null ? '-' : mood.rate_1to2 + '%') + '</b></span>' +
         '<span>二进三 <b>' + (mood.rate_2to3 == null ? '-' : mood.rate_2to3 + '%') + '</b></span>' +
         '<span>' + (mood.emoji || '') + ' ' + (mood.stage || '-') + '</span>' +
-      '</div>' + (tierHtml || '<div style="font-size:12px;color:#8b96a5">暂无梯队数据</div>');
+      '</div>' +
+      ((rv.cluster || []).length ? '<div style="font-size:12px;color:#98a6b8;margin:6px 0 2px">主线：' +
+        rv.cluster.slice(0, 3).map(c => '<b style="color:#dbe4ee">' + c.name + '</b> ' + c.n + '家').join(' · ') +
+        '</div>' : '') +
+      (tierHtml || '<div style="font-size:12px;color:#8b96a5">暂无梯队数据</div>');
 
     /* 2 后排二波 */
     const c2 = card('oxRvBack', '后排二波 · 补涨候选');
@@ -2841,7 +2871,9 @@ body::after{   /* 暗角 */
         '<span class="nm">' + r.name + '<span class="tp">' + r.type + '</span>' +
         '<span class="why">' + (r.why || '') + '</span></span>' +
         '<span class="v" style="color:' + (ok ? '#3ecf8e' : '#5f6b7a') + '">' +
-        (rr.ratio != null ? '赔率 ' + rr.ratio : '赔率 -') + '</span></div>';
+        (rr.ratio != null ? '赔率 ' + rr.ratio : '赔率 -') +
+        ((r.abnormal && r.abnormal.remain != null) ? '<span style="color:#5f6b7a;font-size:11px"> · 异动余 ' + r.abnormal.remain + '%</span>' : '') +
+        '</span></div>';
     }).join('');
     const title = sec.querySelector('.card-title');
     if (title && !title.dataset.done) {
