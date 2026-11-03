@@ -3631,6 +3631,36 @@ def llm_log(data, role, stock, decision):
         data["llm_log"] = LLM_LOG[-40:]
 
 
+def llm_observe(data, market_trend):
+    """【观察模式】收盘后七个角色对评分池榜首各表一次态：只记录、不下单。
+
+    目的：一是让角色「开口」，二是积累判断样本，日后可对照次日涨跌校准。
+    """
+    if not LLM_KEY:
+        return
+    pool = (data.get("score_pool") or {}).get("rows") or []
+    top = None
+    for r in pool:
+        if r.get("board_role") in ("龙头", "卡位", "中军") or (r.get("lbc") or 0) >= 2:
+            top = r
+            break
+    if not top:
+        top = pool[0] if pool else None
+    if not top:
+        return
+    print(f"  🧠 角色圆桌：{top.get('name')}（{top.get('hybk')} · {top.get('lbc')}板 · {top.get('board_role')}）")
+    for role in ["D1", "D2", "D3", "D4", "D5", "D6", "D7"]:
+        ctx = (f"标的：{top.get('name')}({top.get('code')})\n"
+               f"板块：{top.get('hybk')}  连板：{top.get('lbc')}  板块角色：{top.get('board_role')}\n"
+               f"今日涨幅：{top.get('chg')}%  评分：{top.get('score')}\n"
+               f"大盘环境：{market_trend}\n"
+               f"问题：按你的风格，明天你会不会买它？")
+        d = llm_decide(role, ctx)
+        if d:
+            print(f"     {role} {d['action']} 信心{d['confidence']} · {d['reason']}")
+        llm_log(None, role, {"code": top.get("code"), "name": top.get("name")}, d)
+
+
 def classify_board_roles(zt_rows):
     """【板块角色】按板块内部给每只票定位：龙头/中军/卡位/助攻/补涨/跟风。
 
@@ -4080,6 +4110,15 @@ def main():
         # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
         # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
         # 持仓市值被忽略，导致面板与推送口径不一致。
+        # 【角色圆桌】收盘后让七个角色对榜首表态（每轮只跑一次，避免重复刷模型）
+        try:
+            _today = cn_now().strftime("%Y-%m-%d")
+            if cn_now().hour >= 15 and (data.get("llm_observe_day") != _today):
+                llm_observe(data, data.get("market_trend") or "neutral")
+                data["llm_observe_day"] = _today
+        except Exception as e:
+            print(f"  ⚠ 角色圆桌异常：{e}")
+
         data = refresh_assets(data)
         save_data(data)
         print("  ⏸️  非交易时间（已刷新并保存资产快照），退出")
