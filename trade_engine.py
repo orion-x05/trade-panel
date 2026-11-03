@@ -28,7 +28,8 @@ FORCE_SUMMARY = os.environ.get("FORCE_SUMMARY", "").strip().lower() in ("1", "tr
 
 INIT_CASH = 100000
 MAX_POS = 5
-MAX_OVERLAP = 2  # 全局：同一只股票最多允许 2 个角色持有，禁止六角色持仓大幅重复
+MAX_OVERLAP = 1  # 【复盘修正】原先允许 2 个角色同持一票，结果山西汾酒/招商银行/长江电力都出现
+# 同价同秒买入、同时双亏——等于同一笔风险押两注。降为 1：一只票只准一个角色持有。
 
 # 环境闸系数：1.0=正常，0.5=半仓，0=空仓。每轮由 build_env_gate 刷新，do_buy 读它压仓位。
 _ENV_CAP = 1.0
@@ -2194,7 +2195,15 @@ def check_sell_signals(player, stock_data):
         elif chg <= -sl_eff:
             signals.append((hold, f"止损-{abs(chg):.1f}%(自适应·ATR)", 1.0)); continue
         if chg >= tp_eff: signals.append((hold, f"止盈+{chg:.1f}%(自适应·ATR)", 1.0)); continue
-        if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]: signals.append((hold, "跌破MA20+均线走弱", 1.0)); continue
+        if st["price"] < st["ma20"] and st["ma5"] < st["ma10"]:
+            # 【噪声过滤】复盘发现 -0.21%/-1.37% 这类浅位止损多由均线信号触发，属噪声。
+            # 要求亏损幅度至少达到 1 倍 ATR 才认这条离场，否则继续持有。
+            _atr_pct = (st.get("atr_pct") or DEFAULT_ATR_PCT)
+            if chg <= -_atr_pct:
+                signals.append((hold, "跌破MA20+均线走弱", 1.0)); continue
+            else:
+                print(f"  🔇 {hold.get('name')} 均线走弱但仅{chg:+.2f}%（<1ATR {_atr_pct:.1f}%），视为噪声不离场")
+                continue
         if st["kdj_k"] < st["kdj_d"] and st["kdj_k"] > 70: signals.append((hold, "KDJ高位死叉", 1.0)); continue
         if st["vol_ratio"] > 1.5 and st["chg"] < -2: signals.append((hold, "放量下跌主力出逃", 1.0)); continue
     return signals
@@ -2377,6 +2386,11 @@ def _pass_basic_filter(code, st, player, all_players, allow_pullback=False):
         overlap = sum(1 for p in all_players if any(h["code"] == code for h in p["holdings"]))
         if overlap >= MAX_OVERLAP:
             return False, "跨角色重合超限"
+    # 【同板块集中度】同一角色在同一板块最多持 2 只：同板块同涨同跌，押 3 只等于放大的同一注
+    _sec = STOCK_INDUSTRY.get(code, "其他")
+    _same = sum(1 for h in player["holdings"] if STOCK_INDUSTRY.get(h["code"], "其他") == _sec)
+    if _same >= 2:
+        return False, f"{_sec}板块已持 {_same} 只，集中度超限"
     guard_ok, guard_why = global_guard(st, allow_pullback=allow_pullback)
     if not guard_ok:
         return False, f"风控闸:{guard_why}"
