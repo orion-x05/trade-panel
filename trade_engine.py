@@ -3468,6 +3468,7 @@ def build_dip_pool(data, limit=24):
         return {"ok": False, "asof": today_asof, "rows": []}
 
     idx_dev = _index_dev(3)
+    _role_map = classify_board_roles((data.get("limit_decoded") or {}).get("zt_rows") or [])
     rows = []
     _stat = {"cand": len(cand), "no_k": 0, "sealed": 0, "no_type": 0}
     for s in cand[:120]:
@@ -3490,8 +3491,10 @@ def build_dip_pool(data, limit=24):
         rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px)
         ab = calc_abnormal([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k],
                            code, s.get("name"), idx_dev)
+        _br = _role_map.get(str(code)) or {}
         rows.append({
             "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
+            "board_role": _br.get("role"), "board_leader": _br.get("leader"),
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
             "price": round(px, 2), "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
@@ -3505,6 +3508,67 @@ def build_dip_pool(data, limit=24):
           f"位置不符 {_stat['no_type']} → 入选 {len(rows)}")
     return {"ok": bool(rows), "asof": today_asof, "rows": rows, "stat": _stat,
             "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"}
+
+
+def classify_board_roles(zt_rows):
+    """【板块角色】按板块内部给每只票定位：龙头/中军/卡位/助攻/补涨/跟风。
+
+    判断依据（每一项都能落到一个具体字段上）：
+      龙头  = 板块内连板数最高；连板并列时比封单额（fund）
+      卡位  = 与龙头同连板数但不是龙头本身（同身位竞争）
+      中军  = 板块内流通市值（ltsz）最大的那只，且连板 ≤2，且板块至少 3 只
+      补涨  = 龙头已到 ≥5 板（接近尾声）时，板块内冒出的首板
+      助攻  = 龙头 ≥3 板时，板块内 1~2 板的跟随票
+      跟风  = 以上都不是，只是跟着涨
+    """
+    by_sector = {}
+    for s in zt_rows or []:
+        by_sector.setdefault(s.get("hybk") or "其他", []).append(s)
+
+    def _lb(x):
+        try:
+            return int(x.get("lbc") or 0)
+        except Exception:
+            return 0
+
+    def _fund(x):
+        try:
+            return float(x.get("fund") or 0)
+        except Exception:
+            return 0.0
+
+    def _cap(x):
+        try:
+            return float(x.get("ltsz") or 0)
+        except Exception:
+            return 0.0
+
+    out = {}
+    for hy, arr in by_sector.items():
+        if not arr:
+            continue
+        leader = max(arr, key=lambda x: (_lb(x), _fund(x)))
+        max_lb = _lb(leader)
+        big = max(arr, key=_cap)
+        for s in arr:
+            c = str(s.get("code"))
+            lb = _lb(s)
+            if c == str(leader.get("code")):
+                role = "龙头"
+            elif lb == max_lb:
+                role = "卡位"
+            elif c == str(big.get("code")) and lb <= 2 and len(arr) >= 3:
+                role = "中军"
+            elif max_lb >= 5 and lb <= 1:
+                role = "补涨"
+            elif max_lb >= 3 and lb <= 2:
+                role = "助攻"
+            else:
+                role = "跟风"
+            out[c] = {"role": role, "sector": hy,
+                      "leader": leader.get("name"), "leader_lb": max_lb,
+                      "sector_n": len(arr)}
+    return out
 
 
 def build_score_pool(data, top_n=40):
@@ -3556,6 +3620,12 @@ def build_score_pool(data, top_n=40):
             "score": score, "parts": parts,
         })
     rows.sort(key=lambda r: -r["score"])
+    _roles = classify_board_roles(zt)
+    for r in rows:
+        br = _roles.get(str(r.get("code"))) or {}
+        r["board_role"] = br.get("role")
+        r["board_leader"] = br.get("leader")
+        r["sector_n"] = br.get("sector_n")
     out = rows[:top_n]
     # 只给前 20 只算真门禁（每只要拉一次 K 线），避免 Actions 跑太久
     for r in out[:20]:
