@@ -2236,7 +2236,8 @@ body::after{   /* 暗角 */
       sec.className = 'card s3';
       sec.id = 'oxRoleState';
       sec.innerHTML = '<div class="card-title">角色状态</div><div class="body"></div>';
-      today.appendChild(sec);
+      // 【去杂音】角色状态与概览页「七角色」内容重叠，挪到持仓页，概览页只留结论与环境
+      ($('view-hold') || today).appendChild(sec);
     }
   }
 
@@ -2863,7 +2864,7 @@ body::after{   /* 暗角 */
       sec = document.createElement('section');
       sec.className = 'card'; sec.id = 'oxLhbCard';
       sec.innerHTML = '<div class="card-title">龙虎榜 · 净买前列</div><div class="body rows"></div>';
-      const rv = $('view-review'); (rv || document.body).appendChild(sec);
+      const rv = $('view-scan'); (rv || document.body).appendChild(sec);
     }
     const rows = lhb.rows || [];
     if (!rows.length) {
