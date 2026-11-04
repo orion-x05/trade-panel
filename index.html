@@ -888,7 +888,7 @@ body::after{   /* 暗角 */
   <section class="card mini">
     <div class="card-title">单笔上限 · 情绪阶段</div>
     <div class="mini-val"><span id="capVal">–</span><span class="u">%</span></div>
-    <div class="mini-note">该情绪阶段下的单笔仓位上限</div>
+    <div class="mini-note" id="capNote">该情绪阶段下的单笔仓位上限</div>
   </section>
 
   <section class="card mini">
@@ -1489,7 +1489,17 @@ body::after{   /* 暗角 */
     $('hSub').innerHTML = v.sub;
 
     // 仓位上限 / 数据状态
-    const cap = v.text === '不操作' ? 0 : (v.text === '可以动手' ? 60 : (v.text === '观望为主' ? 0 : 25));
+    // 【单笔上限·按情绪阶段】不再由决策文案反推（文案含趋势判断，会把情绪项一起压成 0）。
+    // 口径：涨停家数决定情绪档位，晋级率好再加一档；趋势空头由 BULL_ONLY 单独管，不混进来。
+    const _ld = d.limit_decoded || {};
+    const _zt = Number(_ld.zt_count || 0);
+    const _adv = (d.review && d.review.mood && d.review.mood.promote_rate != null) ? d.review.mood.promote_rate : null;
+    let cap;
+    if (!_zt) cap = 0;
+    else if (_zt < 40) cap = 0;
+    else if (_zt < 60) cap = 25;
+    else if (_zt < 90) cap = 40;
+    else cap = (_adv != null && _adv >= 0.25) ? 60 : 50;
     $('capVal').textContent = cap;
     $('capVal').style.color = cap === 0 ? 'var(--up)' : 'var(--down)';
     const t = d.last_update ? d.last_update.slice(11, 16) : '--:--';
