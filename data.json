@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-04T21:12:32.175226",
+  "last_update": "2026-11-04T22:01:49.558078",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1248,7 +1248,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-04T19:30:34.361336"
+    "last_update": "2026-11-04T21:12:32.175226"
   },
   "data_version": 3,
   "theme_history": {
@@ -10706,7 +10706,7 @@
   "trade_date": "2026-11-04",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-04 21:12",
+    "asof": "2026-11-04 22:01",
     "amt": 20377.0,
     "amt_est": null,
     "amt_used": 20377.0,
@@ -10717,7 +10717,9 @@
     "zt": 118,
     "flags": [],
     "pos_cap": 1.0,
-    "pass": true
+    "pass": true,
+    "up_ratio": 0.83,
+    "zt_count": 118
   },
   "force_close": [],
   "gate_history": {
