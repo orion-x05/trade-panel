@@ -3351,5 +3351,63 @@ body::after{   /* 暗角 */
 })();
 </script>
 
+
+<script>
+/* ===== 补充层 v16：涨停梯队 / 题材雷达 行 → K线 ===== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function markersOf(code) {
+    const d = window.OX_DATA || {};
+    const out = [];
+    (d.players || []).forEach(p => (p.trades || []).forEach(t => {
+      if (String(t.code) !== String(code)) return;
+      out.push({ date: String(t.time || '').slice(0, 10), side: t.type === 'buy' ? 'B' : 'S' });
+    }));
+    return out;
+  }
+
+  function findZT(name) {
+    const d = window.OX_DATA || {};
+    const zt = (d.limit_decoded || {}).zt_rows || [];
+    return zt.find(x => String(x.name) === String(name));
+  }
+
+  function openByCode(code, name, extra) {
+    if (!window.OX_openKline) return;
+    window.OX_openKline(Object.assign({ code: code, name: name, hybk: '', score: null, lbc: 0,
+                                        zdp: null, hs: null, zbc: 0 }, extra || {}), markersOf(code));
+  }
+
+  /* 涨停梯队：行里带股票名，点开查代码再开 K 线 */
+  function bind(elemId) {
+    const box = $(elemId);
+    if (!box || box.dataset.kbound2) return;
+    box.dataset.kbound2 = '1';
+    box.addEventListener('click', (e) => {
+      const row = e.target.closest('.row');
+      if (!row) return;
+      const nmEl = row.querySelector('.nm');
+      if (!nmEl) return;
+      // 名字后面常跟着中文注释，取第一个空格/括号前的部分
+      const raw = (nmEl.textContent || '').trim();
+      const name = raw.split(/[\s（(]/)[0];
+      const hit = findZT(name);
+      if (!hit) return;                      // 题材雷达是板块行，没有单只股票可查
+      openByCode(hit.code, hit.name, { lbc: hit.lbc || 0, zdp: hit.zdp });
+    });
+    Array.from(box.children).forEach(r => { r.style.cursor = 'pointer'; });
+  }
+
+  let n = 0;
+  const t = setInterval(() => {
+    if (window.OX_DATA) {
+      bind('scanZT'); bind('scanPool');
+      if (++n > 8) clearInterval(t);
+    } else if (++n > 80) clearInterval(t);
+  }, 500);
+})();
+</script>
+
 </body>
 </html>
