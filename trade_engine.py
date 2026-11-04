@@ -3553,8 +3553,16 @@ def build_dip_pool(data, limit=24):
             _role_map[k_] = v_
     rows = []
     _stat = {"cand": len(cand), "no_k": 0, "sealed": 0, "no_type": 0}
-    for s in cand[:120]:
+    # 【修正】原先只遍历 cand[:120]，而今天的涨停池往往就有 100+ 家，
+    # 把前 120 个位置全占满，全部被"今日仍封板"挡掉，昨天/前天的票根本没轮到。
+    # 现在：今日已封的直接跳过（不必再拉 K 线），其余全部遍历。
+    _today_codes = {str(s.get("code")) for s in (ld.get("zt_rows") or [])}
+    _today_ds = (ld.get("trade_date") or "").replace("-", "")
+    for s in cand:
         code = s.get("code")
+        if str(code) in _today_codes or (s.get("pool_ds") == _today_ds):
+            _stat["sealed"] += 1
+            continue
         k = _kline_ohlc(code, 60)
         if len(k) < 25:
             _stat["no_k"] += 1
