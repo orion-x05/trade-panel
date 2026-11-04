@@ -3176,7 +3176,10 @@ def build_env_gate(data):
             "amt": round(amt, 0), "amt_est": est, "amt_used": round(amt_for_gate or 0, 0),
             "up": up, "down": down, "flat": flat, "breadth": breadth,
             "zt": zt, "flags": flags, "pos_cap": cap,
-            "pass": (cap >= 1.0)}
+            "pass": (cap >= 1.0),
+            # 【字段对齐】面板读的是 up_ratio / zt_count，之前只产出 breadth / zt，
+            # 面板那两格永远是 None，环境闸看起来"无告警"其实两项没检查。
+            "up_ratio": breadth, "zt_count": zt}
 
 
 def build_review_block(data):
@@ -4123,6 +4126,17 @@ def main():
         # 非交易时段也刷新资产快照并落盘：data.json 必须带正确的 asset 字段。
         # 面板每 30 秒同步它（syncFromServer），asset 缺失时会退化用 cash，
         # 持仓市值被忽略，导致面板与推送口径不一致。
+        # 【收盘刷新环境闸】收盘后也要更新一次，否则 data.env_gate 停在盘中甚至旧版本
+        try:
+            if cn_now().hour >= 15:
+                _eg = build_env_gate(data)
+                if _eg:
+                    data["env_gate"] = _eg
+                    print(f"  🚦 环境闸（收盘口径）：仓位 {int(_eg['pos_cap']*100)}%"
+                          f" · 上涨占比 {(_eg.get('up_ratio') or 0)*100:.0f}% · 涨停 {_eg.get('zt_count')} 家")
+        except Exception as _e:
+            print(f"  ⚠ 环境闸刷新异常：{_e}")
+
         # 【角色圆桌】收盘后让七个角色对榜首表态（每轮只跑一次，避免重复刷模型）
         try:
             _today = cn_now().strftime("%Y-%m-%d")
