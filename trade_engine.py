@@ -2152,6 +2152,10 @@ def effective_sl_tp(role_id, st):
     return round(sl_eff, 2), round(tp_eff, 2), round(rr, 2)
 
 
+# 【动态跟踪止损】止损线 = 持仓期最高价 - TRAIL_ATR×ATR。
+# 与固定止损的区别：随价格上移而抬升，随波动放大而放宽，不会把浮盈还给市场。
+TRAIL_ATR = {"D1": 2.0, "D2": 2.5, "D3": 2.5, "D4": 2.0, "D5": 2.5, "D6": 2.0, "D7": 3.0}
+
 TREND_ROLES = {"D2", "D3", "D5"}   # 趋势波段组：分批减仓 + 移动止盈 + 时间止损
 
 
@@ -2189,6 +2193,9 @@ def check_sell_signals(player, stock_data):
                 continue
         bp = hold.get("buyPrice") or hold.get("cost") or 0
         chg = (st["price"] - bp) / bp * 100
+        # 【记录峰值】持仓期最高价，跟踪止损的基准
+        _peak = max(float(hold.get("peak") or 0), float(st["price"]))
+        hold["peak"] = round(_peak, 3)
         # 【W1·保险丝】浮亏 -12% 无条件全部清仓（补丁一：仅防跳空，正常情况ATR止损先触发；
         # 与 position_plan.py check_exits 的 fuse 语义一致——绝对硬顶，D6 3ATR 宽止损
         # 在高波动票上会被 12% 先截停，这是有意的风险封顶）
@@ -2206,8 +2213,22 @@ def check_sell_signals(player, stock_data):
         if max_chg >= tp_eff * 0.5:
             if st["price"] <= bp * 0.98:   # 浮盈曾达半目标→跌破成本2%锁利（比价避免浮点边界漏判）
                 signals.append((hold, f"移动止损锁利{chg:+.1f}%", 1.0)); continue
-        elif chg <= -sl_eff:
-            signals.append((hold, f"止损-{abs(chg):.1f}%(自适应·ATR)", 1.0)); continue
+        else:
+            # 【动态跟踪止损】初始线 = 成本 - sl_atr×ATR；跟踪线 = 峰值 - trail_atr×ATR；
+            # 浮盈过 3% 才让跟踪线接管（否则刚建仓就被噪声扫掉）。
+            _ap = float(st.get("atr_pct") or DEFAULT_ATR_PCT)
+            _init_line = bp * (1 - sl_eff / 100)
+            _trail_pct = TRAIL_ATR.get(player["id"], 2.5) * _ap
+            _trail_line = _peak * (1 - _trail_pct / 100)
+            _peak_chg = (_peak / bp - 1) * 100 if bp else 0
+            _stop_line = max(_init_line, _trail_line) if _peak_chg >= 3 else _init_line
+            hold["stopLine"] = round(_stop_line, 3)
+            if st["price"] <= _stop_line:
+                if _peak_chg >= 3 and _trail_line > _init_line:
+                    signals.append((hold, f"跟踪止损{chg:+.1f}%（峰值{_peak_chg:+.1f}%，线{_stop_line:.2f}）", 1.0))
+                else:
+                    signals.append((hold, f"止损-{abs(chg):.1f}%(自适应·ATR)", 1.0))
+                continue
         # 【趋势组·分批减仓】涨停封住不动，未封板才分批兑现
         if player["id"] in TREND_ROLES:
             sealed = st.get("chg", 0) >= 9.5 or st.get("sealed")
