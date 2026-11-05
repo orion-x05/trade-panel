@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-06T01:24:02.440552",
+  "last_update": "2026-11-06T02:39:23.429875",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1248,7 +1248,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-06T00:51:33.893945"
+    "last_update": "2026-11-06T01:24:02.440552"
   },
   "data_version": 3,
   "theme_history": {
@@ -9865,10 +9865,9 @@
       "dir": "谨慎",
       "why": [
         "首板晋级率 16.0%（<25%），接力效应弱",
-        "外围：纳指/标普最差 -4.62%，开盘受压",
+        "外围：纳指/标普最差 -5.16%，开盘受压",
         "打板溢价：昨日涨停股今日均 +4.42%（116 只）",
-        "主线：光伏设备11家、半导体4家、专用设备4家",
-        "环境闸：环境数据获取失败 → 禁止开仓 → 总仓 ≤0%"
+        "主线：光伏设备11家、半导体4家、专用设备4家"
       ],
       "watch": [
         "贝特利（光伏设备 后排，龙头 永臻股份 3 板）",
@@ -10435,7 +10434,8 @@
           "concentration": 69.0,
           "main_cost": 13.68,
           "dist_main": -17.7
-        }
+        },
+        "anchors": null
       },
       {
         "code": "605111",
@@ -10496,7 +10496,8 @@
           "concentration": 58.8,
           "main_cost": 41.25,
           "dist_main": -0.7
-        }
+        },
+        "anchors": null
       },
       {
         "code": "000530",
@@ -10554,7 +10555,8 @@
           "concentration": 33.4,
           "main_cost": 9.23,
           "dist_main": -2.1
-        }
+        },
+        "anchors": null
       },
       {
         "code": "603767",
@@ -10615,7 +10617,8 @@
           "concentration": 23.6,
           "main_cost": 16.17,
           "dist_main": 0.7
-        }
+        },
+        "anchors": null
       },
       {
         "code": "001282",
@@ -10676,7 +10679,8 @@
           "concentration": 17.3,
           "main_cost": 17.02,
           "dist_main": -0.8
-        }
+        },
+        "anchors": null
       },
       {
         "code": "603248",
@@ -10734,7 +10738,70 @@
           "concentration": 45.6,
           "main_cost": 21.33,
           "dist_main": -14.4
-        }
+        },
+        "anchors": null
+      },
+      {
+        "code": "000506",
+        "name": "招金黄金",
+        "hybk": "贵金属",
+        "board_role": "卡位",
+        "board_leader": "赤峰黄金",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 12.11",
+        "price": 14.33,
+        "chg": 6.86,
+        "pool_ds": "20261104",
+        "rr": {
+          "ratio": 1.12,
+          "target": 17.06,
+          "stop": 11.9,
+          "atr": 0.88,
+          "upside": 19.1,
+          "downside": -17.0,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 15.01,
+          "idx3": 0.87,
+          "dev": 14.14,
+          "limit": 20.0,
+          "remain": 5.86,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": -7.39,
+          "limit10": 100.0,
+          "remain10": 107.39,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": -16.0,
+          "paozi": false
+        },
+        "chan": {
+          "px": 14.33,
+          "zone": "中枢下",
+          "fx": "bottom",
+          "bi_n": 3,
+          "dir": "down",
+          "zs": {
+            "zg": 19.0,
+            "zd": 17.93
+          },
+          "beichi": true,
+          "merged": 49
+        },
+        "chip": {
+          "px": 14.33,
+          "profit_ratio": 25.0,
+          "avg_cost": 17.03,
+          "support": 12.96,
+          "resistance": 22.55,
+          "concentration": 56.3,
+          "main_cost": 18.69,
+          "dist_main": -23.3
+        },
+        "anchors": null
       },
       {
         "code": "003021",
@@ -10795,7 +10862,8 @@
           "concentration": 38.2,
           "main_cost": 97.0,
           "dist_main": 1.8
-        }
+        },
+        "anchors": null
       },
       {
         "code": "002428",
@@ -10856,7 +10924,8 @@
           "concentration": 48.4,
           "main_cost": 79.31,
           "dist_main": -0.4
-        }
+        },
+        "anchors": null
       },
       {
         "code": "603955",
@@ -10917,7 +10986,8 @@
           "concentration": 42.3,
           "main_cost": 30.28,
           "dist_main": 0.2
-        }
+        },
+        "anchors": null
       },
       {
         "code": "000919",
@@ -10978,7 +11048,8 @@
           "concentration": 19.8,
           "main_cost": 6.84,
           "dist_main": -3.5
-        }
+        },
+        "anchors": null
       },
       {
         "code": "688507",
@@ -11039,68 +11110,8 @@
           "concentration": 38.5,
           "main_cost": 163.0,
           "dist_main": 16.0
-        }
-      },
-      {
-        "code": "603662",
-        "name": "柯力传感",
-        "hybk": "通用设备",
-        "board_role": "卡位",
-        "board_leader": "开勒股份",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 47.50",
-        "price": 56.53,
-        "chg": 3.65,
-        "pool_ds": "20261104",
-        "rr": {
-          "ratio": 0.73,
-          "target": 63.72,
-          "stop": 46.64,
-          "atr": 3.59,
-          "upside": 12.7,
-          "downside": -17.5,
-          "ok": false
         },
-        "abnormal": {
-          "dev3": 11.0,
-          "idx3": 0.87,
-          "dev": 10.13,
-          "limit": 20.0,
-          "remain": 9.87,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 15.09,
-          "limit10": 100.0,
-          "remain10": 84.91,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 23.4,
-          "paozi": false
-        },
-        "chan": {
-          "px": 56.53,
-          "zone": "中枢上",
-          "fx": "bottom",
-          "bi_n": 7,
-          "dir": "up",
-          "zs": {
-            "zg": 50.63,
-            "zd": 46.04
-          },
-          "beichi": false,
-          "merged": 48
-        },
-        "chip": {
-          "px": 56.53,
-          "profit_ratio": 100.0,
-          "avg_cost": 50.24,
-          "support": 45.92,
-          "resistance": 55.73,
-          "concentration": 19.5,
-          "main_cost": 49.8,
-          "dist_main": 13.5
-        }
+        "anchors": null
       },
       {
         "code": "603777",
@@ -11161,7 +11172,8 @@
           "concentration": 13.2,
           "main_cost": 14.62,
           "dist_main": 0.0
-        }
+        },
+        "anchors": null
       },
       {
         "code": "605288",
@@ -11222,7 +11234,8 @@
           "concentration": 27.8,
           "main_cost": 65.25,
           "dist_main": 10.0
-        }
+        },
+        "anchors": null
       },
       {
         "code": "000679",
@@ -11283,7 +11296,8 @@
           "concentration": 22.1,
           "main_cost": 6.81,
           "dist_main": -3.5
-        }
+        },
+        "anchors": null
       },
       {
         "code": "600988",
@@ -11341,7 +11355,8 @@
           "concentration": 50.4,
           "main_cost": 40.81,
           "dist_main": -7.9
-        }
+        },
+        "anchors": null
       },
       {
         "code": "601123",
@@ -11381,7 +11396,8 @@
           "paozi": false
         },
         "chan": null,
-        "chip": null
+        "chip": null,
+        "anchors": null
       },
       {
         "code": "002821",
@@ -11442,7 +11458,8 @@
           "concentration": 30.8,
           "main_cost": 135.15,
           "dist_main": 19.5
-        }
+        },
+        "anchors": null
       },
       {
         "code": "301583",
@@ -11503,7 +11520,8 @@
           "concentration": 71.4,
           "main_cost": 118.25,
           "dist_main": -9.7
-        }
+        },
+        "anchors": null
       },
       {
         "code": "001233",
@@ -11564,7 +11582,8 @@
           "concentration": 44.1,
           "main_cost": 60.19,
           "dist_main": 11.3
-        }
+        },
+        "anchors": null
       },
       {
         "code": "000096",
@@ -11625,7 +11644,8 @@
           "concentration": 17.4,
           "main_cost": 8.56,
           "dist_main": 1.9
-        }
+        },
+        "anchors": null
       },
       {
         "code": "002811",
@@ -11686,7 +11706,8 @@
           "concentration": 63.6,
           "main_cost": 19.82,
           "dist_main": 10.0
-        }
+        },
+        "anchors": null
       },
       {
         "code": "002275",
@@ -11747,7 +11768,8 @@
           "concentration": 42.6,
           "main_cost": 16.47,
           "dist_main": 6.6
-        }
+        },
+        "anchors": null
       },
       {
         "code": "300788",
@@ -11805,11 +11827,12 @@
           "concentration": 37.2,
           "main_cost": 30.75,
           "dist_main": 16.7
-        }
+        },
+        "anchors": null
       }
     ],
     "stat": {
-      "cand": 181,
+      "cand": 176,
       "no_k": 0,
       "sealed": 84,
       "no_type": 4
@@ -11818,16 +11841,21 @@
   },
   "trade_date": "2026-11-05",
   "env_gate": {
-    "ok": false,
-    "asof": "2026-11-06 01:23",
-    "pos_cap": 0.0,
-    "flags": [
-      "环境数据获取失败 → 禁止开仓"
-    ],
-    "pass": false,
-    "up_ratio": null,
-    "zt_count": null,
-    "amt_used": 0
+    "ok": true,
+    "asof": "2026-11-06 02:39",
+    "amt": 21180.0,
+    "amt_est": null,
+    "amt_used": 21180.0,
+    "up": 4591,
+    "down": 620,
+    "flat": 83,
+    "breadth": 0.867,
+    "zt": 84,
+    "flags": [],
+    "pos_cap": 1.0,
+    "pass": true,
+    "up_ratio": 0.867,
+    "zt_count": 84
   },
   "force_close": [],
   "gate_history": {
@@ -13000,22 +13028,22 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-06 01:23",
+    "asof": "2026-11-06 02:39",
     "indexes": {
       "道琼斯": {
-        "px": 51917.56,
-        "chg": -2.7,
-        "time": "2026-11-05 12:23:21"
+        "px": 51741.63,
+        "chg": -3.03,
+        "time": "2026-11-05 13:39:00"
       },
       "纳斯达克": {
-        "px": 24547.54,
-        "chg": -4.62,
-        "time": "2026-11-05 12:23:20"
+        "px": 24407.65,
+        "chg": -5.16,
+        "time": "2026-11-05 13:38:59"
       },
       "标普500": {
-        "px": 7422.42,
-        "chg": -3.46,
-        "time": "2026-11-05 12:23:21"
+        "px": 7386.97,
+        "chg": -3.92,
+        "time": "2026-11-05 13:39:00"
       },
       "恒生指数": {
         "px": 24796.98,
@@ -13023,7 +13051,7 @@
         "time": "2026/11/05 18:31:15"
       }
     },
-    "worst": -4.62,
+    "worst": -5.16,
     "risk": "高"
   }
 }
