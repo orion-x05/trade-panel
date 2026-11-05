@@ -3517,6 +3517,127 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
             "ret20": ret20, "paozi": bool(paozi)}
 
 
+
+# ============ 缠论（日线单级别） ============
+# 只做可判定的部分：包含处理 → 分型 → 笔 → 中枢 → 背驰。
+# 不做线段与多级别递归（太重，收益不成正比）。
+
+def _chan_merge(bars):
+    """K线包含处理：把有包含关系的K线合并，方向由前一根决定（升取高高、降取低低）。"""
+    out = []
+    for b in bars:
+        if not out:
+            out.append(dict(b)); continue
+        p = out[-1]
+        inside = (b["h"] <= p["h"] and b["l"] >= p["l"]) or (b["h"] >= p["h"] and b["l"] <= p["l"])
+        if not inside:
+            out.append(dict(b)); continue
+        up = True if len(out) < 2 else out[-1]["h"] >= out[-2]["h"]
+        if up:
+            p["h"] = max(p["h"], b["h"]); p["l"] = max(p["l"], b["l"])
+        else:
+            p["h"] = min(p["h"], b["h"]); p["l"] = min(p["l"], b["l"])
+        p["c"] = b["c"]; p["d"] = b["d"]
+    return out
+
+
+def _chan_fx(m):
+    """顶/底分型：中间那根同时高于（低于）左右两根的高低点。"""
+    fx = []
+    for i in range(1, len(m) - 1):
+        hi, lo = m[i]["h"], m[i]["l"]
+        if hi > m[i-1]["h"] and hi > m[i+1]["h"] and lo > m[i-1]["l"] and lo > m[i+1]["l"]:
+            fx.append((i, "top"))
+        elif lo < m[i-1]["l"] and lo < m[i+1]["l"] and hi < m[i-1]["h"] and hi < m[i+1]["h"]:
+            fx.append((i, "bottom"))
+    return fx
+
+
+def _chan_bi(m, fx, min_gap=4):
+    """笔：顶底交替，且两个分型之间至少隔 min_gap 根合并K线（简化版新笔定义）。"""
+    bis, last = [], None
+    for i, t in fx:
+        if last is None:
+            last = (i, t); continue
+        if t == last[1]:
+            # 同向分型，取更极端的一个
+            if (t == "top" and m[i]["h"] > m[last[0]]["h"]) or (t == "bottom" and m[i]["l"] < m[last[0]]["l"]):
+                last = (i, t)
+            continue
+        if i - last[0] >= min_gap:
+            bis.append({"a": last[0], "b": i, "dir": "up" if last[1] == "bottom" else "down",
+                        "hi": max(m[last[0]]["h"], m[i]["h"]), "lo": min(m[last[0]]["l"], m[i]["l"])})
+            last = (i, t)
+    return bis
+
+
+def _chan_zs(bis):
+    """中枢：最近连续三笔的重叠区间。返回 {zg, zd, ok}，无重叠则 None。"""
+    if len(bis) < 3:
+        return None
+    a, b, c = bis[-3], bis[-2], bis[-1]
+    zg = min(a["hi"], b["hi"], c["hi"])
+    zd = max(a["lo"], b["lo"], c["lo"])
+    return {"zg": round(zg, 2), "zd": round(zd, 2)} if zg > zd else None
+
+
+def _chan_macd_area(bars, i0, i1):
+    """区间 MACD 柱面积（用收盘价近似），用来比较相邻同向笔的力度。"""
+    closes = [x["c"] for x in bars]
+    def ema(vals, n):
+        k = 2.0 / (n + 1); e = vals[0]; out = []
+        for v in vals:
+            e = v * k + e * (1 - k); out.append(e)
+        return out
+    if len(closes) < 30:
+        return 0.0
+    e12, e26 = ema(closes, 12), ema(closes, 26)
+    dif = [a - b for a, b in zip(e12, e26)]
+    dea = ema(dif, 9)
+    bar = [(a - b) * 2 for a, b in zip(dif, dea)]
+    return round(sum(abs(x) for x in bar[i0:i1 + 1]), 3)
+
+
+def chan_analysis(bars):
+    """对一段日K（至少 60 根）给出缠论状态。返回 None 表示数据不足。"""
+    if not bars or len(bars) < 60:
+        return None
+    m = _chan_merge(bars)
+    fx = _chan_fx(m)
+    bis = _chan_bi(m, fx)
+    if not bis:
+        return None
+    zs = _chan_zs(bis)
+    last = bis[-1]
+    # 背驰：比较最近两段同向笔的 MACD 面积，后段力度不足前段的 80% → 背驰
+    beichi = False
+    same = [b for b in bis if b["dir"] == last["dir"]]
+    if len(same) >= 2:
+        prev = same[-2]
+        cur_area = _chan_macd_area(bars, last["a"], last["b"])
+        prev_area = _chan_macd_area(bars, prev["a"], prev["b"])
+        if prev_area > 0 and cur_area < prev_area * 0.8:
+            beichi = True
+    px = bars[-1]["c"]
+    zone = None
+    if zs:
+        if px > zs["zg"]:
+            zone = "中枢上"
+        elif px < zs["zd"]:
+            zone = "中枢下"
+        else:
+            zone = "中枢内"
+    return {
+        "px": round(px, 2), "zone": zone,        # 现价相对最近中枢的位置
+        "fx": fx[-1][1] if fx else None,        # 最新分型：top / bottom
+        "bi_n": len(bis),                        # 笔数量
+        "dir": last["dir"],                      # 最近一笔方向 up / down
+        "zs": zs,                                # 中枢区间
+        "beichi": beichi,                        # 是否背驰
+        "merged": len(m),
+    }
+
+
 def build_dip_pool(data, limit=24):
     """【低吸池】候选来自「前几天涨停、今天回调还没封板」的票。
 
@@ -3594,6 +3715,7 @@ def build_dip_pool(data, limit=24):
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
             "price": round(px, 2), "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
+            "chan": chan_analysis([{"d": x["d"], "o": x["o"], "c": x["c"], "h": x["h"], "l": x["l"]} for x in k]),
         })
         if len(rows) >= limit:
             break
