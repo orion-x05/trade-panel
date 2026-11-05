@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-06T02:43:17.443090",
+  "last_update": "2026-11-06T02:49:44.496455",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1248,7 +1248,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-06T02:39:23.429875"
+    "last_update": "2026-11-06T02:43:17.443090"
   },
   "data_version": 3,
   "theme_history": {
@@ -9865,7 +9865,7 @@
       "dir": "谨慎",
       "why": [
         "首板晋级率 16.0%（<25%），接力效应弱",
-        "外围：纳指/标普最差 -5.19%，开盘受压",
+        "外围：纳指/标普最差 -5.18%，开盘受压",
         "打板溢价：昨日涨停股今日均 +4.42%（116 只）",
         "主线：光伏设备11家、半导体4家、专用设备4家"
       ],
@@ -10437,12 +10437,16 @@
         },
         "anchors": {
           "px": 11.26,
-          "low_zone": 10.3,
-          "breakout": 14.24,
-          "ma120": 9.38,
-          "avg_anchor": 11.31,
-          "spread": 43.0,
-          "dist_anchor": -0.4,
+          "anchors": {
+            "low": 10.3,
+            "breakout": 14.24,
+            "ma120": 9.38,
+            "turn": 10.43
+          },
+          "n": 4,
+          "avg_anchor": 11.09,
+          "spread": 43.8,
+          "dist_anchor": 1.6,
           "agree": false
         }
       },
@@ -10508,12 +10512,16 @@
         },
         "anchors": {
           "px": 40.96,
-          "low_zone": 42.07,
-          "breakout": 62.4,
-          "ma120": 58.1,
-          "avg_anchor": 54.19,
-          "spread": 37.5,
-          "dist_anchor": -24.4,
+          "anchors": {
+            "low": 42.07,
+            "breakout": 62.4,
+            "ma120": 58.1,
+            "turn": 42.71
+          },
+          "n": 4,
+          "avg_anchor": 51.32,
+          "spread": 39.6,
+          "dist_anchor": -20.2,
           "agree": false
         }
       },
@@ -10576,12 +10584,16 @@
         },
         "anchors": {
           "px": 9.04,
-          "low_zone": 5.29,
-          "breakout": 7.73,
-          "ma120": 5.72,
-          "avg_anchor": 6.25,
-          "spread": 39.1,
-          "dist_anchor": 44.7,
+          "anchors": {
+            "low": 5.29,
+            "breakout": 7.73,
+            "ma120": 5.72,
+            "turn": 9.06
+          },
+          "n": 4,
+          "avg_anchor": 6.95,
+          "spread": 54.2,
+          "dist_anchor": 30.1,
           "agree": false
         }
       },
@@ -10647,12 +10659,16 @@
         },
         "anchors": {
           "px": 16.28,
-          "low_zone": 16.26,
-          "breakout": 16.41,
-          "ma120": 15.63,
-          "avg_anchor": 16.1,
-          "spread": 4.8,
-          "dist_anchor": 1.1,
+          "anchors": {
+            "low": 16.26,
+            "breakout": 16.41,
+            "ma120": 15.63,
+            "turn": 16.01
+          },
+          "n": 4,
+          "avg_anchor": 16.08,
+          "spread": 4.9,
+          "dist_anchor": 1.3,
           "agree": true
         }
       },
@@ -10718,12 +10734,17 @@
         },
         "anchors": {
           "px": 16.88,
-          "low_zone": 16.18,
-          "breakout": 16.66,
-          "ma120": 17.11,
-          "avg_anchor": 16.65,
+          "anchors": {
+            "low": 16.18,
+            "breakout": 16.66,
+            "ma120": 17.11,
+            "turn": 16.48,
+            "ma_glue": 16.24
+          },
+          "n": 5,
+          "avg_anchor": 16.53,
           "spread": 5.6,
-          "dist_anchor": 1.4,
+          "dist_anchor": 2.1,
           "agree": true
         }
       },
@@ -10789,83 +10810,16 @@
         },
         "anchors": {
           "px": 18.25,
-          "low_zone": 21.51,
-          "breakout": 23.9,
-          "ma120": 20.82,
-          "avg_anchor": 22.08,
-          "spread": 14.0,
-          "dist_anchor": -17.3,
-          "agree": true
-        }
-      },
-      {
-        "code": "000506",
-        "name": "招金黄金",
-        "hybk": "贵金属",
-        "board_role": "卡位",
-        "board_leader": "赤峰黄金",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 11.60",
-        "price": 14.33,
-        "chg": 6.86,
-        "pool_ds": "20261104",
-        "rr": {
-          "ratio": 1.12,
-          "target": 17.06,
-          "stop": 11.9,
-          "atr": 0.88,
-          "upside": 19.1,
-          "downside": -17.0,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 15.01,
-          "idx3": 0.87,
-          "dev": 14.14,
-          "limit": 20.0,
-          "remain": 5.86,
-          "risk": "中",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -7.39,
-          "limit10": 100.0,
-          "remain10": 107.39,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -16.0,
-          "paozi": false
-        },
-        "chan": {
-          "px": 14.33,
-          "zone": "中枢下",
-          "fx": "bottom",
-          "bi_n": 22,
-          "dir": "down",
-          "zs": {
-            "zg": 19.0,
-            "zd": 17.93
+          "anchors": {
+            "low": 21.51,
+            "breakout": 23.9,
+            "ma120": 20.82,
+            "turn": 17.57
           },
-          "beichi": true,
-          "merged": 200
-        },
-        "chip": {
-          "px": 14.33,
-          "profit_ratio": 34.0,
-          "avg_cost": 16.5,
-          "support": 12.15,
-          "resistance": 21.44,
-          "concentration": 56.3,
-          "main_cost": 14.14,
-          "dist_main": 1.3
-        },
-        "anchors": {
-          "px": 14.33,
-          "low_zone": 14.14,
-          "breakout": 19.38,
-          "ma120": 15.58,
-          "avg_anchor": 16.37,
-          "spread": 32.0,
-          "dist_anchor": -12.4,
+          "n": 4,
+          "avg_anchor": 20.95,
+          "spread": 30.2,
+          "dist_anchor": -12.9,
           "agree": false
         }
       },
@@ -10931,12 +10885,16 @@
         },
         "anchors": {
           "px": 98.78,
-          "low_zone": 89.47,
-          "breakout": 95.13,
-          "ma120": 83.82,
-          "avg_anchor": 89.47,
+          "anchors": {
+            "low": 89.47,
+            "breakout": 95.13,
+            "ma120": 83.82,
+            "turn": 89.75
+          },
+          "n": 4,
+          "avg_anchor": 89.54,
           "spread": 12.6,
-          "dist_anchor": 10.4,
+          "dist_anchor": 10.3,
           "agree": true
         }
       },
@@ -11002,12 +10960,16 @@
         },
         "anchors": {
           "px": 79.0,
-          "low_zone": 66.2,
-          "breakout": 102.35,
-          "ma120": 90.48,
-          "avg_anchor": 86.34,
-          "spread": 41.9,
-          "dist_anchor": -8.5,
+          "anchors": {
+            "low": 66.2,
+            "breakout": 102.35,
+            "ma120": 90.48,
+            "turn": 75.75
+          },
+          "n": 4,
+          "avg_anchor": 83.7,
+          "spread": 43.2,
+          "dist_anchor": -5.6,
           "agree": false
         }
       },
@@ -11073,12 +11035,16 @@
         },
         "anchors": {
           "px": 30.35,
-          "low_zone": 24.17,
-          "breakout": 30.39,
-          "ma120": 22.05,
-          "avg_anchor": 25.54,
-          "spread": 32.7,
-          "dist_anchor": 18.8,
+          "anchors": {
+            "low": 24.17,
+            "breakout": 30.39,
+            "ma120": 22.05,
+            "turn": 26.24
+          },
+          "n": 4,
+          "avg_anchor": 25.71,
+          "spread": 32.4,
+          "dist_anchor": 18.0,
           "agree": false
         }
       },
@@ -11144,12 +11110,17 @@
         },
         "anchors": {
           "px": 6.6,
-          "low_zone": 6.83,
-          "breakout": 6.46,
-          "ma120": 6.36,
-          "avg_anchor": 6.55,
-          "spread": 7.2,
-          "dist_anchor": 0.8,
+          "anchors": {
+            "low": 6.83,
+            "breakout": 6.46,
+            "ma120": 6.36,
+            "turn": 6.53,
+            "ma_glue": 6.32
+          },
+          "n": 5,
+          "avg_anchor": 6.5,
+          "spread": 7.8,
+          "dist_anchor": 1.5,
           "agree": true
         }
       },
@@ -11215,12 +11186,91 @@
         },
         "anchors": {
           "px": 189.01,
-          "low_zone": 162.26,
-          "breakout": 156.19,
-          "ma120": 172.11,
-          "avg_anchor": 163.52,
-          "spread": 9.7,
-          "dist_anchor": 15.6,
+          "anchors": {
+            "low": 162.26,
+            "breakout": 156.19,
+            "ma120": 172.11,
+            "turn": 185.36
+          },
+          "n": 4,
+          "avg_anchor": 168.98,
+          "spread": 17.3,
+          "dist_anchor": 11.9,
+          "agree": false
+        }
+      },
+      {
+        "code": "603662",
+        "name": "柯力传感",
+        "hybk": "通用设备",
+        "board_role": "卡位",
+        "board_leader": "开勒股份",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 47.50",
+        "price": 56.53,
+        "chg": 3.65,
+        "pool_ds": "20261104",
+        "rr": {
+          "ratio": 0.73,
+          "target": 63.72,
+          "stop": 46.64,
+          "atr": 3.59,
+          "upside": 12.7,
+          "downside": -17.5,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 11.0,
+          "idx3": 0.87,
+          "dev": 10.13,
+          "limit": 20.0,
+          "remain": 9.87,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 15.09,
+          "limit10": 100.0,
+          "remain10": 84.91,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 23.4,
+          "paozi": false
+        },
+        "chan": {
+          "px": 56.53,
+          "zone": "中枢上",
+          "fx": "bottom",
+          "bi_n": 25,
+          "dir": "up",
+          "zs": {
+            "zg": 50.63,
+            "zd": 46.04
+          },
+          "beichi": true,
+          "merged": 196
+        },
+        "chip": {
+          "px": 56.53,
+          "profit_ratio": 84.2,
+          "avg_cost": 52.91,
+          "support": 46.29,
+          "resistance": 74.74,
+          "concentration": 53.8,
+          "main_cost": 49.84,
+          "dist_main": 13.4
+        },
+        "anchors": {
+          "px": 56.53,
+          "anchors": {
+            "low": 49.84,
+            "breakout": 55.36,
+            "ma120": 55.78,
+            "turn": 49.69
+          },
+          "n": 4,
+          "avg_anchor": 52.67,
+          "spread": 11.6,
+          "dist_anchor": 7.3,
           "agree": true
         }
       },
@@ -11286,12 +11336,17 @@
         },
         "anchors": {
           "px": 14.62,
-          "low_zone": 13.96,
-          "breakout": 14.62,
-          "ma120": 15.02,
-          "avg_anchor": 14.53,
-          "spread": 7.3,
-          "dist_anchor": 0.6,
+          "anchors": {
+            "low": 13.96,
+            "breakout": 14.62,
+            "ma120": 15.02,
+            "turn": 13.71,
+            "ma_glue": 13.59
+          },
+          "n": 5,
+          "avg_anchor": 14.18,
+          "spread": 10.1,
+          "dist_anchor": 3.1,
           "agree": true
         }
       },
@@ -11357,12 +11412,16 @@
         },
         "anchors": {
           "px": 71.78,
-          "low_zone": 60.17,
-          "breakout": 65.4,
-          "ma120": 66.84,
-          "avg_anchor": 64.14,
+          "anchors": {
+            "low": 60.17,
+            "breakout": 65.4,
+            "ma120": 66.84,
+            "turn": 64.97
+          },
+          "n": 4,
+          "avg_anchor": 64.34,
           "spread": 10.4,
-          "dist_anchor": 11.9,
+          "dist_anchor": 11.6,
           "agree": true
         }
       },
@@ -11428,12 +11487,17 @@
         },
         "anchors": {
           "px": 6.57,
-          "low_zone": 6.78,
-          "breakout": 6.99,
-          "ma120": 6.26,
-          "avg_anchor": 6.68,
-          "spread": 10.9,
-          "dist_anchor": -1.6,
+          "anchors": {
+            "low": 6.78,
+            "breakout": 6.99,
+            "ma120": 6.26,
+            "turn": 6.45,
+            "ma_glue": 6.3
+          },
+          "n": 5,
+          "avg_anchor": 6.56,
+          "spread": 11.1,
+          "dist_anchor": 0.2,
           "agree": true
         }
       },
@@ -11496,12 +11560,15 @@
         },
         "anchors": {
           "px": 37.58,
-          "low_zone": 32.08,
-          "breakout": null,
-          "ma120": 37.46,
-          "avg_anchor": 34.77,
-          "spread": 15.5,
-          "dist_anchor": 8.1,
+          "anchors": {
+            "low": 32.08,
+            "ma120": 37.46,
+            "turn": 38.87
+          },
+          "n": 3,
+          "avg_anchor": 36.14,
+          "spread": 18.8,
+          "dist_anchor": 4.0,
           "agree": false
         }
       },
@@ -11608,12 +11675,16 @@
         },
         "anchors": {
           "px": 161.45,
-          "low_zone": 119.61,
-          "breakout": 182.03,
-          "ma120": 153.06,
-          "avg_anchor": 151.57,
-          "spread": 41.2,
-          "dist_anchor": 6.5,
+          "anchors": {
+            "low": 119.61,
+            "breakout": 182.03,
+            "ma120": 153.06,
+            "turn": 163.61
+          },
+          "n": 4,
+          "avg_anchor": 154.58,
+          "spread": 40.4,
+          "dist_anchor": 4.4,
           "agree": false
         }
       },
@@ -11741,13 +11812,17 @@
         },
         "anchors": {
           "px": 66.98,
-          "low_zone": 44.76,
-          "breakout": 50.72,
-          "ma120": 47.85,
-          "avg_anchor": 47.78,
-          "spread": 12.5,
-          "dist_anchor": 40.2,
-          "agree": true
+          "anchors": {
+            "low": 44.76,
+            "breakout": 50.72,
+            "ma120": 47.85,
+            "turn": 59.39
+          },
+          "n": 4,
+          "avg_anchor": 50.68,
+          "spread": 28.9,
+          "dist_anchor": 32.2,
+          "agree": false
         }
       },
       {
@@ -11812,12 +11887,17 @@
         },
         "anchors": {
           "px": 8.72,
-          "low_zone": 7.93,
-          "breakout": 8.54,
-          "ma120": 7.88,
-          "avg_anchor": 8.12,
-          "spread": 8.1,
-          "dist_anchor": 7.4,
+          "anchors": {
+            "low": 7.93,
+            "breakout": 8.54,
+            "ma120": 7.88,
+            "turn": 8.0,
+            "ma_glue": 7.95
+          },
+          "n": 5,
+          "avg_anchor": 8.06,
+          "spread": 8.2,
+          "dist_anchor": 8.2,
           "agree": true
         }
       },
@@ -11883,12 +11963,16 @@
         },
         "anchors": {
           "px": 21.8,
-          "low_zone": 14.27,
-          "breakout": 20.8,
-          "ma120": 13.46,
-          "avg_anchor": 16.18,
-          "spread": 45.4,
-          "dist_anchor": 34.8,
+          "anchors": {
+            "low": 14.27,
+            "breakout": 20.8,
+            "ma120": 13.46,
+            "turn": 19.96
+          },
+          "n": 4,
+          "avg_anchor": 17.12,
+          "spread": 42.9,
+          "dist_anchor": 27.3,
           "agree": false
         }
       },
@@ -11954,12 +12038,16 @@
         },
         "anchors": {
           "px": 17.56,
-          "low_zone": 13.37,
-          "breakout": 17.93,
-          "ma120": 12.97,
-          "avg_anchor": 14.76,
-          "spread": 33.6,
-          "dist_anchor": 19.0,
+          "anchors": {
+            "low": 13.37,
+            "breakout": 17.93,
+            "ma120": 12.97,
+            "turn": 14.5
+          },
+          "n": 4,
+          "avg_anchor": 14.69,
+          "spread": 33.8,
+          "dist_anchor": 19.5,
           "agree": false
         }
       },
@@ -12025,18 +12113,22 @@
         },
         "anchors": {
           "px": 35.9,
-          "low_zone": 30.52,
-          "breakout": 34.01,
-          "ma120": 26.88,
-          "avg_anchor": 30.47,
+          "anchors": {
+            "low": 30.52,
+            "breakout": 34.01,
+            "ma120": 26.88,
+            "turn": 30.43
+          },
+          "n": 4,
+          "avg_anchor": 30.46,
           "spread": 23.4,
-          "dist_anchor": 17.8,
+          "dist_anchor": 17.9,
           "agree": false
         }
       }
     ],
     "stat": {
-      "cand": 176,
+      "cand": 181,
       "no_k": 0,
       "sealed": 84,
       "no_type": 4
@@ -12046,7 +12138,7 @@
   "trade_date": "2026-11-05",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-06 02:43",
+    "asof": "2026-11-06 02:49",
     "amt": 21180.0,
     "amt_est": null,
     "amt_used": 21180.0,
@@ -13232,22 +13324,22 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-06 02:43",
+    "asof": "2026-11-06 02:49",
     "indexes": {
       "道琼斯": {
-        "px": 51693.67,
-        "chg": -3.12,
-        "time": "2026-11-05 13:42:59"
+        "px": 51724.72,
+        "chg": -3.06,
+        "time": "2026-11-05 13:49:19"
       },
       "纳斯达克": {
-        "px": 24400.93,
-        "chg": -5.19,
-        "time": "2026-11-05 13:42:59"
+        "px": 24404.19,
+        "chg": -5.18,
+        "time": "2026-11-05 13:49:19"
       },
       "标普500": {
-        "px": 7381.09,
-        "chg": -4.0,
-        "time": "2026-11-05 13:42:59"
+        "px": 7382.55,
+        "chg": -3.98,
+        "time": "2026-11-05 13:49:19"
       },
       "恒生指数": {
         "px": 24796.98,
@@ -13255,7 +13347,7 @@
         "time": "2026/11/05 18:31:15"
       }
     },
-    "worst": -5.19,
+    "worst": -5.18,
     "risk": "高"
   }
 }
