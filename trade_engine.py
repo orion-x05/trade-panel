@@ -3145,9 +3145,15 @@ def build_env_gate(data):
         diff = (j.get("data") or {}).get("diff") or []
     except Exception as e:
         print(f"  ⚠ 环境闸取数失败：{e}")
-        return None
+        # 【安全降级】参考 quant-forge：关键数据缺失一律判「禁止出手 + 零仓位」，
+        # 绝不因为拿不到数就当成“没告警”。
+        return {"ok": False, "asof": cn_now().strftime("%Y-%m-%d %H:%M"),
+                "pos_cap": 0.0, "flags": ["环境数据获取失败 → 禁止开仓"], "pass": False,
+                "up_ratio": None, "zt_count": None, "amt_used": 0}
     if len(diff) < 2:
-        return None
+        return {"ok": False, "asof": cn_now().strftime("%Y-%m-%d %H:%M"),
+                "pos_cap": 0.0, "flags": ["环境数据不完整 → 禁止开仓"], "pass": False,
+                "up_ratio": None, "zt_count": None, "amt_used": 0}
     up = sum(int(x.get("f104") or 0) for x in diff)
     down = sum(int(x.get("f105") or 0) for x in diff)
     flat = sum(int(x.get("f106") or 0) for x in diff)
@@ -3195,6 +3201,17 @@ def build_env_gate(data):
         cap = min(cap, 0.5)
     if zt and zt < 40:
         flags.append(f"涨停 {zt} 家 < 40 家")
+        cap = 0.0
+    # 【安全降级】三项全都必须有值，缺一项就禁止开仓（宁可错过，不要瞎做）
+    _missing = []
+    if breadth is None:
+        _missing.append("上涨占比")
+    if not zt:
+        _missing.append("涨停家数")
+    if not amt_for_gate:
+        _missing.append("成交额")
+    if _missing:
+        flags.append("环境数据缺失（" + "、".join(_missing) + "）→ 禁止开仓")
         cap = 0.0
     if flags and cap == 1.0:
         cap = 0.5
