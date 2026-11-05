@@ -3129,6 +3129,36 @@ def build_lhb(days_back=0, top_n=12):
             "rows": out[:top_n], "top_net": out[:top_n]}
 
 
+def build_premium(data):
+    """【打板溢价】昨日涨停股今日的实际表现，按板数分组。
+
+    为什么重要：涨停家数只说明“有多少人在打板”，溢价说明“打了板赚不赚钱”。
+    溢价为负的日子，接力盘会迅速消失，涨停家数再多也是虚火。
+    """
+    rows = (data.get("yesterday_perf") or {}).get("rows") or []
+    if not rows:
+        return None
+    out = {}
+    for label, fn in (("首板", lambda b: b == 1), ("2板", lambda b: b == 2), ("3板+", lambda b: b >= 3)):
+        sel = [r for r in rows if fn(int(r.get("yesterday_board_count") or 0))]
+        if not sel:
+            continue
+        rets = [float(r.get("today_pct") or 0) for r in sel]
+        up = sum(1 for x in rets if x > 0)
+        cont = sum(1 for r in sel if r.get("is_zt_today"))
+        out[label] = {"n": len(sel),
+                      "avg": round(sum(rets) / len(rets), 2),
+                      "up_rate": round(up / len(sel), 3),
+                      "zt_rate": round(cont / len(sel), 3)}
+    if not out:
+        return None
+    # 综合溢价：按家数加权
+    tot_n = sum(v["n"] for v in out.values())
+    tot = sum(v["avg"] * v["n"] for v in out.values()) / tot_n if tot_n else 0
+    out["_all"] = {"n": tot_n, "avg": round(tot, 2)}
+    return out
+
+
 def build_env_gate(data):
     """【环境闸】决定今天该不该出手，比选哪只票更重要。
 
@@ -3290,6 +3320,16 @@ def build_review_block(data):
     _th = sorted(radar.get("themes") or [], key=lambda t: (-(t.get("n") or 0), -(t.get("max_lb") or 0)))
     cluster = [{"name": t.get("name"), "n": t.get("n"), "max_lb": t.get("max_lb"),
                 "stage": t.get("stage")} for t in _th[:5]]
+    prem = build_premium(data)
+    if prem:
+        data["premium"] = prem
+        _a = prem.get("_all") or {}
+        _t = prem.get("3板+") or prem.get("2板") or {}
+        if _a.get("avg") is not None:
+            expect["why"].append(f"打板溢价：昨日涨停股今日均 {_a['avg']:+.2f}%（{_a.get('n')} 只）")
+        if _t.get("avg") is not None and _t["avg"] < 0:
+            expect["why"].append(f"高位溢价为负（{_t['avg']:+.2f}%），接力盘在撤")
+
     if cluster:
         expect["why"].append(
             "主线：" + "、".join(f"{c['name']}{c['n']}家" for c in cluster[:3]))
