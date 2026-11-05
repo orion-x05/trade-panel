@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-05T23:23:00.522446",
+  "last_update": "2026-11-05T23:41:52.515619",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1248,7 +1248,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-05T23:11:42.048235"
+    "last_update": "2026-11-05T23:23:00.522446"
   },
   "data_version": 3,
   "theme_history": {
@@ -10603,57 +10603,6 @@
         }
       },
       {
-        "code": "000506",
-        "name": "招金黄金",
-        "hybk": "贵金属",
-        "board_role": "卡位",
-        "board_leader": "赤峰黄金",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 12.11",
-        "price": 14.33,
-        "chg": 6.86,
-        "pool_ds": "20261104",
-        "rr": {
-          "ratio": 1.12,
-          "target": 17.06,
-          "stop": 11.9,
-          "atr": 0.88,
-          "upside": 19.1,
-          "downside": -17.0,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 15.01,
-          "idx3": 0.87,
-          "dev": 14.14,
-          "limit": 20.0,
-          "remain": 5.86,
-          "risk": "中",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -7.39,
-          "limit10": 100.0,
-          "remain10": 107.39,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -16.0,
-          "paozi": false
-        },
-        "chan": {
-          "px": 14.33,
-          "zone": "中枢下",
-          "fx": "bottom",
-          "bi_n": 3,
-          "dir": "down",
-          "zs": {
-            "zg": 19.0,
-            "zd": 17.93
-          },
-          "beichi": true,
-          "merged": 50
-        }
-      },
-      {
         "code": "003021",
         "name": "兆威机电",
         "hybk": "电机Ⅱ",
@@ -10906,6 +10855,57 @@
           },
           "beichi": true,
           "merged": 43
+        }
+      },
+      {
+        "code": "603662",
+        "name": "柯力传感",
+        "hybk": "通用设备",
+        "board_role": "卡位",
+        "board_leader": "开勒股份",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 47.50",
+        "price": 56.53,
+        "chg": 3.65,
+        "pool_ds": "20261104",
+        "rr": {
+          "ratio": 0.73,
+          "target": 63.72,
+          "stop": 46.64,
+          "atr": 3.59,
+          "upside": 12.7,
+          "downside": -17.5,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 11.0,
+          "idx3": 0.87,
+          "dev": 10.13,
+          "limit": 20.0,
+          "remain": 9.87,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 15.09,
+          "limit10": 100.0,
+          "remain10": 84.91,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 23.4,
+          "paozi": false
+        },
+        "chan": {
+          "px": 56.53,
+          "zone": "中枢上",
+          "fx": "bottom",
+          "bi_n": 6,
+          "dir": "up",
+          "zs": {
+            "zg": 50.63,
+            "zd": 46.04
+          },
+          "beichi": false,
+          "merged": 49
         }
       },
       {
@@ -11504,7 +11504,7 @@
       }
     ],
     "stat": {
-      "cand": 176,
+      "cand": 181,
       "no_k": 0,
       "sealed": 84,
       "no_type": 4
@@ -11514,7 +11514,7 @@
   "trade_date": "2026-11-05",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-05 23:22",
+    "asof": "2026-11-05 23:41",
     "amt": 21180.0,
     "amt_est": null,
     "amt_used": 21180.0,
