@@ -2618,15 +2618,20 @@ body::after{   /* 暗角 */
       }
     }
     // ---------- 4) 中枢 ----------
-    let zs = null;
-    if (bi.length >= 3) {
-      for (let s = bi.length - 3; s >= 0; s--) {
-        const t3 = bi.slice(s, s + 3);
+    // 中枢改用线段找（线段级别中枢），线段不足三笔时退回用笔
+    let zs = null, zsLevel = null;
+    const _findZs = (arr, lvl) => {
+      if (!arr || arr.length < 3) return null;
+      for (let s = arr.length - 3; s >= 0; s--) {
+        const t3 = arr.slice(s, s + 3);
         const zg = Math.min.apply(null, t3.map(x => Math.max(x.aP, x.bP)));
         const zd = Math.max.apply(null, t3.map(x => Math.min(x.aP, x.bP)));
-        if (zg > zd) { zs = { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b }; break; }
+        if (zg > zd) return { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b, level: lvl };
       }
-    }
+      return null;
+    };
+    zs = _findZs(bi, '笔');          // 先算出笔级别中枢（线段要用）
+
     // ---------- 5) 线段：连续≥3笔，反向笔破坏线段起点极值才结束 ----------
     const segs = [];
     let cur = null;
@@ -2647,6 +2652,11 @@ body::after{   /* 暗角 */
     }
     if (cur) segs.push(cur);
     const segsOk = segs.filter(s => s.n >= 3);   // 至少三笔才算线段
+    // 用线段重找中枢：线段级别更稳；找不到再退回笔级别
+    const _segsForZs = segsOk.map(s => ({ aP: s.dir === 'up' ? s.lo : s.hi, bP: s.dir === 'up' ? s.hi : s.lo,
+                                          a: s.start, b: s.end }));
+    const zsSeg = _findZs(_segsForZs, '线段');
+    if (zsSeg) zs = zsSeg;
 
     return { m: m, fx: fx, bi: bi, zs: zs, segs: segsOk };
   }
@@ -2706,7 +2716,9 @@ body::after{   /* 暗角 */
           let x2 = W - P;   // 中枢延伸到哪里：到最新K线（中枢仍在延续）
           chn += '<rect x="' + Math.min(x1, x2).toFixed(1) + '" y="' + Y(ch.zs.zg).toFixed(1) +
                  '" width="' + Math.abs(x2 - x1).toFixed(1) + '" height="' + Math.abs(Y(ch.zs.zd) - Y(ch.zs.zg)).toFixed(1) +
-                 '" fill="#e8b339" opacity=".13" stroke="#e8b339" stroke-width=".8" stroke-dasharray="3,2"/>';
+                 '" fill="#e8b339" opacity=".13" stroke="#e8b339" stroke-width=".8" stroke-dasharray="3,2"/>' +
+                 '<text x="' + (Math.min(x1, x2) + 4).toFixed(1) + '" y="' + (Y(ch.zs.zg) + 10).toFixed(1) +
+                 '" fill="#e8b339" font-size="9" opacity=".9">中枢·' + (ch.zs.level || '') + '</text>';
         }
         // 笔：折线
         const pts = [];
