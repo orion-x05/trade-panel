@@ -2564,51 +2564,68 @@ body::after{   /* 暗角 */
   let ALL = [], VIEW = { end: 0, count: 60 };
 
 
-  /* ===== 缠论：包含处理 → 分型 → 笔 → 中枢（在 K 线图上画出来） ===== */
+/* ===== 缠论（标准版）=====
+     1) 包含处理：方向由上一组决定，升取高高、降取低低
+     2) 分型：顶分型 = 中间K线高点最高且低点最高；底分型反之（严格分型）
+     3) 笔（新笔定义）：顶底交替，两分型之间在合并序列上至少间隔 1 根独立K线
+     4) 中枢：连续三笔的重叠区间；若三笔无重叠则顺延取后三笔
+  */
   function chanCalc(bars) {
     if (!bars || bars.length < 40) return null;
-    // 1) 包含处理
+    // ---------- 1) 包含处理 ----------
     const m = [];
     for (let i = 0; i < bars.length; i++) {
-      const b = { d: bars[i][0], o: +bars[i][1], c: +bars[i][2], h: +bars[i][3], l: +bars[i][4], i0: i };
+      const b = { d: bars[i][0], o: +bars[i][1], c: +bars[i][2], h: +bars[i][3], l: +bars[i][4], i0: i, idx: [i] };
       if (!m.length) { m.push(b); continue; }
       const pv = m[m.length - 1];
       const inside = (b.h <= pv.h && b.l >= pv.l) || (b.h >= pv.h && b.l <= pv.l);
       if (!inside) { m.push(b); continue; }
-      const up = m.length < 2 ? true : (m[m.length - 1].h >= m[m.length - 2].h);
+      const up = m.length < 2 ? (b.h >= pv.h) : (pv.h >= m[m.length - 2].h);
       if (up) { pv.h = Math.max(pv.h, b.h); pv.l = Math.max(pv.l, b.l); }
       else { pv.h = Math.min(pv.h, b.h); pv.l = Math.min(pv.l, b.l); }
-      pv.c = b.c; pv.d = b.d;
+      pv.c = b.c; pv.d = b.d; pv.idx.push(i);
     }
-    // 2) 分型
+    // ---------- 2) 分型 ----------
     const fx = [];
     for (let i = 1; i < m.length - 1; i++) {
       const a = m[i - 1], b = m[i], c = m[i + 1];
-      if (b.h > a.h && b.h > c.h && b.l > a.l && b.l > c.l) fx.push({ i: i, t: 'top' });
-      else if (b.l < a.l && b.l < c.l && b.h < a.h && b.h < c.h) fx.push({ i: i, t: 'bottom' });
+      if (b.h > a.h && b.h > c.h && b.l > a.l && b.l > c.l) fx.push({ i: i, t: 'top', p: b.h });
+      else if (b.l < a.l && b.l < c.l && b.h < a.h && b.h < c.h) fx.push({ i: i, t: 'bottom', p: b.l });
     }
-    // 3) 笔（顶底交替，间隔≥4）
+    if (fx.length < 2) return { m: m, fx: fx, bi: [], zs: null };
+    // ---------- 3) 笔（新笔） ----------
     const bi = [];
-    let last = null;
-    for (const f of fx) {
-      if (!last) { last = f; continue; }
+    let last = fx[0];
+    for (let k = 1; k < fx.length; k++) {
+      const f = fx[k];
       if (f.t === last.t) {
-        if ((f.t === 'top' && m[f.i].h > m[last.i].h) || (f.t === 'bottom' && m[f.i].l < m[last.i].l)) last = f;
+        // 同类分型取更极端的
+        if ((f.t === 'top' && f.p > last.p) || (f.t === 'bottom' && f.p < last.p)) last = f;
         continue;
       }
-      if (f.i - last.i >= 4) {
-        bi.push({ a: last.i, b: f.i, dir: last.t === 'bottom' ? 'up' : 'down' });
+      const gap = f.i - last.i;                 // 合并序列上的间隔
+      if (gap < 4) {                            // 中间至少要有 3 根合并K线
+        // 间隔不够但反向更极端时，允许替换 last 的极值判断（不生成笔）
+        continue;
+      }
+      // 顶必须高于底（防呆）
+      if (last.t === 'bottom' && f.p > last.p) {
+        bi.push({ a: last.i, b: f.i, aP: last.p, bP: f.p, dir: 'up' });
+        last = f;
+      } else if (last.t === 'top' && f.p < last.p) {
+        bi.push({ a: last.i, b: f.i, aP: last.p, bP: f.p, dir: 'down' });
         last = f;
       }
     }
-    // 4) 中枢：最近三笔重叠
+    // ---------- 4) 中枢 ----------
     let zs = null;
     if (bi.length >= 3) {
-      const t3 = bi.slice(-3);
-      const hi = t3.map(x => Math.max(m[x.a].h, m[x.b].h));
-      const lo = t3.map(x => Math.min(m[x.a].l, m[x.b].l));
-      const zg = Math.min.apply(null, hi), zd = Math.max.apply(null, lo);
-      if (zg > zd) zs = { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b };
+      for (let s = bi.length - 3; s >= 0; s--) {
+        const t3 = bi.slice(s, s + 3);
+        const zg = Math.min.apply(null, t3.map(x => Math.max(x.aP, x.bP)));
+        const zd = Math.max.apply(null, t3.map(x => Math.min(x.aP, x.bP)));
+        if (zg > zd) { zs = { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b }; break; }
+      }
     }
     return { m: m, fx: fx, bi: bi, zs: zs };
   }
@@ -2673,8 +2690,8 @@ body::after{   /* 暗角 */
         // 笔：折线
         const pts = [];
         ch.bi.forEach(b => {
-          const pa = { x: X(ch.m[b.a].i0), y: Y(b.dir === 'up' ? ch.m[b.a].l : ch.m[b.a].h) };
-          const pb = { x: X(ch.m[b.b].i0), y: Y(b.dir === 'up' ? ch.m[b.b].h : ch.m[b.b].l) };
+          const pa = { x: X(ch.m[b.a].i0), y: Y(b.aP) };
+          const pb = { x: X(ch.m[b.b].i0), y: Y(b.bP) };
           if (!pts.length) pts.push(pa);
           pts.push(pb);
         });
