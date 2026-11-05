@@ -2563,6 +2563,56 @@ body::after{   /* 暗角 */
 
   let ALL = [], VIEW = { end: 0, count: 60 };
 
+
+  /* ===== 缠论：包含处理 → 分型 → 笔 → 中枢（在 K 线图上画出来） ===== */
+  function chanCalc(bars) {
+    if (!bars || bars.length < 40) return null;
+    // 1) 包含处理
+    const m = [];
+    for (let i = 0; i < bars.length; i++) {
+      const b = { d: bars[i][0], o: +bars[i][1], c: +bars[i][2], h: +bars[i][3], l: +bars[i][4], i0: i };
+      if (!m.length) { m.push(b); continue; }
+      const pv = m[m.length - 1];
+      const inside = (b.h <= pv.h && b.l >= pv.l) || (b.h >= pv.h && b.l <= pv.l);
+      if (!inside) { m.push(b); continue; }
+      const up = m.length < 2 ? true : (m[m.length - 1].h >= m[m.length - 2].h);
+      if (up) { pv.h = Math.max(pv.h, b.h); pv.l = Math.max(pv.l, b.l); }
+      else { pv.h = Math.min(pv.h, b.h); pv.l = Math.min(pv.l, b.l); }
+      pv.c = b.c; pv.d = b.d;
+    }
+    // 2) 分型
+    const fx = [];
+    for (let i = 1; i < m.length - 1; i++) {
+      const a = m[i - 1], b = m[i], c = m[i + 1];
+      if (b.h > a.h && b.h > c.h && b.l > a.l && b.l > c.l) fx.push({ i: i, t: 'top' });
+      else if (b.l < a.l && b.l < c.l && b.h < a.h && b.h < c.h) fx.push({ i: i, t: 'bottom' });
+    }
+    // 3) 笔（顶底交替，间隔≥4）
+    const bi = [];
+    let last = null;
+    for (const f of fx) {
+      if (!last) { last = f; continue; }
+      if (f.t === last.t) {
+        if ((f.t === 'top' && m[f.i].h > m[last.i].h) || (f.t === 'bottom' && m[f.i].l < m[last.i].l)) last = f;
+        continue;
+      }
+      if (f.i - last.i >= 4) {
+        bi.push({ a: last.i, b: f.i, dir: last.t === 'bottom' ? 'up' : 'down' });
+        last = f;
+      }
+    }
+    // 4) 中枢：最近三笔重叠
+    let zs = null;
+    if (bi.length >= 3) {
+      const t3 = bi.slice(-3);
+      const hi = t3.map(x => Math.max(m[x.a].h, m[x.b].h));
+      const lo = t3.map(x => Math.min(m[x.a].l, m[x.b].l));
+      const zg = Math.min.apply(null, hi), zd = Math.max.apply(null, lo);
+      if (zg > zd) zs = { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b };
+    }
+    return { m: m, fx: fx, bi: bi, zs: zs };
+  }
+
   function drawK() {
     const box = $('oxKbox'); if (!box || !ALL.length) return;
     const n = ALL.length;
@@ -2606,8 +2656,35 @@ body::after{   /* 暗角 */
       mk += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + col +
             '" font-size="10" font-weight="700" text-anchor="middle">' + m.side + '</text>';
     });
+    // 【缠论叠加】笔 + 中枢 + 分型
+    let chn = '';
+    try {
+      const ch = chanCalc(ALL);
+      if (ch && ch.bi.length) {
+        const X = (i0) => P + (i0 - base) * cw + cw / 2;
+        // 中枢矩形
+        if (ch.zs) {
+          const x1 = X(ch.m[ch.zs.a].i0), x2 = X(ch.m[ch.zs.b].i0);
+          chn += '<rect x="' + Math.min(x1, x2).toFixed(1) + '" y="' + Y(ch.zs.zg).toFixed(1) +
+                 '" width="' + Math.abs(x2 - x1).toFixed(1) + '" height="' + Math.abs(Y(ch.zs.zd) - Y(ch.zs.zg)).toFixed(1) +
+                 '" fill="#e8b339" opacity=".13" stroke="#e8b339" stroke-width=".8" stroke-dasharray="3,2"/>';
+        }
+        // 笔：折线
+        const pts = [];
+        ch.bi.forEach(b => {
+          const pa = { x: X(ch.m[b.a].i0), y: Y(b.dir === 'up' ? ch.m[b.a].l : ch.m[b.a].h) };
+          const pb = { x: X(ch.m[b.b].i0), y: Y(b.dir === 'up' ? ch.m[b.b].h : ch.m[b.b].l) };
+          if (!pts.length) pts.push(pa);
+          pts.push(pb);
+        });
+        if (pts.length > 1) {
+          chn += '<path d="' + pts.map((q, i) => (i ? 'L' : 'M') + q.x.toFixed(1) + ' ' + q.y.toFixed(1)).join(' ') +
+                 '" fill="none" stroke="#c084fc" stroke-width="1.4" opacity=".9"/>';
+        }
+      }
+    } catch (e) { }
     $('oxKbox').innerHTML =
-      '<svg class="ox-kline" id="oxKsvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g +
+      '<svg class="ox-kline" id="oxKsvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' + g + chn +
       (ml ? '<path d="' + ml + '" fill="none" stroke="#4d9fff" stroke-width="1.2" opacity=".8"/>' : '') + mk + '</svg>';
     const f = rows[0][0], t = rows[rows.length - 1][0];
     $('oxKinfo').textContent = f + ' → ' + t + ' · ' + rows.length + ' 根 · 滚轮缩放，拖动平移';
