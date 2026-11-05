@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-05T16:55:40.990457",
+  "last_update": "2026-11-05T16:57:38.789391",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -10555,54 +10555,51 @@
         }
       },
       {
-        "code": "000506",
-        "name": "招金黄金",
-        "hybk": "贵金属",
-        "board_role": "卡位",
-        "board_leader": "赤峰黄金",
+        "code": "603248",
+        "name": "锡华科技",
+        "hybk": "风电设备",
+        "board_role": "独苗",
+        "board_leader": "锡华科技",
         "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 12.11",
-        "price": 14.33,
-        "chg": 6.86,
+        "type": "假阴真阳",
+        "why": "收 18.25 低于开盘 18.78，但涨幅 +1.4%，放量 3.33×",
+        "price": 18.25,
+        "chg": 1.39,
         "pool_ds": "20261104",
         "rr": {
-          "ratio": 1.12,
-          "target": 17.06,
-          "stop": 11.9,
-          "atr": 0.88,
-          "upside": 19.1,
-          "downside": -17.0,
+          "ratio": 1.23,
+          "target": 21.13,
+          "stop": 15.9,
+          "atr": 0.92,
+          "upside": 15.8,
+          "downside": -12.9,
           "ok": false
         },
         "abnormal": {
-          "dev3": 15.01,
+          "dev3": 10.74,
           "idx3": 0.87,
-          "dev": 14.14,
+          "dev": 9.87,
           "limit": 20.0,
-          "remain": 5.86,
-          "risk": "中",
+          "remain": 10.13,
+          "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -7.39,
+          "dev10": 1.74,
           "limit10": 100.0,
-          "remain10": 107.39,
+          "remain10": 98.26,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -16.0,
+          "ret20": -11.6,
           "paozi": false
         },
         "chan": {
-          "px": 14.33,
-          "zone": "中枢下",
+          "px": 18.25,
+          "zone": null,
           "fx": "bottom",
-          "bi_n": 3,
+          "bi_n": 2,
           "dir": "down",
-          "zs": {
-            "zg": 19.0,
-            "zd": 17.93
-          },
-          "beichi": true,
-          "merged": 50
+          "zs": null,
+          "beichi": false,
+          "merged": 46
         }
       },
       {
@@ -11118,9 +11115,9 @@
         "hybk": "冶钢原料",
         "board_role": "独苗",
         "board_leader": "马矿股份",
-        "lbc": 1,
+        "lbc": 2,
         "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 13.52",
+        "why": "2板，回踩未破最近涨停日最低 13.52",
         "price": 15.92,
         "chg": -3.98,
         "pool_ds": "20261104",
@@ -11359,8 +11356,8 @@
         "code": "002811",
         "name": "郑中设计",
         "hybk": "装修装饰",
-        "board_role": "独苗",
-        "board_leader": "郑中设计",
+        "board_role": "卡位",
+        "board_leader": "金 螳 螂",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 10.04",
@@ -11507,9 +11504,9 @@
       }
     ],
     "stat": {
-      "cand": 162,
+      "cand": 100,
       "no_k": 0,
-      "sealed": 84,
+      "sealed": 16,
       "no_type": 4
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
@@ -11517,7 +11514,7 @@
   "trade_date": "2026-11-05",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-05 16:30",
+    "asof": "2026-11-05 16:57",
     "amt": 21180.0,
     "amt_est": null,
     "amt_used": 21180.0,
