@@ -3631,26 +3631,29 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
 # 软件里写的“主力吸筹成本”用的是同一类推断，只是不标注误差。
 
 
-def cost_anchors(bars, bins=40, decay=0.97):
-    """【成本三锚】用三种独立方法估成本，看是否互相印证。
+def cost_anchors5(bars, float_shares, bins=40, decay=0.97):
+    """【成本五锚】五种独立方法估成本，看是否互相印证。
 
-    ① 低位密集区：只在价格区间下 1/3 内找成交密集峰（老马说的“低位横盘=成本区”）
-    ② 放量突破点：最近一次“量比>1.8 且创 20 日新高”那天的成交均价
-    ③ 长期均线：MA120（长期成本参考）
+    ① 低位密集区   只在价格区间下 40% 找成交密集峰
+    ② 放量突破点   最近一次「量比>1.8 且创 20 日新高」当天的均价
+    ③ MA120        长期均线，中线成本分水岭
+    ④ 换手法       从最近往前累加换手率到 100%，这段区间的成交量加权均价
+                    （对应「主力建仓需要时间，累计换手一轮≈换完一批筹码」）
+    ⑤ 均线粘合     5/10/20/30/60 日均线的均值（粘合时才有意义）
 
-    consistency 越小越一致；三者差距大说明证据互相矛盾，别当准。
+    float_shares: 流通股本（股）。决定换手法能否使用。
     """
     if not bars or len(bars) < 120:
         return None
+    n = len(bars)
     px = float(bars[-1]["c"])
     lo = min(float(x["l"]) for x in bars)
     hi = max(float(x["h"]) for x in bars)
     if hi <= lo:
         return None
-    step = (hi - lo) / bins
-    n = len(bars)
 
-    # ① 低位密集区：仅统计价格在区间下 40% 以内的成交量
+    # ① 低位密集区
+    step = (hi - lo) / bins
     low_cut = lo + (hi - lo) * 0.4
     vols = [0.0] * bins
     for i, x in enumerate(bars):
@@ -3658,41 +3661,63 @@ def cost_anchors(bars, bins=40, decay=0.97):
         if p > low_cut:
             continue
         w = decay ** (n - 1 - i)
-        idx = max(0, min(bins - 1, int((p - lo) / step)))
-        vols[idx] += float(x["v"] or 0) * w
-    a1 = None
-    if sum(vols) > 0:
-        peak = max(range(bins), key=lambda i: vols[i])
-        a1 = round(lo + step * (peak + 0.5), 2)
+        vols[max(0, min(bins - 1, int((p - lo) / step)))] += float(x["v"] or 0) * w
+    a1 = round(lo + step * (max(range(bins), key=lambda i: vols[i]) + 0.5), 2) if sum(vols) > 0 else None
 
-    # ② 放量突破点：最近一次 量比>1.8 + 创20日新高 那天的均价
+    # ② 放量突破点
     a2 = None
     for i in range(n - 1, 20, -1):
-        seg = [float(b[-1]["c"]) if False else float(b["c"]) for b in bars[i - 20:i]]
-        vr = float(bars[i]["v"] or 0) / (sum(float(b["v"] or 0) for b in bars[i - 5:i]) / 5 or 1)
-        if vr > 1.8 and float(bars[i]["c"]) >= max(seg):
+        seg = [float(b["c"]) for b in bars[i - 20:i]]
+        base = sum(float(b["v"] or 0) for b in bars[i - 5:i]) / 5 or 1
+        if float(bars[i]["v"] or 0) / base > 1.8 and float(bars[i]["c"]) >= max(seg):
             a2 = round((float(bars[i]["h"]) + float(bars[i]["l"]) + float(bars[i]["c"])) / 3.0, 2)
             break
 
-    # ③ 长期均线
     closes = [float(x["c"]) for x in bars]
+    # ③ MA120
     a3 = round(sum(closes[-120:]) / 120, 2) if len(closes) >= 120 else None
 
-    anchors = [x for x in (a1, a2, a3) if x]
+    # ④ 换手法：累计换手 100% 的区间加权均价
+    a4 = None
+    if float_shares and float_shares > 0:
+        acc_turn, acc_amt, acc_vol = 0.0, 0.0, 0.0
+        for i in range(n - 1, -1, -1):
+            v = float(bars[i]["v"] or 0)
+            if v <= 0:
+                continue
+            turn = v * 100.0 / float_shares * 100  # v 单位是「手」，换算成股再算换手 %
+            p = (float(bars[i]["h"]) + float(bars[i]["l"]) + float(bars[i]["c"])) / 3.0
+            acc_amt += v * p
+            acc_vol += v
+            acc_turn += turn
+            if acc_turn >= 100:
+                break
+        if acc_vol > 0 and acc_turn >= 60:          # 至少覆盖 60% 换手才算数
+            a4 = round(acc_amt / acc_vol, 2)
+
+    # ⑤ 均线粘合
+    a5 = None
+    if len(closes) >= 60:
+        mas = [sum(closes[-k:]) / k for k in (5, 10, 20, 30, 60)]
+        spread_ma = (max(mas) - min(mas)) / (sum(mas) / 5) * 100
+        if spread_ma <= 6:                           # 粘合才取，不然没意义
+            a5 = round(sum(mas) / 5, 2)
+
+    anchors = {k: v for k, v in (("low", a1), ("breakout", a2), ("ma120", a3),
+                                 ("turn", a4), ("ma_glue", a5)) if v}
     if not anchors:
         return None
-    avg = sum(anchors) / len(anchors)
-    spread = (max(anchors) - min(anchors)) / avg * 100 if avg else None
-
+    vals = list(anchors.values())
+    avg = sum(vals) / len(vals)
+    spread = (max(vals) - min(vals)) / avg * 100 if avg else None
     return {
         "px": round(px, 2),
-        "low_zone": a1,        # 低位密集区（推断成本区）
-        "breakout": a2,        # 放量突破点（起涨成本线）
-        "ma120": a3,           # 长期均线（成本参考）
+        "anchors": anchors,                 # 各方法给出的成本
+        "n": len(vals),
         "avg_anchor": round(avg, 2),
-        "spread": round(spread, 1) if spread is not None else None,   # 三锚离散度 %
+        "spread": round(spread, 1) if spread is not None else None,
         "dist_anchor": round((px / avg - 1) * 100, 1) if avg else None,
-        "agree": (spread is not None and spread <= 15),               # 15% 以内算互相印证
+        "agree": (len(vals) >= 3 and spread is not None and spread <= 15),
     }
 
 
@@ -3956,7 +3981,9 @@ def build_dip_pool(data, limit=24):
             "rr": rr, "abnormal": ab,
             "chan": chan_analysis([{"d": x["d"], "o": x["o"], "c": x["c"], "h": x["h"], "l": x["l"]} for x in k]),
             "chip": chip_distribution([{"c": x["c"], "h": x["h"], "l": x["l"], "v": x.get("v") or 0} for x in k]),
-            "anchors": cost_anchors([{"c": x["c"], "h": x["h"], "l": x["l"], "v": x.get("v") or 0} for x in k]),
+            "anchors": cost_anchors5(
+                [{"c": x["c"], "h": x["h"], "l": x["l"], "v": x.get("v") or 0} for x in k],
+                (float(s.get("ltsz") or 0) * 1e8 / px) if (s.get("ltsz") and px) else None),
         })
         if len(rows) >= limit:
             break
