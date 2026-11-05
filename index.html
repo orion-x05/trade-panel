@@ -2592,7 +2592,7 @@ body::after{   /* 暗角 */
       if (b.h > a.h && b.h > c.h && b.l > a.l && b.l > c.l) fx.push({ i: i, t: 'top', p: b.h });
       else if (b.l < a.l && b.l < c.l && b.h < a.h && b.h < c.h) fx.push({ i: i, t: 'bottom', p: b.l });
     }
-    if (fx.length < 2) return { m: m, fx: fx, bi: [], zs: null };
+    if (fx.length < 2) return { m: m, fx: fx, bi: [], zs: null, segs: [] };
     // ---------- 3) 笔（新笔） ----------
     const bi = [];
     let last = fx[0];
@@ -2627,7 +2627,28 @@ body::after{   /* 暗角 */
         if (zg > zd) { zs = { zg: zg, zd: zd, a: t3[0].a, b: t3[2].b }; break; }
       }
     }
-    return { m: m, fx: fx, bi: bi, zs: zs };
+    // ---------- 5) 线段：连续≥3笔，反向笔破坏线段起点极值才结束 ----------
+    const segs = [];
+    let cur = null;
+    for (const b of bi) {
+      if (!cur) {
+        cur = { start: b.a, end: b.b, hi: Math.max(b.aP, b.bP), lo: Math.min(b.aP, b.bP), dir: b.dir, n: 1 };
+        continue;
+      }
+      if (b.dir === cur.dir) {
+        cur.end = b.b; cur.n++;
+        cur.hi = Math.max(cur.hi, b.bP); cur.lo = Math.min(cur.lo, b.bP);
+      } else if ((cur.dir === 'up' && b.bP < cur.lo) || (cur.dir === 'down' && b.bP > cur.hi)) {
+        segs.push(cur);                       // 破坏 → 线段结束，开新线段
+        cur = { start: b.a, end: b.b, hi: Math.max(b.aP, b.bP), lo: Math.min(b.aP, b.bP), dir: b.dir, n: 1 };
+      } else {
+        cur.end = b.b; cur.n++;               // 反向笔未破坏，视为线段内震荡
+      }
+    }
+    if (cur) segs.push(cur);
+    const segsOk = segs.filter(s => s.n >= 3);   // 至少三笔才算线段
+
+    return { m: m, fx: fx, bi: bi, zs: zs, segs: segsOk };
   }
 
   function drawK() {
@@ -2673,7 +2694,7 @@ body::after{   /* 暗角 */
       mk += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + col +
             '" font-size="10" font-weight="700" text-anchor="middle">' + m.side + '</text>';
     });
-    // 【缠论叠加】笔 + 中枢 + 分型
+    // 【缠论叠加】线段 + 笔 + 中枢 + 分型
     let chn = '';
     try {
       const ch = chanCalc(ALL);
@@ -2694,6 +2715,14 @@ body::after{   /* 暗角 */
           const pb = { x: X(ch.m[b.b].i0), y: Y(b.bP) };
           if (!pts.length) pts.push(pa);
           pts.push(pb);
+        });
+        // 线段：橙红色粗线
+        (ch.segs || []).forEach(s => {
+          const x1 = X(ch.m[s.start].i0), x2 = X(ch.m[s.end].i0);
+          if (!isFinite(x1) || !isFinite(x2)) return;
+          const y1 = Y(s.dir === 'up' ? s.lo : s.hi), y2 = Y(s.dir === 'up' ? s.hi : s.lo);
+          chn += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) +
+                 '" stroke="#f0883e" stroke-width="2.2" opacity=".55" stroke-linecap="round"/>';
         });
         // 若最后一笔没有连到最新一根K线，补一条虚线到现价，避免“笔断了”的观感
         if (pts.length) {
