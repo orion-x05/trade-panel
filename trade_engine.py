@@ -3721,6 +3721,60 @@ def cost_anchors5(bars, float_shares, bins=40, decay=0.97):
     }
 
 
+def build_auction(codes, top_n=20):
+    """【竞价强度】9:25~9:35 采集集合竞价结果。
+
+    指标：
+      auc_chg   = 竞价价 / 昨收 − 1      （竞价涨幅）
+      auc_share = 竞价量 / 昨日全天量 ×100（竞价量占昨日成交的百分比）
+    两者都强 = 资金一开盘就要买。只记录、不下单，先攒两周统计。
+
+    注意：竞价阶段成交量很小，噪音大，不要单独当信号用。
+    """
+    now = cn_now()
+    if not (now.hour == 9 and 25 <= now.minute <= 35):
+        return None
+    codes = [str(c) for c in codes if c][:120]
+    out = []
+    for i in range(0, len(codes), 50):
+        part = codes[i:i + 50]
+        q = ",".join(("sh" if c.startswith("6") else "sz") + c for c in part)
+        try:
+            r = requests.get("https://qt.gtimg.cn/q=" + q, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+            r.encoding = "gbk"
+            txt = r.text
+        except Exception as e:
+            print(f"  ⚠ 竞价取数失败：{e}")
+            continue
+        for line in txt.strip().split(";"):
+            if "~" not in line:
+                continue
+            a = line.split("~")
+            if len(a) < 49:
+                continue
+            try:
+                name, code = a[1], a[2]
+                px, prev = float(a[3] or 0), float(a[4] or 0)
+                if px <= 0 or prev <= 0:
+                    continue
+                auc_vol = float(a[36] or 0)          # 手（竞价阶段就是竞价量）
+                yday_vol = float(a[47] or 0)         # 昨日成交量（手）
+                out.append({
+                    "code": code, "name": name,
+                    "auc_chg": round((px / prev - 1) * 100, 2),
+                    "auc_share": round(auc_vol / yday_vol * 100, 2) if yday_vol > 0 else None,
+                })
+            except Exception:
+                continue
+    if not out:
+        return None
+    out.sort(key=lambda x: -(x.get("auc_chg") or 0))
+    strong = [x for x in out if (x.get("auc_chg") or 0) >= 2 and (x.get("auc_share") or 0) >= 2]
+    return {"asof": now.strftime("%Y-%m-%d %H:%M"), "n": len(out),
+            "items": out[:top_n], "strong": strong[:top_n],
+            "basis": "竞价涨幅 + 竞价量占昨日成交比"}
+
+
 def _secid(code):
     return ("1." if str(code).startswith("6") else "0.") + str(code)
 
@@ -4571,6 +4625,18 @@ def main():
         except Exception as e:
             print(f"  ⚠ 龙虎榜异常：{e}")
         # 【复盘闭环】生成明日预期并验证昨日预期
+        # 【竞价强度】9:25~9:35 采集一次，当天只存一份
+        try:
+            if not data.get("auction") or str(data.get("auction", {}).get("asof", ""))[:10] != cn_now().strftime("%Y-%m-%d"):
+                _auc_codes = list(STOCK_POOL) + [str(s.get("code")) for s in ((data.get("limit_decoded") or {}).get("zt_rows") or [])]
+                _auc = build_auction(_auc_codes)
+                if _auc:
+                    data["auction"] = _auc
+                    print(f"  🔔 竞价强度：{_auc['n']} 只，强:{len(_auc['strong'])} 只"
+                          + (f" · 首位 {_auc['items'][0]['name']} {_auc['items'][0]['auc_chg']:+.2f}%" if _auc.get("items") else ""))
+        except Exception as _e:
+            print(f"  ⚠ 竞价采集异常：{_e}")
+
         try:
             data["dip_pool"] = build_dip_pool(data)
             _dp = data["dip_pool"]
