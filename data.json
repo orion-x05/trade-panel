@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-06T00:51:33.893945",
+  "last_update": "2026-11-06T01:24:02.440552",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1248,7 +1248,7 @@
     "active_roles": 5,
     "total_trades": 17,
     "roles_count": 7,
-    "last_update": "2026-11-05T23:41:52.515619"
+    "last_update": "2026-11-06T00:51:33.893945"
   },
   "data_version": 3,
   "theme_history": {
@@ -9865,8 +9865,10 @@
       "dir": "谨慎",
       "why": [
         "首板晋级率 16.0%（<25%），接力效应弱",
+        "外围：纳指/标普最差 -4.62%，开盘受压",
         "打板溢价：昨日涨停股今日均 +4.42%（116 只）",
-        "主线：光伏设备11家、半导体4家、专用设备4家"
+        "主线：光伏设备11家、半导体4家、专用设备4家",
+        "环境闸：环境数据获取失败 → 禁止开仓 → 总仓 ≤0%"
       ],
       "watch": [
         "贝特利（光伏设备 后排，龙头 永臻股份 3 板）",
@@ -10423,6 +10425,16 @@
           },
           "beichi": true,
           "merged": 45
+        },
+        "chip": {
+          "px": 11.26,
+          "profit_ratio": 28.1,
+          "avg_cost": 13.11,
+          "support": 9.45,
+          "resistance": 18.5,
+          "concentration": 69.0,
+          "main_cost": 13.68,
+          "dist_main": -17.7
         }
       },
       {
@@ -10474,6 +10486,16 @@
           },
           "beichi": false,
           "merged": 45
+        },
+        "chip": {
+          "px": 40.96,
+          "profit_ratio": 32.7,
+          "avg_cost": 47.65,
+          "support": 37.08,
+          "resistance": 65.1,
+          "concentration": 58.8,
+          "main_cost": 41.25,
+          "dist_main": -0.7
         }
       },
       {
@@ -10522,6 +10544,16 @@
           "zs": null,
           "beichi": true,
           "merged": 40
+        },
+        "chip": {
+          "px": 9.04,
+          "profit_ratio": 73.8,
+          "avg_cost": 8.16,
+          "support": 6.8,
+          "resistance": 9.53,
+          "concentration": 33.4,
+          "main_cost": 9.23,
+          "dist_main": -2.1
         }
       },
       {
@@ -10573,6 +10605,16 @@
           },
           "beichi": false,
           "merged": 44
+        },
+        "chip": {
+          "px": 16.28,
+          "profit_ratio": 77.1,
+          "avg_cost": 15.54,
+          "support": 14.33,
+          "resistance": 18.0,
+          "concentration": 23.6,
+          "main_cost": 16.17,
+          "dist_main": 0.7
         }
       },
       {
@@ -10624,57 +10666,74 @@
           },
           "beichi": false,
           "merged": 39
+        },
+        "chip": {
+          "px": 16.88,
+          "profit_ratio": 80.4,
+          "avg_cost": 16.43,
+          "support": 15.6,
+          "resistance": 18.44,
+          "concentration": 17.3,
+          "main_cost": 17.02,
+          "dist_main": -0.8
         }
       },
       {
-        "code": "000506",
-        "name": "招金黄金",
-        "hybk": "贵金属",
-        "board_role": "卡位",
-        "board_leader": "赤峰黄金",
+        "code": "603248",
+        "name": "锡华科技",
+        "hybk": "风电设备",
+        "board_role": "独苗",
+        "board_leader": "锡华科技",
         "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 12.11",
-        "price": 14.33,
-        "chg": 6.86,
+        "type": "假阴真阳",
+        "why": "收 18.25 低于开盘 18.78，但涨幅 +1.4%，放量 3.33×",
+        "price": 18.25,
+        "chg": 1.39,
         "pool_ds": "20261104",
         "rr": {
-          "ratio": 1.12,
-          "target": 17.06,
-          "stop": 11.9,
-          "atr": 0.88,
-          "upside": 19.1,
-          "downside": -17.0,
+          "ratio": 1.23,
+          "target": 21.13,
+          "stop": 15.9,
+          "atr": 0.92,
+          "upside": 15.8,
+          "downside": -12.9,
           "ok": false
         },
         "abnormal": {
-          "dev3": 15.01,
+          "dev3": 10.74,
           "idx3": 0.87,
-          "dev": 14.14,
+          "dev": 9.87,
           "limit": 20.0,
-          "remain": 5.86,
-          "risk": "中",
+          "remain": 10.13,
+          "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -7.39,
+          "dev10": 1.74,
           "limit10": 100.0,
-          "remain10": 107.39,
+          "remain10": 98.26,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -16.0,
+          "ret20": -11.6,
           "paozi": false
         },
         "chan": {
-          "px": 14.33,
-          "zone": "中枢下",
+          "px": 18.25,
+          "zone": null,
           "fx": "bottom",
-          "bi_n": 3,
+          "bi_n": 2,
           "dir": "down",
-          "zs": {
-            "zg": 19.0,
-            "zd": 17.93
-          },
-          "beichi": true,
-          "merged": 49
+          "zs": null,
+          "beichi": false,
+          "merged": 45
+        },
+        "chip": {
+          "px": 18.25,
+          "profit_ratio": 25.8,
+          "avg_cost": 20.32,
+          "support": 17.22,
+          "resistance": 26.49,
+          "concentration": 45.6,
+          "main_cost": 21.33,
+          "dist_main": -14.4
         }
       },
       {
@@ -10726,6 +10785,16 @@
           },
           "beichi": false,
           "merged": 42
+        },
+        "chip": {
+          "px": 98.78,
+          "profit_ratio": 100.0,
+          "avg_cost": 85.76,
+          "support": 69.02,
+          "resistance": 101.75,
+          "concentration": 38.2,
+          "main_cost": 97.0,
+          "dist_main": 1.8
         }
       },
       {
@@ -10777,6 +10846,16 @@
           },
           "beichi": true,
           "merged": 49
+        },
+        "chip": {
+          "px": 79.0,
+          "profit_ratio": 27.3,
+          "avg_cost": 86.05,
+          "support": 71.35,
+          "resistance": 113.0,
+          "concentration": 48.4,
+          "main_cost": 79.31,
+          "dist_main": -0.4
         }
       },
       {
@@ -10828,6 +10907,16 @@
           },
           "beichi": false,
           "merged": 49
+        },
+        "chip": {
+          "px": 30.35,
+          "profit_ratio": 100.0,
+          "avg_cost": 25.5,
+          "support": 21.02,
+          "resistance": 31.8,
+          "concentration": 42.3,
+          "main_cost": 30.28,
+          "dist_main": 0.2
         }
       },
       {
@@ -10879,6 +10968,16 @@
           },
           "beichi": true,
           "merged": 39
+        },
+        "chip": {
+          "px": 6.6,
+          "profit_ratio": 56.1,
+          "avg_cost": 6.53,
+          "support": 6.06,
+          "resistance": 7.35,
+          "concentration": 19.8,
+          "main_cost": 6.84,
+          "dist_main": -3.5
         }
       },
       {
@@ -10930,6 +11029,16 @@
           },
           "beichi": true,
           "merged": 42
+        },
+        "chip": {
+          "px": 189.01,
+          "profit_ratio": 100.0,
+          "avg_cost": 158.16,
+          "support": 132.54,
+          "resistance": 193.45,
+          "concentration": 38.5,
+          "main_cost": 163.0,
+          "dist_main": 16.0
         }
       },
       {
@@ -10981,6 +11090,16 @@
           },
           "beichi": false,
           "merged": 48
+        },
+        "chip": {
+          "px": 56.53,
+          "profit_ratio": 100.0,
+          "avg_cost": 50.24,
+          "support": 45.92,
+          "resistance": 55.73,
+          "concentration": 19.5,
+          "main_cost": 49.8,
+          "dist_main": 13.5
         }
       },
       {
@@ -11032,6 +11151,16 @@
           },
           "beichi": true,
           "merged": 44
+        },
+        "chip": {
+          "px": 14.62,
+          "profit_ratio": 80.8,
+          "avg_cost": 13.78,
+          "support": 12.94,
+          "resistance": 14.76,
+          "concentration": 13.2,
+          "main_cost": 14.62,
+          "dist_main": 0.0
         }
       },
       {
@@ -11083,6 +11212,16 @@
           },
           "beichi": true,
           "merged": 46
+        },
+        "chip": {
+          "px": 71.78,
+          "profit_ratio": 94.3,
+          "avg_cost": 64.09,
+          "support": 58.18,
+          "resistance": 75.99,
+          "concentration": 27.8,
+          "main_cost": 65.25,
+          "dist_main": 10.0
         }
       },
       {
@@ -11134,6 +11273,16 @@
           },
           "beichi": false,
           "merged": 42
+        },
+        "chip": {
+          "px": 6.57,
+          "profit_ratio": 66.6,
+          "avg_cost": 6.46,
+          "support": 5.97,
+          "resistance": 7.4,
+          "concentration": 22.1,
+          "main_cost": 6.81,
+          "dist_main": -3.5
         }
       },
       {
@@ -11182,6 +11331,16 @@
           "zs": null,
           "beichi": false,
           "merged": 41
+        },
+        "chip": {
+          "px": 37.58,
+          "profit_ratio": 31.7,
+          "avg_cost": 40.04,
+          "support": 31.82,
+          "resistance": 51.99,
+          "concentration": 50.4,
+          "main_cost": 40.81,
+          "dist_main": -7.9
         }
       },
       {
@@ -11190,9 +11349,9 @@
         "hybk": "冶钢原料",
         "board_role": "独苗",
         "board_leader": "马矿股份",
-        "lbc": 1,
+        "lbc": 2,
         "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 13.52",
+        "why": "2板，回踩未破最近涨停日最低 13.52",
         "price": 15.92,
         "chg": -3.98,
         "pool_ds": "20261104",
@@ -11221,7 +11380,8 @@
           "ret20": -6.6,
           "paozi": false
         },
-        "chan": null
+        "chan": null,
+        "chip": null
       },
       {
         "code": "002821",
@@ -11272,6 +11432,16 @@
           },
           "beichi": true,
           "merged": 45
+        },
+        "chip": {
+          "px": 161.45,
+          "profit_ratio": 44.7,
+          "avg_cost": 162.19,
+          "support": 134.32,
+          "resistance": 184.32,
+          "concentration": 30.8,
+          "main_cost": 135.15,
+          "dist_main": 19.5
         }
       },
       {
@@ -11323,6 +11493,16 @@
           },
           "beichi": false,
           "merged": 47
+        },
+        "chip": {
+          "px": 106.81,
+          "profit_ratio": 31.0,
+          "avg_cost": 119.52,
+          "support": 88.61,
+          "resistance": 173.99,
+          "concentration": 71.4,
+          "main_cost": 118.25,
+          "dist_main": -9.7
         }
       },
       {
@@ -11374,6 +11554,16 @@
           },
           "beichi": false,
           "merged": 45
+        },
+        "chip": {
+          "px": 66.98,
+          "profit_ratio": 100.0,
+          "avg_cost": 53.39,
+          "support": 44.38,
+          "resistance": 67.93,
+          "concentration": 44.1,
+          "main_cost": 60.19,
+          "dist_main": 11.3
         }
       },
       {
@@ -11425,6 +11615,16 @@
           },
           "beichi": true,
           "merged": 48
+        },
+        "chip": {
+          "px": 8.72,
+          "profit_ratio": 100.0,
+          "avg_cost": 8.09,
+          "support": 7.61,
+          "resistance": 9.02,
+          "concentration": 17.4,
+          "main_cost": 8.56,
+          "dist_main": 1.9
         }
       },
       {
@@ -11476,6 +11676,16 @@
           },
           "beichi": false,
           "merged": 52
+        },
+        "chip": {
+          "px": 21.8,
+          "profit_ratio": 89.7,
+          "avg_cost": 18.42,
+          "support": 13.77,
+          "resistance": 25.48,
+          "concentration": 63.6,
+          "main_cost": 19.82,
+          "dist_main": 10.0
         }
       },
       {
@@ -11527,6 +11737,16 @@
           },
           "beichi": true,
           "merged": 40
+        },
+        "chip": {
+          "px": 17.56,
+          "profit_ratio": 74.1,
+          "avg_cost": 15.84,
+          "support": 12.37,
+          "resistance": 19.12,
+          "concentration": 42.6,
+          "main_cost": 16.47,
+          "dist_main": 6.6
         }
       },
       {
@@ -11575,11 +11795,21 @@
           "zs": null,
           "beichi": false,
           "merged": 42
+        },
+        "chip": {
+          "px": 35.9,
+          "profit_ratio": 100.0,
+          "avg_cost": 30.54,
+          "support": 26.17,
+          "resistance": 37.53,
+          "concentration": 37.2,
+          "main_cost": 30.75,
+          "dist_main": 16.7
         }
       }
     ],
     "stat": {
-      "cand": 179,
+      "cand": 181,
       "no_k": 0,
       "sealed": 84,
       "no_type": 4
@@ -11588,21 +11818,16 @@
   },
   "trade_date": "2026-11-05",
   "env_gate": {
-    "ok": true,
-    "asof": "2026-11-06 00:51",
-    "amt": 21180.0,
-    "amt_est": null,
-    "amt_used": 21180.0,
-    "up": 4591,
-    "down": 620,
-    "flat": 83,
-    "breadth": 0.867,
-    "zt": 84,
-    "flags": [],
-    "pos_cap": 1.0,
-    "pass": true,
-    "up_ratio": 0.867,
-    "zt_count": 84
+    "ok": false,
+    "asof": "2026-11-06 01:23",
+    "pos_cap": 0.0,
+    "flags": [
+      "环境数据获取失败 → 禁止开仓"
+    ],
+    "pass": false,
+    "up_ratio": null,
+    "zt_count": null,
+    "amt_used": 0
   },
   "force_close": [],
   "gate_history": {
@@ -12772,5 +12997,33 @@
       "n": 116,
       "avg": 4.42
     }
+  },
+  "overseas": {
+    "ok": true,
+    "asof": "2026-11-06 01:23",
+    "indexes": {
+      "道琼斯": {
+        "px": 51917.56,
+        "chg": -2.7,
+        "time": "2026-11-05 12:23:21"
+      },
+      "纳斯达克": {
+        "px": 24547.54,
+        "chg": -4.62,
+        "time": "2026-11-05 12:23:20"
+      },
+      "标普500": {
+        "px": 7422.42,
+        "chg": -3.46,
+        "time": "2026-11-05 12:23:21"
+      },
+      "恒生指数": {
+        "px": 24796.98,
+        "chg": 3.67,
+        "time": "2026/11/05 18:31:15"
+      }
+    },
+    "worst": -4.62,
+    "risk": "高"
   }
 }
