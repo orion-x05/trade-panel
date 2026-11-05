@@ -3129,6 +3129,46 @@ def build_lhb(days_back=0, top_n=12):
             "rows": out[:top_n], "top_net": out[:top_n]}
 
 
+def build_overseas():
+    """【外围市场闸】隔夜美股与恒指的真实涨跌。
+
+    为什么要：A股开盘价受隔夜外盘直接影响，纳指大跌的日子高开概率极低，
+    追高就是接盘。这条比任何技术指标都更早影响开盘决策。
+    """
+    url = "https://qt.gtimg.cn/q=usDJI,usIXIC,usINX,hkHSI"
+    try:
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+        r.encoding = "gbk"
+        txt = r.text
+    except Exception as e:
+        print(f"  ⚠ 外围市场取数失败：{e}")
+        return None
+    out = {}
+    for line in txt.strip().split(";"):
+        if "~" not in line:
+            continue
+        a = line.split("~")
+        if len(a) < 33:
+            continue
+        try:
+            name = a[1]
+            chg = float(a[32] or 0)
+            out[name] = {"px": float(a[3] or 0), "chg": round(chg, 2), "time": a[30]}
+        except Exception:
+            continue
+    if not out:
+        return None
+    # 风险判定：纳指/标普任一跌幅 ≥2% → 高风险；≥1% → 中等
+    nas = out.get("纳斯达克", {}).get("chg")
+    spx = out.get("标普500", {}).get("chg")
+    worst = min([x for x in (nas, spx) if x is not None], default=None)
+    risk = "unknown"
+    if worst is not None:
+        risk = "高" if worst <= -2 else ("中" if worst <= -1 else "低")
+    return {"ok": True, "asof": cn_now().strftime("%Y-%m-%d %H:%M"),
+            "indexes": out, "worst": worst, "risk": risk}
+
+
 def build_premium(data):
     """【打板溢价】昨日涨停股今日的实际表现，按板数分组。
 
@@ -3320,6 +3360,13 @@ def build_review_block(data):
     _th = sorted(radar.get("themes") or [], key=lambda t: (-(t.get("n") or 0), -(t.get("max_lb") or 0)))
     cluster = [{"name": t.get("name"), "n": t.get("n"), "max_lb": t.get("max_lb"),
                 "stage": t.get("stage")} for t in _th[:5]]
+    ovs = build_overseas()
+    if ovs:
+        data["overseas"] = ovs
+        _w = ovs.get("worst")
+        if _w is not None and _w <= -1:
+            expect["why"].append(f"外围：纳指/标普最差 {_w:+.2f}%，开盘受压")
+
     prem = build_premium(data)
     if prem:
         data["premium"] = prem
