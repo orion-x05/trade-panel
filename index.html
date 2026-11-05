@@ -2664,7 +2664,8 @@ body::after{   /* 暗角 */
         const X = (i0) => P + (i0 - base) * cw + cw / 2;
         // 中枢矩形
         if (ch.zs) {
-          const x1 = X(ch.m[ch.zs.a].i0), x2 = X(ch.m[ch.zs.b].i0);
+          const x1 = X(ch.m[ch.zs.a].i0);
+          let x2 = W - P;   // 中枢延伸到哪里：到最新K线（中枢仍在延续）
           chn += '<rect x="' + Math.min(x1, x2).toFixed(1) + '" y="' + Y(ch.zs.zg).toFixed(1) +
                  '" width="' + Math.abs(x2 - x1).toFixed(1) + '" height="' + Math.abs(Y(ch.zs.zd) - Y(ch.zs.zg)).toFixed(1) +
                  '" fill="#e8b339" opacity=".13" stroke="#e8b339" stroke-width=".8" stroke-dasharray="3,2"/>';
@@ -2677,10 +2678,33 @@ body::after{   /* 暗角 */
           if (!pts.length) pts.push(pa);
           pts.push(pb);
         });
-        if (pts.length > 1) {
-          chn += '<path d="' + pts.map((q, i) => (i ? 'L' : 'M') + q.x.toFixed(1) + ' ' + q.y.toFixed(1)).join(' ') +
-                 '" fill="none" stroke="#c084fc" stroke-width="1.4" opacity=".9"/>';
+        // 若最后一笔没有连到最新一根K线，补一条虚线到现价，避免“笔断了”的观感
+        if (pts.length) {
+          const lastPt = pts[pts.length - 1];
+          const lastIdx = ALL.length - 1;
+          const pxNow = +ALL[lastIdx][2];
+          const xNow = X(lastIdx);
+          if (isFinite(xNow) && Math.abs(lastPt.x - xNow) > 0.5) {
+            pts.push({ x: xNow, y: Y(pxNow), dash: true });
+          }
         }
+        if (pts.length > 1) {
+          let seg = '';
+          for (let i = 1; i < pts.length; i++) {
+            const a = pts[i - 1], b2 = pts[i];
+            seg += '<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b2.x.toFixed(1) + '" y2="' + b2.y.toFixed(1) +
+                   '" stroke="#c084fc" stroke-width="1.4" opacity=".9"' + (b2.dash ? ' stroke-dasharray="3,3" opacity=".55"' : '') + '/>';
+          }
+          chn += seg;
+        }
+        // 分型点
+        ch.fx.forEach(f => {
+          const x = X(ch.m[f.i].i0);
+          if (!isFinite(x) || x < 0 || x > W) return;
+          const y = Y(f.t === 'top' ? ch.m[f.i].h : ch.m[f.i].l);
+          chn += '<circle cx="' + x.toFixed(1) + '" cy="' + (f.t === 'top' ? y - 3 : y + 3).toFixed(1) + '" r="1.8" fill="' +
+                 (f.t === 'top' ? '#e07a7a' : '#6fb2e8') + '"/>';
+        });
       }
     } catch (e) { }
     $('oxKbox').innerHTML =
