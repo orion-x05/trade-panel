@@ -2256,7 +2256,7 @@ body::after{   /* 暗角 */
       const d = window.OX_DATA || {};
       const out = [];
       ((d.score_pool || {}).rows || []).slice(0, 20).forEach(r =>
-        out.push({ label: (r.name || r.code) + ' · 评分 ' + r.score, go: () => go('scan'), key: (r.name || '') + r.code }));
+        out.push({ label: (r.name || r.code) + ' · 评分 ' + (r.score != null ? r.score : '—'), go: () => go('scan'), key: (r.name || '') + r.code }));
       ((d.dip_pool || {}).rows || []).slice(0, 20).forEach(r =>
         out.push({ label: (r.name || r.code) + ' · ' + r.type, go: () => go('scan'), key: (r.name || '') + r.code }));
       ((d.players || [])).forEach(p => (p.holdings || []).forEach(h =>
@@ -2843,10 +2843,10 @@ body::after{   /* 暗角 */
         '<div>ATR<b>' + (r.gates.rr.atr || '-') + '</b></div>' +
       '</div>' : '') +
       '<div class="ox-kv2">' +
-        '<div>连板<b>' + (r.lbc || 0) + ' 板</b></div>' +
-        '<div>涨幅<b>' + (r.zdp || 0) + '%</b></div>' +
-        '<div>换手<b>' + (r.hs || 0) + '%</b></div>' +
-        '<div>炸板<b>' + (r.zbc || 0) + ' 次</b></div>' +
+        '<div>连板<b>' + (r.lbc != null && r.lbc !== '' ? r.lbc + ' 板' : '—') + '</b></div>' +
+        '<div>涨幅<b>' + (r.zdp != null && r.zdp !== '' ? r.zdp + '%' : '—') + '</b></div>' +
+        '<div>换手<b>' + (r.hs != null && r.hs !== '' ? r.hs + '%' : '—') + '</b></div>' +
+        '<div>炸板<b>' + (r.zbc != null ? r.zbc + ' 次' : '—') + '</b></div>' +
       '</div>' +
       '<div class="ox-gate"><div class="ox-sub" style="margin:14px 0 6px">门禁 ' + g.points + '/' + g.max + ' 分</div>' +
       g.items.map(it => {
@@ -3580,7 +3580,8 @@ body::after{   /* 暗角 */
       const name = raw.split(/[\s（(]/)[0];
       const hit = findZT(name);
       if (!hit) return;                      // 题材雷达是板块行，没有单只股票可查
-      openByCode(hit.code, hit.name, { lbc: hit.lbc || 0, zdp: hit.zdp });
+      openByCode(hit.code, hit.name, { lbc: hit.lbc != null ? hit.lbc : null,
+                                       zdp: hit.zdp != null ? hit.zdp : (hit.chg != null ? hit.chg : null) });
     });
     Array.from(box.children).forEach(r => { r.style.cursor = 'pointer'; });
   }
