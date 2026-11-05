@@ -2936,6 +2936,13 @@ body::after{   /* 暗角 */
         '<span class="v" style="color:' + (ok ? '#3ecf8e' : '#5f6b7a') + '">' +
         (rr.ratio != null ? '赔率 ' + rr.ratio : '赔率 -') +
         ((r.abnormal && r.abnormal.remain != null) ? '<span style="color:#5f6b7a;font-size:11px"> · 异动余 ' + r.abnormal.remain + '%</span>' : '') +
+        ((r.chan && r.chan.zone)
+          ? '<span style="font-size:11px;margin-left:6px;padding:0 5px;border-radius:4px;' +
+            (r.chan.zone === '中枢上' ? 'color:#e07a7a;background:rgba(224,122,122,.12)'
+             : r.chan.zone === '中枢下' ? 'color:#6fb2e8;background:rgba(111,178,232,.12)'
+             : 'color:#9aa6b4;background:rgba(154,166,180,.12)') + '">' + r.chan.zone + '</span>' +
+            (r.chan.beichi ? '<span style="font-size:11px;margin-left:4px;color:#e8b339">背驰</span>' : '')
+          : '') +
         '</span></div>';
     }).join('');
     const title = sec.querySelector('.card-title');
