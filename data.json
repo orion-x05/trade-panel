@@ -840,7 +840,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-05T16:30:31.811000",
+  "last_update": "2026-11-05T16:30:40.464782",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -4774,14 +4774,6 @@
     "ok": true,
     "rows": [
       {
-        "code": "000096",
-        "name": "广聚能源",
-        "yesterday_board_count": 1,
-        "today_pct": 3.07,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
         "code": "002827",
         "name": "高争民爆",
         "yesterday_board_count": 3,
@@ -4794,6 +4786,14 @@
         "name": "大连友谊",
         "yesterday_board_count": 2,
         "today_pct": -9.75,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
+        "code": "000096",
+        "name": "广聚能源",
+        "yesterday_board_count": 1,
+        "today_pct": 3.07,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -5238,20 +5238,20 @@
         "lbc_today": 0
       },
       {
-        "code": "600206",
-        "name": "有研新材",
-        "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
         "code": "688517",
         "name": "金冠电气",
         "yesterday_board_count": 1,
         "today_pct": 3.36,
         "is_zt_today": false,
         "lbc_today": 0
+      },
+      {
+        "code": "600206",
+        "name": "有研新材",
+        "yesterday_board_count": 1,
+        "today_pct": 10.0,
+        "is_zt_today": true,
+        "lbc_today": 2
       },
       {
         "code": "301070",
@@ -5358,12 +5358,12 @@
         "lbc_today": 0
       },
       {
-        "code": "603893",
-        "name": "瑞芯微",
+        "code": "603048",
+        "name": "浙江黎明",
         "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
+        "today_pct": 2.55,
+        "is_zt_today": false,
+        "lbc_today": 0
       },
       {
         "code": "600699",
@@ -5374,12 +5374,12 @@
         "lbc_today": 0
       },
       {
-        "code": "603048",
-        "name": "浙江黎明",
+        "code": "603893",
+        "name": "瑞芯微",
         "yesterday_board_count": 1,
-        "today_pct": 2.55,
-        "is_zt_today": false,
-        "lbc_today": 0
+        "today_pct": 10.0,
+        "is_zt_today": true,
+        "lbc_today": 2
       },
       {
         "code": "002674",
@@ -5574,6 +5574,14 @@
         "lbc_today": 2
       },
       {
+        "code": "688409",
+        "name": "富创精密",
+        "yesterday_board_count": 1,
+        "today_pct": 4.79,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
         "code": "603283",
         "name": "赛腾股份",
         "yesterday_board_count": 1,
@@ -5670,6 +5678,14 @@
         "lbc_today": 0
       },
       {
+        "code": "300943",
+        "name": "春晖智控",
+        "yesterday_board_count": 1,
+        "today_pct": -1.12,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
         "code": "002536",
         "name": "飞龙股份",
         "yesterday_board_count": 1,
@@ -5687,7 +5703,7 @@
       }
     ],
     "promote": {
-      "base_1to2": 104,
+      "base_1to2": 106,
       "hit_1to2": 17,
       "base_2to3": 6,
       "hit_2to3": 2
@@ -9840,7 +9856,7 @@
       "max_lb": 4,
       "boom": 121,
       "boom_rate": 42.9,
-      "rate_1to2": 16.3,
+      "rate_1to2": 16.0,
       "rate_2to3": 33.3,
       "stage": "偏暖",
       "emoji": "🌤"
@@ -9848,7 +9864,7 @@
     "expect": {
       "dir": "谨慎",
       "why": [
-        "首板晋级率 16.3%（<25%），接力效应弱",
+        "首板晋级率 16.0%（<25%），接力效应弱",
         "主线：光伏设备11家、半导体4家、专用设备4家"
       ],
       "watch": [
@@ -11200,7 +11216,7 @@
       }
     ],
     "stat": {
-      "cand": 228,
+      "cand": 136,
       "no_k": 0,
       "sealed": 16,
       "no_type": 4
