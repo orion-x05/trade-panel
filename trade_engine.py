@@ -3626,6 +3626,9 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
 # ============ 筹码分布（自算，替代软件黑箱） ============
 # 原理：把每根K线的成交量按成交均价分配到价格区间，累积成分布。
 # 只用日K，不依赖任何付费数据。
+# 【重要】这里算出的是「成交密集峰」，不是真实的「主力成本」。
+# 真实成本不可观测：主力可对倒制造假换手、可锁仓让筹码不换、也可多账户分散建仓。
+# 软件里写的“主力吸筹成本”用的是同一类推断，只是不标注误差。
 
 def chip_distribution(bars, bins=40, decay=0.97):
     """返回 {profit_ratio, avg_cost, support, resistance, concentration, main_cost, dist_main}
@@ -3683,8 +3686,8 @@ def chip_distribution(bars, bins=40, decay=0.97):
         "avg_cost": round(avg_cost, 2),
         "support": support, "resistance": resistance,  # 密集区上下沿
         "concentration": concentration,               # 90%筹码带宽/均价 %
-        "main_cost": main_cost,                       # 密集峰中心 ≈ 主力成本
-        "dist_main": round((px / main_cost - 1) * 100, 1) if main_cost else None,
+        "main_cost": main_cost,                       # 密集峰中心（推断值，非真实主力成本）
+        "dist_main": round((px / main_cost - 1) * 100, 1) if main_cost else None,  # 现价距密集峰，正=高于筹码密集区
     }
 
 
