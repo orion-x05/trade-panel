@@ -3622,6 +3622,72 @@ def calc_abnormal(rows, code, name="", idx_dev=0.0):
 
 
 
+
+# ============ 筹码分布（自算，替代软件黑箱） ============
+# 原理：把每根K线的成交量按成交均价分配到价格区间，累积成分布。
+# 只用日K，不依赖任何付费数据。
+
+def chip_distribution(bars, bins=40, decay=0.97):
+    """返回 {profit_ratio, avg_cost, support, resistance, concentration, main_cost, dist_main}
+
+    bars: [{c, h, l, v}]，至少 60 根。
+    """
+    if not bars or len(bars) < 60:
+        return None
+    px = float(bars[-1]["c"])
+    lo = min(float(x["l"]) for x in bars)
+    hi = max(float(x["h"]) for x in bars)
+    if hi <= lo:
+        return None
+    step = (hi - lo) / bins
+    vols = [0.0] * bins
+    # 【时间衰减】越久远的成交对“当前筹码”贡献越小（筹码会换手），
+    # 用逐日 0.97 的衰减近似，否则半年前的高位密集峰会把结果带偏。
+    n = len(bars)
+    for i, x in enumerate(bars):
+        w = decay ** (n - 1 - i)
+        p = (float(x["h"]) + float(x["l"]) + float(x["c"])) / 3.0
+        idx = int((p - lo) / step)
+        idx = max(0, min(bins - 1, idx))
+        vols[idx] += float(x["v"] or 0) * w
+    total = sum(vols)
+    if total <= 0:
+        return None
+
+    def center(i):
+        return lo + step * (i + 0.5)
+
+    # 平均成本（成交量加权）
+    avg_cost = sum(vols[i] * center(i) for i in range(bins)) / total
+    # 获利比例：成本低于现价的筹码
+    profit = sum(vols[i] for i in range(bins) if center(i) <= px) / total
+
+    # 密集区：成交量最大的档，向两侧扩展到覆盖 90% 筹码
+    peak = max(range(bins), key=lambda i: vols[i])
+    acc, l, r = vols[peak], peak, peak
+    target = total * 0.9
+    while acc < target and (l > 0 or r < bins - 1):
+        left = vols[l - 1] if l > 0 else -1
+        right = vols[r + 1] if r < bins - 1 else -1
+        if right >= left:
+            r += 1; acc += vols[r]
+        else:
+            l -= 1; acc += vols[l]
+    support, resistance = round(lo + step * l, 2), round(lo + step * (r + 1), 2)
+    main_cost = round(center(peak), 2)
+    concentration = round((resistance - support) / avg_cost * 100, 1) if avg_cost else None
+
+    return {
+        "px": round(px, 2),
+        "profit_ratio": round(profit * 100, 1),      # 获利盘 %
+        "avg_cost": round(avg_cost, 2),
+        "support": support, "resistance": resistance,  # 密集区上下沿
+        "concentration": concentration,               # 90%筹码带宽/均价 %
+        "main_cost": main_cost,                       # 密集峰中心 ≈ 主力成本
+        "dist_main": round((px / main_cost - 1) * 100, 1) if main_cost else None,
+    }
+
+
 # ============ 缠论（日线单级别） ============
 # 只做可判定的部分：包含处理 → 分型 → 笔 → 中枢 → 背驰。
 # 不做线段与多级别递归（太重，收益不成正比）。
@@ -3820,6 +3886,7 @@ def build_dip_pool(data, limit=24):
             "price": round(px, 2), "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
             "chan": chan_analysis([{"d": x["d"], "o": x["o"], "c": x["c"], "h": x["h"], "l": x["l"]} for x in k]),
+            "chip": chip_distribution([{"c": x["c"], "h": x["h"], "l": x["l"], "v": x.get("v") or 0} for x in k]),
         })
         if len(rows) >= limit:
             break
