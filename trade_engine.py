@@ -3929,7 +3929,7 @@ def build_dip_pool(data, limit=24):
         if str(code) in _today_codes or (s.get("pool_ds") == _today_ds):
             _stat["sealed"] += 1
             continue
-        k = _kline_ohlc(code, 60)
+        k = _kline_ohlc(code, 250)   # 250根：成本三锚需要 MA120，60根算不出来
         if len(k) < 25:
             _stat["no_k"] += 1
             continue
