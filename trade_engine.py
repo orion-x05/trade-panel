@@ -3721,6 +3721,42 @@ def cost_anchors5(bars, float_shares, bins=40, decay=0.97):
     }
 
 
+def _secid(code):
+    return ("1." if str(code).startswith("6") else "0.") + str(code)
+
+
+def build_fundflow(codes, chunk=40):
+    """【资金流】东财主力/超大单/大单净额，批量取。
+
+    ⚠ 口径提醒：主力净额是「当日主动买卖差额」，可以被对倒做出来，
+       不代表筹码真的集中。只作辅助，不当唯一依据。
+    """
+    out = {}
+    codes = [str(c) for c in codes if c][:200]
+    for i in range(0, len(codes), chunk):
+        part = codes[i:i + chunk]
+        url = ("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids="
+               + ",".join(_secid(c) for c in part)
+               + "&fields=f12,f62,f184,f66,f72")
+        try:
+            j = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12).json()
+            diff = (j.get("data") or {}).get("diff") or []
+        except Exception as e:
+            print(f"  ⚠ 资金流取数失败：{e}")
+            continue
+        for x in diff:
+            try:
+                out[str(x.get("f12"))] = {
+                    "main": round(float(x.get("f62") or 0) / 1e8, 2),      # 主力净额（亿）
+                    "main_pct": round(float(x.get("f184") or 0), 2),        # 主力净占比 %
+                    "xl": round(float(x.get("f66") or 0) / 1e8, 2),         # 超大单净额（亿）
+                    "lg": round(float(x.get("f72") or 0) / 1e8, 2),         # 大单净额（亿）
+                }
+            except Exception:
+                continue
+    return out
+
+
 def chip_distribution(bars, bins=40, decay=0.97):
     """返回 {profit_ratio, avg_cost, support, resistance, concentration, main_cost, dist_main}
 
@@ -3987,6 +4023,13 @@ def build_dip_pool(data, limit=24):
         })
         if len(rows) >= limit:
             break
+
+    try:
+        _ff = build_fundflow([r["code"] for r in rows])
+        for r in rows:
+            r["flow"] = _ff.get(str(r["code"]))
+    except Exception as _e:
+        print(f"  ⚠ 低吸池资金流附加失败：{_e}")
 
     rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
                              -((r.get("rr") or {}).get("ratio") or 0)))
