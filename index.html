@@ -2943,6 +2943,15 @@ body::after{   /* 暗角 */
              : 'color:#9aa6b4;background:rgba(154,166,180,.12)') + '">' + r.chan.zone + '</span>' +
             (r.chan.beichi ? '<span style="font-size:11px;margin-left:4px;color:#e8b339">背驰</span>' : '')
           : '') +
+        ((r.chip && r.chip.dist_main != null)
+          ? (function () {
+              const d = r.chip.dist_main;
+              const col = d > 50 ? '#e07a7a' : (d < 0 ? '#6fb2e8' : '#9aa6b4');
+              const txt = (d >= 0 ? '+' : '') + d + '%';
+              return '<span style="font-size:11px;margin-left:6px;color:' + col + '">距主力 ' + txt +
+                     '<span style="color:#5f6b7a"> · 获利 ' + r.chip.profit_ratio + '%</span></span>';
+            })()
+          : '') +
         '</span></div>';
     }).join('');
     const title = sec.querySelector('.card-title');
