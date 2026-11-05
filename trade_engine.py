@@ -58,7 +58,7 @@ SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
 #   固定百分比止损会被个股正常波动频繁触发、胜率被噪声吃掉；ATR反映真实波动幅度。
 #   D3 从 1.0ATR 放宽到 2.0ATR——1ATR 是 D3 胜率 0% 的直接原因（补丁原文标注 ⚠️）。
 # sl/tp 百分比不再决定止损距离，降级为：盈亏比 RR 来源 + 回测调参(bt_tune)通道。
-RISK_PER_TRADE = 0.01   # 单笔风险预算：最多亏总权益 1%
+RISK_PER_TRADE = 0.015  # 单笔风险预算：最多亏总权益 1.5%（要波动大一点：10万本金单笔风险 1500 元）
 MAX_SINGLE_PCT = 0.25   # 单票硬顶：占总权益 25%
 FUSE_PCT = 0.12         # 保险丝：浮亏 -12% 无条件全部清仓（防跳空，正常情况ATR止损先触发）
 DEFAULT_ATR_PCT = 2.0   # 无ATR数据时的默认波动率（与前端 defAtr=买入价×2% 一致）
@@ -67,7 +67,7 @@ DEFAULT_ATR_PCT = 2.0   # 无ATR数据时的默认波动率（与前端 defAtr=�
 # 第 2 批：次日 (a)不破前日收盘 → 补 2/3 (b)低开但快速翻红 → 补 2/3 (c)低开不翻红 → 放弃，仅留 1/3
 # 为什么不一次买满：尾盘突破信号往往已是当日高位，次日低开是常态；
 #   先买 1/3，用剩下的 2/3 换取「确认权」——判断错误时亏得少（position_plan.EntryPlan 原话）。
-W2_FIRST_PCT = 1.0 / 3.0      # 第1批占计划总股数比例
+W2_FIRST_PCT = 1.0 / 2.0      # 第1批占计划总股数比例（1/3→1/2：用户要求仓位更实，别只有100股）
 W2_STATS = {"fill": 0, "abandon": 0}   # 第2批补仓率统计（补丁验收项：记录第2批补仓率）
 
 def first_tranche_shares(total):
@@ -2721,7 +2721,7 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     position_ratio = min(position_ratio, 1.0)
     # 【信号强度仓位】评分越高仓位越重（弱信号降仓控回撤）；回测调参 cap 优先时不叠加
     if cap is None:
-        sig_k = 1.0 if score >= 80 else 0.7 if score >= 60 else 0.5
+        sig_k = 1.0 if score >= 80 else 0.85 if score >= 60 else 0.7
         position_ratio = position_ratio * sig_k
     # 【人格气质·情绪仓位】亢奋略增、恐惧略减（封顶±10%），防过度自信/过度恐惧
     mood = _ROLE_MOOD.get(rid, 0.0)
@@ -2748,6 +2748,12 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     # 【W2·两段式建仓】第1批只买 1/3（补丁三）：尾盘突破信号往往已是当日高位、
     #   次日低开是常态；先买 1/3，用剩下的 2/3 换取「确认权」。第2批次日判定见
     #   process_second_tranche（不破前收/低开翻红补仓，低开不翻红放弃）。
+    # 【最小单笔兜底】风险预算 × 信号强度 × 环境闸三重折扣叠加后，实际下单常只有 100 股
+    # （几千元），远低于「最小单笔 1 万」的设计口径。不足 1 万时按 1 万执行（现金够的话）。
+    if plan_total * st["price"] < 10000:
+        _min_qty = int(10000 / st["price"] / 100) * 100
+        if _min_qty * st["price"] <= player["cash"]:
+            plan_total = _min_qty
     qty = first_tranche_shares(plan_total)
     if qty < 100:
         print(f"  {player['id']} 资金不足，跳过 {st['name']}")
@@ -2767,14 +2773,14 @@ def do_buy(player, code, st, score, reason, ntf=1.0, trend="neutral", override=F
     player["trades"].append({
         "type": "buy", "code": code, "name": st["name"],
         "qty": qty, "price": st["price"], "fee": fee,
-        "time": cn_now().isoformat(), "reason": f"{reason}（第1批试仓1/3，计划{plan_total}股）",
+        "time": cn_now().isoformat(), "reason": f"{reason}（第1批试仓1/2，计划{plan_total}股）",
         "trend": trend
     })
     # 【每笔买入都推送】去掉"同角色同股同日只推一次"的按日去重（.push_* 标记文件），
     # 只要真实成交就推；统一走 push_report（仅 WxPusher），消息含时间+原因
     push_report(
         f"📈 {player['id']} 建仓(第1批) {st['name']}",
-        f"股票：{st['name']}({code})\n数量：{qty}股（计划{plan_total}股的1/3试仓）\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ 第2批：次日不破前收/低开翻红补足，低开不翻红放弃\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"股票：{st['name']}({code})\n数量：{qty}股（计划{plan_total}股的1/2试仓）\n价格：{st['price']:.2f}元\n成本：{cost_per:.2f}元\n评分：{score}分\n原因：{reason}\n⏰ 第2批：次日不破前收/低开翻红补足，低开不翻红放弃\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
     print(f"  ✅ {player['id']} 买入 {st['name']} {qty}股 @{st['price']:.2f}（第1批1/3，计划{plan_total}股）")
 
