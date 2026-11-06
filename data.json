@@ -890,7 +890,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-06T16:30:43.515812",
+  "last_update": "2026-11-06T16:55:25.721424",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1299,7 +1299,7 @@
     "active_roles": 4,
     "total_trades": 18,
     "roles_count": 7,
-    "last_update": "2026-11-06T15:32:28.039608"
+    "last_update": "2026-11-06T16:30:43.515812"
   },
   "data_version": 3,
   "theme_history": {
@@ -6983,7 +6983,7 @@
     "lhb": {
       "ok": true,
       "asof": "2026-11-06",
-      "count": 41,
+      "count": 79,
       "rows": [
         {
           "code": "002696",
@@ -7010,6 +7010,51 @@
           "sell": 1.08,
           "deal_amt": 3.77,
           "explain": "主力做T，成功率42.05%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "601595",
+          "name": "上海电影",
+          "chg": 10.0,
+          "price": 35.76,
+          "net": 1.19,
+          "buy": 2.42,
+          "sell": 1.23,
+          "deal_amt": 3.65,
+          "explain": "1家机构买入，成功率42.38%",
+          "inst": true,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "600327",
+          "name": "大东方",
+          "chg": 10.09,
+          "price": 4.91,
+          "net": 1.08,
+          "buy": 1.68,
+          "sell": 0.6,
+          "deal_amt": 2.27,
+          "explain": "买一主买，成功率41.75%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "600327",
+          "name": "大东方",
+          "chg": 10.09,
+          "price": 4.91,
+          "net": 1.08,
+          "buy": 1.68,
+          "sell": 0.6,
+          "deal_amt": 2.27,
+          "explain": "买一主买，成功率41.75%",
           "inst": false,
           "d1": null,
           "d2": null,
@@ -7046,6 +7091,21 @@
           "d5": null
         },
         {
+          "code": "601599",
+          "name": "浙文影业",
+          "chg": 9.96,
+          "price": 5.08,
+          "net": 0.95,
+          "buy": 2.9,
+          "sell": 1.95,
+          "deal_amt": 4.85,
+          "explain": "普通席位买入，成功率53.03%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
           "code": "002929",
           "name": "润建股份",
           "chg": 10.01,
@@ -7056,6 +7116,21 @@
           "deal_amt": 9.54,
           "explain": "1家机构买入，成功率25.03%",
           "inst": true,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "601188",
+          "name": "龙江交通",
+          "chg": 10.12,
+          "price": 3.81,
+          "net": 0.9,
+          "buy": 1.7,
+          "sell": 0.8,
+          "deal_amt": 2.5,
+          "explain": "普通席位买入，成功率42.61%",
+          "inst": false,
           "d1": null,
           "d2": null,
           "d5": null
@@ -7085,81 +7160,6 @@
           "sell": 1.04,
           "deal_amt": 2.59,
           "explain": "4家机构买入，成功率25.87%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "300686",
-          "name": "智动力",
-          "chg": 20.0,
-          "price": 13.68,
-          "net": 0.48,
-          "buy": 1.32,
-          "sell": 0.84,
-          "deal_amt": 2.16,
-          "explain": "3家机构买入，成功率34.46%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301718",
-          "name": "通则康威",
-          "chg": -0.77,
-          "price": 47.9,
-          "net": 0.42,
-          "buy": 0.8,
-          "sell": 0.38,
-          "deal_amt": 1.17,
-          "explain": "3家机构卖出，成功率38.81%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "300686",
-          "name": "智动力",
-          "chg": 20.0,
-          "price": 13.68,
-          "net": 0.4,
-          "buy": 0.96,
-          "sell": 0.56,
-          "deal_amt": 1.53,
-          "explain": "2家机构买入，成功率26.10%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301697",
-          "name": "贝特利",
-          "chg": 20.0,
-          "price": 36.6,
-          "net": 0.36,
-          "buy": 1.11,
-          "sell": 0.75,
-          "deal_amt": 1.86,
-          "explain": "1家机构买入，成功率29.43%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301697",
-          "name": "贝特利",
-          "chg": 20.0,
-          "price": 36.6,
-          "net": 0.36,
-          "buy": 1.11,
-          "sell": 0.75,
-          "deal_amt": 1.86,
-          "explain": "1家机构买入，成功率29.43%",
           "inst": true,
           "d1": null,
           "d2": null,
@@ -7198,6 +7198,51 @@
           "d5": null
         },
         {
+          "code": "601595",
+          "name": "上海电影",
+          "chg": 10.0,
+          "price": 35.76,
+          "net": 1.19,
+          "buy": 2.42,
+          "sell": 1.23,
+          "deal_amt": 3.65,
+          "explain": "1家机构买入，成功率42.38%",
+          "inst": true,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "600327",
+          "name": "大东方",
+          "chg": 10.09,
+          "price": 4.91,
+          "net": 1.08,
+          "buy": 1.68,
+          "sell": 0.6,
+          "deal_amt": 2.27,
+          "explain": "买一主买，成功率41.75%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "600327",
+          "name": "大东方",
+          "chg": 10.09,
+          "price": 4.91,
+          "net": 1.08,
+          "buy": 1.68,
+          "sell": 0.6,
+          "deal_amt": 2.27,
+          "explain": "买一主买，成功率41.75%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
           "code": "000525",
           "name": "红太阳",
           "chg": 10.09,
@@ -7228,6 +7273,21 @@
           "d5": null
         },
         {
+          "code": "601599",
+          "name": "浙文影业",
+          "chg": 9.96,
+          "price": 5.08,
+          "net": 0.95,
+          "buy": 2.9,
+          "sell": 1.95,
+          "deal_amt": 4.85,
+          "explain": "普通席位买入，成功率53.03%",
+          "inst": false,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
           "code": "002929",
           "name": "润建股份",
           "chg": 10.01,
@@ -7238,6 +7298,21 @@
           "deal_amt": 9.54,
           "explain": "1家机构买入，成功率25.03%",
           "inst": true,
+          "d1": null,
+          "d2": null,
+          "d5": null
+        },
+        {
+          "code": "601188",
+          "name": "龙江交通",
+          "chg": 10.12,
+          "price": 3.81,
+          "net": 0.9,
+          "buy": 1.7,
+          "sell": 0.8,
+          "deal_amt": 2.5,
+          "explain": "普通席位买入，成功率42.61%",
+          "inst": false,
           "d1": null,
           "d2": null,
           "d5": null
@@ -7267,81 +7342,6 @@
           "sell": 1.04,
           "deal_amt": 2.59,
           "explain": "4家机构买入，成功率25.87%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "300686",
-          "name": "智动力",
-          "chg": 20.0,
-          "price": 13.68,
-          "net": 0.48,
-          "buy": 1.32,
-          "sell": 0.84,
-          "deal_amt": 2.16,
-          "explain": "3家机构买入，成功率34.46%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301718",
-          "name": "通则康威",
-          "chg": -0.77,
-          "price": 47.9,
-          "net": 0.42,
-          "buy": 0.8,
-          "sell": 0.38,
-          "deal_amt": 1.17,
-          "explain": "3家机构卖出，成功率38.81%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "300686",
-          "name": "智动力",
-          "chg": 20.0,
-          "price": 13.68,
-          "net": 0.4,
-          "buy": 0.96,
-          "sell": 0.56,
-          "deal_amt": 1.53,
-          "explain": "2家机构买入，成功率26.10%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301697",
-          "name": "贝特利",
-          "chg": 20.0,
-          "price": 36.6,
-          "net": 0.36,
-          "buy": 1.11,
-          "sell": 0.75,
-          "deal_amt": 1.86,
-          "explain": "1家机构买入，成功率29.43%",
-          "inst": true,
-          "d1": null,
-          "d2": null,
-          "d5": null
-        },
-        {
-          "code": "301697",
-          "name": "贝特利",
-          "chg": 20.0,
-          "price": 36.6,
-          "net": 0.36,
-          "buy": 1.11,
-          "sell": 0.75,
-          "deal_amt": 1.86,
-          "explain": "1家机构买入，成功率29.43%",
           "inst": true,
           "d1": null,
           "d2": null,
@@ -7801,10 +7801,10 @@
         "ref": 10.27
       },
       {
-        "code": "000525",
-        "name": "红太阳",
+        "code": "601595",
+        "name": "上海电影",
         "basis": "龙虎榜净买",
-        "ref": 5.02
+        "ref": 35.76
       }
     ],
     "mood": {
@@ -7832,7 +7832,7 @@
         "华升股份（纺织制造 后排，龙头 浙文影业 5 板）",
         "龙虎榜净买 百洋股份（机构） +1.87 亿",
         "龙虎榜净买 东方日升 +1.6 亿",
-        "龙虎榜净买 红太阳 +0.99 亿"
+        "龙虎榜净买 上海电影（机构） +1.19 亿"
       ],
       "invalid": "若明日涨停数跌破 20 家，或最高标断板，则本预期作废"
     }
@@ -7962,7 +7962,7 @@
   "lhb": {
     "ok": true,
     "asof": "2026-11-06",
-    "count": 41,
+    "count": 79,
     "rows": [
       {
         "code": "002696",
@@ -7989,6 +7989,51 @@
         "sell": 1.08,
         "deal_amt": 3.77,
         "explain": "主力做T，成功率42.05%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "601595",
+        "name": "上海电影",
+        "chg": 10.0,
+        "price": 35.76,
+        "net": 1.19,
+        "buy": 2.42,
+        "sell": 1.23,
+        "deal_amt": 3.65,
+        "explain": "1家机构买入，成功率42.38%",
+        "inst": true,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "chg": 10.09,
+        "price": 4.91,
+        "net": 1.08,
+        "buy": 1.68,
+        "sell": 0.6,
+        "deal_amt": 2.27,
+        "explain": "买一主买，成功率41.75%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "chg": 10.09,
+        "price": 4.91,
+        "net": 1.08,
+        "buy": 1.68,
+        "sell": 0.6,
+        "deal_amt": 2.27,
+        "explain": "买一主买，成功率41.75%",
         "inst": false,
         "d1": null,
         "d2": null,
@@ -8025,6 +8070,21 @@
         "d5": null
       },
       {
+        "code": "601599",
+        "name": "浙文影业",
+        "chg": 9.96,
+        "price": 5.08,
+        "net": 0.95,
+        "buy": 2.9,
+        "sell": 1.95,
+        "deal_amt": 4.85,
+        "explain": "普通席位买入，成功率53.03%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
         "code": "002929",
         "name": "润建股份",
         "chg": 10.01,
@@ -8035,6 +8095,21 @@
         "deal_amt": 9.54,
         "explain": "1家机构买入，成功率25.03%",
         "inst": true,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "601188",
+        "name": "龙江交通",
+        "chg": 10.12,
+        "price": 3.81,
+        "net": 0.9,
+        "buy": 1.7,
+        "sell": 0.8,
+        "deal_amt": 2.5,
+        "explain": "普通席位买入，成功率42.61%",
+        "inst": false,
         "d1": null,
         "d2": null,
         "d5": null
@@ -8064,81 +8139,6 @@
         "sell": 1.04,
         "deal_amt": 2.59,
         "explain": "4家机构买入，成功率25.87%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "300686",
-        "name": "智动力",
-        "chg": 20.0,
-        "price": 13.68,
-        "net": 0.48,
-        "buy": 1.32,
-        "sell": 0.84,
-        "deal_amt": 2.16,
-        "explain": "3家机构买入，成功率34.46%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301718",
-        "name": "通则康威",
-        "chg": -0.77,
-        "price": 47.9,
-        "net": 0.42,
-        "buy": 0.8,
-        "sell": 0.38,
-        "deal_amt": 1.17,
-        "explain": "3家机构卖出，成功率38.81%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "300686",
-        "name": "智动力",
-        "chg": 20.0,
-        "price": 13.68,
-        "net": 0.4,
-        "buy": 0.96,
-        "sell": 0.56,
-        "deal_amt": 1.53,
-        "explain": "2家机构买入，成功率26.10%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301697",
-        "name": "贝特利",
-        "chg": 20.0,
-        "price": 36.6,
-        "net": 0.36,
-        "buy": 1.11,
-        "sell": 0.75,
-        "deal_amt": 1.86,
-        "explain": "1家机构买入，成功率29.43%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301697",
-        "name": "贝特利",
-        "chg": 20.0,
-        "price": 36.6,
-        "net": 0.36,
-        "buy": 1.11,
-        "sell": 0.75,
-        "deal_amt": 1.86,
-        "explain": "1家机构买入，成功率29.43%",
         "inst": true,
         "d1": null,
         "d2": null,
@@ -8177,6 +8177,51 @@
         "d5": null
       },
       {
+        "code": "601595",
+        "name": "上海电影",
+        "chg": 10.0,
+        "price": 35.76,
+        "net": 1.19,
+        "buy": 2.42,
+        "sell": 1.23,
+        "deal_amt": 3.65,
+        "explain": "1家机构买入，成功率42.38%",
+        "inst": true,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "chg": 10.09,
+        "price": 4.91,
+        "net": 1.08,
+        "buy": 1.68,
+        "sell": 0.6,
+        "deal_amt": 2.27,
+        "explain": "买一主买，成功率41.75%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "chg": 10.09,
+        "price": 4.91,
+        "net": 1.08,
+        "buy": 1.68,
+        "sell": 0.6,
+        "deal_amt": 2.27,
+        "explain": "买一主买，成功率41.75%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
         "code": "000525",
         "name": "红太阳",
         "chg": 10.09,
@@ -8207,6 +8252,21 @@
         "d5": null
       },
       {
+        "code": "601599",
+        "name": "浙文影业",
+        "chg": 9.96,
+        "price": 5.08,
+        "net": 0.95,
+        "buy": 2.9,
+        "sell": 1.95,
+        "deal_amt": 4.85,
+        "explain": "普通席位买入，成功率53.03%",
+        "inst": false,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
         "code": "002929",
         "name": "润建股份",
         "chg": 10.01,
@@ -8217,6 +8277,21 @@
         "deal_amt": 9.54,
         "explain": "1家机构买入，成功率25.03%",
         "inst": true,
+        "d1": null,
+        "d2": null,
+        "d5": null
+      },
+      {
+        "code": "601188",
+        "name": "龙江交通",
+        "chg": 10.12,
+        "price": 3.81,
+        "net": 0.9,
+        "buy": 1.7,
+        "sell": 0.8,
+        "deal_amt": 2.5,
+        "explain": "普通席位买入，成功率42.61%",
+        "inst": false,
         "d1": null,
         "d2": null,
         "d5": null
@@ -8246,81 +8321,6 @@
         "sell": 1.04,
         "deal_amt": 2.59,
         "explain": "4家机构买入，成功率25.87%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "300686",
-        "name": "智动力",
-        "chg": 20.0,
-        "price": 13.68,
-        "net": 0.48,
-        "buy": 1.32,
-        "sell": 0.84,
-        "deal_amt": 2.16,
-        "explain": "3家机构买入，成功率34.46%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301718",
-        "name": "通则康威",
-        "chg": -0.77,
-        "price": 47.9,
-        "net": 0.42,
-        "buy": 0.8,
-        "sell": 0.38,
-        "deal_amt": 1.17,
-        "explain": "3家机构卖出，成功率38.81%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "300686",
-        "name": "智动力",
-        "chg": 20.0,
-        "price": 13.68,
-        "net": 0.4,
-        "buy": 0.96,
-        "sell": 0.56,
-        "deal_amt": 1.53,
-        "explain": "2家机构买入，成功率26.10%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301697",
-        "name": "贝特利",
-        "chg": 20.0,
-        "price": 36.6,
-        "net": 0.36,
-        "buy": 1.11,
-        "sell": 0.75,
-        "deal_amt": 1.86,
-        "explain": "1家机构买入，成功率29.43%",
-        "inst": true,
-        "d1": null,
-        "d2": null,
-        "d5": null
-      },
-      {
-        "code": "301697",
-        "name": "贝特利",
-        "chg": 20.0,
-        "price": 36.6,
-        "net": 0.36,
-        "buy": 1.11,
-        "sell": 0.75,
-        "deal_amt": 1.86,
-        "explain": "1家机构买入，成功率29.43%",
         "inst": true,
         "d1": null,
         "d2": null,
@@ -8406,7 +8406,12 @@
           "dist_anchor": -25.2,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.18,
+          "main_pct": 9.79,
+          "xl": 0.08,
+          "lg": 0.09
+        }
       },
       {
         "code": "600641",
@@ -8482,7 +8487,12 @@
           "dist_anchor": -11.6,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": 1.67,
+          "main_pct": 3.17,
+          "xl": 1.04,
+          "lg": 0.62
+        }
       },
       {
         "code": "600206",
@@ -8558,7 +8568,12 @@
           "dist_anchor": 0.4,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -4.11,
+          "main_pct": -8.38,
+          "xl": -3.16,
+          "lg": -0.95
+        }
       },
       {
         "code": "000995",
@@ -8634,7 +8649,12 @@
           "dist_anchor": 9.7,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -1.82,
+          "main_pct": -16.78,
+          "xl": -1.08,
+          "lg": -0.74
+        }
       },
       {
         "code": "600683",
@@ -8710,7 +8730,12 @@
           "dist_anchor": -36.5,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": 0.25,
+          "main_pct": 7.68,
+          "xl": 0.02,
+          "lg": 0.23
+        }
       },
       {
         "code": "002307",
@@ -8786,7 +8811,12 @@
           "dist_anchor": 3.7,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": -0.02,
+          "main_pct": -0.37,
+          "xl": -0.02,
+          "lg": 0.0
+        }
       },
       {
         "code": "001360",
@@ -8862,7 +8892,12 @@
           "dist_anchor": 2.2,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.02,
+          "main_pct": 0.6,
+          "xl": -0.11,
+          "lg": 0.13
+        }
       },
       {
         "code": "000017",
@@ -8938,7 +8973,12 @@
           "dist_anchor": -20.1,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -0.16,
+          "main_pct": -2.81,
+          "xl": -0.22,
+          "lg": 0.06
+        }
       },
       {
         "code": "603098",
@@ -9015,7 +9055,12 @@
           "dist_anchor": -1.1,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.03,
+          "main_pct": 1.45,
+          "xl": 0.04,
+          "lg": -0.02
+        }
       },
       {
         "code": "002865",
@@ -9088,7 +9133,12 @@
           "dist_anchor": 4.5,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -1.42,
+          "main_pct": -5.35,
+          "xl": -0.31,
+          "lg": -1.11
+        }
       },
       {
         "code": "001269",
@@ -9164,7 +9214,12 @@
           "dist_anchor": -16.5,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": 0.0,
+          "main_pct": 0.21,
+          "xl": -0.01,
+          "lg": 0.01
+        }
       },
       {
         "code": "000533",
@@ -9240,7 +9295,12 @@
           "dist_anchor": -12.9,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -0.06,
+          "main_pct": -0.55,
+          "xl": -0.18,
+          "lg": 0.13
+        }
       },
       {
         "code": "002131",
@@ -9316,7 +9376,12 @@
           "dist_anchor": -2.5,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -5.12,
+          "main_pct": -16.69,
+          "xl": -4.54,
+          "lg": -0.58
+        }
       },
       {
         "code": "600481",
@@ -9392,7 +9457,12 @@
           "dist_anchor": -22.2,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -0.34,
+          "main_pct": -5.47,
+          "xl": 0.01,
+          "lg": -0.35
+        }
       },
       {
         "code": "002529",
@@ -9465,7 +9535,12 @@
           "dist_anchor": -3.8,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.15,
+          "main_pct": 3.83,
+          "xl": 0.31,
+          "lg": -0.16
+        }
       },
       {
         "code": "603212",
@@ -9541,7 +9616,12 @@
           "dist_anchor": -4.7,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": -0.04,
+          "main_pct": -0.79,
+          "xl": 0.01,
+          "lg": -0.06
+        }
       },
       {
         "code": "002309",
@@ -9617,7 +9697,12 @@
           "dist_anchor": -3.9,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": -0.94,
+          "main_pct": -6.7,
+          "xl": -0.55,
+          "lg": -0.39
+        }
       },
       {
         "code": "002045",
@@ -9694,7 +9779,12 @@
           "dist_anchor": 11.1,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.98,
+          "main_pct": 7.79,
+          "xl": 0.93,
+          "lg": 0.04
+        }
       },
       {
         "code": "002081",
@@ -9770,7 +9860,12 @@
           "dist_anchor": -13.6,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -0.38,
+          "main_pct": -2.32,
+          "xl": -1.01,
+          "lg": 0.63
+        }
       },
       {
         "code": "603598",
@@ -9846,7 +9941,12 @@
           "dist_anchor": 13.5,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": -0.01,
+          "main_pct": -0.08,
+          "xl": -0.16,
+          "lg": 0.15
+        }
       },
       {
         "code": "600986",
@@ -9923,7 +10023,12 @@
           "dist_anchor": 6.9,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": -0.11,
+          "main_pct": -0.64,
+          "xl": -0.0,
+          "lg": -0.11
+        }
       },
       {
         "code": "000603",
@@ -9999,7 +10104,12 @@
           "dist_anchor": -11.6,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -0.33,
+          "main_pct": -1.52,
+          "xl": -0.44,
+          "lg": 0.11
+        }
       },
       {
         "code": "002506",
@@ -10075,7 +10185,12 @@
           "dist_anchor": 3.4,
           "agree": false
         },
-        "flow": null
+        "flow": {
+          "main": -2.12,
+          "main_pct": -8.74,
+          "xl": -1.85,
+          "lg": -0.28
+        }
       },
       {
         "code": "688429",
@@ -10148,11 +10263,16 @@
           "dist_anchor": 6.8,
           "agree": true
         },
-        "flow": null
+        "flow": {
+          "main": 0.08,
+          "main_pct": 4.0,
+          "xl": -0.05,
+          "lg": 0.13
+        }
       }
     ],
     "stat": {
-      "cand": 197,
+      "cand": 196,
       "no_k": 1,
       "sealed": 32,
       "no_type": 0
@@ -10161,16 +10281,25 @@
   },
   "trade_date": "2026-11-06",
   "env_gate": {
-    "ok": false,
-    "asof": "2026-11-06 16:30",
-    "pos_cap": 0.0,
+    "ok": true,
+    "asof": "2026-11-06 16:55",
+    "amt": 16578.0,
+    "amt_est": null,
+    "amt_used": 16578.0,
+    "up": 725,
+    "down": 4483,
+    "flat": 87,
+    "breadth": 0.137,
+    "zt": 32,
     "flags": [
-      "环境数据获取失败 → 禁止开仓"
+      "成交额 1.66 万亿 < 1.9 万亿",
+      "上涨家数占比 14% < 45%",
+      "涨停 32 家 < 40 家"
     ],
+    "pos_cap": 0.0,
     "pass": false,
-    "up_ratio": null,
-    "zt_count": null,
-    "amt_used": 0
+    "up_ratio": 0.137,
+    "zt_count": 32
   },
   "force_close": [],
   "gate_history": {
@@ -11343,7 +11472,7 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-06 16:30",
+    "asof": "2026-11-06 16:55",
     "indexes": {
       "道琼斯": {
         "px": 51523.06,
@@ -11363,7 +11492,7 @@
       "恒生指数": {
         "px": 24481.86,
         "chg": -1.27,
-        "time": "2026/11/06 16:14:51"
+        "time": "2026/11/06 16:39:51"
       }
     },
     "worst": -5.52,
