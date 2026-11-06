@@ -890,7 +890,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-06T22:57:20.323967",
+  "last_update": "2026-11-06T23:16:05.627708",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1299,7 +1299,7 @@
     "active_roles": 4,
     "total_trades": 18,
     "roles_count": 7,
-    "last_update": "2026-11-06T22:48:18.668280"
+    "last_update": "2026-11-06T22:57:20.323967"
   },
   "data_version": 3,
   "theme_history": {
@@ -9066,7 +9066,7 @@
         "name": "钧达股份",
         "hybk": "光伏设备",
         "board_role": "卡位",
-        "board_leader": "协鑫集成",
+        "board_leader": "弘元绿能",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 34.66",
@@ -9144,7 +9144,7 @@
         "name": "欧晶科技",
         "hybk": "光伏设备",
         "board_role": "卡位",
-        "board_leader": "协鑫集成",
+        "board_leader": "弘元绿能",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 17.31",
@@ -9302,6 +9302,87 @@
         }
       },
       {
+        "code": "300071",
+        "name": "福石控股",
+        "hybk": "广告营销",
+        "board_role": "跟风",
+        "board_leader": "引力传媒",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 3.53",
+        "price": 4.23,
+        "chg": -7.03,
+        "pool_ds": "20261105",
+        "rr": {
+          "ratio": 0.66,
+          "target": 4.75,
+          "stop": 3.44,
+          "atr": 0.26,
+          "upside": 12.3,
+          "downside": -18.7,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 14.32,
+          "idx3": 0.34,
+          "dev": 13.98,
+          "limit": 30.0,
+          "remain": 16.02,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
+          "dev10": 6.61,
+          "limit10": 100.0,
+          "remain10": 93.39,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 1.7,
+          "paozi": false
+        },
+        "chan": {
+          "px": 4.23,
+          "zone": "中枢上",
+          "fx": "bottom",
+          "bi_n": 15,
+          "dir": "down",
+          "zs": {
+            "zg": 4.12,
+            "zd": 3.97
+          },
+          "beichi": false,
+          "merged": 187
+        },
+        "chip": {
+          "px": 4.23,
+          "profit_ratio": 54.9,
+          "avg_cost": 4.23,
+          "support": 3.66,
+          "resistance": 4.63,
+          "concentration": 22.9,
+          "main_cost": 4.39,
+          "dist_main": -3.6
+        },
+        "anchors": {
+          "px": 4.23,
+          "anchors": {
+            "low": 4.39,
+            "breakout": 4.33,
+            "ma120": 4.14,
+            "turn": 4.05
+          },
+          "n": 4,
+          "avg_anchor": 4.23,
+          "spread": 8.0,
+          "dist_anchor": 0.1,
+          "agree": true
+        },
+        "flow": {
+          "main": -1.35,
+          "main_pct": -14.71,
+          "xl": -1.08,
+          "lg": -0.28
+        }
+      },
+      {
         "code": "002131",
         "name": "利欧股份",
         "hybk": "通用设备",
@@ -9387,7 +9468,7 @@
         "name": "双良节能",
         "hybk": "光伏设备",
         "board_role": "卡位",
-        "board_leader": "协鑫集成",
+        "board_leader": "弘元绿能",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 3.79",
@@ -9546,7 +9627,7 @@
         "name": "赛伍技术",
         "hybk": "光伏设备",
         "board_role": "卡位",
-        "board_leader": "协鑫集成",
+        "board_leader": "弘元绿能",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 9.51",
@@ -10111,92 +10192,11 @@
         }
       },
       {
-        "code": "002506",
-        "name": "协鑫集成",
-        "hybk": "光伏设备",
-        "board_role": "龙头",
-        "board_leader": "协鑫集成",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 2.36",
-        "price": 2.58,
-        "chg": 1.57,
-        "pool_ds": "20261105",
-        "rr": {
-          "ratio": 0.48,
-          "target": 2.81,
-          "stop": 2.1,
-          "atr": 0.11,
-          "upside": 8.9,
-          "downside": -18.6,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 15.7,
-          "idx3": 0.34,
-          "dev": 15.36,
-          "limit": 20.0,
-          "remain": 4.64,
-          "risk": "中",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 10.67,
-          "limit10": 100.0,
-          "remain10": 89.33,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 7.9,
-          "paozi": false
-        },
-        "chan": {
-          "px": 2.58,
-          "zone": "中枢内",
-          "fx": "bottom",
-          "bi_n": 20,
-          "dir": "down",
-          "zs": {
-            "zg": 2.8,
-            "zd": 2.53
-          },
-          "beichi": false,
-          "merged": 189
-        },
-        "chip": {
-          "px": 2.58,
-          "profit_ratio": 68.8,
-          "avg_cost": 2.7,
-          "support": 2.1,
-          "resistance": 3.38,
-          "concentration": 47.3,
-          "main_cost": 2.26,
-          "dist_main": 14.2
-        },
-        "anchors": {
-          "px": 2.58,
-          "anchors": {
-            "low": 2.26,
-            "breakout": 2.56,
-            "ma120": 2.79,
-            "turn": 2.37
-          },
-          "n": 4,
-          "avg_anchor": 2.5,
-          "spread": 21.2,
-          "dist_anchor": 3.4,
-          "agree": false
-        },
-        "flow": {
-          "main": -2.12,
-          "main_pct": -8.74,
-          "xl": -1.85,
-          "lg": -0.28
-        }
-      },
-      {
         "code": "688429",
         "name": "时创能源",
         "hybk": "光伏设备",
         "board_role": "卡位",
-        "board_leader": "协鑫集成",
+        "board_leader": "弘元绿能",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 9.23",
@@ -10271,7 +10271,7 @@
       }
     ],
     "stat": {
-      "cand": 201,
+      "cand": 200,
       "no_k": 1,
       "sealed": 32,
       "no_type": 0
@@ -10281,7 +10281,7 @@
   "trade_date": "2026-11-06",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-06 22:57",
+    "asof": "2026-11-06 23:15",
     "amt": 16578.0,
     "amt_est": null,
     "amt_used": 16578.0,
@@ -11471,22 +11471,22 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-06 22:57",
+    "asof": "2026-11-06 23:15",
     "indexes": {
       "道琼斯": {
-        "px": 51408.87,
-        "chg": -0.22,
-        "time": "2026-11-06 09:57:00"
+        "px": 51589.13,
+        "chg": 0.13,
+        "time": "2026-11-06 10:15:40"
       },
       "纳斯达克": {
-        "px": 24736.21,
-        "chg": 1.73,
-        "time": "2026-11-06 09:57:00"
+        "px": 24760.2,
+        "chg": 1.83,
+        "time": "2026-11-06 10:15:40"
       },
       "标普500": {
-        "px": 7425.24,
-        "chg": 0.97,
-        "time": "2026-11-06 09:57:00"
+        "px": 7434.21,
+        "chg": 1.09,
+        "time": "2026-11-06 10:15:40"
       },
       "恒生指数": {
         "px": 24481.86,
@@ -11494,7 +11494,7 @@
         "time": "2026/11/06 18:30:50"
       }
     },
-    "worst": 0.97,
+    "worst": 1.09,
     "risk": "低"
   }
 }
