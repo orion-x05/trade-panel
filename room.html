@@ -105,6 +105,7 @@ function drawMe(){
   s+=`<ellipse cx="${cx+11}" cy="${cy-106}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".75"/>`;
   s+=`<path d="M${cx-2} ${cy-104} q2 2 4 0" stroke="#c98a80" stroke-width="1.4" fill="none"/>`;
   s+=`</g>`;
+  return s;
 }
 
 let items=[
@@ -219,9 +220,19 @@ function draw(){
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      o+=poly([P(x,h+0.5,z),P(x+w,h+0.5,z),P(x+w,h+0.5,z+0.5),P(x,h+0.5,z+0.5)],"#a3adc6");
-      const c1=P(x+0.7,h+0.6,z+0.9);
-      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]}" rx="10" ry="6" fill="#d9b98c"/>`;
+      const col=(a)=>a;
+      // 靠背（后排抬高）
+      o+=poly([P(x,h+1.0,z+0.1),P(x+w,h+1.0,z+0.1),P(x+w,h+1.0,z+0.55),P(x,h+1.0,z+0.55)],"#8d97b2");
+      o+=poly([P(x,h,z+0.55),P(x+w,h,z+0.55),P(x+w,h+1.0,z+0.55),P(x,h+1.0,z+0.55)],"#7b86a2");
+      // 座垫
+      o+=poly([P(x+0.35,h+0.35,z+0.55),P(x+w-0.35,h+0.35,z+0.55),P(x+w-0.35,h+0.35,z+d-0.25),P(x+0.35,h+0.35,z+d-0.25)],"#a3adc6");
+      // 扶手（两侧小块）
+      o+=poly([P(x,h+0.7,z+0.55),P(x+0.35,h+0.7,z+0.55),P(x+0.35,h+0.7,z+d-0.25),P(x,h+0.7,z+d-0.25)],"#98a3bd");
+      o+=poly([P(x+w-0.35,h+0.7,z+0.55),P(x+w,h+0.7,z+0.55),P(x+w,h+0.7,z+d-0.25),P(x+w-0.35,h+0.7,z+d-0.25)],"#98a3bd");
+      // 抱枕
+      const c1=P(x+w-0.9,h+0.55,z+0.95);
+      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]}" rx="9" ry="6" fill="#d9b98c"/>`;
+      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]-1}" rx="6" ry="3.4" fill="#e6cba4"/>`;
     }
     if(it.kind==="pot"){
       for(const [dx,dy] of [[0,0.9],[0.5,0.6],[-0.4,0.7],[0.2,1.3]]){
