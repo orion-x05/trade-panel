@@ -140,6 +140,12 @@ function shadowQuad(x,z,w,d,op){
   return poly([P(x+0.12,0.005,z+0.12),P(x+w+0.12,0.005,z+0.12),P(x+w+0.12,0.005,z+d+0.12),P(x+0.12,0.005,z+d+0.12)],"#000","opacity='"+ (op||0.16) +"'");
 }
 
+function panel(x0,z0,x1,z1,yb,yt,fill,ex){
+  return poly([P(x0,yt,z0),P(x1,yt,z1),P(x1,yb,z1),P(x0,yb,z0)], fill, ex||EDGE);
+}
+function plate(x0,z0,x1,z1,y,fill,ex){
+  return poly([P(x0,y,z0),P(x1,y,z1),P(x1,y,z1+0.0001),P(x0,y,z0+0.0001)], fill, ex||EDGE);
+}
 const EDGE="stroke='rgba(0,0,0,.13)' stroke-width='.8' stroke-linejoin='round'";
 function svgBox(x,z,w,d,ht,top,l,r,y0){
   const b=y0||0, t=b+ht;
@@ -278,26 +284,26 @@ function draw(){
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      const foot=0.14, seatH=1.05, backH=1.95, armH=1.45, bk=0.34;
-      o+=shadowQuad(x,z,w,d,0.17);
-      // ① 靠背（近侧）
-      o+=svgBox(x,z+d-bk,w,bk,backH,"#93a0bb","#7b88a3","#66738e",foot);
-      // ② 四只矮脚
-      for(const [lx,lz] of [[x+0.08,z+d-bk-0.18],[x+w-0.24,z+d-bk-0.18],[x+0.08,z+0.1],[x+w-0.24,z+0.1]])
-        o+=svgBox(lx,lz,0.16,0.16,foot,"#5c4a38","#4a3b2c","#3b2f24");
-      // ③ 坐箱
-      o+=svgBox(x,z,w,d-bk,seatH,"#8b96b1","#76819c","#616c87",foot);
-      // ④ 扶手
-      o+=svgBox(x,z,0.28,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
-      o+=svgBox(x+w-0.28,z,0.28,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
-      // ⑤ 坐垫（两块，等宽对齐）
-      const cw=(w-0.56-0.08)/2;
-      o+=svgBox(x+0.32,z+0.06,cw,d-bk-0.14,0.3,"#aab4cd","#919db8","#78849f",seatH);
-      o+=svgBox(x+0.32+cw+0.08,z+0.06,cw,d-bk-0.14,0.3,"#aab4cd","#919db8","#78849f",seatH);
-      // ⑥ 抱枕（靠在背上）
-      const pp=P(x+0.8,seatH+0.3,z+d-bk-0.24);
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="7" ry="4.8" fill="#d9b98c"/>`;
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="4.6" ry="2.8" fill="#e8d0a8"/>`;
+      const seatH=1.1, backH=2.05, armH=1.5, armW=0.26, bk=0.3;
+      const FRONT="#7c87a2", SIDE="#6b7690", BACK="#8b96b0", TOP="#a4aec6", CUSH="#b3bdd3";
+      o+=shadowQuad(x,z,w,d,0.16);
+      // 后立面（靠背）
+      o+=poly([P(x,backH,z),P(x+w,backH,z),P(x+w,seatH,z+d*0.35),P(x,seatH,z+d*0.35)],BACK,EDGE);
+      // 座面（顶面）
+      o+=poly([P(x,seatH,z+d*0.35),P(x+w,seatH,z+d*0.35),P(x+w,seatH,z+d),P(x,seatH,z+d)],TOP,EDGE);
+      // 前立面（座箱）
+      o+=panel(x,z+d,x+w,z+d,0,seatH,FRONT);
+      // 左右立面
+      o+=panel(x,z,x,z+d,0,armH,SIDE);
+      o+=panel(x+w,z,x+w,z+d,0,armH,SIDE);
+      // 两块坐垫（薄片，略高于座面）
+      const cw=(w-2*armW-0.1)/2;
+      o+=poly([P(x+armW,seatH+0.14,z+d*0.38),P(x+armW+cw,seatH+0.14,z+d*0.38),P(x+armW+cw,seatH+0.14,z+d*0.94),P(x+armW,seatH+0.14,z+d*0.94)],CUSH,EDGE);
+      o+=poly([P(x+armW+cw+0.1,seatH+0.14,z+d*0.38),P(x+w-armW,seatH+0.14,z+d*0.38),P(x+w-armW,seatH+0.14,z+d*0.94),P(x+armW+cw+0.1,seatH+0.14,z+d*0.94)],CUSH,EDGE);
+      // 抱枕
+      const pp=P(x+0.75,seatH+0.5,z+d*0.92);
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="8" ry="6" fill="#e0bd8e"/>`;
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="5.4" ry="3.6" fill="#edd0a6"/>`;
     }
     if(it.kind==="pot"){
       const cx0=x+w/2, cz0=z+d/2;
