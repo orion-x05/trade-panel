@@ -271,8 +271,14 @@ function draw(){
       }
     }
     if(it.kind==="table"){
-      const pp=P(x+w/2,h+0.25,z+d/2);
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="12" ry="7" fill="#e3b56a"/>`;
+      // 圆柱矮凳：底面椭圆 + 侧壁 + 顶面
+      const cx0=(x+w/2), cz0=(z+d/2);
+      const top=P(cx0,h,cz0), bot=P(cx0,0,cz0);
+      const rx=w*0.46*C*U, ry=w*0.46*S*U*0.9;
+      o+=`<ellipse cx="${bot[0]}" cy="${bot[1]}" rx="${rx.toFixed(1)}" ry="${(ry*0.55).toFixed(1)}" fill="#8a6b45" opacity=".9"/>`;
+      o+=`<path d="M${(top[0]-rx).toFixed(1)} ${top[1].toFixed(1)} L${(bot[0]-rx).toFixed(1)} ${bot[1].toFixed(1)} A${rx.toFixed(1)} ${(ry*0.55).toFixed(1)} 0 0 0 ${(bot[0]+rx).toFixed(1)} ${bot[1].toFixed(1)} L${(top[0]+rx).toFixed(1)} ${top[1].toFixed(1)} Z" fill="#a9824f"/>`;
+      o+=`<ellipse cx="${top[0]}" cy="${top[1]}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="#d9b578"/>`;
+      o+=`<ellipse cx="${top[0]}" cy="${top[1]}" rx="${(rx*0.62).toFixed(1)}" ry="${(ry*0.62).toFixed(1)}" fill="#e6c68e" opacity=".8"/>`;
     }
     o+=`</g>`;
     }});
