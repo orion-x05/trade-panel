@@ -62,7 +62,7 @@ const P=(x,y,z)=>{const [xr,zr]=toR(x,z); return [OX+(xr-zr)*C*U, OY+(xr+zr)*S*U
 const poly=(pts,f,ex="")=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${f}" ${ex}/>`;
 const line=(a,b,col,w,op=1)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`;
 
-const ME={x:6,z:4.6};
+const ME={x:6.2,z:5.2};
 function drawMe(){
   let s="";
   const [cx,cy]=P(ME.x,0,ME.z);
@@ -128,12 +128,12 @@ function drawMe(){
 }
 
 let items=[
- {id:"bed",  x:0.4,z:0.5,w:3.2,d:5.4,h:1.3,top:"#8fa3c4",l:"#7186a8",r:"#5f7294",kind:"bed"},
- {id:"desk", x:7.4,z:0.5,w:4.2,d:2.1,h:2.6,top:"#b98a5c",l:"#9a6f47",r:"#85603d",kind:"desk"},
- {id:"shelf",x:10.1,z:0.5,w:1.6,d:1.3,h:5.2,top:"#8a6440",l:"#6f5031",r:"#5d4228",kind:"shelf"},
- {id:"sofa", x:4.2,z:6.6,w:3.4,d:1.9,h:1.7,top:"#8a94ae",l:"#6d7793",r:"#5b6580",kind:"sofa"},
- {id:"pot",  x:9.7,z:7.4,w:1.2,d:1.2,h:1.5,top:"#4d8a5f",l:"#3d6f4c",r:"#325c3f",kind:"pot"},
- {id:"table",x:5.2,z:3.3,w:1.8,d:1.8,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
+ {id:"bed",  x:0.6,z:1.2,w:3.0,d:5.0,h:1.3,top:"#8fa3c4",l:"#7186a8",r:"#5f7294",kind:"bed"},
+ {id:"desk", x:6.4,z:1.0,w:4.0,d:2.0,h:2.6,top:"#b98a5c",l:"#9a6f47",r:"#85603d",kind:"desk"},
+ {id:"shelf",x:9.8,z:0.35,w:1.5,d:1.1,h:5.0,top:"#8a6440",l:"#6f5031",r:"#5d4228",kind:"shelf"},
+ {id:"sofa", x:3.4,z:6.4,w:3.2,d:1.8,h:1.7,top:"#8a94ae",l:"#6d7793",r:"#5b6580",kind:"sofa"},
+ {id:"pot",  x:9.6,z:7.2,w:1.2,d:1.2,h:1.5,top:"#4d8a5f",l:"#3d6f4c",r:"#325c3f",kind:"pot"},
+ {id:"table",x:5.0,z:4.4,w:1.6,d:1.6,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
 ];
 
 function svgBox(x,z,w,d,ht,top,l,r,y0){
@@ -229,8 +229,8 @@ function draw(){
         o+=svgBox(lx,lz,lw,lw,y0-th,"#a67c53","#8e6844","#7a5738");
       // 显示器
       o+=svgBox(x+1.6,z+0.55,1.9,0.16,1.55,"#1b2534","#22303f","#172130",y0);
-      o+=poly([P(x+1.72,y0+0.85,z+0.22),P(x+3.38,y0+0.85,z+0.22),P(x+3.38,y0+1.48,z+0.22),P(x+1.72,y0+1.48,z+0.22)],"#2f6099");
-      o+=poly([P(x+1.85,y0+1.38,z+0.21),P(x+2.6,y0+1.38,z+0.21),P(x+2.6,y0+1.31,z+0.21),P(x+1.85,y0+1.31,z+0.21)],"#8fc0ea","opacity='.7'");
+      o+=poly([P(x+1.72,y0+0.85,z+0.72),P(x+3.38,y0+0.85,z+0.72),P(x+3.38,y0+1.48,z+0.72),P(x+1.72,y0+1.48,z+0.72)],"#2f6099");
+      o+=poly([P(x+1.85,y0+1.38,z+0.73),P(x+2.6,y0+1.38,z+0.73),P(x+2.6,y0+1.31,z+0.73),P(x+1.85,y0+1.31,z+0.73)],"#8fc0ea","opacity='.7'");
       // 键盘
       o+=svgBox(x+1.65,z+1.3,1.8,0.45,0.1,"#cbbfa8","#b3a68f","#9a8e79",y0);
       // 茶杯
