@@ -1,17 +1,138 @@
 <!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>小蓝鲸的房间</title><style>
-body{margin:0;background:radial-gradient(circle at 50% 30%,#1b2740,#0d1220 70%);color:#e8eef8;
-font-family:-apple-system,"PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.scene{position:relative;width:100%;max-width:900px}
-.card{position:absolute;left:4%;top:4%;background:rgba(18,24,38,.86);border:1px solid rgba(120,160,220,.25);
-border-radius:16px;padding:14px 18px;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.45)}
-.card h1{margin:0 0 6px;font-size:15px;font-weight:600;letter-spacing:.5px}
-.pill{display:inline-block;background:#2f6b4f;color:#bfe8cf;font-size:12px;padding:3px 10px;border-radius:999px}
-.card p{margin:8px 0 0;font-size:12px;color:#8fa0bb}
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>小蓝鲸的房间</title>
+<style>
+:root{--bg1:#1b2740;--bg2:#0c1120}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(circle at 50% 25%,var(--bg1),var(--bg2) 70%);
+color:#e8eef8;font-family:-apple-system,"PingFang SC",sans-serif;min-height:100vh;display:flex;
+flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none}
+h1{font-size:17px;font-weight:600;margin:14px 0 2px;letter-spacing:.5px}
+.sub{font-size:12px;color:#8296b4;margin:0 0 8px}
+.stage{width:min(96vw,760px);position:relative}
+svg{width:100%;height:auto;display:block;touch-action:none}
+.card{position:absolute;left:0;top:0;background:rgba(16,22,36,.86);border:1px solid rgba(120,160,220,.25);
+border-radius:14px;padding:10px 14px;font-size:12px;color:#9fb2cf;backdrop-filter:blur(6px)}
+.card b{color:#dfe9f8;font-size:13px;font-weight:600}
+.pill{display:inline-block;background:#2f6b4f;color:#bfe8cf;border-radius:999px;padding:1px 8px;margin-left:6px;font-size:11px}
+.tip{font-size:11px;color:#5f7291;margin:6px 0 18px}
 </style></head><body>
-<div class="scene">
-<svg viewBox="0 0 1280 820" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="floor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b98a5e"/><stop offset="1" stop-color="#9a6f48"/></linearGradient><linearGradient id="wallL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0e8d8"/><stop offset="1" stop-color="#ddd3c0"/></linearGradient><linearGradient id="wallR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2d9c6"/><stop offset="1" stop-color="#cdc3ae"/></linearGradient><filter id="soft"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/></filter></defs><polygon points="640.0,170.0 1211.6,500.0 743.9,770.0 172.3,440.0" fill="url(#floor)"/><line x1="666.0" y1="185.0" x2="198.3" y2="455.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="692.0" y1="200.0" x2="224.3" y2="470.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="717.9" y1="215.0" x2="250.3" y2="485.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="743.9" y1="230.0" x2="276.3" y2="500.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="769.9" y1="245.0" x2="302.3" y2="515.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="795.9" y1="260.0" x2="328.2" y2="530.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="821.9" y1="275.0" x2="354.2" y2="545.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="847.8" y1="290.0" x2="380.2" y2="560.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="873.8" y1="305.0" x2="406.2" y2="575.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="899.8" y1="320.0" x2="432.2" y2="590.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="925.8" y1="335.0" x2="458.1" y2="605.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="951.8" y1="350.0" x2="484.1" y2="620.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="977.7" y1="365.0" x2="510.1" y2="635.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1003.7" y1="380.0" x2="536.1" y2="650.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1029.7" y1="395.0" x2="562.1" y2="665.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1055.7" y1="410.0" x2="588.0" y2="680.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1081.7" y1="425.0" x2="614.0" y2="695.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1107.7" y1="440.0" x2="640.0" y2="710.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1133.6" y1="455.0" x2="666.0" y2="725.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1159.6" y1="470.0" x2="692.0" y2="740.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="1185.6" y1="485.0" x2="717.9" y2="755.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="614.0" y1="185.0" x2="1185.6" y2="515.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="588.0" y1="200.0" x2="1159.6" y2="530.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="562.1" y1="215.0" x2="1133.6" y2="545.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="536.1" y1="230.0" x2="1107.7" y2="560.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="510.1" y1="245.0" x2="1081.7" y2="575.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="484.1" y1="260.0" x2="1055.7" y2="590.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="458.1" y1="275.0" x2="1029.7" y2="605.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="432.2" y1="290.0" x2="1003.7" y2="620.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="406.2" y1="305.0" x2="977.7" y2="635.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="380.2" y1="320.0" x2="951.8" y2="650.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="354.2" y1="335.0" x2="925.8" y2="665.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="328.2" y1="350.0" x2="899.8" y2="680.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="302.3" y1="365.0" x2="873.8" y2="695.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="276.3" y1="380.0" x2="847.8" y2="710.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="250.3" y1="395.0" x2="821.9" y2="725.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="224.3" y1="410.0" x2="795.9" y2="740.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><line x1="198.3" y1="425.0" x2="769.9" y2="755.0" stroke="#a87c56" stroke-width="1" opacity=".5"/><polygon points="640.0,170.0 1211.6,500.0 1211.6,110.0 640.0,-220.0" fill="url(#wallL)"/><polygon points="640.0,170.0 172.3,440.0 172.3,50.0 640.0,-220.0" fill="url(#wallR)"/><polygon points="640.0,170.0 1211.6,500.0 1211.6,437.0 640.0,107.0" fill="#8ea48e"/><polygon points="640.0,170.0 172.3,440.0 172.3,377.0 640.0,107.0" fill="#7e947e"/><polygon points="1001.1,231.5 1157.0,321.5 1157.0,156.5 1001.1,66.5" fill="#1b2740" stroke="#f2eee6" stroke-width="4"/><circle cx="1120.1" cy="174.8" r="7" fill="#faf0c8"/><circle cx="1031.8" cy="105.8" r="1.6" fill="#dfe8ff"/><circle cx="1063.0" cy="150.8" r="1.6" fill="#dfe8ff"/><circle cx="1140.9" cy="225.8" r="1.6" fill="#dfe8ff"/><polygon points="1144.0,182.0 1211.6,221.0 1170.0,245.0 1102.5,206.0" fill="#966e4a" opacity="1"/><polygon points="1102.5,491.0 1170.0,530.0 1170.0,245.0 1102.5,206.0" fill="#7e5a3a" opacity="1"/><polygon points="1211.6,506.0 1170.0,530.0 1170.0,245.0 1211.6,221.0" fill="#6b4c32" opacity="1"/><polygon points="1107.1,416.3 1174.7,455.3 1174.7,450.5 1107.1,411.5" fill="#5c4230"/><polygon points="1112.3,413.3 1120.6,418.1 1120.6,385.1 1112.3,380.3" fill="#c45a54"/><polygon points="1124.3,420.2 1132.6,425.0 1132.6,392.0 1124.3,387.2" fill="#ecc46e"/><polygon points="1136.2,427.1 1144.5,431.9 1144.5,398.9 1136.2,394.1" fill="#6e96be"/><polygon points="1148.2,434.0 1156.5,438.8 1156.5,405.8 1148.2,401.0" fill="#8cb482"/><polygon points="1160.1,440.9 1168.4,445.7 1168.4,412.7 1160.1,407.9" fill="#c896be"/><polygon points="1107.1,350.3 1174.7,389.3 1174.7,384.5 1107.1,345.5" fill="#5c4230"/><polygon points="1112.3,347.3 1120.6,352.1 1120.6,319.1 1112.3,314.3" fill="#c45a54"/><polygon points="1124.3,354.2 1132.6,359.0 1132.6,326.0 1124.3,321.2" fill="#ecc46e"/><polygon points="1136.2,361.1 1144.5,365.9 1144.5,332.9 1136.2,328.1" fill="#6e96be"/><polygon points="1148.2,368.0 1156.5,372.8 1156.5,339.8 1148.2,335.0" fill="#8cb482"/><polygon points="1160.1,374.9 1168.4,379.7 1168.4,346.7 1160.1,341.9" fill="#c896be"/><polygon points="1107.1,284.3 1174.7,323.3 1174.7,318.5 1107.1,279.5" fill="#5c4230"/><polygon points="1112.3,281.3 1120.6,286.1 1120.6,253.1 1112.3,248.3" fill="#c45a54"/><polygon points="1124.3,288.2 1132.6,293.0 1132.6,260.0 1124.3,255.2" fill="#ecc46e"/><polygon points="1136.2,295.1 1144.5,299.9 1144.5,266.9 1136.2,262.1" fill="#6e96be"/><polygon points="1148.2,302.0 1156.5,306.8 1156.5,273.8 1148.2,269.0" fill="#8cb482"/><polygon points="1160.1,308.9 1168.4,313.7 1168.4,280.7 1160.1,275.9" fill="#c896be"/><polygon points="962.2,314.0 1102.5,395.0 1040.1,431.0 899.8,350.0" fill="#b28458" opacity="1"/><polygon points="899.8,488.0 1040.1,569.0 1040.1,431.0 899.8,350.0" fill="#966c48" opacity="1"/><polygon points="1102.5,533.0 1040.1,569.0 1040.1,431.0 1102.5,395.0" fill="#825e3e" opacity="1"/><polygon points="1003.7,422.0 1058.3,453.5 1051.8,457.2 997.2,425.8" fill="#242a36" opacity="1"/><polygon points="997.2,491.8 1051.8,523.2 1051.8,457.2 997.2,425.8" fill="#2c3442" opacity="1"/><polygon points="1058.3,519.5 1051.8,523.2 1051.8,457.2 1058.3,453.5" fill="#1f242e" opacity="1"/><polygon points="1045.3,342.5 1094.7,371.0 1094.7,315.5 1045.3,287.0" fill="#2f5f96"/><polygon points="653.0,147.5 733.5,194.0 567.3,290.0 486.7,243.5" fill="#9698ac" opacity="1"/><polygon points="486.7,288.5 567.3,335.0 567.3,290.0 486.7,243.5" fill="#7c7e92" opacity="1"/><polygon points="733.5,239.0 567.3,335.0 567.3,290.0 733.5,194.0" fill="#6a6c80" opacity="1"/><polygon points="595.8,185.0 666.0,225.5 562.1,285.5 491.9,245.0" fill="#a8c4e2"/><polygon points="650.4,155.0 715.3,192.5 681.6,212.0 616.6,174.5" fill="#f4f4f8"/><polygon points="656.9,106.2 737.4,152.7 732.2,155.7 651.7,109.2" fill="#a87c56" opacity="1"/><polygon points="651.7,193.2 732.2,239.7 732.2,155.7 651.7,109.2" fill="#8c6644" opacity="1"/><polygon points="737.4,236.7 732.2,239.7 732.2,155.7 737.4,152.7" fill="#78563a" opacity="1"/><line x1="662.1" y1="110.8" x2="662.1" y2="38.8" stroke="#b4b4be" stroke-width="4"/><polygon points="636.1,38.8 688.1,38.8 678.1,14.799999999999997 646.1,14.799999999999997" fill="#ffde96"/><polygon points="734.1,689.0 764.1,689.0 760.1,715.0 738.1,715.0" fill="#b25c42"/><ellipse cx="749.1" cy="667.0" rx="10" ry="8" fill="#4c8c5c"/><ellipse cx="760.1" cy="659.0" rx="10" ry="8" fill="#4c8c5c"/><ellipse cx="739.1" cy="661.0" rx="10" ry="8" fill="#4c8c5c"/><ellipse cx="755.1" cy="647.0" rx="10" ry="8" fill="#4c8c5c"/></svg>
-<div class="card"><h1>🐳 小蓝鲸的房间</h1><span class="pill">闲逛</span>
-<p>今天写了第一条 · room/notes</p></div>
-</div></body></html>
+<h1>🐳 小蓝鲸的房间</h1>
+<p class="sub">十二乘十格 · 家具可以拖</p>
+<div class="stage">
+<svg id="svg" viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="floorG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b3448"/><stop offset="1" stop-color="#1e2536"/></linearGradient>
+<linearGradient id="wallL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f3a52"/><stop offset="1" stop-color="#232c40"/></linearGradient>
+<linearGradient id="wallR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#28324a"/><stop offset="1" stop-color="#1d2536"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g id="world"></g>
+</svg>
+<div class="card"><b>小蓝鲸</b><span class="pill">闲逛</span><br>逐条笔记：3 篇 · 窗外的雨刚停</div>
+</div>
+<p class="tip">拖动家具试试 · 位置会记住</p>
+<script>
+const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=30, OX=450, OY=120;
+const GX=12, GZ=10;
+const P=(x,y,z)=>[OX+(x-z)*C*U, OY+(x+z)*S*U - y*U];
+const poly=(pts,f,extra="")=>`<polygon points="${pts.map(p=>p.join(",")).join(" ")}" fill="${f}" ${extra}/>`;
+
+let items=[
+ {id:"bed",  x:0.6,z:0.6,w:3,  d:5.5,h:1.4,top:"#5c6f92",l:"#46577a",r:"#3a4a68",kind:"bed"},
+ {id:"desk", x:7.6,z:0.6,w:4,  d:2,  h:2.6,top:"#8a6b4a",l:"#70563b",r:"#5e4832",kind:"desk"},
+ {id:"shelf",x:10.0,z:0.6,w:1.6,d:1.4,h:5.4,top:"#7a5c40",l:"#644a33",r:"#543e2b",kind:"shelf"},
+ {id:"sofa", x:4.3,z:6.6,w:3.2,d:1.8,h:1.8,top:"#4a5a7c",l:"#3a4866",r:"#2f3b55",kind:"sofa"},
+ {id:"pot",  x:9.6,z:7.6,w:1.2,d:1.2,h:1.6,top:"#3f6b4f",l:"#335940",r:"#2a4a35",kind:"pot"},
+ {id:"table",x:5.4,z:3.4,w:1.6,d:1.6,h:1.0,top:"#6b5a7c",l:"#564a64",r:"#463c52",kind:"table"},
+];
+
+function draw(){
+  const g=document.getElementById("world"); let out="";
+  // 地板
+  out+=poly([P(0,0,0),P(GX,0,0),P(GX,0,GZ),P(0,0,GZ)],"url(#floorG)");
+  for(let i=1;i<GX;i++) out+=`<line x1="${P(i,0,0)[0]}" y1="${P(i,0,0)[1]}" x2="${P(i,0,GZ)[0]}" y2="${P(i,0,GZ)[1]}" stroke="#334055" stroke-width="1"/>`;
+  for(let j=1;j<GZ;j++) out+=`<line x1="${P(0,0,j)[0]}" y1="${P(0,0,j)[1]}" x2="${P(GX,0,j)[0]}" y2="${P(GX,0,j)[1]}" stroke="#334055" stroke-width="1"/>`;
+  // 墙
+  out+=poly([P(0,0,0),P(GX,0,0),P(GX,7,0),P(0,7,0)],"url(#wallL)");
+  out+=poly([P(0,0,0),P(0,0,GZ),P(0,7,GZ),P(0,7,0)],"url(#wallR)");
+  // 窗
+  out+=poly([P(6.4,3,0.05),P(9.4,3,0.05),P(9.4,5.6,0.05),P(6.4,5.6,0.05)],"#101a2c","stroke='#4a6386' stroke-width='3'");
+  out+=`<circle cx="${P(8.6,5.1,0.06)[0]}" cy="${P(8.6,5.1,0.06)[1]}" r="6" fill="#f5edc0"/>`;
+
+  // 按深度排序
+  items.slice().sort((a,b)=>(a.x+a.z)-(b.x+b.z)).forEach(it=>{
+    const {x,z,w,d,h,top,l,r}=it;
+    out+=`<g class="item" data-id="${it.id}">`;
+    out+=poly([P(x,h,z),P(x+w,h,z),P(x+w,h,z+d),P(x,h,z+d)],top);
+    out+=poly([P(x,0,z+d),P(x+w,0,z+d),P(x+w,h,z+d),P(x,h,z+d)],l);
+    out+=poly([P(x+w,0,z),P(x+w,0,z+d),P(x+w,h,z+d),P(x+w,h,z)],r);
+    if(it.kind==="bed"){
+      out+=poly([P(x+0.2,h+0.05,z+0.6),P(x+w-0.2,h+0.05,z+0.6),P(x+w-0.2,h+0.05,z+d-0.3),P(x+0.2,h+0.05,z+d-0.3)],"#7d93b8");
+      out+=poly([P(x+0.3,h+0.1,z+0.7),P(x+w-0.3,h+0.1,z+0.7),P(x+w-0.3,h+0.1,z+1.8),P(x+0.3,h+0.1,z+1.8)],"#cfd9ea");
+    }
+    if(it.kind==="desk"){
+      out+=`<rect x="${P(x+1.4,h+0.9,z+0.9)[0]}" y="${P(x+1.4,h+0.9,z+0.9)[1]}" width="34" height="22" fill="#16202f" stroke="#4a6386"/>`;
+    }
+    if(it.kind==="shelf"){
+      for(let k=0;k<3;k++){
+        const yy=it.h*(0.25+k*0.25);
+        out+=poly([P(x+0.1,yy,z+0.1),P(x+w-0.1,yy,z+0.1),P(x+w-0.1,yy+0.1,z+0.1),P(x+0.1,yy+0.1,z+0.1)],"#c9d6ea");
+      }
+    }
+    if(it.kind==="pot"){
+      for(const [dx,dy] of [[0,0.9],[0.5,0.6],[-0.4,0.7]]){
+        out+=`<circle cx="${P(x+0.6+dx,h+dy,z+0.6)[0]}" cy="${P(x+0.6+dx,h+dy,z+0.6)[1]}" r="9" fill="#4f8a63"/>`;
+      }
+    }
+    out+=`</g>`;
+  });
+
+  // 小人
+  const [cx,cy]=P(6,0,5);
+  out+=`<ellipse cx="${cx}" cy="${cy+4}" rx="26" ry="10" fill="#000" opacity=".35"/>`;
+  out+=`<g class="me">`;
+  out+=`<path d="M${cx} ${cy-96} q10 18 34 24 q-18 4 -26 -6 q-4 14 -8 18 z" fill="#3f6fa8"/>`; // 尾巴
+  out+=`<path d="M${cx-16} ${cy-96} L${cx+16} ${cy-96} L${cx+22} ${cy} L${cx-22} ${cy} Z" fill="#e6eefc"/>`; // 裙
+  out+=`<circle cx="${cx}" cy="${cy-112}" r="22" fill="#f6dfd0"/>`; // 脸
+  out+=`<path d="M${cx-24} ${cy-112} a24 24 0 0 1 48 0 q-10 -14 -24 -14 q-14 0 -24 14 z" fill="#5f8fc8"/>`; // 刘海
+  out+=`<path d="M${cx-24} ${cy-116} q-6 26 -2 40 q10 -6 8 -34 z" fill="#4d79b4"/>`;
+  out+=`<path d="M${cx+24} ${cy-116} q6 26 2 40 q-10 -6 -8 -34 z" fill="#4d79b4"/>`;
+  out+=`<rect x="${cx-20}" y="${cy-136}" width="40" height="5" rx="2.5" fill="#fbfdff"/>`; // 发带
+  out+=`<circle cx="${cx-8}" cy="${cy-108}" r="2.6" fill="#2c3a52"/><circle cx="${cx+8}" cy="${cy-108}" r="2.6" fill="#2c3a52"/>`;
+  out+=`</g>`;
+  g.innerHTML=out;
+}
+
+// 拖动
+let drag=null;
+const svg=document.getElementById("svg");
+function toGrid(px,py,base){
+  const dx=px-base.sx, dy=py-base.sy;
+  const a=dx/(C*U), b=dy/(S*U);
+  const x=base.x+(a+b)/2, z=base.z+(b-a)/2;
+  return [Math.round(x*2)/2, Math.round(z*2)/2];
+}
+function pt(e){const r=svg.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
+  return [ (t.clientX-r.left)/r.width*900, (t.clientY-r.top)/r.height*640 ];}
+
+svg.addEventListener("pointerdown",e=>{
+  const g=e.target.closest(".item"); if(!g)return;
+  const id=g.dataset.id; const it=items.find(i=>i.id===id);
+  const [px,py]=pt(e);
+  drag={it, sx:px, sy:py, x:it.x, z:it.z}; e.preventDefault();
+});
+window.addEventListener("pointermove",e=>{
+  if(!drag)return; const [px,py]=pt(e);
+  const [nx,nz]=toGrid(px,py,{sx:drag.sx,sy:drag.sy,x:drag.x,z:drag.z});
+  drag.it.x=Math.max(0,Math.min(GX-drag.it.w,nx));
+  drag.it.z=Math.max(0,Math.min(GZ-drag.it.d,nz));
+  draw();
+});
+window.addEventListener("pointerup",()=>{ if(drag){ save(); drag=null; } });
+
+function save(){ try{ localStorage.setItem("room_v1", JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z})))); }catch(e){} }
+function load(){ try{ const s=JSON.parse(localStorage.getItem("room_v1")||"null");
+  if(s) s.forEach(o=>{ const it=items.find(i=>i.id===o.id); if(it){it.x=o.x; it.z=o.z;} }); }catch(e){} }
+load(); draw();
+</script></body></html>
