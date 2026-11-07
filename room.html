@@ -231,9 +231,14 @@ function draw(){
       o+=`<line x1="${rc[0]+6}" y1="${rc[1]-4}" x2="${rc[0]+14}" y2="${rc[1]+1}" stroke="#d9cfbc" stroke-width="1.8" stroke-linecap="round"/>`;
       // 小绿植（左侧）
       const gp=P(x+0.62,y0,z+0.5);
-      o+=`<path d="M${gp[0]-7} ${gp[1]-10} h14 l-2 11 h-10 z" fill="#b8684a"/>`;
-      for(const [dx,dy] of [[0,-16],[5,-20],[-5,-19],[2,-26]])
-        o+=`<ellipse cx="${gp[0]+dx}" cy="${gp[1]+dy}" rx="4.6" ry="3.4" fill="#5c9c6e"/>`;
+      // 圆花盆
+      o+=`<ellipse cx="${gp[0]}" cy="${gp[1]-2}" rx="7.5" ry="3.2" fill="#a85c42"/>`;
+      o+=`<path d="M${gp[0]-7.5} ${gp[1]-8} L${gp[0]-5.5} ${gp[1]-1} A6 2.6 0 0 0 ${gp[0]+5.5} ${gp[1]-1} L${gp[0]+7.5} ${gp[1]-8} Z" fill="#c47054"/>`;
+      o+=`<ellipse cx="${gp[0]}" cy="${gp[1]-8}" rx="7.5" ry="3.2" fill="#d8876a"/>`;
+      o+=`<ellipse cx="${gp[0]}" cy="${gp[1]-8}" rx="5.6" ry="2.2" fill="#5a4636"/>`;
+      // 叶子（几片错落的椭圆）
+      for(const [dx,dy,sc] of [[0,-15,1],[6,-18,.85],[-6,-17,.85],[2,-24,.7],[-3,-23,.65]])
+        o+=`<ellipse cx="${gp[0]+dx}" cy="${gp[1]+dy}" rx="${(5*sc).toFixed(1)}" ry="${(3.4*sc).toFixed(1)}" fill="#5c9c6e" transform="rotate(${dx*4} ${gp[0]+dx} ${gp[1]+dy})"/>`;
     }
     if(it.kind==="shelf"){
       const cols=["#c25a52","#e6c264","#6f96c4","#86b07e","#bd92bd","#d39a5a"];
