@@ -301,6 +301,12 @@ window.addEventListener("pointermove",e=>{ if(!drag)return; const [px,py]=pt(e);
 window.addEventListener("pointerup",()=>{ if(drag){try{localStorage.setItem("room_v2",JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z}))));}catch(e){} drag=null;}});
 try{const s=JSON.parse(localStorage.getItem("room_v2")||"null");
   if(s)s.forEach(o=>{const it=items.find(i=>i.id===o.id); if(it){it.x=o.x;it.z=o.z;}});}catch(e){}
-document.getElementById('rot').onclick=()=>{ROT=(ROT+1)%4; draw();};
+let rb=document.getElementById('rot');
+if(!rb){
+  rb=document.createElement('button'); rb.id='rot'; rb.textContent='↻ 转一下';
+  rb.style.cssText='margin-left:8px;padding:4px 12px;border-radius:8px;border:1px solid rgba(120,160,220,.35);background:rgba(30,40,58,.9);color:#a8bcd8;font-size:12px';
+  const tip=document.querySelector('.tip'); if(tip) tip.appendChild(rb); else document.body.appendChild(rb);
+}
+rb.onclick=()=>{ROT=(ROT+1)%4; draw();};
 draw();
 </script></body></html>
