@@ -284,26 +284,28 @@ function draw(){
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      const seatH=1.1, backH=2.05, armH=1.5, armW=0.26, bk=0.3;
-      const FRONT="#7c87a2", SIDE="#6b7690", BACK="#8b96b0", TOP="#a4aec6", CUSH="#b3bdd3";
+      const foot=0.15, seatH=1.05, backH=1.95, armH=1.45, bk=0.34, aw=0.26;
+      const C1="#98a1b8", C2="#7f89a2", C3="#6a748e";
+      const S1="#aeb8cf", S2="#949fb9", S3="#7d88a3";
       o+=shadowQuad(x,z,w,d,0.16);
-      // 后立面（靠背）
-      o+=poly([P(x,backH,z),P(x+w,backH,z),P(x+w,seatH,z+d*0.35),P(x,seatH,z+d*0.35)],BACK,EDGE);
-      // 座面（顶面）
-      o+=poly([P(x,seatH,z+d*0.35),P(x+w,seatH,z+d*0.35),P(x+w,seatH,z+d),P(x,seatH,z+d)],TOP,EDGE);
-      // 前立面（座箱）
-      o+=panel(x,z+d,x+w,z+d,0,seatH,FRONT);
-      // 左右立面
-      o+=panel(x,z,x,z+d,0,armH,SIDE);
-      o+=panel(x+w,z,x+w,z+d,0,armH,SIDE);
-      // 两块坐垫（薄片，略高于座面）
-      const cw=(w-2*armW-0.1)/2;
-      o+=poly([P(x+armW,seatH+0.14,z+d*0.38),P(x+armW+cw,seatH+0.14,z+d*0.38),P(x+armW+cw,seatH+0.14,z+d*0.94),P(x+armW,seatH+0.14,z+d*0.94)],CUSH,EDGE);
-      o+=poly([P(x+armW+cw+0.1,seatH+0.14,z+d*0.38),P(x+w-armW,seatH+0.14,z+d*0.38),P(x+w-armW,seatH+0.14,z+d*0.94),P(x+armW+cw+0.1,seatH+0.14,z+d*0.94)],CUSH,EDGE);
-      // 抱枕
-      const pp=P(x+0.75,seatH+0.5,z+d*0.92);
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="8" ry="6" fill="#e0bd8e"/>`;
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="5.4" ry="3.6" fill="#edd0a6"/>`;
+      // ① 靠背（近侧，先画）
+      o+=svgBox(x,z+d-bk,w,bk,backH,C1,C2,C3,foot);
+      // ② 四只矮脚
+      for(const [lx,lz] of [[x+0.08,z+d-bk-0.2],[x+w-0.24,z+d-bk-0.2],[x+0.08,z+0.1],[x+w-0.24,z+0.1]])
+        o+=svgBox(lx,lz,0.16,0.16,foot,"#5c4a38","#4a3b2c","#3b2f24");
+      // ③ 坐箱
+      o+=svgBox(x,z,w,d-bk,seatH,C1,C2,C3,foot);
+      // ④ 扶手
+      o+=svgBox(x,z,aw,d-bk,armH,C1,C2,C3,foot);
+      o+=svgBox(x+w-aw,z,aw,d-bk,armH,C1,C2,C3,foot);
+      // ⑤ 坐垫
+      const cw=(w-2*aw-0.08)/2;
+      o+=svgBox(x+aw,z+0.05,cw,d-bk-0.12,0.22,S1,S2,S3,foot+seatH);
+      o+=svgBox(x+aw+cw+0.08,z+0.05,cw,d-bk-0.12,0.22,S1,S2,S3,foot+seatH);
+      // ⑥ 抱枕
+      const pp=P(x+0.78,foot+seatH+0.42,z+d-bk-0.22);
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="7.5" ry="5.4" fill="#e0bd8e"/>`;
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="5" ry="3.4" fill="#edd0a6"/>`;
     }
     if(it.kind==="pot"){
       const cx0=x+w/2, cz0=z+d/2;
