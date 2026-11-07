@@ -110,7 +110,7 @@ let items=[
  {id:"bed",  x:0.4,z:0.5,w:3.2,d:5.4,h:1.3,top:"#8fa3c4",l:"#7186a8",r:"#5f7294",kind:"bed"},
  {id:"desk", x:7.4,z:0.5,w:4.2,d:2.1,h:2.6,top:"#b98a5c",l:"#9a6f47",r:"#85603d",kind:"desk"},
  {id:"shelf",x:10.1,z:0.5,w:1.6,d:1.3,h:5.2,top:"#8a6440",l:"#6f5031",r:"#5d4228",kind:"shelf"},
- {id:"sofa", x:4.2,z:6.6,w:3.4,d:1.9,h:1.7,top:"#7d6fa0",l:"#655a85",r:"#544a70",kind:"sofa"},
+ {id:"sofa", x:4.2,z:6.6,w:3.4,d:1.9,h:1.7,top:"#8a94ae",l:"#6d7793",r:"#5b6580",kind:"sofa"},
  {id:"pot",  x:9.7,z:7.4,w:1.2,d:1.2,h:1.5,top:"#4d8a5f",l:"#3d6f4c",r:"#325c3f",kind:"pot"},
  {id:"table",x:5.2,z:3.3,w:1.8,d:1.8,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
 ];
@@ -180,27 +180,45 @@ function draw(){
       o+=poly([P(x+0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+1.5),P(x+0.35,h+0.3,z+1.5)],"#fbfcff");
     }
     if(it.kind==="desk"){
-      const s=P(x+1.3,h+0.6,z+0.8);
-      o+=`<rect x="${s[0]}" y="${s[1]-24}" width="42" height="26" rx="3" fill="#16202f" stroke="#4d6a92" stroke-width="2"/>`;
-      o+=`<rect x="${s[0]+5}" y="${s[1]-19}" width="32" height="16" fill="#2c5c95"/>`;
-      o+=`<rect x="${s[0]-12}" y="${s[1]+2}" width="60" height="4" rx="2" fill="#6d5236"/>`;
-      o+=`<rect x="${s[0]+52}" y="${s[1]-8}" width="9" height="11" rx="2" fill="#e8e2d4"/>`;
+      const s=P(x+1.55,h+0.5,z+0.75);
+      // 显示器（放大）
+      o+=`<rect x="${s[0]-6}" y="${s[1]-56}" width="76" height="48" rx="4" fill="#141c28" stroke="#5b7ba4" stroke-width="2.5"/>`;
+      o+=`<rect x="${s[0]+2}" y="${s[1]-48}" width="60" height="32" rx="2" fill="#2f6099"/>`;
+      o+=`<rect x="${s[0]+7}" y="${s[1]-42}" width="26" height="3" rx="1.5" fill="#8fc0ea" opacity=".75"/>`;
+      o+=`<rect x="${s[0]+7}" y="${s[1]-35}" width="40" height="3" rx="1.5" fill="#8fc0ea" opacity=".45"/>`;
+      o+=`<rect x="${s[0]+28}" y="${s[1]-8}" width="8" height="8" fill="#4b6789"/>`;
+      o+=`<rect x="${s[0]+12}" y="${s[1]}" width="40" height="4" rx="2" fill="#4b6789"/>`;
+      // 键盘
+      o+=`<rect x="${s[0]-2}" y="${s[1]+8}" width="66" height="7" rx="2" fill="#c9bda8"/>`;
+      // 杯子
+      o+=`<rect x="${s[0]+74}" y="${s[1]+2}" width="10" height="12" rx="2" fill="#efe8da"/>`;
+      o+=`<path d="M${s[0]+84} ${s[1]+5} q5 3 0 7" stroke="#efe8da" stroke-width="2" fill="none"/>`;
+      // 小绿植
+      o+=`<rect x="${s[0]-30}" y="${s[1]}" width="12" height="11" rx="2" fill="#b86a4c"/>`;
+      for(const [dx,dy] of [[-3,-4],[3,-6],[0,-10]])
+        o+=`<ellipse cx="${s[0]-24+dx}" cy="${s[1]+dy}" rx="4.5" ry="3.4" fill="#5c9c6e"/>`;
+      // 唱片机
+      const rp=[s[0]+96, s[1]+2];
+      o+=`<rect x="${rp[0]}" y="${rp[1]}" width="26" height="12" rx="2" fill="#5a4a3c"/>`;
+      o+=`<ellipse cx="${rp[0]+8}" cy="${rp[1]+4}" rx="6" ry="4" fill="#22262e"/>`;
+      o+=`<line x1="${rp[0]+14}" y1="${rp[1]+4}" x2="${rp[0]+21}" y2="${rp[1]+1}" stroke="#d9cfbc" stroke-width="1.6"/>`;
     }
     if(it.kind==="shelf"){
       const cols=["#c25a52","#e6c264","#6f96c4","#86b07e","#bd92bd","#d39a5a"];
       for(let k=0;k<3;k++){
         const yy=h*(0.16+k*0.28);
-        o+=poly([P(x+0.06,yy,z+0.06),P(x+w-0.06,yy,z+0.06),P(x+w-0.06,yy-0.1,z+0.06),P(x+0.06,yy-0.1,z+0.06)],"#c39b68");
+        const zf=z+d-0.02;
+        o+=poly([P(x+0.05,yy,zf),P(x+w-0.05,yy,zf),P(x+w-0.05,yy-0.09,zf),P(x+0.05,yy-0.09,zf)],"#c39b68");
         for(let b=0;b<4;b++){
           const bx=x+0.14+b*((w-0.28)/4), bw=(w-0.28)/4-0.05, bh=0.5+((k+b)%2)*0.16;
-          o+=poly([P(bx,yy-0.1,z+0.07),P(bx+bw,yy-0.1,z+0.07),P(bx+bw,yy-0.1+bh,z+0.07),P(bx,yy-0.1+bh,z+0.07)],cols[(k*2+b)%6]);
+          o+=poly([P(bx,yy-0.09,zf-0.01),P(bx+bw,yy-0.09,zf-0.01),P(bx+bw,yy-0.09+bh,zf-0.01),P(bx,yy-0.09+bh,zf-0.01)],cols[(k*2+b)%6]);
         }
       }
       const gg=P(x+w/2,h+0.5,z+d/2);
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      o+=poly([P(x,h+0.5,z),P(x+w,h+0.5,z),P(x+w,h+0.5,z+0.5),P(x,h+0.5,z+0.5)],"#8b7cb0");
+      o+=poly([P(x,h+0.5,z),P(x+w,h+0.5,z),P(x+w,h+0.5,z+0.5),P(x,h+0.5,z+0.5)],"#a3adc6");
       const c1=P(x+0.7,h+0.6,z+0.9);
       o+=`<ellipse cx="${c1[0]}" cy="${c1[1]}" rx="10" ry="6" fill="#d9b98c"/>`;
     }
