@@ -216,19 +216,19 @@ function draw(){
     if(it.kind==="bed"){
       const fx=x+0.1, fz=z+0.1, fw=w-0.2, fd=d-0.2;
       o+=shadowQuad(x,z,w,d,0.16);
-      // 四条矮脚
+      // ① 床头板（最远，先画）
+      o+=svgBox(fx,fz-0.1,fw,0.16,1.85,"#b0865c","#96724e","#7d5d3f",0);
+      // ② 四条矮脚
       for(const [lx,lz] of [[fx,fz],[fx+fw-0.22,fz],[fx,fz+fd-0.22],[fx+fw-0.22,fz+fd-0.22]])
         o+=svgBox(lx,lz,0.22,0.22,0.4,"#8a6a4a","#72563b","#5d462f");
-      // 床架
+      // ③ 床架
       o+=svgBox(fx,fz,fw,fd,0.35,"#b08a62","#96724e","#7e5e40",0.4);
-      // 床垫
+      // ④ 床垫
       o+=svgBox(fx+0.08,fz+0.08,fw-0.16,fd-0.16,0.5,"#e6ecf6","#d2dbeb","#bcc7da",0.75);
-      // 被子（靠前 2/3）
-      o+=svgBox(fx+0.12,fz+fd*0.34,fw-0.24,fd*0.6,0.26,"#a8c4e2","#8fadce","#7a98bb",1.25);
-      // 枕头
-      o+=svgBox(fx+0.25,fz+0.2,fw*0.62,0.85,0.3,"#fbfcff","#e9eff8","#d5dde9",1.25);
-      // 床头板（远侧，只到 1.9，不挡视线）
-      o+=svgBox(fx,fz-0.06,fw,0.18,1.9,"#b0865c","#96724e","#7d5d3f",0);
+      // ⑤ 被子（靠前段，最后画）
+      o+=svgBox(fx+0.12,fz+fd*0.36,fw-0.24,fd*0.58,0.24,"#a8c4e2","#8fadce","#7a98bb",1.25);
+      // ⑥ 枕头
+      o+=svgBox(fx+0.26,fz+0.22,fw*0.6,0.8,0.28,"#fbfcff","#e9eff8","#d5dde9",1.25);
     }
     if(it.kind==="desk"){
       const y0=h, th=0.22, L=0.16, inset=0.18;
@@ -277,28 +277,26 @@ function draw(){
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      const C1="#8f9ab5", C2="#77839e", C3="#5f6b85";
-      const S1="#aab4cd", S2="#919db8", S3="#78849f";
-      const foot=0.18, seatH=1.35, backH=2.7, armH=1.85, bk=0.42;
+      const foot=0.16, seatH=1.30, backH=2.55, armH=1.75, bk=0.40;
       o+=shadowQuad(x,z,w,d,0.17);
-      // 四只矮脚
-      for(const [lx,lz] of [[x+0.1,z+d-bk-0.16],[x+w-0.26,z+d-bk-0.16],[x+0.1,z+0.12],[x+w-0.26,z+0.12]])
-        o+=svgBox(lx,lz,0.16,0.16,foot,"#5c4a38","#4a3b2c","#3b2f24");
-      // 坐箱（底座）
-      o+=svgBox(x,z,w,d-bk,seatH,"#8b96b1","#76819c","#616c87",foot);
-      // 靠背（近侧，矮于座高的两倍）
+      // ① 靠背（近侧）
       o+=svgBox(x,z+d-bk,w,bk,backH,"#93a0bb","#7b88a3","#66738e",foot);
-      // 扶手
-      o+=svgBox(x,z,0.3,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
-      o+=svgBox(x+w-0.3,z,0.3,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
-      // 两块坐垫
-      const cw=(w-0.6-0.1)/2;
-      o+=svgBox(x+0.34,z+0.08,cw,d-bk-0.2,0.34,S1,S2,S3,seatH);
-      o+=svgBox(x+0.34+cw+0.1,z+0.08,cw,d-bk-0.2,0.34,S1,S2,S3,seatH);
-      // 抱枕
-      const pp=P(x+0.85,seatH+0.34,z+d-bk-0.22);
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="7.5" ry="5" fill="#d9b98c"/>`;
-      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="5" ry="3" fill="#e8d0a8"/>`;
+      // ② 四只矮脚
+      for(const [lx,lz] of [[x+0.08,z+d-bk-0.18],[x+w-0.24,z+d-bk-0.18],[x+0.08,z+0.1],[x+w-0.24,z+0.1]])
+        o+=svgBox(lx,lz,0.16,0.16,foot,"#5c4a38","#4a3b2c","#3b2f24");
+      // ③ 坐箱
+      o+=svgBox(x,z,w,d-bk,seatH,"#8b96b1","#76819c","#616c87",foot);
+      // ④ 扶手
+      o+=svgBox(x,z,0.28,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
+      o+=svgBox(x+w-0.28,z,0.28,d-bk,armH,"#8b96b1","#76819c","#616c87",foot);
+      // ⑤ 坐垫（两块，等宽对齐）
+      const cw=(w-0.56-0.08)/2;
+      o+=svgBox(x+0.32,z+0.06,cw,d-bk-0.14,0.3,"#aab4cd","#919db8","#78849f",seatH);
+      o+=svgBox(x+0.32+cw+0.08,z+0.06,cw,d-bk-0.14,0.3,"#aab4cd","#919db8","#78849f",seatH);
+      // ⑥ 抱枕（靠在背上）
+      const pp=P(x+0.8,seatH+0.3,z+d-bk-0.24);
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="7" ry="4.8" fill="#d9b98c"/>`;
+      o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="4.6" ry="2.8" fill="#e8d0a8"/>`;
     }
     if(it.kind==="pot"){
       const cx0=x+w/2, cz0=z+d/2;
