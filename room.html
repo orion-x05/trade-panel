@@ -37,6 +37,14 @@ box-shadow:0 12px 30px rgba(0,0,0,.5)}
 </div>
 <p class="tip">拖家具试试 · 位置会记住</p>
 <script>
+window.addEventListener('error', function(ev){
+  var d=document.getElementById('err');
+  if(!d){d=document.createElement('pre');d.id='err';
+    d.style.cssText='position:fixed;left:8px;bottom:8px;right:8px;max-height:40vh;overflow:auto;background:#2a1520;color:#ff9aa2;font-size:11px;padding:8px;border-radius:8px;white-space:pre-wrap;z-index:99';
+    document.body.appendChild(d);}
+  d.textContent='JS 错误: '+(ev.message||'')+'\n'+(ev.filename||'')+':'+(ev.lineno||'');
+});
+
 const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=29, OX=450, OY=170;
 const GX=12, GZ=10;
 let ROT=0;                       // 0/1/2/3 → 每次 90°
