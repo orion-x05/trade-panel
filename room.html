@@ -39,7 +39,18 @@ box-shadow:0 12px 30px rgba(0,0,0,.5)}
 <script>
 const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=29, OX=450, OY=170;
 const GX=12, GZ=10;
-const P=(x,y,z)=>[OX+(x-z)*C*U, OY+(x+z)*S*U - y*U];
+let ROT=0;                       // 0/1/2/3 → 每次 90°
+function toR(x,z){
+  const a=ROT*Math.PI/2, ca=Math.cos(a), sa=Math.sin(a);
+  const dx=x-GX/2, dz=z-GZ/2;
+  return [dx*ca-dz*sa+GX/2, dx*sa+dz*ca+GZ/2];
+}
+function fromR(xr,zr){
+  const a=-ROT*Math.PI/2, ca=Math.cos(a), sa=Math.sin(a);
+  const dx=xr-GX/2, dz=zr-GZ/2;
+  return [dx*ca-dz*sa+GX/2, dx*sa+dz*ca+GZ/2];
+}
+const P=(x,y,z)=>{const [xr,zr]=toR(x,z); return [OX+(xr-zr)*C*U, OY+(xr+zr)*S*U - y*U];};
 const poly=(pts,f,ex="")=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${f}" ${ex}/>`;
 const line=(a,b,col,w,op=1)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`;
 
@@ -264,9 +275,13 @@ function draw(){
 let drag=null; const svg=document.getElementById("svg");
 function pt(e){const r=svg.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
   return [(t.clientX-r.left)/r.width*900,(t.clientY-r.top)/r.height*660];}
-function toGrid(px,py,b){const dx=px-b.sx, dy=py-b.sy;
+function toGrid(px,py,b){
+  const dx=px-b.sx, dy=py-b.sy;
   const a=dx/(C*U), bb=dy/(S*U);
-  return [b.x+(a+bb)/2, b.z+(bb-a)/2];}
+  const [xr0,zr0]=toR(b.x,b.z);
+  const xr=xr0+(a+bb)/2, zr=zr0+(bb-a)/2;
+  return fromR(xr,zr);
+}
 svg.addEventListener("pointerdown",e=>{const g=e.target.closest(".item"); if(!g)return;
   const it=items.find(i=>i.id===g.dataset.id); const [px,py]=pt(e);
   drag={it,sx:px,sy:py,x:it.x,z:it.z}; e.preventDefault();});
@@ -278,5 +293,6 @@ window.addEventListener("pointermove",e=>{ if(!drag)return; const [px,py]=pt(e);
 window.addEventListener("pointerup",()=>{ if(drag){try{localStorage.setItem("room_v2",JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z}))));}catch(e){} drag=null;}});
 try{const s=JSON.parse(localStorage.getItem("room_v2")||"null");
   if(s)s.forEach(o=>{const it=items.find(i=>i.id===o.id); if(it){it.x=o.x;it.z=o.z;}});}catch(e){}
+document.getElementById('rot').onclick=()=>{ROT=(ROT+1)%4; draw();};
 draw();
 </script></body></html>
