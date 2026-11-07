@@ -136,10 +136,11 @@ let items=[
  {id:"table",x:5.2,z:3.3,w:1.8,d:1.8,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
 ];
 
-function svgBox(x,z,w,d,ht,top,l,r){
-  return poly([P(x,ht,z),P(x+w,ht,z),P(x+w,ht,z+d),P(x,ht,z+d)],top)
-       + poly([P(x,0,z+d),P(x+w,0,z+d),P(x+w,ht,z+d),P(x,ht,z+d)],l)
-       + poly([P(x+w,0,z),P(x+w,0,z+d),P(x+w,ht,z+d),P(x+w,ht,z)],r);
+function svgBox(x,z,w,d,ht,top,l,r,y0){
+  const b=y0||0, t=b+ht;
+  return poly([P(x,t,z),P(x+w,t,z),P(x+w,t,z+d),P(x,t,z+d)],top)
+       + poly([P(x,b,z+d),P(x+w,b,z+d),P(x+w,t,z+d),P(x,t,z+d)],l)
+       + poly([P(x+w,b,z),P(x+w,b,z+d),P(x+w,t,z+d),P(x+w,t,z)],r);
 }
 
 function draw(){
@@ -207,28 +208,32 @@ function draw(){
       o+=poly([P(x+0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+1.5),P(x+0.35,h+0.3,z+1.5)],"#fbfcff");
     }
     if(it.kind==="desk"){
-      const s=P(x+1.55,h+0.5,z+0.75);
-      // 显示器（放大）
-      o+=`<rect x="${s[0]-6}" y="${s[1]-56}" width="76" height="48" rx="4" fill="#141c28" stroke="#5b7ba4" stroke-width="2.5"/>`;
-      o+=`<rect x="${s[0]+2}" y="${s[1]-48}" width="60" height="32" rx="2" fill="#2f6099"/>`;
-      o+=`<rect x="${s[0]+7}" y="${s[1]-42}" width="26" height="3" rx="1.5" fill="#8fc0ea" opacity=".75"/>`;
-      o+=`<rect x="${s[0]+7}" y="${s[1]-35}" width="40" height="3" rx="1.5" fill="#8fc0ea" opacity=".45"/>`;
-      o+=`<rect x="${s[0]+28}" y="${s[1]-8}" width="8" height="8" fill="#4b6789"/>`;
-      o+=`<rect x="${s[0]+12}" y="${s[1]}" width="40" height="4" rx="2" fill="#4b6789"/>`;
-      // 键盘
-      o+=`<rect x="${s[0]-2}" y="${s[1]+8}" width="66" height="7" rx="2" fill="#c9bda8"/>`;
-      // 杯子
-      o+=`<rect x="${s[0]+74}" y="${s[1]+2}" width="10" height="12" rx="2" fill="#efe8da"/>`;
-      o+=`<path d="M${s[0]+84} ${s[1]+5} q5 3 0 7" stroke="#efe8da" stroke-width="2" fill="none"/>`;
-      // 小绿植
-      o+=`<rect x="${s[0]-30}" y="${s[1]}" width="12" height="11" rx="2" fill="#b86a4c"/>`;
-      for(const [dx,dy] of [[-3,-4],[3,-6],[0,-10]])
-        o+=`<ellipse cx="${s[0]-24+dx}" cy="${s[1]+dy}" rx="4.5" ry="3.4" fill="#5c9c6e"/>`;
-      // 唱片机
-      const rp=[s[0]+96, s[1]+2];
-      o+=`<rect x="${rp[0]}" y="${rp[1]}" width="26" height="12" rx="2" fill="#5a4a3c"/>`;
-      o+=`<ellipse cx="${rp[0]+8}" cy="${rp[1]+4}" rx="6" ry="4" fill="#22262e"/>`;
-      o+=`<line x1="${rp[0]+14}" y1="${rp[1]+4}" x2="${rp[0]+21}" y2="${rp[1]+1}" stroke="#d9cfbc" stroke-width="1.6"/>`;
+      const y0=h;                      // 桌面高度
+      // 显示器（立在桌上）
+      o+=svgBox(x+1.5,z+0.55,2.0,0.18,1.7,"#1b2534","#22303f","#172130",y0);
+      o+=poly([P(x+1.62,y0+0.95,z+0.20),P(x+3.38,y0+0.95,z+0.20),
+               P(x+3.38,y0+1.62,z+0.20),P(x+1.62,y0+1.62,z+0.20)],"#2f6099");
+      o+=poly([P(x+1.75,y0+1.50,z+0.19),P(x+2.55,y0+1.50,z+0.19),
+               P(x+2.55,y0+1.42,z+0.19),P(x+1.75,y0+1.42,z+0.19)],"#8fc0ea","opacity='.7'");
+      // 键盘（平放在桌面）
+      o+=svgBox(x+1.55,z+1.35,2.0,0.5,0.12,"#cbbfa8","#b3a68f","#9a8e79",y0);
+      // 茶杯（右侧靠前）
+      const cp=P(x+3.45,y0,z+1.15);
+      o+=`<ellipse cx="${cp[0]}" cy="${cp[1]-9}" rx="7" ry="4" fill="#efe8da"/>`;
+      o+=`<path d="M${cp[0]-7} ${cp[1]-9} l1.2 9 q5.8 2 11.6 0 l1.2 -9" fill="#efe8da"/>`;
+      o+=`<ellipse cx="${cp[0]}" cy="${cp[1]-9}" rx="5.4" ry="3" fill="#8a6a4e"/>`;
+      // 唱片机（右侧靠后）
+      const rp=P(x+3.3,y0,z+0.35);
+      o+=svgBox(x+2.95,z+0.20,1.1,0.85,0.28,"#5c4c3e","#4a3d32","#3d3229",y0);
+      const rc=P(x+3.5,y0+0.28,z+0.62);
+      o+=`<ellipse cx="${rc[0]}" cy="${rc[1]}" rx="12" ry="7" fill="#1e222a"/>`;
+      o+=`<ellipse cx="${rc[0]}" cy="${rc[1]}" rx="3" ry="1.8" fill="#c9c2b4"/>`;
+      o+=`<line x1="${rc[0]+6}" y1="${rc[1]-4}" x2="${rc[0]+14}" y2="${rc[1]+1}" stroke="#d9cfbc" stroke-width="1.8" stroke-linecap="round"/>`;
+      // 小绿植（左侧）
+      const gp=P(x+0.62,y0,z+0.5);
+      o+=`<path d="M${gp[0]-7} ${gp[1]-10} h14 l-2 11 h-10 z" fill="#b8684a"/>`;
+      for(const [dx,dy] of [[0,-16],[5,-20],[-5,-19],[2,-26]])
+        o+=`<ellipse cx="${gp[0]+dx}" cy="${gp[1]+dy}" rx="4.6" ry="3.4" fill="#5c9c6e"/>`;
     }
     if(it.kind==="shelf"){
       const cols=["#c25a52","#e6c264","#6f96c4","#86b07e","#bd92bd","#d39a5a"];
