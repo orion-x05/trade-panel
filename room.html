@@ -45,7 +45,7 @@ window.addEventListener('error', function(ev){
   d.textContent='JS 错误: '+(ev.message||'')+'\n'+(ev.filename||'')+':'+(ev.lineno||'');
 });
 
-const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=29, OX=560, OY=200;
+const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=44, OX=555, OY=230;
 const GX=12, GZ=10;
 let ROT=0;                       // 0/1/2/3 → 每次 90°
 function toR(x,z){
@@ -366,7 +366,8 @@ window.addEventListener("pointermove",e=>{ if(!drag)return; const [px,py]=pt(e);
   drag.it.z=Math.max(0,Math.min(GZ-drag.it.d,Math.round(nz*2)/2));
   draw();});
 window.addEventListener("pointerup",()=>{ if(drag){try{localStorage.setItem("room_v2",JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z}))));}catch(e){} drag=null;}});
-try{const s=JSON.parse(localStorage.getItem("room_v2")||"null");
+try{ try{ draw(); }catch(er){ var d=document.getElementById('err')||document.createElement('pre'); d.id='err'; d.style.cssText='position:fixed;left:8px;bottom:8px;right:8px;background:#2a1520;color:#ff9aa2;font-size:11px;padding:8px;border-radius:8px;white-space:pre-wrap;z-index:99'; d.textContent='draw 出错: '+er.message+'\n'+(er.stack||'').slice(0,400); document.body.appendChild(d); }
+const s=JSON.parse(localStorage.getItem("room_v2")||"null");
   if(s)s.forEach(o=>{const it=items.find(i=>i.id===o.id); if(it){it.x=o.x;it.z=o.z;}});}catch(e){}
 let rb=document.getElementById('rot');
 if(!rb){
