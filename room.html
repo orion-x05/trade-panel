@@ -2,145 +2,213 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>小蓝鲸的房间</title>
 <style>
-:root{--bg1:#1b2740;--bg2:#0c1120}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:radial-gradient(circle at 50% 25%,var(--bg1),var(--bg2) 70%);
-color:#e8eef8;font-family:-apple-system,"PingFang SC",sans-serif;min-height:100vh;display:flex;
-flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none}
-h1{font-size:17px;font-weight:600;margin:14px 0 2px;letter-spacing:.5px}
-.sub{font-size:12px;color:#8296b4;margin:0 0 8px}
-.stage{width:min(96vw,760px);position:relative}
+body{margin:0;background:radial-gradient(circle at 50% 20%,#243450,#0b1018 72%);
+color:#eef3fb;font-family:-apple-system,"PingFang SC",sans-serif;min-height:100vh;
+display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none}
+h1{font-size:16px;font-weight:600;margin:12px 0 2px;letter-spacing:.6px}
+.sub{font-size:11.5px;color:#7f93b2;margin:0 0 6px}
+.stage{width:min(97vw,820px);position:relative}
 svg{width:100%;height:auto;display:block;touch-action:none}
-.card{position:absolute;left:0;top:0;background:rgba(16,22,36,.86);border:1px solid rgba(120,160,220,.25);
-border-radius:14px;padding:10px 14px;font-size:12px;color:#9fb2cf;backdrop-filter:blur(6px)}
-.card b{color:#dfe9f8;font-size:13px;font-weight:600}
-.pill{display:inline-block;background:#2f6b4f;color:#bfe8cf;border-radius:999px;padding:1px 8px;margin-left:6px;font-size:11px}
-.tip{font-size:11px;color:#5f7291;margin:6px 0 18px}
+.card{position:absolute;left:2%;top:2%;background:rgba(14,20,32,.88);border:1px solid rgba(120,160,220,.22);
+border-radius:16px;padding:12px 16px;font-size:12px;color:#93a6c4;backdrop-filter:blur(8px);
+box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.card b{color:#e6eefb;font-size:13.5px}
+.pill{display:inline-block;background:#2e6b4d;color:#b9e6cd;border-radius:999px;padding:2px 9px;margin-left:7px;font-size:11px}
+.btns{margin-top:9px;display:flex;gap:6px}
+.btns span{border:1px solid rgba(120,160,220,.28);border-radius:7px;padding:2px 9px;font-size:11px;color:#8fa4c2}
+.tip{font-size:11px;color:#556a89;margin:8px 0 16px}
 </style></head><body>
 <h1>🐳 小蓝鲸的房间</h1>
-<p class="sub">十二乘十格 · 家具可以拖</p>
+<p class="sub">十二乘十格 · 家具能拖</p>
 <div class="stage">
-<svg id="svg" viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg">
+<svg id="svg" viewBox="0 0 900 660" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<linearGradient id="floorG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b3448"/><stop offset="1" stop-color="#1e2536"/></linearGradient>
-<linearGradient id="wallL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f3a52"/><stop offset="1" stop-color="#232c40"/></linearGradient>
-<linearGradient id="wallR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#28324a"/><stop offset="1" stop-color="#1d2536"/></linearGradient>
-<filter id="glow"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="floorG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c59a6c"/><stop offset="1" stop-color="#a87b52"/></linearGradient>
+<linearGradient id="wallBack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe6d4"/><stop offset="1" stop-color="#ddd2bd"/></linearGradient>
+<linearGradient id="wallLeft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2d8c4"/><stop offset="1" stop-color="#cdc1aa"/></linearGradient>
+<radialGradient id="lampGlow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+<radialGradient id="winSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2c4c"/><stop offset="1" stop-color="#39507a"/></radialGradient>
 </defs>
 <g id="world"></g>
 </svg>
-<div class="card"><b>小蓝鲸</b><span class="pill">闲逛</span><br>逐条笔记：3 篇 · 窗外的雨刚停</div>
+<div class="card"><b>小蓝鲸</b><span class="pill">闲逛</span><br>笔记 3 篇 · 窗外雨刚停
+<div class="btns"><span>写字</span><span>读书</span><span>发呆</span></div></div>
 </div>
-<p class="tip">拖动家具试试 · 位置会记住</p>
+<p class="tip">拖家具试试 · 位置会记住</p>
 <script>
-const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=30, OX=450, OY=120;
+const C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6), U=29, OX=450, OY=170;
 const GX=12, GZ=10;
 const P=(x,y,z)=>[OX+(x-z)*C*U, OY+(x+z)*S*U - y*U];
-const poly=(pts,f,extra="")=>`<polygon points="${pts.map(p=>p.join(",")).join(" ")}" fill="${f}" ${extra}/>`;
+const poly=(pts,f,ex="")=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${f}" ${ex}/>`;
+const line=(a,b,col,w,op=1)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`;
 
 let items=[
- {id:"bed",  x:0.6,z:0.6,w:3,  d:5.5,h:1.4,top:"#5c6f92",l:"#46577a",r:"#3a4a68",kind:"bed"},
- {id:"desk", x:7.6,z:0.6,w:4,  d:2,  h:2.6,top:"#8a6b4a",l:"#70563b",r:"#5e4832",kind:"desk"},
- {id:"shelf",x:10.0,z:0.6,w:1.6,d:1.4,h:5.4,top:"#7a5c40",l:"#644a33",r:"#543e2b",kind:"shelf"},
- {id:"sofa", x:4.3,z:6.6,w:3.2,d:1.8,h:1.8,top:"#4a5a7c",l:"#3a4866",r:"#2f3b55",kind:"sofa"},
- {id:"pot",  x:9.6,z:7.6,w:1.2,d:1.2,h:1.6,top:"#3f6b4f",l:"#335940",r:"#2a4a35",kind:"pot"},
- {id:"table",x:5.4,z:3.4,w:1.6,d:1.6,h:1.0,top:"#6b5a7c",l:"#564a64",r:"#463c52",kind:"table"},
+ {id:"bed",  x:0.4,z:0.5,w:3.2,d:5.4,h:1.3,top:"#8fa3c4",l:"#7186a8",r:"#5f7294",kind:"bed"},
+ {id:"desk", x:7.4,z:0.5,w:4.2,d:2.1,h:2.6,top:"#b98a5c",l:"#9a6f47",r:"#85603d",kind:"desk"},
+ {id:"shelf",x:10.1,z:0.5,w:1.6,d:1.3,h:5.2,top:"#8a6440",l:"#6f5031",r:"#5d4228",kind:"shelf"},
+ {id:"sofa", x:4.2,z:6.6,w:3.4,d:1.9,h:1.7,top:"#7d6fa0",l:"#655a85",r:"#544a70",kind:"sofa"},
+ {id:"pot",  x:9.7,z:7.4,w:1.2,d:1.2,h:1.5,top:"#4d8a5f",l:"#3d6f4c",r:"#325c3f",kind:"pot"},
+ {id:"table",x:5.2,z:3.3,w:1.8,d:1.8,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
 ];
 
 function draw(){
-  const g=document.getElementById("world"); let out="";
-  // 地板
-  out+=poly([P(0,0,0),P(GX,0,0),P(GX,0,GZ),P(0,0,GZ)],"url(#floorG)");
-  for(let i=1;i<GX;i++) out+=`<line x1="${P(i,0,0)[0]}" y1="${P(i,0,0)[1]}" x2="${P(i,0,GZ)[0]}" y2="${P(i,0,GZ)[1]}" stroke="#334055" stroke-width="1"/>`;
-  for(let j=1;j<GZ;j++) out+=`<line x1="${P(0,0,j)[0]}" y1="${P(0,0,j)[1]}" x2="${P(GX,0,j)[0]}" y2="${P(GX,0,j)[1]}" stroke="#334055" stroke-width="1"/>`;
-  // 墙
-  out+=poly([P(0,0,0),P(GX,0,0),P(GX,7,0),P(0,7,0)],"url(#wallL)");
-  out+=poly([P(0,0,0),P(0,0,GZ),P(0,7,GZ),P(0,7,0)],"url(#wallR)");
-  // 窗
-  out+=poly([P(6.4,3,0.05),P(9.4,3,0.05),P(9.4,5.6,0.05),P(6.4,5.6,0.05)],"#101a2c","stroke='#4a6386' stroke-width='3'");
-  out+=`<circle cx="${P(8.6,5.1,0.06)[0]}" cy="${P(8.6,5.1,0.06)[1]}" r="6" fill="#f5edc0"/>`;
+  const g=document.getElementById("world"); let o="";
+  // ---- 地板 ----
+  o+=poly([P(0,0,0),P(GX,0,0),P(GX,0,GZ),P(0,0,GZ)],"url(#floorG)");
+  for(let i=0;i<GX;i++){
+    o+=poly([P(i,0,0),P(i+1,0,0),P(i+1,0,GZ),P(i,0,GZ)], i%2? "#c09668":"#b98d61");
+  }
+  for(let i=1;i<GX;i++) o+=line(P(i,0,0),P(i,0,GZ),"#9c7448",1,.55);
+  for(let j=1;j<GZ;j++) o+=line(P(0,0,j),P(GX,0,j),"#9c7448",1,.55);
 
-  // 按深度排序
+  // ---- 墙 ----
+  o+=poly([P(0,0,0),P(GX,0,0),P(GX,7.2,0),P(0,7.2,0)],"url(#wallBack)");
+  o+=poly([P(0,0,0),P(0,0,GZ),P(0,7.2,GZ),P(0,7.2,0)],"url(#wallLeft)");
+  // 墙裙
+  o+=poly([P(0,0,0),P(GX,0,0),P(GX,1.8,0),P(0,1.8,0)],"#93a88f");
+  o+=poly([P(0,0,0),P(0,0,GZ),P(0,1.8,GZ),P(0,1.8,0)],"#829876");
+
+  // ---- 窗（后墙）----
+  const w1=P(5.6,2.6,0), w2=P(8.6,2.6,0), w3=P(8.6,5.4,0), w4=P(5.6,5.4,0);
+  o+=poly([w1,w2,w3,w4],"url(#winSky)");
+  o+=`<circle cx="${P(8.0,4.9,0)[0].toFixed(1)}" cy="${P(8.0,4.9,0)[1].toFixed(1)}" r="7" fill="#f7ecc0"/>`;
+  for(const [sx,sy] of [[6.0,5.0],[6.6,4.6],[7.2,5.1],[7.5,3.4],[6.3,3.2]])
+    o+=`<circle cx="${P(sx,sy,0)[0].toFixed(1)}" cy="${P(sx,sy,0)[1].toFixed(1)}" r="1.4" fill="#d8e6ff"/>`;
+  o+=poly([w1,w2,w3,w4],"none","stroke='#c9756a' stroke-width='6'");
+  o+=line(P(7.1,2.6,0),P(7.1,5.4,0),"#c9756a",3);
+  o+=line(P(5.6,4.0,0),P(8.6,4.0,0),"#c9756a",3);
+  // 窗帘
+  o+=poly([P(5.3,2.4,0),P(5.6,2.4,0),P(5.6,5.6,0),P(5.3,5.6,0)],"#b8605a");
+  o+=poly([P(8.6,2.4,0),P(8.9,2.4,0),P(8.9,5.6,0),P(8.6,5.6,0)],"#b8605a");
+
+  // ---- 挂画 + 挂钟 + 串灯 ----
+  o+=poly([P(9.4,4.6,0),P(10.9,4.6,0),P(10.9,6.2,0),P(9.4,6.2,0)],"#2a4f74","stroke='#e6dcc8' stroke-width='4'");
+  o+=`<ellipse cx="${P(10.15,5.35,0)[0]}" cy="${P(10.15,5.35,0)[1]}" rx="8" ry="5" fill="#9fd0e6"/>`;
+  // 钟
+  const cc=P(3.4,5.6,0);
+  o+=`<circle cx="${cc[0]}" cy="${cc[1]}" r="15" fill="#f5f1e6" stroke="#c9756a" stroke-width="3"/>`;
+  o+=line(cc,[cc[0],cc[1]-9],"#5a4a3a",2)+line(cc,[cc[0]+6,cc[1]+2],"#5a4a3a",2);
+  // 串灯
+  for(let i=0;i<=12;i++){
+    const t=i/12, sx=3.0+t*8.4, sy=6.9-0.9*Math.sin(t*Math.PI);
+    const p=P(sx,sy,0);
+    o+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="#ffe9a8" opacity=".95"/>`;
+    o+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="#ffdf94" opacity=".18"/>`;
+  }
+
+  // ---- 地毯 ----
+  const rc=P(6,0.01,5.6);
+  o+=`<ellipse cx="${rc[0]}" cy="${rc[1]}" rx="86" ry="44" fill="#d8c7b0" opacity=".35"/>`;
+  o+=`<ellipse cx="${rc[0]}" cy="${rc[1]}" rx="64" ry="32" fill="#c9b49a" opacity=".45"/>`;
+
+  // ---- 家具（按深度排序）----
   items.slice().sort((a,b)=>(a.x+a.z)-(b.x+b.z)).forEach(it=>{
     const {x,z,w,d,h,top,l,r}=it;
-    out+=`<g class="item" data-id="${it.id}">`;
-    out+=poly([P(x,h,z),P(x+w,h,z),P(x+w,h,z+d),P(x,h,z+d)],top);
-    out+=poly([P(x,0,z+d),P(x+w,0,z+d),P(x+w,h,z+d),P(x,h,z+d)],l);
-    out+=poly([P(x+w,0,z),P(x+w,0,z+d),P(x+w,h,z+d),P(x+w,h,z)],r);
+    o+=`<g class="item" data-id="${it.id}">`;
+    o+=poly([P(x,h,z),P(x+w,h,z),P(x+w,h,z+d),P(x,h,z+d)],top);
+    o+=poly([P(x,0,z+d),P(x+w,0,z+d),P(x+w,h,z+d),P(x,h,z+d)],l);
+    o+=poly([P(x+w,0,z),P(x+w,0,z+d),P(x+w,h,z+d),P(x+w,h,z)],r);
     if(it.kind==="bed"){
-      out+=poly([P(x+0.2,h+0.05,z+0.6),P(x+w-0.2,h+0.05,z+0.6),P(x+w-0.2,h+0.05,z+d-0.3),P(x+0.2,h+0.05,z+d-0.3)],"#7d93b8");
-      out+=poly([P(x+0.3,h+0.1,z+0.7),P(x+w-0.3,h+0.1,z+0.7),P(x+w-0.3,h+0.1,z+1.8),P(x+0.3,h+0.1,z+1.8)],"#cfd9ea");
+      o+=poly([P(x+0.15,h+0.06,z+0.4),P(x+w-0.15,h+0.06,z+0.4),P(x+w-0.15,h+0.06,z+d-0.4),P(x+0.15,h+0.06,z+d-0.4)],"#b9cbe4");
+      o+=poly([P(x+0.25,h+0.14,z+1.6),P(x+w-0.25,h+0.14,z+1.6),P(x+w-0.25,h+0.14,z+d-0.5),P(x+0.25,h+0.14,z+d-0.5)],"#d6e2f2");
+      o+=poly([P(x+0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+0.5),P(x+w-0.35,h+0.3,z+1.5),P(x+0.35,h+0.3,z+1.5)],"#fbfcff");
     }
     if(it.kind==="desk"){
-      out+=`<rect x="${P(x+1.4,h+0.9,z+0.9)[0]}" y="${P(x+1.4,h+0.9,z+0.9)[1]}" width="34" height="22" fill="#16202f" stroke="#4a6386"/>`;
+      const s=P(x+1.3,h+0.6,z+0.8);
+      o+=`<rect x="${s[0]}" y="${s[1]-24}" width="42" height="26" rx="3" fill="#16202f" stroke="#4d6a92" stroke-width="2"/>`;
+      o+=`<rect x="${s[0]+5}" y="${s[1]-19}" width="32" height="16" fill="#2c5c95"/>`;
+      o+=`<rect x="${s[0]-12}" y="${s[1]+2}" width="60" height="4" rx="2" fill="#6d5236"/>`;
+      // 杯子
+      o+=`<rect x="${s[0]+52}" y="${s[1]-8}" width="9" height="11" rx="2" fill="#e8e2d4"/>`;
     }
     if(it.kind==="shelf"){
-      const cols=["#c96a5e","#e8c56a","#6f9ac8","#8fbc86","#c49ac0","#d9a35f"];
+      const cols=["#c25a52","#e6c264","#6f96c4","#86b07e","#bd92bd","#d39a5a"];
       for(let k=0;k<3;k++){
-        const yy=it.h*(0.18+k*0.27);
-        // 隔板
-        out+=poly([P(x+0.05,yy,z+0.05),P(x+w-0.05,yy,z+0.05),P(x+w-0.05,yy-0.08,z+0.05),P(x+0.05,yy-0.08,z+0.05)],"#a98457");
-        // 书脊
-        for(let b=0;b<5;b++){
-          const bx=x+0.12+b*((w-0.24)/5), bh=0.55+((k+b)%2)*0.15;
-          out+=poly([P(bx,yy-0.08,z+0.06),P(bx+(w-0.24)/5-0.04,yy-0.08,z+0.06),
-                     P(bx+(w-0.24)/5-0.04,yy-0.08+bh,z+0.06),P(bx,yy-0.08+bh,z+0.06)],cols[(k*2+b)%6]);
+        const yy=h*(0.16+k*0.28);
+        o+=poly([P(x+0.06,yy,z+0.06),P(x+w-0.06,yy,z+0.06),P(x+w-0.06,yy-0.1,z+0.06),P(x+0.06,yy-0.1,z+0.06)],"#c39b68");
+        for(let b=0;b<4;b++){
+          const bx=x+0.14+b*((w-0.28)/4), bw=(w-0.28)/4-0.05, bh=0.5+((k+b)%2)*0.16;
+          o+=poly([P(bx,yy-0.1,z+0.07),P(bx+bw,yy-0.1,z+0.07),P(bx+bw,yy-0.1+bh,z+0.07),P(bx,yy-0.1+bh,z+0.07)],cols[(k*2+b)%6]);
         }
       }
+      // 顶上小地球仪
+      const gg=P(x+w/2,h+0.5,z+d/2);
+      o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
+    }
+    if(it.kind==="sofa"){
+      o+=poly([P(x,h+0.5,z),P(x+w,h+0.5,z),P(x+w,h+0.5,z+0.5),P(x,h+0.5,z+0.5)],"#8b7cb0");
+      const c1=P(x+0.7,h+0.6,z+0.9);
+      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]}" rx="10" ry="6" fill="#d9b98c"/>`;
     }
     if(it.kind==="pot"){
-      for(const [dx,dy] of [[0,0.9],[0.5,0.6],[-0.4,0.7]]){
-        out+=`<circle cx="${P(x+0.6+dx,h+dy,z+0.6)[0]}" cy="${P(x+0.6+dx,h+dy,z+0.6)[1]}" r="9" fill="#4f8a63"/>`;
+      for(const [dx,dy] of [[0,0.9],[0.5,0.6],[-0.4,0.7],[0.2,1.3]]){
+        const p=P(x+0.6+dx,h+dy,z+0.6);
+        o+=`<ellipse cx="${p[0]}" cy="${p[1]}" rx="10" ry="7" fill="#4f8a63"/>`;
       }
     }
-    out+=`</g>`;
+    if(it.kind==="table"){
+      const p=P(x+w/2,h+0.25,z+d/2);
+      o+=`<ellipse cx="${p[0]}" cy="${p[1]}" rx="12" ry="7" fill="#e3b56a"/>`;
+    }
+    o+=`</g>`;
   });
 
-  // 小人
-  const [cx,cy]=P(6,0,5);
-  out+=`<ellipse cx="${cx}" cy="${cy+4}" rx="26" ry="10" fill="#000" opacity=".35"/>`;
-  out+=`<g class="me">`;
-  out+=`<path d="M${cx} ${cy-96} q10 18 34 24 q-18 4 -26 -6 q-4 14 -8 18 z" fill="#3f6fa8"/>`; // 尾巴
-  out+=`<path d="M${cx-16} ${cy-96} L${cx+16} ${cy-96} L${cx+22} ${cy} L${cx-22} ${cy} Z" fill="#e6eefc"/>`; // 裙
-  out+=`<circle cx="${cx}" cy="${cy-112}" r="22" fill="#f6dfd0"/>`; // 脸
-  out+=`<path d="M${cx-24} ${cy-112} a24 24 0 0 1 48 0 q-10 -14 -24 -14 q-14 0 -24 14 z" fill="#5f8fc8"/>`; // 刘海
-  out+=`<path d="M${cx-24} ${cy-116} q-6 26 -2 40 q10 -6 8 -34 z" fill="#4d79b4"/>`;
-  out+=`<path d="M${cx+24} ${cy-116} q6 26 2 40 q-10 -6 -8 -34 z" fill="#4d79b4"/>`;
-  out+=`<rect x="${cx-20}" y="${cy-136}" width="40" height="5" rx="2.5" fill="#fbfdff"/>`; // 发带
-  out+=`<circle cx="${cx-8}" cy="${cy-108}" r="2.6" fill="#2c3a52"/><circle cx="${cx+8}" cy="${cy-108}" r="2.6" fill="#2c3a52"/>`;
-  out+=`</g>`;
-  g.innerHTML=out;
+  // ---- 台灯（床边，带光晕）----
+  const lb=P(0.9,0,2.2);
+  o+=`<ellipse cx="${lb[0]}" cy="${lb[1]-10}" rx="90" ry="60" fill="url(#lampGlow)"/>`;
+  o+=line([lb[0],lb[1]],[lb[0],lb[1]-78],"#cfc9bd",4);
+  o+=poly([[lb[0]-22,lb[1]-78],[lb[0]+22,lb[1]-78],[lb[0]+14,lb[1]-102],[lb[0]-14,lb[1]-102]],"#ffe6ac");
+
+  // ---- 小人 ----
+  const [cx,cy]=P(6,0,4.6);
+  o+=`<ellipse cx="${cx}" cy="${cy+3}" rx="30" ry="12" fill="#000" opacity=".28"/>`;
+  o+=`<g class="me">`;
+  // 尾巴
+  o+=`<path d="M${cx+14} ${cy-58} q26 6 30 26 q-16 -6 -22 -16 q-2 14 -8 18 z" fill="#3f6fa8" opacity=".95"/>`;
+  // 裙
+  o+=`<path d="M${cx-15} ${cy-94} L${cx+15} ${cy-94} L${cx+26} ${cy-4} L${cx-26} ${cy-4} Z" fill="#2f4a78"/>`;
+  o+=`<path d="M${cx-15} ${cy-94} L${cx+15} ${cy-94} L${cx+18} ${cy-70} L${cx-18} ${cy-70} Z" fill="#e9f1fc"/>`;
+  // 手
+  o+=`<path d="M${cx-15} ${cy-88} q-12 16 -10 30 l7 2 q0 -16 8 -26 z" fill="#e9f1fc"/>`;
+  o+=`<path d="M${cx+15} ${cy-88} q12 16 10 30 l-7 2 q0 -16 -8 -26 z" fill="#e9f1fc"/>`;
+  // 头
+  o+=`<circle cx="${cx}" cy="${cy-116}" r="20" fill="#f7e2d4"/>`;
+  // 兜帽
+  o+=`<path d="M${cx-24} ${cy-114} a24 24 0 0 1 48 0 q-6 -26 -24 -26 q-18 0 -24 26 z" fill="#3c5f96"/>`;
+  o+=`<path d="M${cx-22} ${cy-124} q-6 26 -2 40 q10 -8 8 -34 z" fill="#32527f"/>`;
+  o+=`<path d="M${cx+22} ${cy-124} q6 26 2 40 q-10 -8 -8 -34 z" fill="#32527f"/>`;
+  // 兔耳
+  o+=`<path d="M${cx-14} ${cy-140} q-2 -20 6 -22 q8 2 4 20 z" fill="#3c5f96"/>`;
+  o+=`<path d="M${cx+14} ${cy-140} q2 -20 -6 -22 q-8 2 -4 20 z" fill="#3c5f96"/>`;
+  // 眼睛
+  o+=`<ellipse cx="${cx-7}" cy="${cy-112}" rx="3" ry="4.2" fill="#2b3a52"/>`;
+  o+=`<ellipse cx="${cx+7}" cy="${cy-112}" rx="3" ry="4.2" fill="#2b3a52"/>`;
+  o+=`<circle cx="${cx-6}" cy="${cy-114}" r="1.1" fill="#fff"/><circle cx="${cx+8}" cy="${cy-114}" r="1.1" fill="#fff"/>`;
+  // 腮红
+  o+=`<ellipse cx="${cx-11}" cy="${cy-105}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".8"/>`;
+  o+=`<ellipse cx="${cx+11}" cy="${cy-105}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".8"/>`;
+  o+=`</g>`;
+
+  g.innerHTML=o;
 }
 
-// 拖动
-let drag=null;
-const svg=document.getElementById("svg");
-function toGrid(px,py,base){
-  const dx=px-base.sx, dy=py-base.sy;
-  const a=dx/(C*U), b=dy/(S*U);
-  const x=base.x+(a+b)/2, z=base.z+(b-a)/2;
-  return [Math.round(x*2)/2, Math.round(z*2)/2];
-}
+let drag=null; const svg=document.getElementById("svg");
 function pt(e){const r=svg.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
-  return [ (t.clientX-r.left)/r.width*900, (t.clientY-r.top)/r.height*640 ];}
-
-svg.addEventListener("pointerdown",e=>{
-  const g=e.target.closest(".item"); if(!g)return;
-  const id=g.dataset.id; const it=items.find(i=>i.id===id);
-  const [px,py]=pt(e);
-  drag={it, sx:px, sy:py, x:it.x, z:it.z}; e.preventDefault();
-});
-window.addEventListener("pointermove",e=>{
-  if(!drag)return; const [px,py]=pt(e);
+  return [(t.clientX-r.left)/r.width*900,(t.clientY-r.top)/r.height*660];}
+function toGrid(px,py,b){const dx=px-b.sx, dy=py-b.sy;
+  const a=dx/(C*U), bb=dy/(S*U);
+  return [b.x+(a+bb)/2, b.z+(bb-a)/2];}
+svg.addEventListener("pointerdown",e=>{const g=e.target.closest(".item"); if(!g)return;
+  const it=items.find(i=>i.id===g.dataset.id); const [px,py]=pt(e);
+  drag={it,sx:px,sy:py,x:it.x,z:it.z}; e.preventDefault();});
+window.addEventListener("pointermove",e=>{ if(!drag)return; const [px,py]=pt(e);
   const [nx,nz]=toGrid(px,py,{sx:drag.sx,sy:drag.sy,x:drag.x,z:drag.z});
-  drag.it.x=Math.max(0,Math.min(GX-drag.it.w,nx));
-  drag.it.z=Math.max(0,Math.min(GZ-drag.it.d,nz));
-  draw();
-});
-window.addEventListener("pointerup",()=>{ if(drag){ save(); drag=null; } });
-
-function save(){ try{ localStorage.setItem("room_v1", JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z})))); }catch(e){} }
-function load(){ try{ const s=JSON.parse(localStorage.getItem("room_v1")||"null");
-  if(s) s.forEach(o=>{ const it=items.find(i=>i.id===o.id); if(it){it.x=o.x; it.z=o.z;} }); }catch(e){} }
-load(); draw();
+  drag.it.x=Math.max(0,Math.min(GX-drag.it.w,Math.round(nx*2)/2));
+  drag.it.z=Math.max(0,Math.min(GZ-drag.it.d,Math.round(nz*2)/2));
+  draw();});
+window.addEventListener("pointerup",()=>{ if(drag){try{localStorage.setItem("room_v2",JSON.stringify(items.map(i=>({id:i.id,x:i.x,z:i.z}))));}catch(e){} drag=null;}});
+try{const s=JSON.parse(localStorage.getItem("room_v2")||"null");
+  if(s)s.forEach(o=>{const it=items.find(i=>i.id===o.id); if(it){it.x=o.x;it.z=o.z;}});}catch(e){}
+draw();
 </script></body></html>
