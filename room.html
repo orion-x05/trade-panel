@@ -273,20 +273,20 @@ function draw(){
     if(it.kind==="sofa"){
       const C1="#8f9ab5", C2="#77839e", C3="#5f6b85";
       const S1="#aab4cd", S2="#919db8", S3="#78849f";
-      const bh=1.9, sh=0.85;
+      const bh=1.9, sh=0.85, bk=0.44;
+      // 靠背在近侧（背朝外，人面朝屋里）
+      o+=svgBox(x,z+d-bk,w,bk,bh,C1,C2,C3);
       // 底座
-      o+=svgBox(x,z,w,d,sh*0.6,C1,C2,C3);
-      // 靠背（远侧 z 小的一边）
-      o+=svgBox(x,z+0.05,w,0.42,bh,C1,C2,C3);
-      // 扶手
-      o+=svgBox(x+0.03,z+0.42,0.34,d-0.45,sh+0.25,C1,C2,C3);
-      o+=svgBox(x+w-0.37,z+0.42,0.34,d-0.45,sh+0.25,C1,C2,C3);
+      o+=svgBox(x,z,w,d-bk,sh*0.6,C1,C2,C3);
+      // 两侧扶手
+      o+=svgBox(x,z,0.34,d-bk,sh+0.25,C1,C2,C3);
+      o+=svgBox(x+w-0.34,z,0.34,d-bk,sh+0.25,C1,C2,C3);
       // 坐垫
-      const cw=(w-0.74-0.12)/2;
-      o+=svgBox(x+0.4,z+0.47,cw,d-0.55,sh*0.55,S1,S2,S3);
-      o+=svgBox(x+0.4+cw+0.12,z+0.47,cw,d-0.55,sh*0.55,S1,S2,S3);
-      // 抱枕
-      const pp=P(x+w-1.0,sh+0.15,z+0.75);
+      const cw=(w-0.68-0.12)/2;
+      o+=svgBox(x+0.4,z+0.08,cw,d-bk-0.16,sh*0.55,S1,S2,S3);
+      o+=svgBox(x+0.4+cw+0.12,z+0.08,cw,d-bk-0.16,sh*0.55,S1,S2,S3);
+      // 抱枕（靠在背上）
+      const pp=P(x+0.9,sh+0.18,z+d-bk-0.25);
       o+=`<ellipse cx="${pp[0]}" cy="${pp[1]}" rx="8" ry="5.5" fill="#d9b98c"/>`;
       o+=`<ellipse cx="${pp[0]}" cy="${pp[1]-1}" rx="5.5" ry="3.2" fill="#e8d0a8"/>`;
     }
