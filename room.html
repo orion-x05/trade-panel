@@ -136,6 +136,12 @@ let items=[
  {id:"table",x:5.2,z:3.3,w:1.8,d:1.8,h:0.9,top:"#c9a05f",l:"#a9824a",r:"#8f6d3d",kind:"table"},
 ];
 
+function svgBox(x,z,w,d,ht,top,l,r){
+  return poly([P(x,ht,z),P(x+w,ht,z),P(x+w,ht,z+d),P(x,ht,z+d)],top)
+       + poly([P(x,0,z+d),P(x+w,0,z+d),P(x+w,ht,z+d),P(x,ht,z+d)],l)
+       + poly([P(x+w,0,z),P(x+w,0,z+d),P(x+w,ht,z+d),P(x+w,ht,z)],r);
+}
+
 function draw(){
   const g=document.getElementById("world"); let o="";
   // ---- 地板 ----
@@ -239,19 +245,18 @@ function draw(){
       o+=`<circle cx="${gg[0]}" cy="${gg[1]}" r="5" fill="#79b0d6"/>`;
     }
     if(it.kind==="sofa"){
-      const col=(a)=>a;
-      // 靠背（后排抬高）
-      o+=poly([P(x,h+1.0,z+0.1),P(x+w,h+1.0,z+0.1),P(x+w,h+1.0,z+0.55),P(x,h+1.0,z+0.55)],"#8d97b2");
-      o+=poly([P(x,h,z+0.55),P(x+w,h,z+0.55),P(x+w,h+1.0,z+0.55),P(x,h+1.0,z+0.55)],"#7b86a2");
-      // 座垫
-      o+=poly([P(x+0.35,h+0.35,z+0.55),P(x+w-0.35,h+0.35,z+0.55),P(x+w-0.35,h+0.35,z+d-0.25),P(x+0.35,h+0.35,z+d-0.25)],"#a3adc6");
-      // 扶手（两侧小块）
-      o+=poly([P(x,h+0.7,z+0.55),P(x+0.35,h+0.7,z+0.55),P(x+0.35,h+0.7,z+d-0.25),P(x,h+0.7,z+d-0.25)],"#98a3bd");
-      o+=poly([P(x+w-0.35,h+0.7,z+0.55),P(x+w,h+0.7,z+0.55),P(x+w,h+0.7,z+d-0.25),P(x+w-0.35,h+0.7,z+d-0.25)],"#98a3bd");
-      // 抱枕
-      const c1=P(x+w-0.9,h+0.55,z+0.95);
-      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]}" rx="9" ry="6" fill="#d9b98c"/>`;
-      o+=`<ellipse cx="${c1[0]}" cy="${c1[1]-1}" rx="6" ry="3.4" fill="#e6cba4"/>`;
+      const C1="#8f9ab5", C2="#77839e", C3="#5f6b85";   // 面/前/侧
+      const S1="#a6b0c9", S2="#8d99b3", S3="#74809b";   // 座垫
+      // 底座
+      o+=svgBox(x+0.05,z+0.05,w-0.1,d-0.1,h*0.55,C1,C2,C3);
+      // 靠背（后侧，抬高）
+      o+=svgBox(x+0.05,z+0.05,w-0.1,d*0.28,h*1.6,C1,C2,C3);
+      // 左右扶手
+      o+=svgBox(x+0.05,z+d*0.28,0.34,d*0.66,h*0.95,C1,C2,C3);
+      o+=svgBox(x+w-0.39,z+d*0.28,0.34,d*0.66,h*0.95,C1,C2,C3);
+      // 座垫（两块，略高于底座）
+      o+=svgBox(x+0.42,z+d*0.32,(w-0.9)/2,d*0.62,h*0.60,S1,S2,S3);
+      o+=svgBox(x+0.42+(w-0.9)/2+0.06,z+d*0.32,(w-0.9)/2,d*0.62,h*0.60,S1,S2,S3);
     }
     if(it.kind==="pot"){
       for(const [dx,dy] of [[0,0.9],[0.5,0.6],[-0.4,0.7],[0.2,1.3]]){
