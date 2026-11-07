@@ -75,9 +75,17 @@ function draw(){
       out+=`<rect x="${P(x+1.4,h+0.9,z+0.9)[0]}" y="${P(x+1.4,h+0.9,z+0.9)[1]}" width="34" height="22" fill="#16202f" stroke="#4a6386"/>`;
     }
     if(it.kind==="shelf"){
+      const cols=["#c96a5e","#e8c56a","#6f9ac8","#8fbc86","#c49ac0","#d9a35f"];
       for(let k=0;k<3;k++){
-        const yy=it.h*(0.25+k*0.25);
-        out+=poly([P(x+0.1,yy,z+0.1),P(x+w-0.1,yy,z+0.1),P(x+w-0.1,yy+0.1,z+0.1),P(x+0.1,yy+0.1,z+0.1)],"#c9d6ea");
+        const yy=it.h*(0.18+k*0.27);
+        // 隔板
+        out+=poly([P(x+0.05,yy,z+0.05),P(x+w-0.05,yy,z+0.05),P(x+w-0.05,yy-0.08,z+0.05),P(x+0.05,yy-0.08,z+0.05)],"#a98457");
+        // 书脊
+        for(let b=0;b<5;b++){
+          const bx=x+0.12+b*((w-0.24)/5), bh=0.55+((k+b)%2)*0.15;
+          out+=poly([P(bx,yy-0.08,z+0.06),P(bx+(w-0.24)/5-0.04,yy-0.08,z+0.06),
+                     P(bx+(w-0.24)/5-0.04,yy-0.08+bh,z+0.06),P(bx,yy-0.08+bh,z+0.06)],cols[(k*2+b)%6]);
+        }
       }
     }
     if(it.kind==="pot"){
