@@ -44,66 +44,67 @@ const poly=(pts,f,ex="")=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1
 const line=(a,b,col,w,op=1)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`;
 
 const ME={x:6,z:4.6};
-function drawMe(o){
+function drawMe(){
+  let s="";
   const [cx,cy]=P(ME.x,0,ME.z);
   // 地面影子
-  o+=`<ellipse cx="${cx}" cy="${cy+3}" rx="30" ry="12" fill="#000" opacity=".28"/>`;
-  o+=`<g class="me">`;
+  s+=`<ellipse cx="${cx}" cy="${cy+3}" rx="30" ry="12" fill="#000" opacity=".28"/>`;
+  s+=`<g class="me">`;
   // 尾巴（带纹路）
-  o+=`<path d="M${cx+13} ${cy-60} q28 8 32 28 q-17 -6 -24 -17 q-2 15 -9 19 z" fill="#3f6fa8"/>`;
-  o+=`<path d="M${cx+20} ${cy-52} q10 6 14 14" stroke="#8fc0ea" stroke-width="2" fill="none" opacity=".7"/>`;
-  o+=`<path d="M${cx+17} ${cy-46} q9 6 12 12" stroke="#8fc0ea" stroke-width="2" fill="none" opacity=".5"/>`;
+  s+=`<path d="M${cx+13} ${cy-60} q28 8 32 28 q-17 -6 -24 -17 q-2 15 -9 19 z" fill="#3f6fa8"/>`;
+  s+=`<path d="M${cx+20} ${cy-52} q10 6 14 14" stroke="#8fc0ea" stroke-width="2" fill="none" opacity=".7"/>`;
+  s+=`<path d="M${cx+17} ${cy-46} q9 6 12 12" stroke="#8fc0ea" stroke-width="2" fill="none" opacity=".5"/>`;
   // 腿 + 鞋
-  o+=`<rect x="${cx-9}" y="${cy-16}" width="6" height="14" rx="3" fill="#f7e2d4"/>`;
-  o+=`<rect x="${cx+3}" y="${cy-16}" width="6" height="14" rx="3" fill="#f7e2d4"/>`;
-  o+=`<ellipse cx="${cx-6}" cy="${cy-2}" rx="7" ry="4" fill="#2b3a52"/>`;
-  o+=`<ellipse cx="${cx+6}" cy="${cy-2}" rx="7" ry="4" fill="#2b3a52"/>`;
+  s+=`<rect x="${cx-9}" y="${cy-16}" width="6" height="14" rx="3" fill="#f7e2d4"/>`;
+  s+=`<rect x="${cx+3}" y="${cy-16}" width="6" height="14" rx="3" fill="#f7e2d4"/>`;
+  s+=`<ellipse cx="${cx-6}" cy="${cy-2}" rx="7" ry="4" fill="#2b3a52"/>`;
+  s+=`<ellipse cx="${cx+6}" cy="${cy-2}" rx="7" ry="4" fill="#2b3a52"/>`;
   // 裙子
-  o+=`<path d="M${cx-15} ${cy-94} L${cx+15} ${cy-94} L${cx+27} ${cy-12} L${cx-27} ${cy-12} Z" fill="#2f4a78"/>`;
-  o+=`<path d="M${cx-4} ${cy-92} L${cx+4} ${cy-92} L${cx+9} ${cy-14} L${cx-9} ${cy-14} Z" fill="#eef4fd" opacity=".92"/>`; // 围裙
-  o+=`<path d="M${cx-27} ${cy-13} q27 5 54 0" stroke="#e6edf8" stroke-width="2" fill="none" opacity=".8"/>`; // 裙摆滚边
+  s+=`<path d="M${cx-15} ${cy-94} L${cx+15} ${cy-94} L${cx+27} ${cy-12} L${cx-27} ${cy-12} Z" fill="#2f4a78"/>`;
+  s+=`<path d="M${cx-4} ${cy-92} L${cx+4} ${cy-92} L${cx+9} ${cy-14} L${cx-9} ${cy-14} Z" fill="#eef4fd" opacity=".92"/>`; // 围裙
+  s+=`<path d="M${cx-27} ${cy-13} q27 5 54 0" stroke="#e6edf8" stroke-width="2" fill="none" opacity=".8"/>`; // 裙摆滚边
   // 腰间蝴蝶结
-  o+=`<path d="M${cx-10} ${cy-78} q-8 -6 -12 2 q8 4 12 0 z" fill="#dbe7f7"/>`;
-  o+=`<path d="M${cx+10} ${cy-78} q8 -6 12 2 q-8 4 -12 0 z" fill="#dbe7f7"/>`;
-  o+=`<circle cx="${cx}" cy="${cy-77}" r="3" fill="#c3d4ec"/>`;
+  s+=`<path d="M${cx-10} ${cy-78} q-8 -6 -12 2 q8 4 12 0 z" fill="#dbe7f7"/>`;
+  s+=`<path d="M${cx+10} ${cy-78} q8 -6 12 2 q-8 4 -12 0 z" fill="#dbe7f7"/>`;
+  s+=`<circle cx="${cx}" cy="${cy-77}" r="3" fill="#c3d4ec"/>`;
   // 袖子
-  o+=`<path d="M${cx-15} ${cy-90} q-13 14 -11 27 l8 2 q-1 -15 8 -24 z" fill="#e9f1fc"/>`;
-  o+=`<path d="M${cx+15} ${cy-90} q13 14 11 27 l-8 2 q1 -15 -8 -24 z" fill="#e9f1fc"/>`;
-  o+=`<ellipse cx="${cx-23}" cy="${cy-61}" rx="5" ry="4" fill="#f7e2d4"/>`;
-  o+=`<ellipse cx="${cx+23}" cy="${cy-61}" rx="5" ry="4" fill="#f7e2d4"/>`;
+  s+=`<path d="M${cx-15} ${cy-90} q-13 14 -11 27 l8 2 q-1 -15 8 -24 z" fill="#e9f1fc"/>`;
+  s+=`<path d="M${cx+15} ${cy-90} q13 14 11 27 l-8 2 q1 -15 -8 -24 z" fill="#e9f1fc"/>`;
+  s+=`<ellipse cx="${cx-23}" cy="${cy-61}" rx="5" ry="4" fill="#f7e2d4"/>`;
+  s+=`<ellipse cx="${cx+23}" cy="${cy-61}" rx="5" ry="4" fill="#f7e2d4"/>`;
   // 小鲸鱼挂饰（腰侧）
-  o+=`<ellipse cx="${cx+22}" cy="${cy-40}" rx="6" ry="4" fill="#5f96cf"/>`;
-  o+=`<path d="M${cx+28} ${cy-42} l5 -3 l-1 6 z" fill="#5f96cf"/>`;
-  o+=`<circle cx="${cx+20}" cy="${cy-41}" r=".9" fill="#fff"/>`;
+  s+=`<ellipse cx="${cx+22}" cy="${cy-40}" rx="6" ry="4" fill="#5f96cf"/>`;
+  s+=`<path d="M${cx+28} ${cy-42} l5 -3 l-1 6 z" fill="#5f96cf"/>`;
+  s+=`<circle cx="${cx+20}" cy="${cy-41}" r=".9" fill="#fff"/>`;
   // 脖子
-  o+=`<rect x="${cx-5}" y="${cy-100}" width="10" height="8" fill="#f0d6c6"/>`;
+  s+=`<rect x="${cx-5}" y="${cy-100}" width="10" height="8" fill="#f0d6c6"/>`;
   // 头
-  o+=`<circle cx="${cx}" cy="${cy-118}" r="20" fill="#f7e2d4"/>`;
+  s+=`<circle cx="${cx}" cy="${cy-118}" r="20" fill="#f7e2d4"/>`;
   // 兜帽
-  o+=`<path d="M${cx-25} ${cy-116} a25 25 0 0 1 50 0 q-7 -28 -25 -28 q-18 0 -25 28 z" fill="#3c5f96"/>`;
-  o+=`<path d="M${cx-25} ${cy-116} q6 -22 25 -22 q19 0 25 22" stroke="#5c82b8" stroke-width="2" fill="none" opacity=".85"/>`;
+  s+=`<path d="M${cx-25} ${cy-116} a25 25 0 0 1 50 0 q-7 -28 -25 -28 q-18 0 -25 28 z" fill="#3c5f96"/>`;
+  s+=`<path d="M${cx-25} ${cy-116} q6 -22 25 -22 q19 0 25 22" stroke="#5c82b8" stroke-width="2" fill="none" opacity=".85"/>`;
   // 两侧长发
-  o+=`<path d="M${cx-23} ${cy-126} q-7 28 -3 44 q11 -9 9 -36 z" fill="#32527f"/>`;
-  o+=`<path d="M${cx+23} ${cy-126} q7 28 3 44 q-11 -9 -9 -36 z" fill="#32527f"/>`;
+  s+=`<path d="M${cx-23} ${cy-126} q-7 28 -3 44 q11 -9 9 -36 z" fill="#32527f"/>`;
+  s+=`<path d="M${cx+23} ${cy-126} q7 28 3 44 q-11 -9 -9 -36 z" fill="#32527f"/>`;
   // 兔耳（内耳）
-  o+=`<path d="M${cx-13} ${cy-142} q-2 -19 6 -21 q7 2 4 19 z" fill="#3c5f96"/>`;
-  o+=`<path d="M${cx-11} ${cy-140} q-1 -13 4 -15 q4 2 2 14 z" fill="#c8dcf4" opacity=".85"/>`;
-  o+=`<path d="M${cx+13} ${cy-142} q2 -19 -6 -21 q-7 2 -4 19 z" fill="#3c5f96"/>`;
-  o+=`<path d="M${cx+11} ${cy-140} q1 -13 -4 -15 q-4 2 -2 14 z" fill="#c8dcf4" opacity=".85"/>`;
+  s+=`<path d="M${cx-13} ${cy-142} q-2 -19 6 -21 q7 2 4 19 z" fill="#3c5f96"/>`;
+  s+=`<path d="M${cx-11} ${cy-140} q-1 -13 4 -15 q4 2 2 14 z" fill="#c8dcf4" opacity=".85"/>`;
+  s+=`<path d="M${cx+13} ${cy-142} q2 -19 -6 -21 q-7 2 -4 19 z" fill="#3c5f96"/>`;
+  s+=`<path d="M${cx+11} ${cy-140} q1 -13 -4 -15 q-4 2 -2 14 z" fill="#c8dcf4" opacity=".85"/>`;
   // 呆毛
-  o+=`<path d="M${cx+1} ${cy-144} q6 -10 12 -6 q-6 2 -8 8 z" fill="#3c5f96"/>`;
+  s+=`<path d="M${cx+1} ${cy-144} q6 -10 12 -6 q-6 2 -8 8 z" fill="#3c5f96"/>`;
   // 刘海
-  o+=`<path d="M${cx-19} ${cy-118} q4 -12 19 -12 q15 0 19 12 q-10 -6 -19 -6 q-9 0 -19 6 z" fill="#3c5f96"/>`;
+  s+=`<path d="M${cx-19} ${cy-118} q4 -12 19 -12 q15 0 19 12 q-10 -6 -19 -6 q-9 0 -19 6 z" fill="#3c5f96"/>`;
   // 眼睛（带高光）
-  o+=`<ellipse cx="${cx-7}" cy="${cy-113}" rx="3.2" ry="4.4" fill="#24334c"/>`;
-  o+=`<ellipse cx="${cx+7}" cy="${cy-113}" rx="3.2" ry="4.4" fill="#24334c"/>`;
-  o+=`<circle cx="${cx-6}" cy="${cy-115}" r="1.2" fill="#fff"/>`;
-  o+=`<circle cx="${cx+8}" cy="${cy-115}" r="1.2" fill="#fff"/>`;
+  s+=`<ellipse cx="${cx-7}" cy="${cy-113}" rx="3.2" ry="4.4" fill="#24334c"/>`;
+  s+=`<ellipse cx="${cx+7}" cy="${cy-113}" rx="3.2" ry="4.4" fill="#24334c"/>`;
+  s+=`<circle cx="${cx-6}" cy="${cy-115}" r="1.2" fill="#fff"/>`;
+  s+=`<circle cx="${cx+8}" cy="${cy-115}" r="1.2" fill="#fff"/>`;
   // 腮红 + 嘴
-  o+=`<ellipse cx="${cx-11}" cy="${cy-106}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".75"/>`;
-  o+=`<ellipse cx="${cx+11}" cy="${cy-106}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".75"/>`;
-  o+=`<path d="M${cx-2} ${cy-104} q2 2 4 0" stroke="#c98a80" stroke-width="1.4" fill="none"/>`;
-  o+=`</g>`;
+  s+=`<ellipse cx="${cx-11}" cy="${cy-106}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".75"/>`;
+  s+=`<ellipse cx="${cx+11}" cy="${cy-106}" rx="4" ry="2.4" fill="#f0b6ac" opacity=".75"/>`;
+  s+=`<path d="M${cx-2} ${cy-104} q2 2 4 0" stroke="#c98a80" stroke-width="1.4" fill="none"/>`;
+  s+=`</g>`;
 }
 
 let items=[
@@ -243,7 +244,7 @@ function draw(){
     o+=line([lb[0],lb[1]],[lb[0],lb[1]-78],"#cfc9bd",4);
     o+=poly([[lb[0]-22,lb[1]-78],[lb[0]+22,lb[1]-78],[lb[0]+14,lb[1]-102],[lb[0]-14,lb[1]-102]],"#ffe6ac");
   }});
-  objs.push({d: ME.x+ME.z, fn: ()=>{ drawMe(o); }});
+  objs.push({d: ME.x+ME.z, fn: ()=>{ o+=drawMe(); }});
   objs.sort((a,b)=>a.d-b.d).forEach(x=>x.fn());
 
   g.innerHTML=o;
