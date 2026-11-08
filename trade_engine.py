@@ -3199,6 +3199,73 @@ def build_premium(data):
     return out
 
 
+def _batch_quotes_raw(codes):
+    """批量取报价原始字段：今开、昨收、现价、成交量(手)、量比。"""
+    out = {}
+    codes = [c for c in codes if c][:60]
+    if not codes:
+        return out
+    try:
+        q = ",".join(("sh" if str(c).startswith("6") else "sz") + str(c) for c in codes)
+        r = requests.get("https://qt.gtimg.cn/q=" + q, timeout=10)
+        r.encoding = "gbk"
+        for line in r.text.strip().split(";"):
+            if "~" not in line:
+                continue
+            a = line.split("~")
+            if len(a) < 50:
+                continue
+            try:
+                code = a[0].split("_")[-1][2:]
+                out[code] = {"name": a[1], "open": float(a[5] or 0), "prev": float(a[4] or 0),
+                             "price": float(a[3] or 0), "vol": float(a[36] or 0),
+                             "lb": float(a[49] or 0) if a[49] else None}
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return out
+
+
+def build_auction(data):
+    """【竞价异动】集合竞价（9:25）刚结束时，谁的开盘竞价最强。
+
+    口径与诚实边界：
+      - 竞价涨幅 = 今开 / 昨收 − 1
+      - 竞价量比 = 9:25 时成交量 ÷ 5 日均量（近似；若运行时间晚于 9:40，
+        成交量已含早盘，只能标注为 estimated 而不是真实竞价量）
+      - 只有 9:25–9:40 之间的运行才拿得到接近真实的竞价量，其余时段标 estimated
+    """
+    hour, minute = cn_now().hour, cn_now().minute
+    in_window = (hour == 9 and 25 <= minute <= 40)
+    codes = set(STOCK_POOL)
+    for r in (data.get("score_pool") or {}).get("rows") or []:
+        codes.add(str(r.get("code")))
+    for s in (data.get("limit_decoded") or {}).get("zt_rows") or []:
+        codes.add(str(s.get("code")))
+    quotes = _batch_quotes_raw(list(codes))
+    if not quotes:
+        return None
+    rows = []
+    for code, q in quotes.items():
+        if not q["prev"] or q["open"] <= 0:
+            continue
+        gap = (q["open"] / q["prev"] - 1) * 100
+        rows.append({"code": code, "name": q["name"], "prev": q["prev"], "open": q["open"],
+                     "gap": round(gap, 2), "price": q["price"],
+                     "chg": round((q["price"] / q["prev"] - 1) * 100, 2),
+                     "vol": int(q["vol"])})
+    rows.sort(key=lambda x: -x["gap"])
+    return {
+        "ok": True,
+        "asof": cn_now().strftime("%Y-%m-%d %H:%M"),
+        "status": "available" if in_window else "estimated",
+        "note": "竞价量口径准确" if in_window else "已过竞价窗口，量为盘中累计，仅作参考",
+        "top_gap": rows[:15],
+        "top_low": sorted(rows, key=lambda x: x["gap"])[:10],
+    }
+
+
 def build_env_gate(data):
     """【环境闸】决定今天该不该出手，比选哪只票更重要。
 
@@ -4554,6 +4621,15 @@ def main():
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     data["bull_only"] = bool(BULL_ONLY)
+
+    # 【竞价异动】9:25 之后才有意义；收盘后保留当日最后一次快照
+    try:
+        if cn_now().hour >= 9:
+            _au = build_auction(data)
+            if _au:
+                data["auction"] = _au
+    except Exception as _e:
+        print(f"  ⚠ 竞价异动计算失败：{_e}")
 
     # 【涨停池归档】东财只提供最近一两天的池，历史回测（如"新晋板块·首阴低吸"）
     # 需要每天自己攒。这里按日期存一份精简版：代码/名称/连板/板块，最多留 120 天。
