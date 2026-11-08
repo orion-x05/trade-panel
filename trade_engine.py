@@ -4554,6 +4554,21 @@ def main():
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     data["bull_only"] = bool(BULL_ONLY)
+
+    # 【涨停池归档】东财只提供最近一两天的池，历史回测（如"新晋板块·首阴低吸"）
+    # 需要每天自己攒。这里按日期存一份精简版：代码/名称/连板/板块，最多留 120 天。
+    try:
+        _ld = data.get("limit_decoded") or {}
+        _td = str(_ld.get("trade_date") or "")[:10]
+        _rows = _ld.get("zt_rows") or []
+        if _td and _rows:
+            arc = data.setdefault("zt_archive", {})
+            arc[_td] = [{"c": str(x.get("code")), "n": x.get("name"),
+                         "lb": int(x.get("lbc") or 0), "hy": x.get("hybk") or ""} for x in _rows]
+            for _k in sorted(arc.keys())[:-120]:
+                arc.pop(_k, None)
+    except Exception as _e:
+        print(f"  ⚠ 涨停池归档失败：{_e}")
     if LLM_LOG:
         data["llm_log"] = LLM_LOG[-40:]
     _ld0 = data.get("limit_decoded") or {}
