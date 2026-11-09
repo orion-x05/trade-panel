@@ -3242,7 +3242,7 @@ def _batch_quotes_raw(codes):
     return out
 
 
-def build_auction(data):
+def build_auction_gap(data):
     """【竞价异动】集合竞价（9:25）刚结束时，谁的开盘竞价最强。
 
     口径与诚实边界：
@@ -4641,10 +4641,10 @@ def main():
 
     # 【竞价异动】9:25 之后才有意义；收盘后保留当日最后一次快照
     try:
-        _au = build_auction(data)
+        _au = build_auction_gap(data)
         if _au:
-            data["auction"] = _au
-        print(f"  · 竞价异动写入：{'是' if data.get('auction') else '否'}")
+            data["auction_gap"] = _au          # 与「竞价强度」(data["auction"]) 分开存
+        print(f"  · 竞价异动写入：{'是' if data.get('auction_gap') else '否'}")
     except Exception as _e:
         print(f"  ⚠ 竞价异动计算失败：{_e}")
 
