@@ -3216,7 +3216,7 @@ def _batch_quotes_raw(codes):
             if len(a) < 50:
                 continue
             try:
-                code = a[0].split("_")[-1][2:]
+                code = str(a[2]).strip()          # a[2] 就是纯代码，别从 a[0] 里抠
                 out[code] = {"name": a[1], "open": float(a[5] or 0), "prev": float(a[4] or 0),
                              "price": float(a[3] or 0), "vol": float(a[36] or 0),
                              "lb": float(a[49] or 0) if a[49] else None}
@@ -3224,6 +3224,21 @@ def _batch_quotes_raw(codes):
                 continue
     except Exception:
         pass
+    if not out:                      # 兜底：gtimg 不通就换东财
+        try:
+            secids = ",".join(("1." if str(c).startswith("6") else "0.") + str(c) for c in codes)
+            u = ("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2"
+                 "&fields=f12,f14,f2,f17,f18,f5&secids=" + secids)
+            j = requests.get(u, timeout=10).json()
+            for x in ((j.get("data") or {}).get("diff") or []):
+                try:
+                    out[str(x["f12"])] = {"name": x["f14"], "open": float(x["f17"]),
+                                          "prev": float(x["f18"]), "price": float(x["f2"]),
+                                          "vol": float(x["f5"]) / 100.0, "lb": None}
+                except Exception:
+                    continue
+        except Exception:
+            pass
     return out
 
 
@@ -3244,7 +3259,9 @@ def build_auction(data):
     for s in (data.get("limit_decoded") or {}).get("zt_rows") or []:
         codes.add(str(s.get("code")))
     quotes = _batch_quotes_raw(list(codes))
+    print(f"  · 竞价异动：请求 {len(codes)} 只，拿到 {len(quotes)} 只")
     if not quotes:
+        print("  ⚠ 竞价异动：行情源返回空，本次跳过")
         return None
     rows = []
     for code, q in quotes.items():
