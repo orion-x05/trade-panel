@@ -4641,10 +4641,10 @@ def main():
 
     # 【竞价异动】9:25 之后才有意义；收盘后保留当日最后一次快照
     try:
-        if cn_now().hour >= 9:
-            _au = build_auction(data)
-            if _au:
-                data["auction"] = _au
+        _au = build_auction(data)
+        if _au:
+            data["auction"] = _au
+        print(f"  · 竞价异动写入：{'是' if data.get('auction') else '否'}")
     except Exception as _e:
         print(f"  ⚠ 竞价异动计算失败：{_e}")
 
