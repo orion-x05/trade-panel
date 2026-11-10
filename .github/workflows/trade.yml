@@ -1,5 +1,12 @@
 name: AI交易引擎定时任务
 
+# 同一时刻只跑一个实例。11-10 11:00 出现了三个 dispatch 同时进来（schedule、
+# 手动兜底、另一个触发源撞车），三份并行互相抢 CPU，单次运行从 3 分钟拖到 12 分钟，
+# 数据滞后 50 分钟。加并发组后，后来的排队等前一个跑完，不再并行。
+concurrency:
+  group: trade-engine
+  cancel-in-progress: false
+
 # 交易日（周一至周五）自动运行 + 每周日自动回测调参
 on:
   schedule:
