@@ -2868,14 +2868,27 @@ def compute_sentiment_factor(all_stock_data, data):
 
 
 def _fetch_kline(code, n=140):
-    """拉前复权日 K（腾讯 ifzq），返回 [[date, open, close, high, low, volume], ...]。失败返回 []。"""
+    """拉前复权日 K（腾讯 ifzq），返回 [[date, open, close, high, low, volume], ...]。失败返回 []。
+
+    【重要】腾讯 qfqday/day 的原始列序是 [日期, 收盘, 开盘, 最高, 最低, 成交量]，
+    若直接用 r[1] 当开盘、r[2] 当收盘，整条链路（涨跌幅、MA、ATR、缠论、成本锚、
+    筹码、低吸池显示价）全部建在开盘价上，且开收对调。
+    这里统一重排成 [日期, 开, 收, 高, 低, 量]，下游一律按此口径。
+    """
     sym = ("sh" if str(code).startswith("6") else "sz") + str(code)
     try:
         url = (f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
                f"?param={sym},day,,,{n},qfq")
         j = requests.get(url, timeout=10).json()
         obj = (j.get("data") or {}).get(sym) or {}
-        return obj.get("qfqday") or obj.get("day") or []
+        raw = obj.get("qfqday") or obj.get("day") or []
+        out = []
+        for r in raw:
+            if not r or len(r) < 6:
+                continue
+            # 原始: [d, close, open, high, low, vol] → 目标: [d, open, close, high, low, vol]
+            out.append([r[0], r[2], r[1], r[3], r[4], r[5]])
+        return out
     except Exception:
         return []
 
