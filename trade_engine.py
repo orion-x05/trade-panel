@@ -4164,7 +4164,8 @@ def build_dip_pool(data, limit=24):
             "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
             "board_role": _br.get("role"), "board_leader": _br.get("leader"),
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
-            "price": round(px, 2), "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
+            "price": round(px, 2), "close": round(px, 2),
+            "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
             "chan": chan_analysis([{"d": x["d"], "o": x["o"], "c": x["c"], "h": x["h"], "l": x["l"]} for x in k]),
             "chip": chip_distribution([{"c": x["c"], "h": x["h"], "l": x["l"], "v": x.get("v") or 0} for x in k]),
@@ -4181,6 +4182,26 @@ def build_dip_pool(data, limit=24):
             r["flow"] = _ff.get(str(r["code"]))
     except Exception as _e:
         print(f"  ⚠ 低吸池资金流附加失败：{_e}")
+
+    # 【现价覆盖】看盘时要看的是"现在多少钱"，不是昨天收盘。
+    # close 保留日线收盘（低吸判定、赔率、缠论都用它），price 换成实时价，
+    # chg 同步换成实时涨跌幅（相对昨收）。拿不到行情就退回收盘价并标 live=False。
+    try:
+        _qt = _batch_quotes_raw([r["code"] for r in rows])
+        _live = 0
+        for r in rows:
+            q = _qt.get(str(r["code"]))
+            if not q or not q.get("price") or not q.get("prev"):
+                r["live"] = False
+                continue
+            r["price"] = round(float(q["price"]), 2)
+            r["chg"] = round((float(q["price"]) / float(q["prev"]) - 1) * 100, 2)
+            r["open"] = round(float(q.get("open") or 0), 2) or None
+            r["live"] = True
+            _live += 1
+        print(f"  🎣 低吸池现价覆盖：{_live}/{len(rows)} 取自实时行情")
+    except Exception as _e:
+        print(f"  ⚠ 低吸池现价覆盖失败：{_e}")
 
     rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
                              -((r.get("rr") or {}).get("ratio") or 0)))
