@@ -2870,10 +2870,9 @@ def compute_sentiment_factor(all_stock_data, data):
 def _fetch_kline(code, n=140):
     """拉前复权日 K（腾讯 ifzq），返回 [[date, open, close, high, low, volume], ...]。失败返回 []。
 
-    【重要】腾讯 qfqday/day 的原始列序是 [日期, 收盘, 开盘, 最高, 最低, 成交量]，
-    若直接用 r[1] 当开盘、r[2] 当收盘，整条链路（涨跌幅、MA、ATR、缠论、成本锚、
-    筹码、低吸池显示价）全部建在开盘价上，且开收对调。
-    这里统一重排成 [日期, 开, 收, 高, 低, 量]，下游一律按此口径。
+    【口径确认 2026-11-10】腾讯 qfqday/day 列序为 [日期, 开盘, 收盘, 最高, 最低, 量]，
+    与东财 kline 一致（已用 600229 2026-11-09 开7.06/收6.27 与实时"昨收6.27"三处交叉验证）。
+    早前一度误判为 [日期,收盘,开盘] 并做了对调，已撤回——那会把开收倒过来。
     """
     sym = ("sh" if str(code).startswith("6") else "sz") + str(code)
     try:
@@ -2886,8 +2885,8 @@ def _fetch_kline(code, n=140):
         for r in raw:
             if not r or len(r) < 6:
                 continue
-            # 原始: [d, close, open, high, low, vol] → 目标: [d, open, close, high, low, vol]
-            out.append([r[0], r[2], r[1], r[3], r[4], r[5]])
+            # 原始已是 [d, open, close, high, low, vol]，直接透传（勿再对调）
+            out.append([r[0], r[1], r[2], r[3], r[4], r[5]])
         return out
     except Exception:
         return []
