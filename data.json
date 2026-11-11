@@ -920,7 +920,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-10T23:43:33.543939",
+  "last_update": "2026-11-11T09:02:21.295480",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1331,7 +1331,7 @@
     "active_roles": 3,
     "total_trades": 19,
     "roles_count": 7,
-    "last_update": "2026-11-10T23:32:38.958749"
+    "last_update": "2026-11-10T23:43:33.543939"
   },
   "data_version": 3,
   "theme_history": {
@@ -2030,6 +2030,64 @@
         "n": 4,
         "max_lb": 1
       }
+    },
+    "2026-11-11": {
+      "工业金属": {
+        "n": 2,
+        "max_lb": 7
+      },
+      "一般零售": {
+        "n": 2,
+        "max_lb": 3
+      },
+      "厨卫电器": {
+        "n": 1,
+        "max_lb": 3
+      },
+      "电力": {
+        "n": 1,
+        "max_lb": 3
+      },
+      "铁路公路": {
+        "n": 1,
+        "max_lb": 3
+      },
+      "汽车零部": {
+        "n": 11,
+        "max_lb": 2
+      },
+      "通用设备": {
+        "n": 6,
+        "max_lb": 2
+      },
+      "光学光电": {
+        "n": 6,
+        "max_lb": 2
+      },
+      "光伏设备": {
+        "n": 3,
+        "max_lb": 2
+      },
+      "游戏Ⅱ": {
+        "n": 3,
+        "max_lb": 2
+      },
+      "燃气Ⅱ": {
+        "n": 2,
+        "max_lb": 2
+      },
+      "焦炭Ⅱ": {
+        "n": 1,
+        "max_lb": 2
+      },
+      "工程机械": {
+        "n": 1,
+        "max_lb": 2
+      },
+      "专用设备": {
+        "n": 4,
+        "max_lb": 1
+      }
     }
   },
   "theme_radar": {
@@ -2059,8 +2117,8 @@
         "avg_lb": 4.0,
         "stage": "高潮",
         "emoji": "🔥",
-        "p_n": 1,
-        "delta_n": 1,
+        "p_n": 2,
+        "delta_n": 0,
         "sector_pct": 9.94,
         "sector_limit_count": 2,
         "sector_rank": 1
@@ -2215,8 +2273,8 @@
         "avg_lb": 1.4,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 5,
-        "delta_n": 6,
+        "p_n": 11,
+        "delta_n": 0,
         "sector_pct": 10.01,
         "sector_limit_count": 11,
         "sector_rank": 6
@@ -2269,8 +2327,8 @@
         "avg_lb": 1.7,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 5,
-        "delta_n": 1,
+        "p_n": 6,
+        "delta_n": 0,
         "sector_pct": 11.67,
         "sector_limit_count": 6,
         "sector_rank": 7
@@ -2323,8 +2381,8 @@
         "avg_lb": 1.2,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 6,
+        "p_n": 6,
+        "delta_n": 0,
         "sector_pct": 11.67,
         "sector_limit_count": 6,
         "sector_rank": 8
@@ -2359,8 +2417,8 @@
         "avg_lb": 1.3,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 3,
+        "p_n": 3,
+        "delta_n": 0,
         "sector_pct": 10.01,
         "sector_limit_count": 3,
         "sector_rank": 9
@@ -2395,8 +2453,8 @@
         "avg_lb": 1.7,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 3,
+        "p_n": 3,
+        "delta_n": 0,
         "sector_pct": 10.06,
         "sector_limit_count": 3,
         "sector_rank": 10
@@ -2425,8 +2483,8 @@
         "avg_lb": 1.5,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 2,
+        "p_n": 2,
+        "delta_n": 0,
         "sector_pct": 10.02,
         "sector_limit_count": 2,
         "sector_rank": 11
@@ -2449,8 +2507,8 @@
         "avg_lb": 2.0,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 1,
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 9.94,
         "sector_limit_count": 1,
         "sector_rank": 12
@@ -2473,8 +2531,8 @@
         "avg_lb": 2.0,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 1,
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.0,
         "sector_limit_count": 1,
         "sector_rank": 13
@@ -2515,8 +2573,8 @@
         "avg_lb": 1.0,
         "stage": "持续",
         "emoji": "▶️",
-        "p_n": 0,
-        "delta_n": 4,
+        "p_n": 4,
+        "delta_n": 0,
         "sector_pct": 10.09,
         "sector_limit_count": 4,
         "sector_rank": 14
@@ -2571,18 +2629,18 @@
           "fund": 2.37
         },
         {
-          "name": "泰尔股份",
-          "code": "002347",
-          "lbc": 2,
-          "hybk": "通用设备",
-          "fund": 0.6
-        },
-        {
           "name": "光洋股份",
           "code": "002708",
           "lbc": 2,
           "hybk": "汽车零部",
           "fund": 2.65
+        },
+        {
+          "name": "泰尔股份",
+          "code": "002347",
+          "lbc": 2,
+          "hybk": "通用设备",
+          "fund": 0.6
         },
         {
           "name": "冰山冷热",
@@ -3187,7 +3245,7 @@
     "dt_count": 0,
     "zt_tc": 93,
     "dt_tc": 0,
-    "asof": "2026-11-10 16:48"
+    "asof": "2026-11-11 09:00"
   },
   "limit_decoded": {
     "ok": true,
@@ -3277,20 +3335,6 @@
         "decode": "光伏设备方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高；封单2.37亿，封板结实。"
       },
       {
-        "code": "002347",
-        "name": "泰尔股份",
-        "zdp": 10.0,
-        "lbc": 2,
-        "limit_type": "连板",
-        "fund": 0.6,
-        "hs": 8.5,
-        "zbc": 0,
-        "hybk": "通用设备",
-        "fbt": "09:30",
-        "ltsz": 38.0,
-        "decode": "通用设备方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高。"
-      },
-      {
         "code": "002708",
         "name": "光洋股份",
         "zdp": 10.01,
@@ -3303,6 +3347,20 @@
         "fbt": "09:30",
         "ltsz": 123.2,
         "decode": "汽车零部方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高；封单2.65亿，封板结实。"
+      },
+      {
+        "code": "002347",
+        "name": "泰尔股份",
+        "zdp": 10.0,
+        "lbc": 2,
+        "limit_type": "连板",
+        "fund": 0.6,
+        "hs": 8.5,
+        "zbc": 0,
+        "hybk": "通用设备",
+        "fbt": "09:30",
+        "ltsz": 38.0,
+        "decode": "通用设备方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高。"
       },
       {
         "code": "000530",
@@ -4506,12 +4564,204 @@
     "seal_sum": 72.9,
     "mood": "亢奋",
     "mood_emoji": "🔥",
-    "asof": "2026-11-10 16:48",
-    "trade_date": "2026-11-10"
+    "asof": "2026-11-11 09:00",
+    "trade_date": "2026-11-11"
   },
   "research_feed": {
     "ok": true,
     "reports": [
+      {
+        "title": "公司事件点评报告：Q3单位成本环比上升明显，全年销量指引下调至12.5–13吨",
+        "code": "600988",
+        "name": "赤峰黄金",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 23.8,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607292"
+      },
+      {
+        "title": "公司事件点评报告：三季度盈利增长，数据中心项目与光储布局推进",
+        "code": "002518",
+        "name": "科士达",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 22.2,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607284"
+      },
+      {
+        "title": "公司事件点评报告：三季度盈利增长，高压实铁锂与机器人布局深化",
+        "code": "300432",
+        "name": "富临精工",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 29.2,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607281"
+      },
+      {
+        "title": "公司事件点评报告：电网业务稳步增长，海外项目持续拓展",
+        "code": "600406",
+        "name": "国电南瑞",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 20.9,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607252"
+      },
+      {
+        "title": "公司事件点评报告：盈利稳步提升，海外与检修业务持续拓展",
+        "code": "002270",
+        "name": "华明装备",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 22.2,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607249"
+      },
+      {
+        "title": "公司事件点评报告：三季度利润增长，订单储备与制造服务支撑发展",
+        "code": "600875",
+        "name": "东方电气",
+        "org": "华鑫证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 15.4,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831607234"
+      },
+      {
+        "title": "血液瘤管线3项口头报告领衔，首付款落袋实现扭亏",
+        "code": "688192",
+        "name": "迪哲医药",
+        "org": "东吴证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 8.4,
+        "industry": "",
+        "date": "2026-11-11",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611111831601863"
+      },
+      {
+        "title": "收入加速，高效控费，利润空间持续释放",
+        "code": "002956",
+        "name": "西麦食品",
+        "org": "山西证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 21.8,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831595845"
+      },
+      {
+        "title": "高频高速线缆逐步放量，战略布局光芯片",
+        "code": "605277",
+        "name": "新亚电子",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 18.9,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831594753"
+      },
+      {
+        "title": "北交所信息更新：麦格纳DCT与ELSD实现配套供货，获头部客户分动箱定点拓展应用场景",
+        "code": "920106",
+        "name": "林泰新材",
+        "org": "开源证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": 17.0,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831593883"
+      },
+      {
+        "title": "北交所信息更新：公司规模化应用金刚石铜复合散热材料，冷板液冷业务海内外市场双轮驱动",
+        "code": "920808",
+        "name": "曙光数创",
+        "org": "开源证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": 226.5,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831593882"
+      },
+      {
+        "title": "2026年三季报点评：Q3收入拐点确认，工业AI进入规模化复制期",
+        "code": "688777",
+        "name": "中控技术",
+        "org": "西南证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": 91.0,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831593096"
+      },
+      {
+        "title": "2026年三季报点评：剥离纯碱资产，聚焦镀膜玻璃",
+        "code": "600586",
+        "name": "金晶科技",
+        "org": "西南证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": -7.2,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831593060"
+      },
+      {
+        "title": "单三季度收入同比增长23%，积极布局AI、机器人相关业务",
+        "code": "002906",
+        "name": "华阳集团",
+        "org": "国信证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": 14.2,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831592871"
+      },
+      {
+        "title": "Q3归母净利润同比翻倍，定增落地与中航油合作打开远期成长空间",
+        "code": "000803",
+        "name": "山高环能",
+        "org": "国信证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": 27.9,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831590703"
+      },
+      {
+        "title": "被移除1260H清单，地缘政治风险扰动再降",
+        "code": "603259",
+        "name": "药明康德",
+        "org": "招银国际",
+        "rating": "买入",
+        "aim": 190.0,
+        "pe": null,
+        "industry": "",
+        "date": "2026-11-10",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831590397"
+      },
       {
         "title": "外贸油运景气显著上行，三季度盈利继续走强",
         "code": "600026",
@@ -4799,217 +5049,37 @@
         "industry": "",
         "date": "2026-11-10",
         "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831578099"
-      },
-      {
-        "title": "北交所新股申购报告：华晟智能：智能物流系统领军方案商，绑定优质央国企畅享仓储扩容",
-        "code": "920067",
-        "name": "华晟智能",
-        "org": "开源证券",
-        "rating": "",
-        "aim": null,
-        "pe": null,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831575425"
-      },
-      {
-        "title": "公司事件点评报告：海外变压器订单拓展，供电方案布局深化",
-        "code": "603861",
-        "name": "白云电器",
-        "org": "华鑫证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 22.2,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831575391"
-      },
-      {
-        "title": "公司事件点评报告：储能需求延续增长，渠道与产品协同深化",
-        "code": "605117",
-        "name": "德业股份",
-        "org": "华鑫证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 15.8,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831575389"
-      },
-      {
-        "title": "小核酸相关填料维持高增，盈利同比大幅改善",
-        "code": "688690",
-        "name": "纳微科技",
-        "org": "中邮证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 51.4,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831573662"
-      },
-      {
-        "title": "算力探针份额提升，存储进展顺利",
-        "code": "688809",
-        "name": "强一股份",
-        "org": "中邮证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 72.2,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831573661"
-      },
-      {
-        "title": "来水偏枯拖累三季度业绩，三峡水库完成2026年度蓄水任务",
-        "code": "600900",
-        "name": "长江电力",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 22.4,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831570582"
-      },
-      {
-        "title": "毛利率下行拖累盈利，简易自由现金流转正",
-        "code": "001289",
-        "name": "龙源电力",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 38.8,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831570408"
-      },
-      {
-        "title": "北交所信息更新：2026Q1-3国内厂家储能电池出货+94.5%，储能钠电负极迈向产能保障",
-        "code": "920185",
-        "name": "贝特瑞",
-        "org": "开源证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 25.6,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831570071"
-      },
-      {
-        "title": "北交所信息更新：康农玉8009表现优异，转基因品种矩阵持续完善，2026Q1-3营收同比+102.05%",
-        "code": "920403",
-        "name": "康农种业",
-        "org": "开源证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 20.2,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831569973"
-      },
-      {
-        "title": "CKBA多适应症稳步推进，Q3单季扭亏为盈",
-        "code": "301263",
-        "name": "泰恩康",
-        "org": "华安证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 73.4,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831568280"
-      },
-      {
-        "title": "海外业务占比有所提升，开关类、变压类业务保持较高增速",
-        "code": "002028",
-        "name": "思源电气",
-        "org": "华安证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 23.0,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831568231"
-      },
-      {
-        "title": "2026Q3经营更新：大宗货量稳步增长，造船在手订单增加，上游资源布局推进",
-        "code": "600057",
-        "name": "厦门象屿",
-        "org": "东吴证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 8.4,
-        "industry": "",
-        "date": "2026-11-10",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611101831565035"
-      },
-      {
-        "title": "危化品物流主业修复托底，半导体物流打开成长空间",
-        "code": "603713",
-        "name": "密尔克卫",
-        "org": "东吴证券",
-        "rating": "买入",
-        "aim": 108.4,
-        "pe": 16.7,
-        "industry": "",
-        "date": "2026-11-09",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611091831564003"
-      },
-      {
-        "title": "业绩承压毛利率韧性凸显，工程订单稳健增长",
-        "code": "002096",
-        "name": "易普力",
-        "org": "华安证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 16.2,
-        "industry": "",
-        "date": "2026-11-09",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611091831563152"
-      },
-      {
-        "title": "主业业绩承压，内生外延进入具身智能赛道",
-        "code": "688386",
-        "name": "泛亚微透",
-        "org": "华安证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 111.6,
-        "industry": "",
-        "date": "2026-11-09",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611091831563051"
-      },
-      {
-        "title": "高速电子树脂量价齐升，眉山基地投产逐渐放量",
-        "code": "601208",
-        "name": "东材科技",
-        "org": "华安证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 53.4,
-        "industry": "",
-        "date": "2026-11-09",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611091831562880"
       }
     ],
-    "consensus": [
-      {
-        "code": "600428",
-        "name": "中远海特",
-        "orgs": [
-          "中银证券",
-          "国金证券"
-        ],
-        "n": 2,
-        "rating": "买入",
-        "aim": 14.39,
-        "pe": 8.8,
-        "industry": "",
-        "date": "2026-11-10"
-      }
-    ],
+    "consensus": [],
     "surveys": [
+      {
+        "code": "600022",
+        "name": "山东钢铁",
+        "date": "2026-11-10",
+        "orgs": "参与山东钢铁2026年第三季度业绩说明会的投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "业绩说明会"
+      },
+      {
+        "code": "600839",
+        "name": "四川长虹",
+        "date": "2026-11-09",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "上证路演中心网络互动,业绩说明会"
+      },
+      {
+        "code": "603188",
+        "name": "亚邦股份",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "网络互动,业绩说明会"
+      },
       {
         "code": "603315",
         "name": "福鞍股份",
@@ -5018,6 +5088,24 @@
         "num": 1,
         "sum": 1,
         "way": "同花顺路演平台网络远程互动,业绩说明会"
+      },
+      {
+        "code": "603508",
+        "name": "思维列控",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "视频直播,网络互动,业绩说明会"
+      },
+      {
+        "code": "603810",
+        "name": "丰山集团",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "网络互动,业绩说明会"
       },
       {
         "code": "603833",
@@ -5029,6 +5117,33 @@
         "way": "网络文字互动,业绩说明会"
       },
       {
+        "code": "603856",
+        "name": "东宏股份",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "视频录播,网络互动,业绩说明会"
+      },
+      {
+        "code": "603861",
+        "name": "白云电器",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "网络文字互动,业绩说明会"
+      },
+      {
+        "code": "605162",
+        "name": "新中港",
+        "date": "2026-11-10",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "网络互动,业绩说明会"
+      },
+      {
         "code": "605566",
         "name": "福莱蒽特",
         "date": "2026-11-10",
@@ -5038,651 +5153,140 @@
         "way": "业绩说明会,网络互动"
       },
       {
-        "code": "002046",
-        "name": "国机精工",
-        "date": "2026-11-09",
-        "orgs": "杭州红骅投资",
-        "num": 4,
-        "sum": 4,
-        "way": "特定对象调研"
+        "code": "000570",
+        "name": "苏常柴A",
+        "date": "2026-11-10",
+        "orgs": "投资者网上提问",
+        "num": 1,
+        "sum": 1,
+        "way": "2026年常州上市公司投资者集体接待日"
       },
       {
-        "code": "002046",
-        "name": "国机精工",
-        "date": "2026-11-09",
+        "code": "000681",
+        "name": "视觉中国",
+        "date": "2026-11-10",
+        "orgs": "投资者网上提问",
+        "num": 1,
+        "sum": 1,
+        "way": "业绩说明会"
+      },
+      {
+        "code": "000758",
+        "name": "中色股份",
+        "date": "2026-11-10",
+        "orgs": "西南证券资管",
+        "num": 3,
+        "sum": 3,
+        "way": "特定对象调研,线下交流"
+      },
+      {
+        "code": "000758",
+        "name": "中色股份",
+        "date": "2026-11-10",
+        "orgs": "聚鸣投资",
+        "num": 2,
+        "sum": 3,
+        "way": "特定对象调研,线下交流"
+      },
+      {
+        "code": "000758",
+        "name": "中色股份",
+        "date": "2026-11-10",
         "orgs": "广发证券",
         "num": 1,
-        "sum": 4,
-        "way": "特定对象调研"
+        "sum": 3,
+        "way": "特定对象调研,线下交流"
       },
       {
-        "code": "002046",
-        "name": "国机精工",
-        "date": "2026-11-09",
-        "orgs": "中原证券",
-        "num": 2,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002046",
-        "name": "国机精工",
-        "date": "2026-11-09",
-        "orgs": "漳州市国有资本运营集团",
-        "num": 3,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002907",
-        "name": "华森制药",
+        "code": "000776",
+        "name": "广发证券",
         "date": "2026-11-10",
-        "orgs": "通过\"同花顺\"网络平台参与公司2026年三季度业绩说明会的投资者",
+        "orgs": "高盛邀请的投资者",
+        "num": 2,
+        "sum": 1,
+        "way": "其他,电话会议"
+      },
+      {
+        "code": "000776",
+        "name": "广发证券",
+        "date": "2026-11-10",
+        "orgs": "高盛",
         "num": 1,
         "sum": 1,
-        "way": "业绩说明会"
+        "way": "其他,电话会议"
       },
       {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "浙商证券",
-        "num": 5,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "海创(上海)私募基金管理有限公司",
+        "num": 13,
+        "sum": 31,
+        "way": "分析师会议"
       },
       {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "南方基金",
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "嘉实基金管理有限公司",
+        "num": 15,
+        "sum": 31,
+        "way": "分析师会议"
+      },
+      {
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "民生加银基金管理有限公司",
+        "num": 16,
+        "sum": 31,
+        "way": "分析师会议"
+      },
+      {
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "海南峰辰私募基金管理有限公司",
+        "num": 14,
+        "sum": 31,
+        "way": "分析师会议"
+      },
+      {
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "合众资产管理股份有限公司",
+        "num": 9,
+        "sum": 31,
+        "way": "分析师会议"
+      },
+      {
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "华夏基金管理有限公司",
+        "num": 8,
+        "sum": 31,
+        "way": "分析师会议"
+      },
+      {
+        "code": "000893",
+        "name": "亚钾国际",
+        "date": "2026-11-10",
+        "orgs": "国泰基金管理有限公司",
         "num": 7,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "平安基金",
-        "num": 6,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "东方证券",
-        "num": 4,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "国投证券",
-        "num": 1,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "华安证券",
-        "num": 2,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300902",
-        "name": "国安达",
-        "date": "2026-11-09",
-        "orgs": "华鑫证券",
-        "num": 3,
-        "sum": 7,
-        "way": "特定对象调研,电话会议"
-      },
-      {
-        "code": "300904",
-        "name": "威力传动",
-        "date": "2026-11-10",
-        "orgs": "上海巨创私募基金",
-        "num": 1,
-        "sum": 1,
-        "way": "线上会议"
-      },
-      {
-        "code": "600009",
-        "name": "上海机场",
-        "date": "2026-10-01",
-        "orgs": "其他",
-        "num": 1,
-        "sum": 1,
-        "way": "其他"
-      },
-      {
-        "code": "600098",
-        "name": "广州发展",
-        "date": "2026-11-05",
-        "orgs": "投资者",
-        "num": 1,
-        "sum": 1,
-        "way": "业绩说明会,网络文字互动"
-      },
-      {
-        "code": "600143",
-        "name": "金发科技",
-        "date": "2026-11-05",
-        "orgs": "线上参加公司2026年第三季度业绩说明会的投资者",
-        "num": 1,
-        "sum": 1,
-        "way": "业绩说明会"
-      },
-      {
-        "code": "600148",
-        "name": "长春一东",
-        "date": "2026-11-10",
-        "orgs": "通过参加\"2026年三季度业绩说明会\"的投资者",
-        "num": 1,
-        "sum": 1,
-        "way": "业绩说明会"
-      },
-      {
-        "code": "600166",
-        "name": "福田汽车",
-        "date": "2026-11-05",
-        "orgs": "招商基金",
-        "num": 4,
-        "sum": 5,
-        "way": "路演活动,一对一沟通"
-      },
-      {
-        "code": "600166",
-        "name": "福田汽车",
-        "date": "2026-11-05",
-        "orgs": "国寿资产",
-        "num": 5,
-        "sum": 5,
-        "way": "路演活动,一对一沟通"
-      },
-      {
-        "code": "600166",
-        "name": "福田汽车",
-        "date": "2026-11-05",
-        "orgs": "新华基金",
-        "num": 3,
-        "sum": 5,
-        "way": "路演活动,一对一沟通"
-      },
-      {
-        "code": "600166",
-        "name": "福田汽车",
-        "date": "2026-11-05",
-        "orgs": "华泰证券",
-        "num": 1,
-        "sum": 5,
-        "way": "路演活动,一对一沟通"
-      },
-      {
-        "code": "600166",
-        "name": "福田汽车",
-        "date": "2026-11-05",
-        "orgs": "国泰海通证券",
-        "num": 2,
-        "sum": 5,
-        "way": "路演活动,一对一沟通"
+        "sum": 31,
+        "way": "分析师会议"
       }
     ],
-    "asof": "2026-11-10 16:49"
+    "asof": "2026-11-11 09:00"
   },
   "yesterday_perf": {
-    "ok": true,
-    "rows": [
-      {
-        "code": "002578",
-        "name": "闽发铝业",
-        "yesterday_board_count": 6,
-        "today_pct": 9.98,
-        "is_zt_today": true,
-        "lbc_today": 7
-      },
-      {
-        "code": "002310",
-        "name": "东方新能",
-        "yesterday_board_count": 2,
-        "today_pct": 10.2,
-        "is_zt_today": true,
-        "lbc_today": 3
-      },
-      {
-        "code": "002037",
-        "name": "保利联合",
-        "yesterday_board_count": 1,
-        "today_pct": 0.41,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603366",
-        "name": "日出东方",
-        "yesterday_board_count": 2,
-        "today_pct": 10.01,
-        "is_zt_today": true,
-        "lbc_today": 3
-      },
-      {
-        "code": "002889",
-        "name": "东方嘉盛",
-        "yesterday_board_count": 2,
-        "today_pct": 2.8,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002149",
-        "name": "西部材料",
-        "yesterday_board_count": 1,
-        "today_pct": 3.59,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "601188",
-        "name": "龙江交通",
-        "yesterday_board_count": 2,
-        "today_pct": 10.02,
-        "is_zt_today": true,
-        "lbc_today": 3
-      },
-      {
-        "code": "600327",
-        "name": "大东方",
-        "yesterday_board_count": 2,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 3
-      },
-      {
-        "code": "002565",
-        "name": "顺灏股份",
-        "yesterday_board_count": 1,
-        "today_pct": 7.12,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603660",
-        "name": "苏州科达",
-        "yesterday_board_count": 1,
-        "today_pct": 4.75,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "000530",
-        "name": "冰山冷热",
-        "yesterday_board_count": 1,
-        "today_pct": 10.03,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "603121",
-        "name": "华培动力",
-        "yesterday_board_count": 1,
-        "today_pct": 10.02,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "001379",
-        "name": "腾达科技",
-        "yesterday_board_count": 1,
-        "today_pct": 10.03,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002811",
-        "name": "郑中设计",
-        "yesterday_board_count": 1,
-        "today_pct": -3.5,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002347",
-        "name": "泰尔股份",
-        "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "603703",
-        "name": "盛洋科技",
-        "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002708",
-        "name": "光洋股份",
-        "yesterday_board_count": 1,
-        "today_pct": 10.01,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "603286",
-        "name": "日盈电子",
-        "yesterday_board_count": 1,
-        "today_pct": 10.01,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "001388",
-        "name": "信通电子",
-        "yesterday_board_count": 1,
-        "today_pct": 5.2,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600715",
-        "name": "文投控股",
-        "yesterday_board_count": 1,
-        "today_pct": 10.04,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "600408",
-        "name": "安泰集团",
-        "yesterday_board_count": 1,
-        "today_pct": 9.94,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002172",
-        "name": "澳洋健康",
-        "yesterday_board_count": 1,
-        "today_pct": 2.43,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603683",
-        "name": "晶华新材",
-        "yesterday_board_count": 1,
-        "today_pct": 4.25,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301226",
-        "name": "祥明智能",
-        "yesterday_board_count": 1,
-        "today_pct": 3.63,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002931",
-        "name": "锋龙股份",
-        "yesterday_board_count": 1,
-        "today_pct": 10.01,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "001331",
-        "name": "胜通能源",
-        "yesterday_board_count": 1,
-        "today_pct": 2.3,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "001316",
-        "name": "润贝航科",
-        "yesterday_board_count": 2,
-        "today_pct": -2.94,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "688585",
-        "name": "上纬新材",
-        "yesterday_board_count": 1,
-        "today_pct": 1.31,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603920",
-        "name": "世运电路",
-        "yesterday_board_count": 1,
-        "today_pct": 8.31,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002488",
-        "name": "金固股份",
-        "yesterday_board_count": 1,
-        "today_pct": 0.27,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600776",
-        "name": "东方通信",
-        "yesterday_board_count": 1,
-        "today_pct": 1.55,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002124",
-        "name": "天邦食品",
-        "yesterday_board_count": 1,
-        "today_pct": -0.45,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600121",
-        "name": "郑州煤电",
-        "yesterday_board_count": 1,
-        "today_pct": 5.29,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600853",
-        "name": "龙建股份",
-        "yesterday_board_count": 1,
-        "today_pct": 1.82,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603706",
-        "name": "东方环宇",
-        "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "600278",
-        "name": "东方创业",
-        "yesterday_board_count": 2,
-        "today_pct": 4.6,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "001390",
-        "name": "古麒绒材",
-        "yesterday_board_count": 1,
-        "today_pct": 1.67,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "003004",
-        "name": "声迅股份",
-        "yesterday_board_count": 1,
-        "today_pct": -4.74,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "000823",
-        "name": "超声电子",
-        "yesterday_board_count": 1,
-        "today_pct": 3.25,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301718",
-        "name": "通则康威",
-        "yesterday_board_count": 1,
-        "today_pct": -3.62,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600892",
-        "name": "大晟文化",
-        "yesterday_board_count": 1,
-        "today_pct": 10.02,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002596",
-        "name": "海南瑞泽",
-        "yesterday_board_count": 1,
-        "today_pct": 2.01,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "000026",
-        "name": "飞亚达",
-        "yesterday_board_count": 1,
-        "today_pct": 4.26,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600609",
-        "name": "金杯汽车",
-        "yesterday_board_count": 1,
-        "today_pct": 10.06,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002638",
-        "name": "勤上股份",
-        "yesterday_board_count": 1,
-        "today_pct": 0.92,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600792",
-        "name": "云煤能源",
-        "yesterday_board_count": 1,
-        "today_pct": 2.38,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002913",
-        "name": "奥士康",
-        "yesterday_board_count": 1,
-        "today_pct": 1.56,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603389",
-        "name": "亚振家居",
-        "yesterday_board_count": 1,
-        "today_pct": 5.56,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002864",
-        "name": "盘龙药业",
-        "yesterday_board_count": 1,
-        "today_pct": 4.95,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002639",
-        "name": "雪人集团",
-        "yesterday_board_count": 1,
-        "today_pct": 0.94,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301010",
-        "name": "晶雪节能",
-        "yesterday_board_count": 1,
-        "today_pct": 0.31,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "001226",
-        "name": "拓山重工",
-        "yesterday_board_count": 1,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "000525",
-        "name": "红太阳",
-        "yesterday_board_count": 2,
-        "today_pct": -1.09,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600838",
-        "name": "上海九百",
-        "yesterday_board_count": 1,
-        "today_pct": 3.65,
-        "is_zt_today": false,
-        "lbc_today": 0
-      }
-    ],
-    "promote": {
-      "base_1to2": 45,
-      "hit_1to2": 14,
-      "base_2to3": 8,
-      "hit_2to3": 4
-    },
+    "ok": false,
+    "rows": [],
+    "promote": null,
     "basis": "昨日池实绩",
-    "reason": "",
-    "asof": "2026-11-10 16:49"
+    "reason": "昨日池与今日池完全相同（同一交易日），晋级率不可用"
   },
   "margin_leverage": {
     "signal": {
@@ -5719,7 +5323,7 @@
   "last_month_push": "2026-10",
   "score_pool": {
     "ok": true,
-    "asof": "2026-11-10 16:48",
+    "asof": "2026-11-11 09:00",
     "universe": 93,
     "basis": "涨停梯队 + 题材热度 + 机构共识",
     "rows": [
@@ -8306,7 +7910,7 @@
     ]
   },
   "review": {
-    "asof": "2026-11-10 16:48",
+    "asof": "2026-11-11 09:00",
     "cluster": [
       {
         "name": "汽车零部",
@@ -8764,18 +8368,18 @@
             "zbc": 0
           },
           {
-            "code": "002347",
-            "name": "泰尔股份",
-            "lbc": 2,
-            "hybk": "通用设备",
-            "fbt": "09:30",
-            "zbc": 0
-          },
-          {
             "code": "002708",
             "name": "光洋股份",
             "lbc": 2,
             "hybk": "汽车零部",
+            "fbt": "09:30",
+            "zbc": 0
+          },
+          {
+            "code": "002347",
+            "name": "泰尔股份",
+            "lbc": 2,
+            "hybk": "通用设备",
             "fbt": "09:30",
             "zbc": 0
           },
@@ -9494,14 +9098,14 @@
           "name": "亚玛顿",
           "lbc": 2
         },
-        "通用设备": {
-          "code": "002347",
-          "name": "泰尔股份",
-          "lbc": 2
-        },
         "汽车零部": {
           "code": "002708",
           "name": "光洋股份",
+          "lbc": 2
+        },
+        "通用设备": {
+          "code": "002347",
+          "name": "泰尔股份",
           "lbc": 2
         },
         "游戏Ⅱ": {
@@ -9754,8 +9358,8 @@
       "max_lb": 7,
       "boom": 97,
       "boom_rate": 38.7,
-      "rate_1to2": 31.1,
-      "rate_2to3": 50.0,
+      "rate_1to2": null,
+      "rate_2to3": null,
       "stage": "亢奋",
       "emoji": "🔥"
     },
@@ -9764,9 +9368,8 @@
       "why": [
         "涨停 93 家但炸板率 38.7%，情绪透支",
         "最高标 7 板，空间由它决定，断板则梯队塌",
-        "打板溢价：昨日涨停股今日均 +4.91%（54 只）",
         "主线：汽车零部11家、通用设备6家、光学光电6家",
-        "环境闸：成交额 1.50 万亿 < 1.9 万亿 → 总仓 ≤50%"
+        "环境闸：环境数据缺失（上涨占比、成交额）→ 禁止开仓 → 总仓 ≤0%"
       ],
       "watch": [
         "友好集团（一般零售 后排，龙头 大东方 3 板）",
@@ -10319,171 +9922,87 @@
   },
   "dip_pool": {
     "ok": true,
-    "asof": "2026-11-10 16:48",
+    "asof": "2026-11-11 09:00",
     "rows": [
       {
-        "code": "000823",
-        "name": "超声电子",
+        "code": "002913",
+        "name": "奥士康",
         "hybk": "元件",
-        "board_role": "龙头",
-        "board_leader": "超声电子",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 14.27",
-        "price": 18.44,
-        "close": 18.44,
-        "chg": 3.25,
-        "pool_ds": "20261109",
-        "rr": {
-          "ratio": 2.86,
-          "target": 25.87,
-          "stop": 15.84,
-          "atr": 1.73,
-          "upside": 40.3,
-          "downside": -14.1,
-          "ok": true
-        },
-        "abnormal": {
-          "dev3": 5.01,
-          "idx3": 1.89,
-          "dev": 3.12,
-          "limit": 20.0,
-          "remain": 16.88,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -2.07,
-          "limit10": 100.0,
-          "remain10": 102.07,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -24.9,
-          "paozi": false
-        },
-        "chan": {
-          "px": 18.44,
-          "zone": "中枢下",
-          "fx": "bottom",
-          "bi_n": 24,
-          "dir": "down",
-          "zs": {
-            "zg": 27.18,
-            "zd": 20.0
-          },
-          "beichi": true,
-          "merged": 198
-        },
-        "chip": {
-          "px": 18.44,
-          "profit_ratio": 41.4,
-          "avg_cost": 20.54,
-          "support": 16.02,
-          "resistance": 29.77,
-          "concentration": 67.0,
-          "main_cost": 25.41,
-          "dist_main": -27.4
-        },
-        "anchors": {
-          "px": 18.44,
-          "anchors": {
-            "low": 17.16,
-            "breakout": 18.02,
-            "ma120": 18.44,
-            "turn": 17.59
-          },
-          "n": 4,
-          "avg_anchor": 17.8,
-          "spread": 7.2,
-          "dist_anchor": 3.6,
-          "agree": true
-        },
-        "flow": {
-          "main": -1.49,
-          "main_pct": -5.28,
-          "xl": -0.63,
-          "lg": -0.86
-        },
-        "open": 18.99,
-        "live": true
-      },
-      {
-        "code": "003004",
-        "name": "声迅股份",
-        "hybk": "计算机设",
         "board_role": "独苗",
-        "board_leader": "声迅股份",
+        "board_leader": "奥士康",
         "lbc": 1,
         "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 39.20",
-        "price": 48.48,
-        "close": 48.48,
-        "chg": -4.74,
+        "why": "1板，回踩未破最近涨停日最低 34.30",
+        "price": 59.33,
+        "close": 59.33,
+        "chg": 1.56,
         "pool_ds": "20261109",
         "rr": {
-          "ratio": 2.06,
-          "target": 60.95,
-          "stop": 42.42,
-          "atr": 4.04,
-          "upside": 25.7,
-          "downside": -12.5,
+          "ratio": 3.27,
+          "target": 88.2,
+          "stop": 50.51,
+          "atr": 5.66,
+          "upside": 48.7,
+          "downside": -14.9,
           "ok": true
         },
         "abnormal": {
-          "dev3": 4.57,
+          "dev3": 7.09,
           "idx3": 1.89,
-          "dev": 2.68,
+          "dev": 5.2,
           "limit": 20.0,
-          "remain": 17.32,
+          "remain": 14.8,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -19.24,
+          "dev10": -6.69,
           "limit10": 100.0,
-          "remain10": 119.24,
+          "remain10": 106.69,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -12.2,
+          "ret20": -32.7,
           "paozi": false
         },
         "chan": {
-          "px": 48.48,
+          "px": 59.33,
           "zone": null,
           "fx": "bottom",
-          "bi_n": 16,
+          "bi_n": 18,
           "dir": "down",
           "zs": null,
-          "beichi": true,
-          "merged": 204
+          "beichi": false,
+          "merged": 202
         },
         "chip": {
-          "px": 48.48,
-          "profit_ratio": 12.6,
-          "avg_cost": 59.81,
-          "support": 45.96,
-          "resistance": 89.45,
-          "concentration": 72.7,
-          "main_cost": 57.26,
-          "dist_main": -15.3
+          "px": 59.33,
+          "profit_ratio": 33.4,
+          "avg_cost": 69.39,
+          "support": 32.25,
+          "resistance": 89.94,
+          "concentration": 83.1,
+          "main_cost": 56.15,
+          "dist_main": 5.7
         },
         "anchors": {
-          "px": 48.48,
+          "px": 59.33,
           "anchors": {
-            "low": 46.83,
-            "breakout": 77.23,
-            "ma120": 63.77,
-            "turn": 56.99
+            "low": 56.15,
+            "breakout": 69.01,
+            "ma120": 61.68,
+            "turn": 70.08
           },
           "n": 4,
-          "avg_anchor": 61.21,
-          "spread": 49.7,
-          "dist_anchor": -20.8,
+          "avg_anchor": 64.23,
+          "spread": 21.7,
+          "dist_anchor": -7.6,
           "agree": false
         },
         "flow": {
-          "main": 0.09,
-          "main_pct": 4.77,
-          "xl": 0.09,
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
           "lg": 0.0
         },
-        "open": 52.0,
+        "open": 60.0,
         "live": true
       },
       {
@@ -10535,7 +10054,7 @@
             "zd": 40.65
           },
           "beichi": false,
-          "merged": 193
+          "merged": 192
         },
         "chip": {
           "px": 32.07,
@@ -10562,10 +10081,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.88,
-          "main_pct": 15.56,
-          "xl": 0.07,
-          "lg": 0.81
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 32.28,
         "live": true
@@ -10646,10 +10165,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.88,
-          "main_pct": -5.9,
-          "xl": -0.39,
-          "lg": -0.49
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 6.25,
         "live": true
@@ -10703,7 +10222,7 @@
             "zd": 14.66
           },
           "beichi": false,
-          "merged": 197
+          "merged": 196
         },
         "chip": {
           "px": 21.8,
@@ -10730,12 +10249,93 @@
           "agree": false
         },
         "flow": {
-          "main": -0.59,
-          "main_pct": -5.88,
-          "xl": -0.25,
-          "lg": -0.34
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 23.04,
+        "live": true
+      },
+      {
+        "code": "600792",
+        "name": "云煤能源",
+        "hybk": "焦炭Ⅱ",
+        "board_role": "独苗",
+        "board_leader": "云煤能源",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 3.86",
+        "price": 4.3,
+        "close": 4.3,
+        "chg": 2.38,
+        "pool_ds": "20261109",
+        "rr": {
+          "ratio": 1.09,
+          "target": 5.0,
+          "stop": 3.66,
+          "atr": 0.19,
+          "upside": 16.3,
+          "downside": -14.9,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 11.69,
+          "idx3": 1.89,
+          "dev": 9.8,
+          "limit": 20.0,
+          "remain": 10.2,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 3.47,
+          "limit10": 100.0,
+          "remain10": 96.53,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": -14.0,
+          "paozi": false
+        },
+        "chan": {
+          "px": 4.3,
+          "zone": null,
+          "fx": "bottom",
+          "bi_n": 18,
+          "dir": "down",
+          "zs": null,
+          "beichi": false,
+          "merged": 192
+        },
+        "chip": {
+          "px": 4.3,
+          "profit_ratio": 38.2,
+          "avg_cost": 4.65,
+          "support": 3.69,
+          "resistance": 5.5,
+          "concentration": 39.0,
+          "main_cost": 5.25,
+          "dist_main": -18.1
+        },
+        "anchors": {
+          "px": 4.3,
+          "anchors": {
+            "low": 4.09,
+            "breakout": 5.28,
+            "ma120": 4.02,
+            "turn": 4.24
+          },
+          "n": 4,
+          "avg_anchor": 4.41,
+          "spread": 28.6,
+          "dist_anchor": -2.4,
+          "agree": false
+        },
+        "flow": {
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
+        },
+        "open": 4.08,
         "live": true
       },
       {
@@ -10787,7 +10387,7 @@
             "zd": 4.58
           },
           "beichi": false,
-          "merged": 192
+          "merged": 191
         },
         "chip": {
           "px": 4.98,
@@ -10814,10 +10414,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.33,
-          "main_pct": -3.02,
-          "xl": -0.18,
-          "lg": -0.15
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 4.75,
         "live": true
@@ -10826,8 +10426,8 @@
         "code": "603920",
         "name": "世运电路",
         "hybk": "元件",
-        "board_role": "卡位",
-        "board_leader": "超声电子",
+        "board_role": "独苗",
+        "board_leader": "奥士康",
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 31.49",
@@ -10871,7 +10471,7 @@
             "zd": 37.1
           },
           "beichi": false,
-          "merged": 198
+          "merged": 197
         },
         "chip": {
           "px": 36.37,
@@ -10898,93 +10498,12 @@
           "agree": false
         },
         "flow": {
-          "main": 2.27,
-          "main_pct": 10.72,
-          "xl": 2.17,
-          "lg": 0.11
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 35.29,
-        "live": true
-      },
-      {
-        "code": "600853",
-        "name": "龙建股份",
-        "hybk": "基础建设",
-        "board_role": "独苗",
-        "board_leader": "龙建股份",
-        "lbc": 1,
-        "type": "假阴真阳",
-        "why": "收 3.92 低于开盘 4.10，但涨幅 +1.8%，放量 2.60×",
-        "price": 3.92,
-        "close": 3.92,
-        "chg": 1.82,
-        "pool_ds": "20261109",
-        "rr": {
-          "ratio": 0.83,
-          "target": 4.35,
-          "stop": 3.4,
-          "atr": 0.22,
-          "upside": 11.0,
-          "downside": -13.3,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 9.19,
-          "idx3": 1.89,
-          "dev": 7.3,
-          "limit": 20.0,
-          "remain": 12.7,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 5.69,
-          "limit10": 100.0,
-          "remain10": 94.31,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 12.3,
-          "paozi": false
-        },
-        "chan": {
-          "px": 3.92,
-          "zone": null,
-          "fx": "bottom",
-          "bi_n": 20,
-          "dir": "down",
-          "zs": null,
-          "beichi": false,
-          "merged": 174
-        },
-        "chip": {
-          "px": 3.92,
-          "profit_ratio": 86.9,
-          "avg_cost": 3.6,
-          "support": 2.99,
-          "resistance": 4.02,
-          "concentration": 28.6,
-          "main_cost": 3.58,
-          "dist_main": 9.5
-        },
-        "anchors": {
-          "px": 3.92,
-          "anchors": {
-            "low": 3.58,
-            "breakout": 3.97,
-            "ma120": 3.35,
-            "turn": 3.64
-          },
-          "n": 4,
-          "avg_anchor": 3.64,
-          "spread": 17.1,
-          "dist_anchor": 7.8,
-          "agree": false
-        },
-        "flow": {
-          "main": -0.57,
-          "main_pct": -9.93,
-          "xl": -0.07,
-          "lg": -0.49
-        },
-        "open": 4.1,
         "live": true
       },
       {
@@ -11029,11 +10548,11 @@
           "px": 34.26,
           "zone": null,
           "fx": "bottom",
-          "bi_n": 18,
+          "bi_n": 17,
           "dir": "down",
           "zs": null,
           "beichi": false,
-          "merged": 187
+          "merged": 186
         },
         "chip": {
           "px": 34.26,
@@ -11060,10 +10579,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.34,
-          "main_pct": 8.94,
-          "xl": 0.21,
-          "lg": 0.12
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 36.92,
         "live": true
@@ -11110,14 +10629,14 @@
           "px": 18.9,
           "zone": "中枢上",
           "fx": "bottom",
-          "bi_n": 15,
+          "bi_n": 16,
           "dir": "up",
           "zs": {
             "zg": 16.85,
             "zd": 14.7
           },
           "beichi": false,
-          "merged": 176
+          "merged": 175
         },
         "chip": {
           "px": 18.9,
@@ -11144,10 +10663,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.01,
-          "main_pct": 0.07,
-          "xl": -0.11,
-          "lg": 0.11
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 18.5,
         "live": true
@@ -11201,22 +10720,22 @@
             "zd": 6.53
           },
           "beichi": false,
-          "merged": 184
+          "merged": 183
         },
         "chip": {
           "px": 7.26,
-          "profit_ratio": 70.8,
+          "profit_ratio": 73.0,
           "avg_cost": 6.92,
-          "support": 6.19,
-          "resistance": 7.59,
-          "concentration": 20.2,
-          "main_cost": 7.53,
-          "dist_main": -3.6
+          "support": 6.18,
+          "resistance": 7.57,
+          "concentration": 20.1,
+          "main_cost": 7.51,
+          "dist_main": -3.3
         },
         "anchors": {
           "px": 7.26,
           "anchors": {
-            "low": 7.53,
+            "low": 7.51,
             "breakout": 7.48,
             "ma120": 6.76,
             "turn": 6.96,
@@ -11224,15 +10743,15 @@
           },
           "n": 5,
           "avg_anchor": 7.08,
-          "spread": 11.9,
+          "spread": 11.6,
           "dist_anchor": 2.5,
           "agree": true
         },
         "flow": {
-          "main": 0.06,
-          "main_pct": 1.82,
-          "xl": 0.14,
-          "lg": -0.08
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 7.95,
         "live": true
@@ -11279,14 +10798,14 @@
           "px": 16.86,
           "zone": "中枢上",
           "fx": "bottom",
-          "bi_n": 21,
+          "bi_n": 20,
           "dir": "up",
           "zs": {
             "zg": 12.18,
             "zd": 11.56
           },
           "beichi": false,
-          "merged": 178
+          "merged": 177
         },
         "chip": {
           "px": 16.86,
@@ -11313,96 +10832,12 @@
           "agree": false
         },
         "flow": {
-          "main": -0.88,
-          "main_pct": -6.91,
-          "xl": -0.01,
-          "lg": -0.86
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 18.04,
-        "live": true
-      },
-      {
-        "code": "688585",
-        "name": "上纬新材",
-        "hybk": "塑料",
-        "board_role": "独苗",
-        "board_leader": "上纬新材",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 103.50",
-        "price": 218.86,
-        "close": 218.86,
-        "chg": 1.31,
-        "pool_ds": "20261109",
-        "rr": {
-          "ratio": 0.69,
-          "target": 267.93,
-          "stop": 147.38,
-          "atr": 24.54,
-          "upside": 22.4,
-          "downside": -32.7,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 19.57,
-          "idx3": 1.89,
-          "dev": 17.68,
-          "limit": 30.0,
-          "remain": 12.32,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥30%（创业板/科创板）",
-          "dev10": 35.98,
-          "limit10": 100.0,
-          "remain10": 64.02,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 103.3,
-          "paozi": false
-        },
-        "chan": {
-          "px": 218.86,
-          "zone": "中枢上",
-          "fx": "bottom",
-          "bi_n": 20,
-          "dir": "up",
-          "zs": {
-            "zg": 151.51,
-            "zd": 141.55
-          },
-          "beichi": true,
-          "merged": 183
-        },
-        "chip": {
-          "px": 218.86,
-          "profit_ratio": 93.2,
-          "avg_cost": 162.69,
-          "support": 93.01,
-          "resistance": 207.4,
-          "concentration": 70.3,
-          "main_cost": 166.29,
-          "dist_main": 31.6
-        },
-        "anchors": {
-          "px": 218.86,
-          "anchors": {
-            "low": 144.84,
-            "breakout": 170.36,
-            "ma120": 152.27,
-            "turn": 223.45
-          },
-          "n": 4,
-          "avg_anchor": 172.73,
-          "spread": 45.5,
-          "dist_anchor": 26.7,
-          "agree": false
-        },
-        "flow": {
-          "main": -2.25,
-          "main_pct": -6.37,
-          "xl": -3.69,
-          "lg": 1.44
-        },
-        "open": 223.97,
         "live": true
       },
       {
@@ -11410,7 +10845,7 @@
         "name": "苏州科达",
         "hybk": "计算机设",
         "board_role": "独苗",
-        "board_leader": "声迅股份",
+        "board_leader": "苏州科达",
         "lbc": 1,
         "type": "假阴真阳",
         "why": "收 9.70 低于开盘 10.10，但涨幅 +4.8%，放量 3.06×",
@@ -11447,14 +10882,14 @@
           "px": 9.7,
           "zone": "中枢上",
           "fx": "bottom",
-          "bi_n": 18,
+          "bi_n": 17,
           "dir": "down",
           "zs": {
             "zg": 9.28,
             "zd": 8.36
           },
           "beichi": true,
-          "merged": 187
+          "merged": 186
         },
         "chip": {
           "px": 9.7,
@@ -11481,10 +10916,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.14,
-          "main_pct": 2.74,
-          "xl": 0.05,
-          "lg": 0.1
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 10.1,
         "live": true
@@ -11531,14 +10966,14 @@
           "px": 24.5,
           "zone": "中枢上",
           "fx": "bottom",
-          "bi_n": 20,
+          "bi_n": 21,
           "dir": "up",
           "zs": {
             "zg": 23.28,
             "zd": 20.58
           },
           "beichi": false,
-          "merged": 182
+          "merged": 181
         },
         "chip": {
           "px": 24.5,
@@ -11565,10 +11000,10 @@
           "agree": true
         },
         "flow": {
-          "main": 0.36,
-          "main_pct": 7.65,
-          "xl": -0.05,
-          "lg": 0.41
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 23.75,
         "live": true
@@ -11619,7 +11054,7 @@
           "dir": "down",
           "zs": null,
           "beichi": false,
-          "merged": 188
+          "merged": 187
         },
         "chip": {
           "px": 3.55,
@@ -11649,10 +11084,94 @@
         "flow": {
           "main": 0.0,
           "main_pct": 0.0,
-          "xl": 0.06,
-          "lg": -0.06
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 3.59,
+        "live": true
+      },
+      {
+        "code": "002638",
+        "name": "勤上股份",
+        "hybk": "照明设备",
+        "board_role": "独苗",
+        "board_leader": "勤上股份",
+        "lbc": 1,
+        "type": "假阴真阳",
+        "why": "收 4.37 低于开盘 4.45，但涨幅 +0.9%，放量 2.05×",
+        "price": 4.37,
+        "close": 4.37,
+        "chg": 0.92,
+        "pool_ds": "20261109",
+        "rr": {
+          "ratio": 0.6,
+          "target": 4.76,
+          "stop": 3.71,
+          "atr": 0.2,
+          "upside": 9.0,
+          "downside": -15.1,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 10.91,
+          "idx3": 1.89,
+          "dev": 9.02,
+          "limit": 20.0,
+          "remain": 10.98,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 4.96,
+          "limit10": 100.0,
+          "remain10": 95.04,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 1.2,
+          "paozi": false
+        },
+        "chan": {
+          "px": 4.37,
+          "zone": "中枢下",
+          "fx": "bottom",
+          "bi_n": 19,
+          "dir": "down",
+          "zs": {
+            "zg": 4.82,
+            "zd": 4.44
+          },
+          "beichi": true,
+          "merged": 173
+        },
+        "chip": {
+          "px": 4.37,
+          "profit_ratio": 71.5,
+          "avg_cost": 4.24,
+          "support": 3.7,
+          "resistance": 4.98,
+          "concentration": 30.2,
+          "main_cost": 4.37,
+          "dist_main": 0.0
+        },
+        "anchors": {
+          "px": 4.37,
+          "anchors": {
+            "low": 3.47,
+            "breakout": 4.91,
+            "ma120": 4.08,
+            "turn": 4.37
+          },
+          "n": 4,
+          "avg_anchor": 4.21,
+          "spread": 34.2,
+          "dist_anchor": 3.9,
+          "agree": false
+        },
+        "flow": {
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
+        },
+        "open": 4.45,
         "live": true
       },
       {
@@ -11697,11 +11216,11 @@
           "px": 12.41,
           "zone": null,
           "fx": "bottom",
-          "bi_n": 17,
+          "bi_n": 16,
           "dir": "down",
           "zs": null,
           "beichi": false,
-          "merged": 196
+          "merged": 195
         },
         "chip": {
           "px": 12.41,
@@ -11728,10 +11247,10 @@
           "agree": true
         },
         "flow": {
-          "main": -1.25,
-          "main_pct": -14.05,
-          "xl": -0.54,
-          "lg": -0.71
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 12.71,
         "live": true
@@ -11812,12 +11331,96 @@
           "agree": true
         },
         "flow": {
-          "main": -0.84,
-          "main_pct": -11.81,
-          "xl": -0.38,
-          "lg": -0.47
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 2.4,
+        "live": true
+      },
+      {
+        "code": "000026",
+        "name": "飞亚达",
+        "hybk": "饰品",
+        "board_role": "独苗",
+        "board_leader": "飞亚达",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 14.84",
+        "price": 21.05,
+        "close": 21.05,
+        "chg": 4.26,
+        "pool_ds": "20261109",
+        "rr": {
+          "ratio": 0.57,
+          "target": 23.79,
+          "stop": 16.26,
+          "atr": 1.37,
+          "upside": 13.0,
+          "downside": -22.8,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 12.57,
+          "idx3": 1.89,
+          "dev": 10.68,
+          "limit": 20.0,
+          "remain": 9.32,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 15.66,
+          "limit10": 100.0,
+          "remain10": 84.34,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 23.1,
+          "paozi": false
+        },
+        "chan": {
+          "px": 21.05,
+          "zone": "中枢上",
+          "fx": "bottom",
+          "bi_n": 14,
+          "dir": "down",
+          "zs": {
+            "zg": 20.3,
+            "zd": 19.8
+          },
+          "beichi": false,
+          "merged": 189
+        },
+        "chip": {
+          "px": 21.05,
+          "profit_ratio": 88.9,
+          "avg_cost": 19.02,
+          "support": 16.23,
+          "resistance": 21.77,
+          "concentration": 29.1,
+          "main_cost": 20.84,
+          "dist_main": 1.0
+        },
+        "anchors": {
+          "px": 21.05,
+          "anchors": {
+            "low": 17.52,
+            "breakout": 20.96,
+            "ma120": 19.5,
+            "turn": 18.6
+          },
+          "n": 4,
+          "avg_anchor": 19.15,
+          "spread": 18.0,
+          "dist_anchor": 10.0,
+          "agree": false
+        },
+        "flow": {
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
+        },
+        "open": 20.49,
         "live": true
       },
       {
@@ -11893,10 +11496,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.31,
-          "main_pct": -0.68,
-          "xl": -0.54,
-          "lg": 0.23
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 41.0,
         "live": true
@@ -11950,7 +11553,7 @@
             "zd": 7.28
           },
           "beichi": false,
-          "merged": 187
+          "merged": 186
         },
         "chip": {
           "px": 7.5,
@@ -11977,10 +11580,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.76,
-          "main_pct": -7.84,
-          "xl": -0.11,
-          "lg": -0.65
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 8.07,
         "live": true
@@ -12058,10 +11661,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.05,
-          "main_pct": -1.05,
-          "xl": 0.01,
-          "lg": -0.06
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 30.0,
         "live": true
@@ -12108,14 +11711,14 @@
           "px": 17.68,
           "zone": "中枢内",
           "fx": "bottom",
-          "bi_n": 16,
+          "bi_n": 15,
           "dir": "down",
           "zs": {
             "zg": 18.15,
             "zd": 16.92
           },
           "beichi": true,
-          "merged": 199
+          "merged": 198
         },
         "chip": {
           "px": 17.68,
@@ -12142,10 +11745,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.04,
-          "main_pct": -1.89,
-          "xl": 0.03,
-          "lg": -0.07
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 17.22,
         "live": true
@@ -12226,10 +11829,10 @@
           "agree": false
         },
         "flow": {
-          "main": -2.03,
-          "main_pct": -5.94,
-          "xl": -0.7,
-          "lg": -1.32
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 11.12,
         "live": true
@@ -12276,14 +11879,14 @@
           "px": 8.19,
           "zone": "中枢上",
           "fx": "bottom",
-          "bi_n": 16,
+          "bi_n": 17,
           "dir": "down",
           "zs": {
             "zg": 6.67,
             "zd": 6.41
           },
           "beichi": false,
-          "merged": 164
+          "merged": 163
         },
         "chip": {
           "px": 8.19,
@@ -12310,41 +11913,41 @@
           "agree": false
         },
         "flow": {
-          "main": -0.78,
-          "main_pct": -10.4,
-          "xl": -0.3,
-          "lg": -0.48
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 7.76,
         "live": true
       }
     ],
     "stat": {
-      "cand": 128,
-      "no_k": 1,
+      "cand": 119,
+      "no_k": 0,
       "sealed": 93,
       "no_type": 0
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
   },
-  "trade_date": "2026-11-10",
+  "trade_date": "2026-11-11",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-10 23:43",
-    "amt": 15048.0,
+    "asof": "2026-11-11 09:02",
+    "amt": 0.0,
     "amt_est": null,
-    "amt_used": 15048.0,
-    "up": 4035,
-    "down": 1101,
-    "flat": 159,
-    "breadth": 0.762,
+    "amt_used": 0,
+    "up": 0,
+    "down": 0,
+    "flat": 0,
+    "breadth": null,
     "zt": 93,
     "flags": [
-      "成交额 1.50 万亿 < 1.9 万亿"
+      "环境数据缺失（上涨占比、成交额）→ 禁止开仓"
     ],
-    "pos_cap": 0.5,
+    "pos_cap": 0.0,
     "pass": false,
-    "up_ratio": 0.762,
+    "up_ratio": null,
     "zt_count": 93
   },
   "force_close": [],
@@ -14040,6 +13643,288 @@
           "6": "no"
         }
       }
+    ],
+    "2026-11-11": [
+      {
+        "code": "002578",
+        "name": "闽发铝业",
+        "score": 57.5,
+        "close": 6.06,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "warn",
+          "4": "warn",
+          "5": "no",
+          "6": "warn"
+        }
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "score": 56.0,
+        "close": 5.94,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "no",
+          "6": "warn"
+        }
+      },
+      {
+        "code": "603366",
+        "name": "日出东方",
+        "score": 49.7,
+        "close": 10.88,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "warn",
+          "6": "warn"
+        }
+      },
+      {
+        "code": "002310",
+        "name": "东方新能",
+        "score": 47.1,
+        "close": 2.81,
+        "gates": {
+          "1": "ok",
+          "2": "warn",
+          "3": "warn",
+          "4": "warn",
+          "5": "no",
+          "6": "warn"
+        }
+      },
+      {
+        "code": "002160",
+        "name": "常铝股份",
+        "score": 40.9,
+        "close": 4.0,
+        "gates": {
+          "1": "ok",
+          "2": "warn",
+          "3": "warn",
+          "4": "ok",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "600715",
+        "name": "文投控股",
+        "score": 37.8,
+        "close": 2.85,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "002708",
+        "name": "光洋股份",
+        "score": 37.6,
+        "close": 24.17,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "warn",
+          "6": "no"
+        }
+      },
+      {
+        "code": "000678",
+        "name": "襄阳轴承",
+        "score": 37.6,
+        "close": 19.26,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "002623",
+        "name": "亚玛顿",
+        "score": 36.4,
+        "close": 21.21,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "300613",
+        "name": "富瀚微",
+        "score": 35.8,
+        "close": 80.02,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "warn",
+          "4": "ok",
+          "5": "warn",
+          "6": "no"
+        }
+      },
+      {
+        "code": "600261",
+        "name": "阳光照明",
+        "score": 35.7,
+        "close": 5.85,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "603893",
+        "name": "瑞芯微",
+        "score": 34.0,
+        "close": 233.2,
+        "gates": {
+          "1": "no",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "warn",
+          "6": "no"
+        }
+      },
+      {
+        "code": "002931",
+        "name": "锋龙股份",
+        "score": 32.1,
+        "close": 48.25,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "warn",
+          "4": "warn",
+          "5": "warn",
+          "6": "no"
+        }
+      },
+      {
+        "code": "603533",
+        "name": "掌阅科技",
+        "score": 31.0,
+        "close": 32.8,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "002009",
+        "name": "天奇股份",
+        "score": 31.0,
+        "close": 19.24,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "603598",
+        "name": "引力传媒",
+        "score": 30.3,
+        "close": 23.69,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "warn",
+          "6": "no"
+        }
+      },
+      {
+        "code": "301314",
+        "name": "科瑞思",
+        "score": 28.4,
+        "close": 50.7,
+        "gates": {
+          "1": "no",
+          "2": "warn",
+          "3": "warn",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "603466",
+        "name": "风语筑",
+        "score": 28.2,
+        "close": 15.33,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "warn",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "002343",
+        "name": "慈文传媒",
+        "score": 28.1,
+        "close": 9.33,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
+        "code": "001232",
+        "name": "嘉立创",
+        "score": 26.9,
+        "close": 174.78,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "warn",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      }
     ]
   },
   "gate_stats": {},
@@ -14082,22 +13967,22 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-10 23:43",
+    "asof": "2026-11-11 09:02",
     "indexes": {
       "道琼斯": {
-        "px": 52100.32,
-        "chg": -0.55,
-        "time": "2026-11-10 10:42:59"
+        "px": 52231.89,
+        "chg": -0.3,
+        "time": "2026-11-10 17:00:40"
       },
       "纳斯达克": {
-        "px": 25092.34,
-        "chg": -0.64,
-        "time": "2026-11-10 10:42:59"
+        "px": 25065.87,
+        "chg": -0.74,
+        "time": "2026-11-10 17:15:59"
       },
       "标普500": {
-        "px": 7506.27,
-        "chg": -0.58,
-        "time": "2026-11-10 10:42:59"
+        "px": 7520.93,
+        "chg": -0.38,
+        "time": "2026-11-10 17:00:31"
       },
       "恒生指数": {
         "px": 24557.04,
@@ -14105,7 +13990,7 @@
         "time": "2026/11/10 18:31:35"
       }
     },
-    "worst": -0.64,
+    "worst": -0.74,
     "risk": "低"
   },
   "zt_archive": {
@@ -15192,20 +15077,10 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-10 23:42",
+    "asof": "2026-11-11 09:00",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
-      {
-        "code": "002310",
-        "name": "东方新能",
-        "prev": 2.55,
-        "open": 2.81,
-        "gap": 10.2,
-        "price": 2.81,
-        "chg": 10.2,
-        "vol": 601289
-      },
       {
         "code": "601188",
         "name": "龙江交通",
@@ -15217,44 +15092,24 @@
         "vol": 4235376
       },
       {
-        "code": "002347",
-        "name": "泰尔股份",
-        "prev": 7.0,
-        "open": 7.7,
-        "gap": 10.0,
-        "price": 7.7,
-        "chg": 10.0,
-        "vol": 418857
-      },
-      {
-        "code": "600408",
-        "name": "安泰集团",
-        "prev": 3.32,
-        "open": 3.56,
-        "gap": 7.23,
-        "price": 3.65,
-        "chg": 9.94,
-        "vol": 1701050
-      },
-      {
-        "code": "002708",
-        "name": "光洋股份",
-        "prev": 21.97,
-        "open": 23.52,
-        "gap": 7.06,
-        "price": 24.17,
+        "code": "002623",
+        "name": "亚玛顿",
+        "prev": 19.28,
+        "open": 21.21,
+        "gap": 10.01,
+        "price": 21.21,
         "chg": 10.01,
-        "vol": 160245
+        "vol": 13339
       },
       {
-        "code": "603703",
-        "name": "盛洋科技",
-        "prev": 11.1,
-        "open": 11.79,
-        "gap": 6.22,
-        "price": 12.21,
-        "chg": 10.0,
-        "vol": 1210502
+        "code": "600261",
+        "name": "阳光照明",
+        "prev": 5.32,
+        "open": 5.79,
+        "gap": 8.83,
+        "price": 5.85,
+        "chg": 9.96,
+        "vol": 1053573
       },
       {
         "code": "605398",
@@ -15277,14 +15132,14 @@
         "vol": 85788
       },
       {
-        "code": "603679",
-        "name": "华体科技",
-        "prev": 16.74,
-        "open": 17.5,
-        "gap": 4.54,
-        "price": 18.41,
-        "chg": 9.98,
-        "vol": 84558
+        "code": "603666",
+        "name": "亿嘉和",
+        "prev": 25.92,
+        "open": 26.84,
+        "gap": 3.55,
+        "price": 28.51,
+        "chg": 9.99,
+        "vol": 47190
       },
       {
         "code": "300613",
@@ -15297,14 +15152,14 @@
         "vol": 299061
       },
       {
-        "code": "603893",
-        "name": "瑞芯微",
-        "prev": 212.0,
-        "open": 218.99,
-        "gap": 3.3,
-        "price": 233.2,
-        "chg": 10.0,
-        "vol": 185183
+        "code": "603283",
+        "name": "赛腾股份",
+        "prev": 36.57,
+        "open": 37.71,
+        "gap": 3.12,
+        "price": 40.23,
+        "chg": 10.01,
+        "vol": 211645
       },
       {
         "code": "601021",
@@ -15317,14 +15172,14 @@
         "vol": 111054
       },
       {
-        "code": "600609",
-        "name": "金杯汽车",
-        "prev": 3.48,
-        "open": 3.58,
-        "gap": 2.87,
-        "price": 3.83,
+        "code": "002631",
+        "name": "德尔未来",
+        "prev": 8.85,
+        "open": 9.11,
+        "gap": 2.94,
+        "price": 9.74,
         "chg": 10.06,
-        "vol": 1027872
+        "vol": 264145
       },
       {
         "code": "603121",
@@ -15345,9 +15200,49 @@
         "price": 50.7,
         "chg": 20.0,
         "vol": 47404
+      },
+      {
+        "code": "600715",
+        "name": "文投控股",
+        "prev": 2.59,
+        "open": 2.65,
+        "gap": 2.32,
+        "price": 2.85,
+        "chg": 10.04,
+        "vol": 1836706
+      },
+      {
+        "code": "300556",
+        "name": "丝路视觉",
+        "prev": 18.54,
+        "open": 18.92,
+        "gap": 2.05,
+        "price": 22.25,
+        "chg": 20.01,
+        "vol": 397233
+      },
+      {
+        "code": "600510",
+        "name": "黑牡丹",
+        "prev": 7.42,
+        "open": 7.57,
+        "gap": 2.02,
+        "price": 8.16,
+        "chg": 9.97,
+        "vol": 259823
       }
     ],
     "top_low": [
+      {
+        "code": "600809",
+        "name": "山西汾酒",
+        "prev": 130.6,
+        "open": 129.02,
+        "gap": -1.21,
+        "price": 129.45,
+        "chg": -0.88,
+        "vol": 54296
+      },
       {
         "code": "603381",
         "name": "永臻股份",
@@ -15359,34 +15254,34 @@
         "vol": 420464
       },
       {
-        "code": "000568",
-        "name": "泸州老窖",
-        "prev": 80.18,
-        "open": 79.57,
-        "gap": -0.76,
-        "price": 79.99,
-        "chg": -0.24,
-        "vol": 103315
-      },
-      {
-        "code": "600887",
-        "name": "伊利股份",
-        "prev": 31.14,
-        "open": 30.93,
+        "code": "600900",
+        "name": "长江电力",
+        "prev": 29.83,
+        "open": 29.63,
         "gap": -0.67,
-        "price": 31.14,
-        "chg": 0.0,
-        "vol": 462697
+        "price": 29.67,
+        "chg": -0.54,
+        "vol": 611230
       },
       {
-        "code": "000001",
-        "name": "平安银行",
-        "prev": 11.89,
-        "open": 11.83,
-        "gap": -0.5,
-        "price": 11.86,
-        "chg": -0.25,
-        "vol": 748890
+        "code": "600036",
+        "name": "招商银行",
+        "prev": 43.01,
+        "open": 42.77,
+        "gap": -0.56,
+        "price": 43.01,
+        "chg": 0.0,
+        "vol": 434727
+      },
+      {
+        "code": "000333",
+        "name": "美的集团",
+        "prev": 89.79,
+        "open": 89.3,
+        "gap": -0.55,
+        "price": 88.53,
+        "chg": -1.4,
+        "vol": 229501
       },
       {
         "code": "600519",
@@ -15399,6 +15294,16 @@
         "vol": 23038
       },
       {
+        "code": "600585",
+        "name": "海螺水泥",
+        "prev": 18.57,
+        "open": 18.51,
+        "gap": -0.32,
+        "price": 18.31,
+        "chg": -1.4,
+        "vol": 180748
+      },
+      {
         "code": "601668",
         "name": "中国建筑",
         "prev": 4.67,
@@ -15409,24 +15314,14 @@
         "vol": 1653645
       },
       {
-        "code": "601888",
-        "name": "中国中免",
-        "prev": 53.39,
-        "open": 53.32,
-        "gap": -0.13,
-        "price": 53.21,
-        "chg": -0.34,
-        "vol": 113924
-      },
-      {
-        "code": "002594",
-        "name": "比亚迪",
-        "prev": 84.9,
-        "open": 84.8,
+        "code": "002343",
+        "name": "慈文传媒",
+        "prev": 8.48,
+        "open": 8.47,
         "gap": -0.12,
-        "price": 84.44,
-        "chg": -0.54,
-        "vol": 177745
+        "price": 9.33,
+        "chg": 10.02,
+        "vol": 1038569
       },
       {
         "code": "300015",
@@ -15437,16 +15332,6 @@
         "price": 8.85,
         "chg": -0.9,
         "vol": 677909
-      },
-      {
-        "code": "000678",
-        "name": "襄阳轴承",
-        "prev": 17.51,
-        "open": 17.51,
-        "gap": 0.0,
-        "price": 19.26,
-        "chg": 9.99,
-        "vol": 705628
       }
     ]
   },
