@@ -35,7 +35,7 @@
           "prevClose": 11.56,
           "peak": 11.88,
           "maxChg": 1.2,
-          "stopLine": 11.158
+          "stopLine": 11.159
         }
       ],
       "trades": [
@@ -170,9 +170,9 @@
         100934.61099999999,
         100788.61099999999,
         100466.61099999999,
-        100486.61099999999
+        100500.61099999999
       ],
-      "asset": 100486.61099999999,
+      "asset": 100500.61099999999,
       "asset_history": [
         100000,
         100000,
@@ -194,11 +194,11 @@
         100934.61099999999,
         100788.61099999999,
         100466.61099999999,
-        100486.61099999999
+        100500.61099999999
       ],
       "winRate": 0.333,
       "plRatio": 3.1,
-      "sharpe": 1.13,
+      "sharpe": 1.16,
       "maxDrawdown": 0.0143
     },
     {
@@ -758,7 +758,7 @@
           "secondDone": true,
           "prevClose": 20.08,
           "peak": 22.07,
-          "stopLine": 19.291,
+          "stopLine": 19.283,
           "maxChg": 9.64
         }
       ],
@@ -840,9 +840,9 @@
         100009.0,
         100057.0,
         100141.0,
-        100088.0
+        100086.0
       ],
-      "asset": 100088.0,
+      "asset": 100086.0,
       "asset_history": [
         100000,
         100000,
@@ -864,7 +864,7 @@
         100009.0,
         100057.0,
         100141.0,
-        100088.0
+        100086.0
       ],
       "winRate": 1.0,
       "plRatio": 5.0,
@@ -943,7 +943,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-12T13:53:30.210087",
+  "last_update": "2026-11-12T13:57:02.342709",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1087,7 +1087,7 @@
     }
   },
   "market_sentiment": {
-    "breadth": 0.24,
+    "breadth": 0.27,
     "divergent": false,
     "pessimism": 0.0,
     "contagion": 0.43
@@ -2163,19 +2163,19 @@
         "n": 2,
         "max_lb": 1
       },
+      "地面兵装": {
+        "n": 1,
+        "max_lb": 1
+      },
       "电视广播": {
         "n": 1,
         "max_lb": 1
       },
-      "工程机械": {
-        "n": 1,
-        "max_lb": 1
-      },
-      "多元金融": {
-        "n": 1,
-        "max_lb": 1
-      },
       "渔业": {
+        "n": 1,
+        "max_lb": 1
+      },
+      "房地产开": {
         "n": 1,
         "max_lb": 1
       }
@@ -2189,14 +2189,14 @@
         "n": 1,
         "max_lb": 5,
         "lb_sum": 5,
-        "seal": 1.46,
+        "seal": 1.44,
         "boom": 7,
         "stocks": [
           {
             "name": "日出东方",
             "code": "603366",
             "lbc": 5,
-            "fund": 1.46
+            "fund": 1.44
           }
         ],
         "avg_lb": 5.0,
@@ -2213,7 +2213,7 @@
         "n": 2,
         "max_lb": 4,
         "lb_sum": 6,
-        "seal": 5.07,
+        "seal": 5.22,
         "boom": 0,
         "stocks": [
           {
@@ -2226,7 +2226,7 @@
             "name": "金辰股份",
             "code": "603396",
             "lbc": 2,
-            "fund": 2.73
+            "fund": 2.88
           }
         ],
         "avg_lb": 3.0,
@@ -2243,14 +2243,14 @@
         "n": 2,
         "max_lb": 4,
         "lb_sum": 5,
-        "seal": 1.02,
+        "seal": 1.01,
         "boom": 1,
         "stocks": [
           {
             "name": "东方环宇",
             "code": "603706",
             "lbc": 4,
-            "fund": 0.46
+            "fund": 0.45
           },
           {
             "name": "洪通燃气",
@@ -2273,14 +2273,14 @@
         "n": 1,
         "max_lb": 3,
         "lb_sum": 3,
-        "seal": 0.93,
+        "seal": 0.91,
         "boom": 1,
         "stocks": [
           {
             "name": "惠发食品",
             "code": "603536",
             "lbc": 3,
-            "fund": 0.93
+            "fund": 0.91
           }
         ],
         "avg_lb": 3.0,
@@ -2297,14 +2297,14 @@
         "n": 1,
         "max_lb": 3,
         "lb_sum": 3,
-        "seal": 0.16,
+        "seal": 0.15,
         "boom": 2,
         "stocks": [
           {
             "name": "天普股份",
             "code": "605255",
             "lbc": 3,
-            "fund": 0.16
+            "fund": 0.15
           }
         ],
         "avg_lb": 3.0,
@@ -2321,7 +2321,7 @@
         "n": 3,
         "max_lb": 2,
         "lb_sum": 4,
-        "seal": 2.86,
+        "seal": 2.75,
         "boom": 2,
         "stocks": [
           {
@@ -2334,13 +2334,13 @@
             "name": "中捷资源",
             "code": "002021",
             "lbc": 1,
-            "fund": 1.03
+            "fund": 1.02
           },
           {
             "name": "沈鼓集团",
             "code": "601091",
             "lbc": 1,
-            "fund": 1.54
+            "fund": 1.44
           }
         ],
         "avg_lb": 1.3,
@@ -2357,14 +2357,14 @@
         "n": 1,
         "max_lb": 2,
         "lb_sum": 2,
-        "seal": 1.35,
+        "seal": 1.32,
         "boom": 0,
         "stocks": [
           {
             "name": "天安新材",
             "code": "603725",
             "lbc": 2,
-            "fund": 1.35
+            "fund": 1.32
           }
         ],
         "avg_lb": 2.0,
@@ -2381,20 +2381,20 @@
         "n": 2,
         "max_lb": 1,
         "lb_sum": 2,
-        "seal": 2.33,
+        "seal": 2.31,
         "boom": 0,
         "stocks": [
           {
             "name": "广百股份",
             "code": "002187",
             "lbc": 1,
-            "fund": 1.6
+            "fund": 1.59
           },
           {
             "name": "宁波中百",
             "code": "600857",
             "lbc": 1,
-            "fund": 0.73
+            "fund": 0.72
           }
         ],
         "avg_lb": 1.0,
@@ -2411,20 +2411,20 @@
         "n": 2,
         "max_lb": 1,
         "lb_sum": 2,
-        "seal": 1.91,
+        "seal": 1.77,
         "boom": 3,
         "stocks": [
           {
             "name": "大西洋",
             "code": "600558",
             "lbc": 1,
-            "fund": 1.41
+            "fund": 1.29
           },
           {
             "name": "泰嘉股份",
             "code": "002843",
             "lbc": 1,
-            "fund": 0.5
+            "fund": 0.48
           }
         ],
         "avg_lb": 1.0,
@@ -2441,20 +2441,20 @@
         "n": 2,
         "max_lb": 1,
         "lb_sum": 2,
-        "seal": 1.7,
+        "seal": 1.68,
         "boom": 1,
         "stocks": [
           {
             "name": "成都路桥",
             "code": "002628",
             "lbc": 1,
-            "fund": 0.96
+            "fund": 0.95
           },
           {
             "name": "龙建股份",
             "code": "600853",
             "lbc": 1,
-            "fund": 0.74
+            "fund": 0.73
           }
         ],
         "avg_lb": 1.0,
@@ -2467,18 +2467,42 @@
         "sector_rank": 10
       },
       {
+        "name": "地面兵装",
+        "n": 1,
+        "max_lb": 1,
+        "lb_sum": 1,
+        "seal": 7.71,
+        "boom": 1,
+        "stocks": [
+          {
+            "name": "长城军工",
+            "code": "601606",
+            "lbc": 1,
+            "fund": 7.71
+          }
+        ],
+        "avg_lb": 1.0,
+        "stage": "启动",
+        "emoji": "🌱",
+        "p_n": 0,
+        "delta_n": 1,
+        "sector_pct": 10.02,
+        "sector_limit_count": 1,
+        "sector_rank": 11
+      },
+      {
         "name": "电视广播",
         "n": 1,
         "max_lb": 1,
         "lb_sum": 1,
-        "seal": 2.33,
-        "boom": 1,
+        "seal": 1.67,
+        "boom": 3,
         "stocks": [
           {
             "name": "吉视传媒",
             "code": "601929",
             "lbc": 1,
-            "fund": 2.33
+            "fund": 1.67
           }
         ],
         "avg_lb": 1.0,
@@ -2488,69 +2512,21 @@
         "delta_n": 1,
         "sector_pct": 10.2,
         "sector_limit_count": 1,
-        "sector_rank": 11
-      },
-      {
-        "name": "工程机械",
-        "n": 1,
-        "max_lb": 1,
-        "lb_sum": 1,
-        "seal": 1.31,
-        "boom": 0,
-        "stocks": [
-          {
-            "name": "华东重机",
-            "code": "002685",
-            "lbc": 1,
-            "fund": 1.31
-          }
-        ],
-        "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 1,
-        "sector_pct": 9.98,
-        "sector_limit_count": 1,
         "sector_rank": 12
-      },
-      {
-        "name": "多元金融",
-        "n": 1,
-        "max_lb": 1,
-        "lb_sum": 1,
-        "seal": 1.3,
-        "boom": 0,
-        "stocks": [
-          {
-            "name": "仁东控股",
-            "code": "002647",
-            "lbc": 1,
-            "fund": 1.3
-          }
-        ],
-        "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 1,
-        "sector_pct": 10.0,
-        "sector_limit_count": 1,
-        "sector_rank": 13
       },
       {
         "name": "渔业",
         "n": 1,
         "max_lb": 1,
         "lb_sum": 1,
-        "seal": 1.23,
+        "seal": 1.17,
         "boom": 0,
         "stocks": [
           {
             "name": "好当家",
             "code": "600467",
             "lbc": 1,
-            "fund": 1.23
+            "fund": 1.17
           }
         ],
         "avg_lb": 1.0,
@@ -2559,6 +2535,30 @@
         "p_n": 0,
         "delta_n": 1,
         "sector_pct": 10.22,
+        "sector_limit_count": 1,
+        "sector_rank": 13
+      },
+      {
+        "name": "房地产开",
+        "n": 1,
+        "max_lb": 1,
+        "lb_sum": 1,
+        "seal": 1.11,
+        "boom": 0,
+        "stocks": [
+          {
+            "name": "粤宏远Ａ",
+            "code": "000573",
+            "lbc": 1,
+            "fund": 1.11
+          }
+        ],
+        "avg_lb": 1.0,
+        "stage": "启动",
+        "emoji": "🌱",
+        "p_n": 0,
+        "delta_n": 1,
+        "sector_pct": 10.13,
         "sector_limit_count": 1,
         "sector_rank": 14
       }
@@ -2577,14 +2577,14 @@
           "code": "603366",
           "lbc": 5,
           "hybk": "厨卫电器",
-          "fund": 1.46
+          "fund": 1.44
         },
         {
           "name": "东方环宇",
           "code": "603706",
           "lbc": 4,
           "hybk": "燃气Ⅱ",
-          "fund": 0.46
+          "fund": 0.45
         }
       ],
       "lb3": [
@@ -2593,14 +2593,14 @@
           "code": "603536",
           "lbc": 3,
           "hybk": "食品加工",
-          "fund": 0.93
+          "fund": 0.91
         },
         {
           "name": "天普股份",
           "code": "605255",
           "lbc": 3,
           "hybk": "汽车零部",
-          "fund": 0.16
+          "fund": 0.15
         }
       ],
       "lb2": [
@@ -2609,14 +2609,14 @@
           "code": "603725",
           "lbc": 2,
           "hybk": "家居用品",
-          "fund": 1.35
+          "fund": 1.32
         },
         {
           "name": "金辰股份",
           "code": "603396",
           "lbc": 2,
           "hybk": "光伏设备",
-          "fund": 2.73
+          "fund": 2.88
         },
         {
           "name": "中重科技",
@@ -2632,49 +2632,49 @@
           "code": "000573",
           "lbc": 1,
           "hybk": "房地产开",
-          "fund": 1.12
+          "fund": 1.11
         },
         {
           "name": "东方海洋",
           "code": "002086",
           "lbc": 1,
           "hybk": "农产品加",
-          "fund": 0.01
+          "fund": 0.43
         },
         {
           "name": "大西洋",
           "code": "600558",
           "lbc": 1,
           "hybk": "通用设备",
-          "fund": 1.41
+          "fund": 1.29
         },
         {
           "name": "成都路桥",
           "code": "002628",
           "lbc": 1,
           "hybk": "基础建设",
-          "fund": 0.96
+          "fund": 0.95
         },
         {
           "name": "泰嘉股份",
           "code": "002843",
           "lbc": 1,
           "hybk": "通用设备",
-          "fund": 0.5
+          "fund": 0.48
         },
         {
           "name": "超颖电子",
           "code": "603175",
           "lbc": 1,
           "hybk": "元件",
-          "fund": 0.44
+          "fund": 0.4
         },
         {
           "name": "澳洋健康",
           "code": "002172",
           "lbc": 1,
           "hybk": "医疗服务",
-          "fund": 0.61
+          "fund": 0.52
         },
         {
           "name": "国统股份",
@@ -2684,18 +2684,11 @@
           "fund": 0.18
         },
         {
-          "name": "华东重机",
-          "code": "002685",
-          "lbc": 1,
-          "hybk": "工程机械",
-          "fund": 1.31
-        },
-        {
           "name": "道恩股份",
           "code": "002838",
           "lbc": 1,
           "hybk": "塑料",
-          "fund": 1.0
+          "fund": 0.97
         },
         {
           "name": "洪通燃气",
@@ -2709,63 +2702,63 @@
           "code": "600853",
           "lbc": 1,
           "hybk": "基础建设",
-          "fund": 0.74
+          "fund": 0.73
         },
         {
           "name": "广百股份",
           "code": "002187",
           "lbc": 1,
           "hybk": "一般零售",
-          "fund": 1.6
+          "fund": 1.59
         },
         {
           "name": "兴欣新材",
           "code": "001358",
           "lbc": 1,
           "hybk": "化学制品",
-          "fund": 0.67
+          "fund": 0.66
         },
         {
           "name": "阳光乳业",
           "code": "001318",
           "lbc": 1,
           "hybk": "饮料乳品",
-          "fund": 0.63
+          "fund": 0.62
         },
         {
           "name": "安阳钢铁",
           "code": "600569",
           "lbc": 1,
           "hybk": "普钢",
-          "fund": 0.39
+          "fund": 0.4
         },
         {
           "name": "宁波中百",
           "code": "600857",
           "lbc": 1,
           "hybk": "一般零售",
-          "fund": 0.73
+          "fund": 0.72
         },
         {
           "name": "吉视传媒",
           "code": "601929",
           "lbc": 1,
           "hybk": "电视广播",
-          "fund": 2.33
+          "fund": 1.67
         },
         {
           "name": "龙江交通",
           "code": "601188",
           "lbc": 1,
           "hybk": "铁路公路",
-          "fund": 1.06
+          "fund": 1.03
         },
         {
           "name": "双成药业",
           "code": "002693",
           "lbc": 1,
           "hybk": "化学制药",
-          "fund": 0.46
+          "fund": 0.36
         },
         {
           "name": "哈森股份",
@@ -2779,50 +2772,50 @@
           "code": "002021",
           "lbc": 1,
           "hybk": "专用设备",
-          "fund": 1.03
+          "fund": 1.02
         },
         {
           "name": "起帆电缆",
           "code": "605222",
           "lbc": 1,
           "hybk": "电网设备",
-          "fund": 0.79
+          "fund": 0.77
         },
         {
           "name": "好当家",
           "code": "600467",
           "lbc": 1,
           "hybk": "渔业",
-          "fund": 1.23
-        },
-        {
-          "name": "仁东控股",
-          "code": "002647",
-          "lbc": 1,
-          "hybk": "多元金融",
-          "fund": 1.3
+          "fund": 1.17
         },
         {
           "name": "皇台酒业",
           "code": "000995",
           "lbc": 1,
           "hybk": "白酒Ⅱ",
-          "fund": 0.57
+          "fund": 0.54
         },
         {
           "name": "沈鼓集团",
           "code": "601091",
           "lbc": 1,
           "hybk": "专用设备",
-          "fund": 1.54
+          "fund": 1.44
+        },
+        {
+          "name": "长城军工",
+          "code": "601606",
+          "lbc": 1,
+          "hybk": "地面兵装",
+          "fund": 7.71
         }
       ]
     },
-    "zt_count": 35,
-    "dt_count": 1,
-    "zt_tc": 35,
-    "dt_tc": 1,
-    "asof": "2026-11-12 13:51"
+    "zt_count": 34,
+    "dt_count": 2,
+    "zt_tc": 34,
+    "dt_tc": 2,
+    "asof": "2026-11-12 13:54"
   },
   "limit_decoded": {
     "ok": true,
@@ -2833,7 +2826,7 @@
         "zdp": 10.03,
         "lbc": 5,
         "limit_type": "连板",
-        "fund": 1.46,
+        "fund": 1.44,
         "hs": 19.1,
         "zbc": 7,
         "hybk": "厨卫电器",
@@ -2861,7 +2854,7 @@
         "zdp": 9.99,
         "lbc": 4,
         "limit_type": "连板",
-        "fund": 0.46,
+        "fund": 0.45,
         "hs": 8.7,
         "zbc": 0,
         "hybk": "燃气Ⅱ",
@@ -2875,13 +2868,13 @@
         "zdp": 10.04,
         "lbc": 3,
         "limit_type": "连板",
-        "fund": 0.93,
-        "hs": 23.5,
+        "fund": 0.91,
+        "hs": 23.6,
         "zbc": 1,
         "hybk": "食品加工",
         "fbt": "09:30",
         "ltsz": 31.4,
-        "decode": "食品加工方向3板高标，题材已进入主升，持股者盛宴、追高风险剧增；早盘快速封板，资金抢筹坚决，隔日溢价概率高；换手率23.5%，筹码剧烈交换。"
+        "decode": "食品加工方向3板高标，题材已进入主升，持股者盛宴、追高风险剧增；早盘快速封板，资金抢筹坚决，隔日溢价概率高；换手率23.6%，筹码剧烈交换。"
       },
       {
         "code": "605255",
@@ -2889,7 +2882,7 @@
         "zdp": 10.0,
         "lbc": 3,
         "limit_type": "连板",
-        "fund": 0.16,
+        "fund": 0.15,
         "hs": 1.3,
         "zbc": 2,
         "hybk": "汽车零部",
@@ -2903,8 +2896,8 @@
         "zdp": 10.03,
         "lbc": 2,
         "limit_type": "连板",
-        "fund": 1.35,
-        "hs": 2.3,
+        "fund": 1.32,
+        "hs": 2.4,
         "zbc": 0,
         "hybk": "家居用品",
         "fbt": "09:25",
@@ -2917,13 +2910,13 @@
         "zdp": 10.0,
         "lbc": 2,
         "limit_type": "连板",
-        "fund": 2.73,
-        "hs": 0.7,
+        "fund": 2.88,
+        "hs": 0.8,
         "zbc": 0,
         "hybk": "光伏设备",
         "fbt": "09:25",
         "ltsz": 44.5,
-        "decode": "光伏设备方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高；封单2.73亿，封板结实。"
+        "decode": "光伏设备方向2板，题材发酵中段，明日是3进4的关键验证；早盘快速封板，资金抢筹坚决，隔日溢价概率高；封单2.88亿，封板结实。"
       },
       {
         "code": "603135",
@@ -2945,7 +2938,7 @@
         "zdp": 10.13,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.12,
+        "fund": 1.11,
         "hs": 0.9,
         "zbc": 0,
         "hybk": "房地产开",
@@ -2959,13 +2952,13 @@
         "zdp": 10.02,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.01,
-        "hs": 30.3,
-        "zbc": 9,
+        "fund": 0.43,
+        "hs": 30.4,
+        "zbc": 10,
         "hybk": "农产品加",
         "fbt": "09:25",
         "ltsz": 81.6,
-        "decode": "农产品加方向首板，题材扩散或新方向试探，关注次日能否连板确认；早盘快速封板，资金抢筹坚决，隔日溢价概率高；盘中炸板9次，多空分歧巨大，封板不牢；换手率30.3%，筹码剧烈交换。"
+        "decode": "农产品加方向首板，题材扩散或新方向试探，关注次日能否连板确认；早盘快速封板，资金抢筹坚决，隔日溢价概率高；盘中炸板10次，多空分歧巨大，封板不牢；换手率30.4%，筹码剧烈交换。"
       },
       {
         "code": "600558",
@@ -2973,13 +2966,13 @@
         "zdp": 9.96,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.41,
-        "hs": 14.9,
+        "fund": 1.29,
+        "hs": 15.0,
         "zbc": 3,
         "hybk": "通用设备",
         "fbt": "09:31",
         "ltsz": 53.5,
-        "decode": "通用设备方向首板，题材扩散或新方向试探，关注次日能否连板确认；早盘快速封板，资金抢筹坚决，隔日溢价概率高；盘中炸板3次，多空分歧巨大，封板不牢。"
+        "decode": "通用设备方向首板，题材扩散或新方向试探，关注次日能否连板确认；早盘快速封板，资金抢筹坚决，隔日溢价概率高；盘中炸板3次，多空分歧巨大，封板不牢；换手率15.0%，筹码剧烈交换。"
       },
       {
         "code": "002628",
@@ -2987,8 +2980,8 @@
         "zdp": 9.98,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.96,
-        "hs": 2.5,
+        "fund": 0.95,
+        "hs": 2.6,
         "zbc": 1,
         "hybk": "基础建设",
         "fbt": "09:32",
@@ -3001,7 +2994,7 @@
         "zdp": 10.04,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.5,
+        "fund": 0.48,
         "hs": 3.9,
         "zbc": 0,
         "hybk": "通用设备",
@@ -3015,7 +3008,7 @@
         "zdp": 10.0,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.44,
+        "fund": 0.4,
         "hs": 4.8,
         "zbc": 1,
         "hybk": "元件",
@@ -3029,13 +3022,13 @@
         "zdp": 10.08,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.61,
-        "hs": 28.0,
+        "fund": 0.52,
+        "hs": 28.1,
         "zbc": 3,
         "hybk": "医疗服务",
         "fbt": "09:42",
         "ltsz": 51.0,
-        "decode": "医疗服务方向首板，题材扩散或新方向试探，关注次日能否连板确认；盘中炸板3次，多空分歧巨大，封板不牢；换手率28.0%，筹码剧烈交换。"
+        "decode": "医疗服务方向首板，题材扩散或新方向试探，关注次日能否连板确认；盘中炸板3次，多空分歧巨大，封板不牢；换手率28.1%，筹码剧烈交换。"
       },
       {
         "code": "002205",
@@ -3052,27 +3045,13 @@
         "decode": "水泥方向首板，题材扩散或新方向试探，关注次日能否连板确认。"
       },
       {
-        "code": "002685",
-        "name": "华东重机",
-        "zdp": 9.98,
-        "lbc": 1,
-        "limit_type": "首板",
-        "fund": 1.31,
-        "hs": 4.6,
-        "zbc": 0,
-        "hybk": "工程机械",
-        "fbt": "09:45",
-        "ltsz": 53.3,
-        "decode": "工程机械方向首板，题材扩散或新方向试探，关注次日能否连板确认。"
-      },
-      {
         "code": "002838",
         "name": "道恩股份",
         "zdp": 10.02,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.0,
-        "hs": 3.4,
+        "fund": 0.97,
+        "hs": 3.5,
         "zbc": 1,
         "hybk": "塑料",
         "fbt": "09:47",
@@ -3099,7 +3078,7 @@
         "zdp": 9.92,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.74,
+        "fund": 0.73,
         "hs": 9.4,
         "zbc": 0,
         "hybk": "基础建设",
@@ -3113,7 +3092,7 @@
         "zdp": 10.07,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.6,
+        "fund": 1.59,
         "hs": 4.2,
         "zbc": 0,
         "hybk": "一般零售",
@@ -3127,8 +3106,8 @@
         "zdp": 9.99,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.67,
-        "hs": 5.0,
+        "fund": 0.66,
+        "hs": 5.1,
         "zbc": 0,
         "hybk": "化学制品",
         "fbt": "09:55",
@@ -3141,8 +3120,8 @@
         "zdp": 10.01,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.63,
-        "hs": 11.2,
+        "fund": 0.62,
+        "hs": 11.3,
         "zbc": 1,
         "hybk": "饮料乳品",
         "fbt": "09:56",
@@ -3155,7 +3134,7 @@
         "zdp": 9.89,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.39,
+        "fund": 0.4,
         "hs": 4.3,
         "zbc": 1,
         "hybk": "普钢",
@@ -3169,7 +3148,7 @@
         "zdp": 9.97,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.73,
+        "fund": 0.72,
         "hs": 2.9,
         "zbc": 0,
         "hybk": "一般零售",
@@ -3183,13 +3162,13 @@
         "zdp": 10.2,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 2.33,
-        "hs": 17.0,
-        "zbc": 1,
+        "fund": 1.67,
+        "hs": 18.3,
+        "zbc": 3,
         "hybk": "电视广播",
         "fbt": "10:09",
         "ltsz": 98.1,
-        "decode": "电视广播方向首板，题材扩散或新方向试探，关注次日能否连板确认；封单2.33亿，封板结实；换手率17.0%，筹码剧烈交换。"
+        "decode": "电视广播方向首板，题材扩散或新方向试探，关注次日能否连板确认；盘中炸板3次，多空分歧巨大，封板不牢；换手率18.3%，筹码剧烈交换。"
       },
       {
         "code": "601188",
@@ -3197,7 +3176,7 @@
         "zdp": 10.02,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.06,
+        "fund": 1.03,
         "hs": 26.1,
         "zbc": 2,
         "hybk": "铁路公路",
@@ -3211,7 +3190,7 @@
         "zdp": 9.95,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.46,
+        "fund": 0.36,
         "hs": 11.1,
         "zbc": 4,
         "hybk": "化学制药",
@@ -3239,7 +3218,7 @@
         "zdp": 10.04,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.03,
+        "fund": 1.02,
         "hs": 8.1,
         "zbc": 0,
         "hybk": "专用设备",
@@ -3253,7 +3232,7 @@
         "zdp": 10.01,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.79,
+        "fund": 0.77,
         "hs": 2.7,
         "zbc": 1,
         "hybk": "电网设备",
@@ -3267,7 +3246,7 @@
         "zdp": 10.22,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.23,
+        "fund": 1.17,
         "hs": 8.6,
         "zbc": 0,
         "hybk": "渔业",
@@ -3276,32 +3255,18 @@
         "decode": "渔业方向首板，题材扩散或新方向试探，关注次日能否连板确认。"
       },
       {
-        "code": "002647",
-        "name": "仁东控股",
-        "zdp": 10.0,
-        "lbc": 1,
-        "limit_type": "首板",
-        "fund": 1.3,
-        "hs": 5.7,
-        "zbc": 0,
-        "hybk": "多元金融",
-        "fbt": "13:05",
-        "ltsz": 80.4,
-        "decode": "多元金融方向首板，题材扩散或新方向试探，关注次日能否连板确认。"
-      },
-      {
         "code": "000995",
         "name": "皇台酒业",
         "zdp": 10.03,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 0.57,
-        "hs": 32.2,
+        "fund": 0.54,
+        "hs": 32.3,
         "zbc": 4,
         "hybk": "白酒Ⅱ",
         "fbt": "13:07",
         "ltsz": 32.5,
-        "decode": "白酒Ⅱ方向首板，题材扩散或新方向试探，关注次日能否连板确认；盘中炸板4次，多空分歧巨大，封板不牢；换手率32.2%，筹码剧烈交换。"
+        "decode": "白酒Ⅱ方向首板，题材扩散或新方向试探，关注次日能否连板确认；盘中炸板4次，多空分歧巨大，封板不牢；换手率32.3%，筹码剧烈交换。"
       },
       {
         "code": "601091",
@@ -3309,16 +3274,39 @@
         "zdp": 9.99,
         "lbc": 1,
         "limit_type": "首板",
-        "fund": 1.54,
-        "hs": 31.8,
+        "fund": 1.44,
+        "hs": 31.9,
         "zbc": 2,
         "hybk": "专用设备",
         "fbt": "13:29",
         "ltsz": 44.2,
-        "decode": "专用设备方向首板，题材扩散或新方向试探，关注次日能否连板确认；换手率31.8%，筹码剧烈交换。"
+        "decode": "专用设备方向首板，题材扩散或新方向试探，关注次日能否连板确认；换手率31.9%，筹码剧烈交换。"
+      },
+      {
+        "code": "601606",
+        "name": "长城军工",
+        "zdp": 10.02,
+        "lbc": 1,
+        "limit_type": "首板",
+        "fund": 7.71,
+        "hs": 6.8,
+        "zbc": 1,
+        "hybk": "地面兵装",
+        "fbt": "13:52",
+        "ltsz": 236.2,
+        "decode": "地面兵装方向首板，题材扩散或新方向试探，关注次日能否连板确认；封单7.71亿，封板结实。"
       }
     ],
     "dt_rows": [
+      {
+        "code": "601595",
+        "name": "上海电影",
+        "zdp": -9.99,
+        "days": 1,
+        "hs": 9.5,
+        "hybk": "影视院线",
+        "ltsz": 188.9
+      },
       {
         "code": "605488",
         "name": "福莱新材",
@@ -3329,17 +3317,17 @@
         "ltsz": 169.3
       }
     ],
-    "zt_count": 35,
-    "dt_count": 1,
-    "zt_tc": 35,
-    "dt_tc": 1,
-    "boom": 47,
+    "zt_count": 34,
+    "dt_count": 2,
+    "zt_tc": 34,
+    "dt_tc": 2,
+    "boom": 51,
     "max_lb": 5,
     "early": 10,
-    "seal_sum": 33.4,
+    "seal_sum": 37.6,
     "mood": "温和",
     "mood_emoji": "🌤",
-    "asof": "2026-11-12 13:51",
+    "asof": "2026-11-12 13:54",
     "trade_date": "2026-11-12"
   },
   "research_feed": {
@@ -4069,40 +4057,16 @@
         "way": "特定对象调研,现场参观"
       }
     ],
-    "asof": "2026-11-12 13:52"
+    "asof": "2026-11-12 13:55"
   },
   "yesterday_perf": {
     "ok": true,
     "rows": [
       {
-        "code": "002160",
-        "name": "常铝股份",
-        "yesterday_board_count": 2,
-        "today_pct": -7.27,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002076",
-        "name": "星光股份",
-        "yesterday_board_count": 1,
-        "today_pct": 0.45,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002861",
-        "name": "瀛通通讯",
-        "yesterday_board_count": 2,
-        "today_pct": -8.17,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
         "code": "600715",
         "name": "文投控股",
         "yesterday_board_count": 3,
-        "today_pct": 3.82,
+        "today_pct": 3.5,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4118,15 +4082,31 @@
         "code": "002209",
         "name": "达 意 隆",
         "yesterday_board_count": 2,
-        "today_pct": 2.44,
+        "today_pct": 0.86,
         "is_zt_today": false,
         "lbc_today": 0
       },
       {
-        "code": "600327",
-        "name": "大东方",
-        "yesterday_board_count": 4,
-        "today_pct": 5.82,
+        "code": "002160",
+        "name": "常铝股份",
+        "yesterday_board_count": 2,
+        "today_pct": -6.82,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
+        "code": "002861",
+        "name": "瀛通通讯",
+        "yesterday_board_count": 2,
+        "today_pct": -7.89,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
+        "code": "002076",
+        "name": "星光股份",
+        "yesterday_board_count": 1,
+        "today_pct": 0.45,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4137,6 +4117,14 @@
         "today_pct": 10.03,
         "is_zt_today": true,
         "lbc_today": 5
+      },
+      {
+        "code": "600327",
+        "name": "大东方",
+        "yesterday_board_count": 4,
+        "today_pct": 5.82,
+        "is_zt_today": false,
+        "lbc_today": 0
       },
       {
         "code": "603396",
@@ -4158,7 +4146,7 @@
         "code": "002313",
         "name": "日海智能",
         "yesterday_board_count": 2,
-        "today_pct": 1.28,
+        "today_pct": 1.38,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4174,7 +4162,7 @@
         "code": "002931",
         "name": "锋龙股份",
         "yesterday_board_count": 3,
-        "today_pct": 7.44,
+        "today_pct": 7.4,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4182,7 +4170,7 @@
         "code": "002425",
         "name": "凯撒文化",
         "yesterday_board_count": 2,
-        "today_pct": -3.92,
+        "today_pct": -3.39,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4206,7 +4194,7 @@
         "code": "002529",
         "name": "海源复材",
         "yesterday_board_count": 1,
-        "today_pct": 4.25,
+        "today_pct": 4.55,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4214,7 +4202,7 @@
         "code": "002593",
         "name": "日上集团",
         "yesterday_board_count": 1,
-        "today_pct": 9.05,
+        "today_pct": 8.42,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4222,7 +4210,7 @@
         "code": "600076",
         "name": "康欣新材",
         "yesterday_board_count": 1,
-        "today_pct": -2.24,
+        "today_pct": -2.69,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4230,7 +4218,7 @@
         "code": "002520",
         "name": "日发精机",
         "yesterday_board_count": 1,
-        "today_pct": 1.24,
+        "today_pct": 0.55,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4238,7 +4226,7 @@
         "code": "603083",
         "name": "剑桥科技",
         "yesterday_board_count": 1,
-        "today_pct": 5.67,
+        "today_pct": 5.66,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4254,7 +4242,7 @@
         "code": "603042",
         "name": "华脉科技",
         "yesterday_board_count": 1,
-        "today_pct": -2.69,
+        "today_pct": -2.84,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4270,7 +4258,7 @@
         "code": "002110",
         "name": "三钢闽光",
         "yesterday_board_count": 1,
-        "today_pct": -1.66,
+        "today_pct": -1.33,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4278,7 +4266,7 @@
         "code": "000026",
         "name": "飞亚达",
         "yesterday_board_count": 1,
-        "today_pct": 6.17,
+        "today_pct": 6.0,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4286,7 +4274,7 @@
         "code": "003032",
         "name": "传智教育",
         "yesterday_board_count": 1,
-        "today_pct": -5.94,
+        "today_pct": -5.13,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4302,7 +4290,7 @@
         "code": "002708",
         "name": "光洋股份",
         "yesterday_board_count": 3,
-        "today_pct": -5.15,
+        "today_pct": -5.42,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4318,7 +4306,7 @@
         "code": "002713",
         "name": "东易日盛",
         "yesterday_board_count": 1,
-        "today_pct": 1.77,
+        "today_pct": 2.0,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4326,7 +4314,7 @@
         "code": "603040",
         "name": "新坐标",
         "yesterday_board_count": 1,
-        "today_pct": -4.41,
+        "today_pct": -4.39,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4334,7 +4322,7 @@
         "code": "600629",
         "name": "华建集团",
         "yesterday_board_count": 1,
-        "today_pct": -3.09,
+        "today_pct": -2.7,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4342,7 +4330,7 @@
         "code": "603586",
         "name": "金麒麟",
         "yesterday_board_count": 1,
-        "today_pct": 2.41,
+        "today_pct": 2.61,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4358,7 +4346,7 @@
         "code": "000635",
         "name": "英 力 特",
         "yesterday_board_count": 1,
-        "today_pct": 7.93,
+        "today_pct": 7.74,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4382,15 +4370,7 @@
         "code": "001282",
         "name": "三联锻造",
         "yesterday_board_count": 1,
-        "today_pct": 0.91,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002362",
-        "name": "汉王科技",
-        "yesterday_board_count": 1,
-        "today_pct": -5.35,
+        "today_pct": -0.11,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4398,7 +4378,15 @@
         "code": "301636",
         "name": "泽润新能",
         "yesterday_board_count": 1,
-        "today_pct": -8.03,
+        "today_pct": -8.26,
+        "is_zt_today": false,
+        "lbc_today": 0
+      },
+      {
+        "code": "002362",
+        "name": "汉王科技",
+        "yesterday_board_count": 1,
+        "today_pct": -5.72,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4406,7 +4394,7 @@
         "code": "001331",
         "name": "胜通能源",
         "yesterday_board_count": 1,
-        "today_pct": -2.75,
+        "today_pct": -2.89,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4430,7 +4418,7 @@
         "code": "002633",
         "name": "申科股份",
         "yesterday_board_count": 1,
-        "today_pct": -4.7,
+        "today_pct": -4.83,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4438,7 +4426,7 @@
         "code": "001339",
         "name": "智微智能",
         "yesterday_board_count": 2,
-        "today_pct": -9.15,
+        "today_pct": -9.02,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4446,7 +4434,7 @@
         "code": "603466",
         "name": "风语筑",
         "yesterday_board_count": 2,
-        "today_pct": -4.09,
+        "today_pct": -3.68,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4454,7 +4442,7 @@
         "code": "002765",
         "name": "蓝黛科技",
         "yesterday_board_count": 1,
-        "today_pct": -6.28,
+        "today_pct": -6.41,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4462,7 +4450,7 @@
         "code": "603028",
         "name": "赛福天",
         "yesterday_board_count": 1,
-        "today_pct": 0.25,
+        "today_pct": 0.5,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4470,7 +4458,7 @@
         "code": "000678",
         "name": "襄阳轴承",
         "yesterday_board_count": 2,
-        "today_pct": 6.65,
+        "today_pct": 6.75,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4478,7 +4466,7 @@
         "code": "301596",
         "name": "瑞迪智驱",
         "yesterday_board_count": 1,
-        "today_pct": -9.49,
+        "today_pct": -9.55,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4486,7 +4474,7 @@
         "code": "002164",
         "name": "宁波东力",
         "yesterday_board_count": 1,
-        "today_pct": 7.76,
+        "today_pct": 7.49,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4494,7 +4482,7 @@
         "code": "603330",
         "name": "天洋新材",
         "yesterday_board_count": 1,
-        "today_pct": 2.85,
+        "today_pct": 1.9,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4502,7 +4490,7 @@
         "code": "002919",
         "name": "名臣健康",
         "yesterday_board_count": 1,
-        "today_pct": -6.1,
+        "today_pct": -6.26,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4510,7 +4498,7 @@
         "code": "301486",
         "name": "致尚科技",
         "yesterday_board_count": 1,
-        "today_pct": -2.71,
+        "today_pct": -2.76,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4518,7 +4506,7 @@
         "code": "002148",
         "name": "北纬科技",
         "yesterday_board_count": 1,
-        "today_pct": 5.94,
+        "today_pct": 5.78,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4526,7 +4514,7 @@
         "code": "603258",
         "name": "电魂网络",
         "yesterday_board_count": 1,
-        "today_pct": 2.62,
+        "today_pct": 1.04,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4542,7 +4530,7 @@
         "code": "002384",
         "name": "东山精密",
         "yesterday_board_count": 1,
-        "today_pct": 2.01,
+        "today_pct": 2.06,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4550,7 +4538,7 @@
         "code": "002463",
         "name": "沪电股份",
         "yesterday_board_count": 1,
-        "today_pct": 1.96,
+        "today_pct": 1.92,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4558,7 +4546,7 @@
         "code": "002913",
         "name": "奥士康",
         "yesterday_board_count": 1,
-        "today_pct": 3.8,
+        "today_pct": 3.74,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4574,7 +4562,7 @@
         "code": "300473",
         "name": "德尔股份",
         "yesterday_board_count": 1,
-        "today_pct": -2.57,
+        "today_pct": -2.14,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4590,7 +4578,7 @@
         "code": "603730",
         "name": "岱美股份",
         "yesterday_board_count": 1,
-        "today_pct": -8.85,
+        "today_pct": -8.76,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4598,7 +4586,7 @@
         "code": "600228",
         "name": "返利科技",
         "yesterday_board_count": 1,
-        "today_pct": 4.61,
+        "today_pct": 5.02,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4606,7 +4594,7 @@
         "code": "603289",
         "name": "泰瑞机器",
         "yesterday_board_count": 1,
-        "today_pct": -1.38,
+        "today_pct": -1.48,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4622,7 +4610,7 @@
         "code": "688135",
         "name": "利扬芯片",
         "yesterday_board_count": 1,
-        "today_pct": -3.28,
+        "today_pct": -3.34,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4630,7 +4618,7 @@
         "code": "603228",
         "name": "景旺电子",
         "yesterday_board_count": 1,
-        "today_pct": 4.08,
+        "today_pct": 4.37,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4638,7 +4626,7 @@
         "code": "002281",
         "name": "光迅科技",
         "yesterday_board_count": 1,
-        "today_pct": -0.06,
+        "today_pct": -0.12,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4646,7 +4634,7 @@
         "code": "601595",
         "name": "上海电影",
         "yesterday_board_count": 2,
-        "today_pct": -9.97,
+        "today_pct": -9.99,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4654,7 +4642,7 @@
         "code": "002957",
         "name": "科瑞技术",
         "yesterday_board_count": 1,
-        "today_pct": -3.15,
+        "today_pct": -3.22,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4662,7 +4650,7 @@
         "code": "301052",
         "name": "果麦文化",
         "yesterday_board_count": 1,
-        "today_pct": -8.58,
+        "today_pct": -9.7,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4670,7 +4658,7 @@
         "code": "002779",
         "name": "中坚科技",
         "yesterday_board_count": 1,
-        "today_pct": -8.75,
+        "today_pct": -8.97,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4678,7 +4666,7 @@
         "code": "002916",
         "name": "深南电路",
         "yesterday_board_count": 1,
-        "today_pct": 1.13,
+        "today_pct": 0.83,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4686,7 +4674,7 @@
         "code": "300990",
         "name": "同飞股份",
         "yesterday_board_count": 1,
-        "today_pct": 1.24,
+        "today_pct": 1.08,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4694,7 +4682,7 @@
         "code": "002837",
         "name": "英维克",
         "yesterday_board_count": 1,
-        "today_pct": -4.43,
+        "today_pct": -4.39,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4702,7 +4690,7 @@
         "code": "688498",
         "name": "源杰科技",
         "yesterday_board_count": 1,
-        "today_pct": -1.56,
+        "today_pct": -1.63,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4710,7 +4698,7 @@
         "code": "601869",
         "name": "长飞光纤",
         "yesterday_board_count": 1,
-        "today_pct": -2.78,
+        "today_pct": -2.65,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4718,7 +4706,7 @@
         "code": "002975",
         "name": "博杰股份",
         "yesterday_board_count": 1,
-        "today_pct": -4.16,
+        "today_pct": -4.11,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4726,7 +4714,7 @@
         "code": "002703",
         "name": "浙江世宝",
         "yesterday_board_count": 1,
-        "today_pct": -1.75,
+        "today_pct": -1.69,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4734,7 +4722,7 @@
         "code": "600776",
         "name": "东方通信",
         "yesterday_board_count": 1,
-        "today_pct": -6.37,
+        "today_pct": -6.3,
         "is_zt_today": false,
         "lbc_today": 0
       },
@@ -4742,7 +4730,7 @@
         "code": "002886",
         "name": "沃特股份",
         "yesterday_board_count": 1,
-        "today_pct": -6.86,
+        "today_pct": -6.82,
         "is_zt_today": false,
         "lbc_today": 0
       }
@@ -4755,7 +4743,7 @@
     },
     "basis": "昨日池实绩",
     "reason": "",
-    "asof": "2026-11-12 13:52"
+    "asof": "2026-11-12 13:55"
   },
   "margin_leverage": {
     "signal": {
@@ -4785,15 +4773,15 @@
     "end_date": "2026-11-12",
     "days": 33,
     "start": 3949.91,
-    "cur": 3656.4,
-    "ret_pct": -7.43,
+    "cur": 3652.35,
+    "ret_pct": -7.53,
     "max_drawdown": -8.93
   },
   "last_month_push": "2026-10",
   "score_pool": {
     "ok": true,
-    "asof": "2026-11-12 13:51",
-    "universe": 35,
+    "asof": "2026-11-12 13:54",
+    "universe": 34,
     "basis": "涨停梯队 + 题材热度 + 机构共识",
     "rows": [
       {
@@ -4882,15 +4870,15 @@
           },
           "abnormal": {
             "dev3": 33.09,
-            "idx3": -1.01,
-            "dev": 34.1,
+            "idx3": -1.09,
+            "dev": 34.18,
             "limit": 20.0,
-            "remain": -14.1,
+            "remain": -14.18,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 45.43,
+            "dev10": 45.67,
             "limit10": 100.0,
-            "remain10": 54.57,
+            "remain10": 54.33,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 47.7,
@@ -4908,15 +4896,15 @@
         "hybk": "光伏设备",
         "lbc": 2,
         "zdp": 10.0,
-        "hs": 0.7,
+        "hs": 0.8,
         "zbc": 0,
         "ltsz": 44.5,
         "consensus": 0,
-        "score": 48.4,
+        "score": 48.5,
         "parts": {
           "board": 8.6,
           "seal": 20.0,
-          "turn": 7.8,
+          "turn": 7.9,
           "theme": 12.0,
           "inst": 0.0,
           "penalty": -0.0
@@ -4971,7 +4959,7 @@
               "name": "评分与风控",
               "level": "warn",
               "pass": true,
-              "value": "评分 48.4",
+              "value": "评分 48.5",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -4988,15 +4976,15 @@
           },
           "abnormal": {
             "dev3": 22.79,
-            "idx3": -1.01,
-            "dev": 23.8,
+            "idx3": -1.09,
+            "dev": 23.88,
             "limit": 20.0,
-            "remain": -3.8,
+            "remain": -3.88,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 28.46,
+            "dev10": 28.7,
             "limit10": 100.0,
-            "remain10": 71.54,
+            "remain10": 71.3,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 17.7,
@@ -5018,10 +5006,10 @@
         "zbc": 7,
         "ltsz": 107.1,
         "consensus": 0,
-        "score": 42.9,
+        "score": 42.7,
         "parts": {
           "board": 21.4,
-          "seal": 14.6,
+          "seal": 14.4,
           "turn": 12.9,
           "theme": 15.0,
           "inst": 0.0,
@@ -5045,7 +5033,7 @@
               "name": "流动性",
               "level": "ok",
               "pass": true,
-              "value": "5 日均额 5.56 亿",
+              "value": "5 日均额 5.57 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -5077,7 +5065,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 42.9",
+              "value": "评分 42.7",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5094,15 +5082,15 @@
           },
           "abnormal": {
             "dev3": 33.16,
-            "idx3": -1.01,
-            "dev": 34.17,
+            "idx3": -1.09,
+            "dev": 34.25,
             "limit": 20.0,
-            "remain": -14.17,
+            "remain": -14.25,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 74.29,
+            "dev10": 74.53,
             "limit10": 100.0,
-            "remain10": 25.71,
+            "remain10": 25.47,
             "risk10": "中",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 80.9,
@@ -5124,10 +5112,10 @@
         "zbc": 0,
         "ltsz": 50.9,
         "consensus": 0,
-        "score": 42.6,
+        "score": 42.5,
         "parts": {
           "board": 17.1,
-          "seal": 4.6,
+          "seal": 4.5,
           "turn": 11.9,
           "theme": 9.0,
           "inst": 0.0,
@@ -5183,7 +5171,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 42.6",
+              "value": "评分 42.5",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5200,15 +5188,15 @@
           },
           "abnormal": {
             "dev3": 33.09,
-            "idx3": -0.93,
-            "dev": 34.02,
+            "idx3": -1.01,
+            "dev": 34.1,
             "limit": 20.0,
-            "remain": -14.02,
+            "remain": -14.1,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 60.2,
+            "dev10": 60.44,
             "limit10": 100.0,
-            "remain10": 39.8,
+            "remain10": 39.56,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 56.4,
@@ -5226,15 +5214,15 @@
         "hybk": "食品加工",
         "lbc": 3,
         "zdp": 10.04,
-        "hs": 23.5,
+        "hs": 23.6,
         "zbc": 1,
         "ltsz": 31.4,
         "consensus": 0,
-        "score": 36.0,
+        "score": 35.7,
         "parts": {
           "board": 12.9,
-          "seal": 9.3,
-          "turn": 10.8,
+          "seal": 9.1,
+          "turn": 10.7,
           "theme": 6.0,
           "inst": 0.0,
           "penalty": -3.0
@@ -5257,7 +5245,7 @@
               "name": "流动性",
               "level": "ok",
               "pass": true,
-              "value": "5 日均额 2.56 亿",
+              "value": "5 日均额 2.57 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -5273,7 +5261,7 @@
               "name": "量价触发",
               "level": "warn",
               "pass": true,
-              "value": "收 13.04 / 前高 11.85 · 量 4.09×",
+              "value": "收 13.04 / 前高 11.85 · 量 4.10×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -5289,7 +5277,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 36.0",
+              "value": "评分 35.7",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5306,15 +5294,15 @@
           },
           "abnormal": {
             "dev3": 33.2,
-            "idx3": -0.93,
-            "dev": 34.13,
+            "idx3": -1.01,
+            "dev": 34.21,
             "limit": 20.0,
-            "remain": -14.13,
+            "remain": -14.21,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 27.69,
+            "dev10": 27.93,
             "limit10": 100.0,
-            "remain10": 72.31,
+            "remain10": 72.07,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 35.6,
@@ -5327,26 +5315,26 @@
         }
       },
       {
-        "code": "601929",
-        "name": "吉视传媒",
-        "hybk": "电视广播",
+        "code": "601606",
+        "name": "长城军工",
+        "hybk": "地面兵装",
         "lbc": 1,
-        "zdp": 10.2,
-        "hs": 17.0,
+        "zdp": 10.02,
+        "hs": 6.8,
         "zbc": 1,
-        "ltsz": 98.1,
+        "ltsz": 236.2,
         "consensus": 0,
-        "score": 35.3,
+        "score": 32.2,
         "parts": {
           "board": 4.3,
           "seal": 20.0,
-          "turn": 14.0,
+          "turn": 10.9,
           "theme": 0.0,
           "inst": 0.0,
           "penalty": -3.0
         },
         "board_role": "独苗",
-        "board_leader": "吉视传媒",
+        "board_leader": "长城军工",
         "sector_n": 1,
         "gates": {
           "items": [
@@ -5355,7 +5343,7 @@
               "name": "市值与状态",
               "level": "ok",
               "pass": true,
-              "value": "98.1 亿",
+              "value": "236.2 亿",
               "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
             },
             {
@@ -5363,7 +5351,7 @@
               "name": "流动性",
               "level": "ok",
               "pass": true,
-              "value": "5 日均额 9.01 亿",
+              "value": "5 日均额 7.36 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -5371,15 +5359,15 @@
               "name": "趋势过滤",
               "level": "warn",
               "pass": true,
-              "value": "MA20 2.36 / MA60 2.41 · 收 2.81",
+              "value": "MA20 30.55 / MA60 31.82 · 收 32.62",
               "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
             },
             {
               "k": "4",
               "name": "量价触发",
-              "level": "ok",
-              "pass": true,
-              "value": "收 2.81 / 前高 2.55 · 量 2.13×",
+              "level": "no",
+              "pass": false,
+              "value": "收 32.62 / 前高 33.52 · 量 2.62×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -5387,7 +5375,7 @@
               "name": "过热控制",
               "level": "ok",
               "pass": true,
-              "value": "5日 +12.4% · 1 板",
+              "value": "5日 +9.5% · 1 板",
               "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
             },
             {
@@ -5395,41 +5383,41 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 35.3",
+              "value": "评分 32.2",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
-          "points": 9,
+          "points": 7,
           "max_points": 12,
           "rr": {
-            "ratio": 0.75,
-            "target": 3.15,
-            "stop": 2.36,
-            "atr": 0.17,
-            "upside": 11.9,
-            "downside": -16.0,
+            "ratio": 0.8,
+            "target": 35.54,
+            "stop": 28.95,
+            "atr": 1.46,
+            "upside": 9.0,
+            "downside": -11.3,
             "ok": false
           },
           "abnormal": {
-            "dev3": 17.08,
+            "dev3": 10.65,
             "idx3": -1.01,
-            "dev": 18.09,
+            "dev": 11.66,
             "limit": 20.0,
-            "remain": 1.91,
-            "risk": "高",
+            "remain": 8.34,
+            "risk": "低",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 27.37,
+            "dev10": 14.29,
             "limit10": 100.0,
-            "remain10": 72.63,
+            "remain10": 85.71,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
-            "ret20": 13.3,
+            "ret20": 2.2,
             "paozi": false
           },
-          "passed": 4,
+          "passed": 3,
           "known": 6,
-          "rsi6": 85.5,
-          "price": 2.81
+          "rsi6": 87.7,
+          "price": 32.62
         }
       },
       {
@@ -5438,14 +5426,14 @@
         "hybk": "家居用品",
         "lbc": 2,
         "zdp": 10.03,
-        "hs": 2.3,
+        "hs": 2.4,
         "zbc": 0,
         "ltsz": 40.1,
         "consensus": 0,
-        "score": 30.8,
+        "score": 30.5,
         "parts": {
           "board": 8.6,
-          "seal": 13.5,
+          "seal": 13.2,
           "turn": 8.7,
           "theme": 0.0,
           "inst": 0.0,
@@ -5469,7 +5457,7 @@
               "name": "流动性",
               "level": "warn",
               "pass": true,
-              "value": "5 日均额 1.62 亿",
+              "value": "5 日均额 1.63 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -5485,7 +5473,7 @@
               "name": "量价触发",
               "level": "warn",
               "pass": true,
-              "value": "收 13.16 / 前高 11.96 · 量 0.47×",
+              "value": "收 13.16 / 前高 11.96 · 量 0.50×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -5501,7 +5489,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 30.8",
+              "value": "评分 30.5",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5548,10 +5536,10 @@
         "zbc": 0,
         "ltsz": 44.4,
         "consensus": 0,
-        "score": 29.9,
+        "score": 29.8,
         "parts": {
           "board": 4.3,
-          "seal": 16.0,
+          "seal": 15.9,
           "turn": 9.6,
           "theme": 0.0,
           "inst": 0.0,
@@ -5591,7 +5579,7 @@
               "name": "量价触发",
               "level": "warn",
               "pass": true,
-              "value": "收 6.34 / 前高 6.04 · 量 0.76×",
+              "value": "收 6.34 / 前高 6.04 · 量 0.77×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -5607,7 +5595,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 29.9",
+              "value": "评分 29.8",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5654,10 +5642,10 @@
         "zbc": 0,
         "ltsz": 36.2,
         "consensus": 0,
-        "score": 28.4,
+        "score": 27.8,
         "parts": {
           "board": 4.3,
-          "seal": 12.3,
+          "seal": 11.7,
           "turn": 11.8,
           "theme": 0.0,
           "inst": 0.0,
@@ -5681,7 +5669,7 @@
               "name": "流动性",
               "level": "warn",
               "pass": true,
-              "value": "5 日均额 1.20 亿",
+              "value": "5 日均额 1.21 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -5697,7 +5685,7 @@
               "name": "量价触发",
               "level": "warn",
               "pass": true,
-              "value": "收 2.48 / 前高 2.32 · 量 3.62×",
+              "value": "收 2.48 / 前高 2.32 · 量 3.63×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -5713,7 +5701,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 28.4",
+              "value": "评分 27.8",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -5751,218 +5739,6 @@
         }
       },
       {
-        "code": "002647",
-        "name": "仁东控股",
-        "hybk": "多元金融",
-        "lbc": 1,
-        "zdp": 10.0,
-        "hs": 5.7,
-        "zbc": 0,
-        "ltsz": 80.4,
-        "consensus": 0,
-        "score": 27.6,
-        "parts": {
-          "board": 4.3,
-          "seal": 13.0,
-          "turn": 10.3,
-          "theme": 0.0,
-          "inst": 0.0,
-          "penalty": -0.0
-        },
-        "board_role": "独苗",
-        "board_leader": "仁东控股",
-        "sector_n": 1,
-        "gates": {
-          "items": [
-            {
-              "k": "1",
-              "name": "市值与状态",
-              "level": "ok",
-              "pass": true,
-              "value": "80.4 亿",
-              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
-            },
-            {
-              "k": "2",
-              "name": "流动性",
-              "level": "ok",
-              "pass": true,
-              "value": "5 日均额 2.35 亿",
-              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
-            },
-            {
-              "k": "3",
-              "name": "趋势过滤",
-              "level": "warn",
-              "pass": true,
-              "value": "MA20 7.53 / MA60 10.11 · 收 7.80",
-              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
-            },
-            {
-              "k": "4",
-              "name": "量价触发",
-              "level": "no",
-              "pass": false,
-              "value": "收 7.80 / 前高 8.78 · 量 2.44×",
-              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
-            },
-            {
-              "k": "5",
-              "name": "过热控制",
-              "level": "ok",
-              "pass": true,
-              "value": "5日 +5.5% · 1 板",
-              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
-            },
-            {
-              "k": "6",
-              "name": "评分与风控",
-              "level": "no",
-              "pass": false,
-              "value": "评分 27.6",
-              "rule": "优选 ≥60 / 可接受 ≥45"
-            }
-          ],
-          "points": 7,
-          "max_points": 12,
-          "rr": {
-            "ratio": 1.03,
-            "target": 8.68,
-            "stop": 6.95,
-            "atr": 0.44,
-            "upside": 11.3,
-            "downside": -10.9,
-            "ok": false
-          },
-          "abnormal": {
-            "dev3": 11.75,
-            "idx3": -1.01,
-            "dev": 12.76,
-            "limit": 20.0,
-            "remain": 7.24,
-            "risk": "低",
-            "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 12.12,
-            "limit10": 100.0,
-            "remain10": 87.88,
-            "risk10": "低",
-            "rule10": "连10日累计偏离 ≥100%",
-            "ret20": -6.8,
-            "paozi": false
-          },
-          "passed": 3,
-          "known": 6,
-          "rsi6": 71.4,
-          "price": 7.8
-        }
-      },
-      {
-        "code": "002685",
-        "name": "华东重机",
-        "hybk": "工程机械",
-        "lbc": 1,
-        "zdp": 9.98,
-        "hs": 4.6,
-        "zbc": 0,
-        "ltsz": 53.3,
-        "consensus": 0,
-        "score": 27.2,
-        "parts": {
-          "board": 4.3,
-          "seal": 13.1,
-          "turn": 9.8,
-          "theme": 0.0,
-          "inst": 0.0,
-          "penalty": -0.0
-        },
-        "board_role": "独苗",
-        "board_leader": "华东重机",
-        "sector_n": 1,
-        "gates": {
-          "items": [
-            {
-              "k": "1",
-              "name": "市值与状态",
-              "level": "ok",
-              "pass": true,
-              "value": "53.3 亿",
-              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
-            },
-            {
-              "k": "2",
-              "name": "流动性",
-              "level": "warn",
-              "pass": true,
-              "value": "5 日均额 1.33 亿",
-              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
-            },
-            {
-              "k": "3",
-              "name": "趋势过滤",
-              "level": "warn",
-              "pass": true,
-              "value": "MA20 4.76 / MA60 5.19 · 收 5.29",
-              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
-            },
-            {
-              "k": "4",
-              "name": "量价触发",
-              "level": "ok",
-              "pass": true,
-              "value": "收 5.29 / 前高 4.99 · 量 2.24×",
-              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
-            },
-            {
-              "k": "5",
-              "name": "过热控制",
-              "level": "ok",
-              "pass": true,
-              "value": "5日 +12.6% · 1 板",
-              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
-            },
-            {
-              "k": "6",
-              "name": "评分与风控",
-              "level": "no",
-              "pass": false,
-              "value": "评分 27.2",
-              "rule": "优选 ≥60 / 可接受 ≥45"
-            }
-          ],
-          "points": 8,
-          "max_points": 12,
-          "rr": {
-            "ratio": 0.53,
-            "target": 5.67,
-            "stop": 4.58,
-            "atr": 0.19,
-            "upside": 7.2,
-            "downside": -13.4,
-            "ok": false
-          },
-          "abnormal": {
-            "dev3": 12.79,
-            "idx3": -1.01,
-            "dev": 13.8,
-            "limit": 20.0,
-            "remain": 6.2,
-            "risk": "低",
-            "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 18.03,
-            "limit10": 100.0,
-            "remain10": 81.97,
-            "risk10": "低",
-            "rule10": "连10日累计偏离 ≥100%",
-            "ret20": 10.7,
-            "paozi": false
-          },
-          "passed": 3,
-          "known": 6,
-          "rsi6": 88.4,
-          "price": 5.29
-        }
-      },
-      {
         "code": "002021",
         "name": "中捷资源",
         "hybk": "专用设备",
@@ -5972,10 +5748,10 @@
         "zbc": 0,
         "ltsz": 31.4,
         "consensus": 0,
-        "score": 26.2,
+        "score": 26.1,
         "parts": {
           "board": 4.3,
-          "seal": 10.3,
+          "seal": 10.2,
           "turn": 11.6,
           "theme": 0.0,
           "inst": 0.0,
@@ -6015,7 +5791,7 @@
               "name": "量价触发",
               "level": "ok",
               "pass": true,
-              "value": "收 2.63 / 前高 2.46 · 量 1.78×",
+              "value": "收 2.63 / 前高 2.46 · 量 1.79×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -6031,7 +5807,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 26.2",
+              "value": "评分 26.1",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -6048,15 +5824,15 @@
           },
           "abnormal": {
             "dev3": 22.33,
-            "idx3": -0.93,
-            "dev": 23.26,
+            "idx3": -1.01,
+            "dev": 23.34,
             "limit": 20.0,
-            "remain": -3.26,
+            "remain": -3.34,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 19.16,
+            "dev10": 19.4,
             "limit10": 100.0,
-            "remain10": 80.84,
+            "remain10": 80.6,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 6.9,
@@ -6066,6 +5842,112 @@
           "known": 6,
           "rsi6": 86.2,
           "price": 2.63
+        }
+      },
+      {
+        "code": "601929",
+        "name": "吉视传媒",
+        "hybk": "电视广播",
+        "lbc": 1,
+        "zdp": 10.2,
+        "hs": 18.3,
+        "zbc": 3,
+        "ltsz": 98.1,
+        "consensus": 0,
+        "score": 25.3,
+        "parts": {
+          "board": 4.3,
+          "seal": 16.7,
+          "turn": 13.3,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -9.0
+        },
+        "board_role": "独苗",
+        "board_leader": "吉视传媒",
+        "sector_n": 1,
+        "gates": {
+          "items": [
+            {
+              "k": "1",
+              "name": "市值与状态",
+              "level": "ok",
+              "pass": true,
+              "value": "98.1 亿",
+              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
+            },
+            {
+              "k": "2",
+              "name": "流动性",
+              "level": "ok",
+              "pass": true,
+              "value": "5 日均额 9.29 亿",
+              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
+            },
+            {
+              "k": "3",
+              "name": "趋势过滤",
+              "level": "warn",
+              "pass": true,
+              "value": "MA20 2.36 / MA60 2.41 · 收 2.81",
+              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
+            },
+            {
+              "k": "4",
+              "name": "量价触发",
+              "level": "ok",
+              "pass": true,
+              "value": "收 2.81 / 前高 2.55 · 量 2.31×",
+              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
+            },
+            {
+              "k": "5",
+              "name": "过热控制",
+              "level": "ok",
+              "pass": true,
+              "value": "5日 +12.4% · 1 板",
+              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
+            },
+            {
+              "k": "6",
+              "name": "评分与风控",
+              "level": "no",
+              "pass": false,
+              "value": "评分 25.3",
+              "rule": "优选 ≥60 / 可接受 ≥45"
+            }
+          ],
+          "points": 9,
+          "max_points": 12,
+          "rr": {
+            "ratio": 0.75,
+            "target": 3.15,
+            "stop": 2.36,
+            "atr": 0.17,
+            "upside": 11.9,
+            "downside": -16.0,
+            "ok": false
+          },
+          "abnormal": {
+            "dev3": 17.08,
+            "idx3": -1.09,
+            "dev": 18.17,
+            "limit": 20.0,
+            "remain": 1.83,
+            "risk": "高",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "dev10": 27.61,
+            "limit10": 100.0,
+            "remain10": 72.39,
+            "risk10": "低",
+            "rule10": "连10日累计偏离 ≥100%",
+            "ret20": 13.3,
+            "paozi": false
+          },
+          "passed": 4,
+          "known": 6,
+          "rsi6": 85.5,
+          "price": 2.81
         }
       },
       {
@@ -6154,15 +6036,15 @@
           },
           "abnormal": {
             "dev3": 14.06,
-            "idx3": -0.93,
-            "dev": 14.99,
+            "idx3": -1.09,
+            "dev": 15.15,
             "limit": 20.0,
-            "remain": 5.01,
+            "remain": 4.85,
             "risk": "中",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 19.4,
+            "dev10": 19.88,
             "limit10": 100.0,
-            "remain10": 80.6,
+            "remain10": 80.12,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 9.3,
@@ -6172,112 +6054,6 @@
           "known": 6,
           "rsi6": 87.6,
           "price": 13.55
-        }
-      },
-      {
-        "code": "600558",
-        "name": "大西洋",
-        "hybk": "通用设备",
-        "lbc": 1,
-        "zdp": 9.96,
-        "hs": 14.9,
-        "zbc": 3,
-        "ltsz": 53.5,
-        "consensus": 0,
-        "score": 24.4,
-        "parts": {
-          "board": 4.3,
-          "seal": 14.1,
-          "turn": 15.0,
-          "theme": 0.0,
-          "inst": 0.0,
-          "penalty": -9.0
-        },
-        "board_role": "独苗",
-        "board_leader": "大西洋",
-        "sector_n": 2,
-        "gates": {
-          "items": [
-            {
-              "k": "1",
-              "name": "市值与状态",
-              "level": "ok",
-              "pass": true,
-              "value": "53.5 亿",
-              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
-            },
-            {
-              "k": "2",
-              "name": "流动性",
-              "level": "ok",
-              "pass": true,
-              "value": "5 日均额 4.36 亿",
-              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
-            },
-            {
-              "k": "3",
-              "name": "趋势过滤",
-              "level": "ok",
-              "pass": true,
-              "value": "MA20 5.49 / MA60 5.03 · 收 5.96",
-              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
-            },
-            {
-              "k": "4",
-              "name": "量价触发",
-              "level": "no",
-              "pass": false,
-              "value": "收 5.96 / 前高 6.24 · 量 1.98×",
-              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
-            },
-            {
-              "k": "5",
-              "name": "过热控制",
-              "level": "ok",
-              "pass": true,
-              "value": "5日 +6.0% · 1 板",
-              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
-            },
-            {
-              "k": "6",
-              "name": "评分与风控",
-              "level": "no",
-              "pass": false,
-              "value": "评分 24.4",
-              "rule": "优选 ≥60 / 可接受 ≥45"
-            }
-          ],
-          "points": 8,
-          "max_points": 12,
-          "rr": {
-            "ratio": 1.33,
-            "target": 7.0,
-            "stop": 5.18,
-            "atr": 0.52,
-            "upside": 17.4,
-            "downside": -13.1,
-            "ok": false
-          },
-          "abnormal": {
-            "dev3": 9.56,
-            "idx3": -1.01,
-            "dev": 10.57,
-            "limit": 20.0,
-            "remain": 9.43,
-            "risk": "低",
-            "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 4.05,
-            "limit10": 100.0,
-            "remain10": 95.95,
-            "risk10": "低",
-            "rule10": "连10日累计偏离 ≥100%",
-            "ret20": 22.9,
-            "paozi": false
-          },
-          "passed": 4,
-          "known": 6,
-          "rsi6": 61.3,
-          "price": 5.96
         }
       },
       {
@@ -6333,7 +6109,7 @@
               "name": "量价触发",
               "level": "warn",
               "pass": true,
-              "value": "收 10.18 / 前高 9.25 · 量 5.15×",
+              "value": "收 10.18 / 前高 9.25 · 量 5.16×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -6366,15 +6142,15 @@
           },
           "abnormal": {
             "dev3": 24.45,
-            "idx3": -1.01,
-            "dev": 25.46,
+            "idx3": -1.09,
+            "dev": 25.54,
             "limit": 20.0,
-            "remain": -5.46,
+            "remain": -5.54,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 24.8,
+            "dev10": 25.04,
             "limit10": 100.0,
-            "remain10": 75.2,
+            "remain10": 74.96,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 31.2,
@@ -6396,10 +6172,10 @@
         "zbc": 0,
         "ltsz": 42.7,
         "consensus": 0,
-        "score": 23.9,
+        "score": 23.8,
         "parts": {
           "board": 4.3,
-          "seal": 7.4,
+          "seal": 7.3,
           "turn": 12.2,
           "theme": 0.0,
           "inst": 0.0,
@@ -6423,7 +6199,7 @@
               "name": "流动性",
               "level": "ok",
               "pass": true,
-              "value": "5 日均额 3.44 亿",
+              "value": "5 日均额 3.45 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -6455,7 +6231,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 23.9",
+              "value": "评分 23.8",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -6472,15 +6248,15 @@
           },
           "abnormal": {
             "dev3": 9.35,
-            "idx3": -1.01,
-            "dev": 10.36,
+            "idx3": -1.09,
+            "dev": 10.44,
             "limit": 20.0,
-            "remain": 9.64,
+            "remain": 9.56,
             "risk": "低",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 18.37,
+            "dev10": 18.61,
             "limit10": 100.0,
-            "remain10": 81.63,
+            "remain10": 81.39,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 17.3,
@@ -6502,10 +6278,10 @@
         "zbc": 0,
         "ltsz": 27.5,
         "consensus": 0,
-        "score": 23.5,
+        "score": 23.4,
         "parts": {
           "board": 4.3,
-          "seal": 11.2,
+          "seal": 11.1,
           "turn": 8.0,
           "theme": 0.0,
           "inst": 0.0,
@@ -6561,7 +6337,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 23.5",
+              "value": "评分 23.4",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -6578,15 +6354,15 @@
           },
           "abnormal": {
             "dev3": 18.21,
-            "idx3": -0.93,
-            "dev": 19.14,
+            "idx3": -1.09,
+            "dev": 19.3,
             "limit": 20.0,
-            "remain": 0.86,
+            "remain": 0.7,
             "risk": "高",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 18.17,
+            "dev10": 18.65,
             "limit10": 100.0,
-            "remain10": 81.83,
+            "remain10": 81.35,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": -2.7,
@@ -6599,19 +6375,125 @@
         }
       },
       {
+        "code": "600558",
+        "name": "大西洋",
+        "hybk": "通用设备",
+        "lbc": 1,
+        "zdp": 9.96,
+        "hs": 15.0,
+        "zbc": 3,
+        "ltsz": 53.5,
+        "consensus": 0,
+        "score": 23.2,
+        "parts": {
+          "board": 4.3,
+          "seal": 12.9,
+          "turn": 15.0,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -9.0
+        },
+        "board_role": "独苗",
+        "board_leader": "大西洋",
+        "sector_n": 2,
+        "gates": {
+          "items": [
+            {
+              "k": "1",
+              "name": "市值与状态",
+              "level": "ok",
+              "pass": true,
+              "value": "53.5 亿",
+              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
+            },
+            {
+              "k": "2",
+              "name": "流动性",
+              "level": "ok",
+              "pass": true,
+              "value": "5 日均额 4.37 亿",
+              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
+            },
+            {
+              "k": "3",
+              "name": "趋势过滤",
+              "level": "ok",
+              "pass": true,
+              "value": "MA20 5.49 / MA60 5.03 · 收 5.96",
+              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
+            },
+            {
+              "k": "4",
+              "name": "量价触发",
+              "level": "no",
+              "pass": false,
+              "value": "收 5.96 / 前高 6.24 · 量 1.99×",
+              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
+            },
+            {
+              "k": "5",
+              "name": "过热控制",
+              "level": "ok",
+              "pass": true,
+              "value": "5日 +6.0% · 1 板",
+              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
+            },
+            {
+              "k": "6",
+              "name": "评分与风控",
+              "level": "no",
+              "pass": false,
+              "value": "评分 23.2",
+              "rule": "优选 ≥60 / 可接受 ≥45"
+            }
+          ],
+          "points": 8,
+          "max_points": 12,
+          "rr": {
+            "ratio": 1.33,
+            "target": 7.0,
+            "stop": 5.18,
+            "atr": 0.52,
+            "upside": 17.4,
+            "downside": -13.1,
+            "ok": false
+          },
+          "abnormal": {
+            "dev3": 9.56,
+            "idx3": -1.09,
+            "dev": 10.65,
+            "limit": 20.0,
+            "remain": 9.35,
+            "risk": "低",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "dev10": 4.29,
+            "limit10": 100.0,
+            "remain10": 95.71,
+            "risk10": "低",
+            "rule10": "连10日累计偏离 ≥100%",
+            "ret20": 22.9,
+            "paozi": false
+          },
+          "passed": 4,
+          "known": 6,
+          "rsi6": 61.3,
+          "price": 5.96
+        }
+      },
+      {
         "code": "001358",
         "name": "兴欣新材",
         "hybk": "化学制品",
         "lbc": 1,
         "zdp": 9.99,
-        "hs": 5.0,
+        "hs": 5.1,
         "zbc": 0,
         "ltsz": 12.3,
         "consensus": 0,
-        "score": 21.0,
+        "score": 20.9,
         "parts": {
           "board": 4.3,
-          "seal": 6.7,
+          "seal": 6.6,
           "turn": 10.0,
           "theme": 0.0,
           "inst": 0.0,
@@ -6635,7 +6517,7 @@
               "name": "流动性",
               "level": "no",
               "pass": false,
-              "value": "5 日均额 0.26 亿",
+              "value": "5 日均额 0.27 亿",
               "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
             },
             {
@@ -6651,7 +6533,7 @@
               "name": "量价触发",
               "level": "no",
               "pass": false,
-              "value": "收 24.22 / 前高 24.92 · 量 2.75×",
+              "value": "收 24.22 / 前高 24.92 · 量 2.77×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -6667,7 +6549,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 21.0",
+              "value": "评分 20.9",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -6684,15 +6566,15 @@
           },
           "abnormal": {
             "dev3": 13.28,
-            "idx3": -0.93,
-            "dev": 14.21,
+            "idx3": -1.09,
+            "dev": 14.37,
             "limit": 20.0,
-            "remain": 5.79,
+            "remain": 5.63,
             "risk": "中",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 15.81,
+            "dev10": 16.29,
             "limit10": 100.0,
-            "remain10": 84.19,
+            "remain10": 83.71,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": -2.8,
@@ -6710,15 +6592,15 @@
         "hybk": "饮料乳品",
         "lbc": 1,
         "zdp": 10.01,
-        "hs": 11.2,
+        "hs": 11.3,
         "zbc": 1,
         "ltsz": 43.8,
         "consensus": 0,
         "score": 20.7,
         "parts": {
           "board": 4.3,
-          "seal": 6.3,
-          "turn": 13.1,
+          "seal": 6.2,
+          "turn": 13.2,
           "theme": 0.0,
           "inst": 0.0,
           "penalty": -3.0
@@ -6757,7 +6639,7 @@
               "name": "量价触发",
               "level": "no",
               "pass": false,
-              "value": "收 15.50 / 前高 16.97 · 量 0.91×",
+              "value": "收 15.50 / 前高 16.97 · 量 0.92×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -6790,15 +6672,15 @@
           },
           "abnormal": {
             "dev3": 16.1,
-            "idx3": -1.01,
-            "dev": 17.11,
+            "idx3": -1.09,
+            "dev": 17.19,
             "limit": 20.0,
-            "remain": 2.89,
+            "remain": 2.81,
             "risk": "中",
             "rule": "连3日累计偏离 ≥20%（主板）",
-            "dev10": 17.08,
+            "dev10": 17.32,
             "limit10": 100.0,
-            "remain10": 82.92,
+            "remain10": 82.68,
             "risk10": "低",
             "rule10": "连10日累计偏离 ≥100%",
             "ret20": 1.5,
@@ -6811,19 +6693,125 @@
         }
       },
       {
+        "code": "600857",
+        "name": "宁波中百",
+        "hybk": "一般零售",
+        "lbc": 1,
+        "zdp": 9.97,
+        "hs": 2.9,
+        "zbc": 0,
+        "ltsz": 33.6,
+        "consensus": 0,
+        "score": 20.4,
+        "parts": {
+          "board": 4.3,
+          "seal": 7.2,
+          "turn": 8.9,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -0.0
+        },
+        "board_role": "独苗",
+        "board_leader": "广百股份",
+        "sector_n": 2,
+        "gates": {
+          "items": [
+            {
+              "k": "1",
+              "name": "市值与状态",
+              "level": "ok",
+              "pass": true,
+              "value": "33.6 亿",
+              "rule": "优选 30~300 亿 / 可接受 20~800 亿 · 非 ST"
+            },
+            {
+              "k": "2",
+              "name": "流动性",
+              "level": "no",
+              "pass": false,
+              "value": "5 日均额 0.61 亿",
+              "rule": "优选 ≥2 亿 / 可接受 ≥0.8 亿"
+            },
+            {
+              "k": "3",
+              "name": "趋势过滤",
+              "level": "warn",
+              "pass": true,
+              "value": "MA20 14.26 / MA60 18.21 · 收 15.00",
+              "rule": "优选 MA20>MA60 且 收盘≥MA20×1.02 / 可接受 收盘≥MA20"
+            },
+            {
+              "k": "4",
+              "name": "量价触发",
+              "level": "no",
+              "pass": false,
+              "value": "收 15.00 / 前高 15.48 · 量 1.62×",
+              "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
+            },
+            {
+              "k": "5",
+              "name": "过热控制",
+              "level": "ok",
+              "pass": true,
+              "value": "5日 +9.1% · 1 板",
+              "rule": "优选 ≤25% 且 ≤4 板 / 可接受 ≤35% 且 ≤6 板"
+            },
+            {
+              "k": "6",
+              "name": "评分与风控",
+              "level": "no",
+              "pass": false,
+              "value": "评分 20.4",
+              "rule": "优选 ≥60 / 可接受 ≥45"
+            }
+          ],
+          "points": 5,
+          "max_points": 12,
+          "rr": {
+            "ratio": 0.8,
+            "target": 16.58,
+            "stop": 13.03,
+            "atr": 0.79,
+            "upside": 10.5,
+            "downside": -13.1,
+            "ok": false
+          },
+          "abnormal": {
+            "dev3": 14.68,
+            "idx3": -1.01,
+            "dev": 15.69,
+            "limit": 20.0,
+            "remain": 4.31,
+            "risk": "中",
+            "rule": "连3日累计偏离 ≥20%（主板）",
+            "dev10": 9.56,
+            "limit10": 100.0,
+            "remain10": 90.44,
+            "risk10": "低",
+            "rule10": "连10日累计偏离 ≥100%",
+            "ret20": -2.0,
+            "paozi": false
+          },
+          "passed": 2,
+          "known": 6,
+          "rsi6": 77.5,
+          "price": 15.0
+        }
+      },
+      {
         "code": "002838",
         "name": "道恩股份",
         "hybk": "塑料",
         "lbc": 1,
         "zdp": 10.02,
-        "hs": 3.4,
+        "hs": 3.5,
         "zbc": 1,
         "ltsz": 99.7,
         "consensus": 0,
-        "score": 20.5,
+        "score": 20.2,
         "parts": {
           "board": 4.3,
-          "seal": 10.0,
+          "seal": 9.7,
           "turn": 9.2,
           "theme": 0.0,
           "inst": 0.0,
@@ -6863,7 +6851,7 @@
               "name": "量价触发",
               "level": "ok",
               "pass": true,
-              "value": "收 23.71 / 前高 21.55 · 量 2.55×",
+              "value": "收 23.71 / 前高 21.55 · 量 2.57×",
               "rule": "优选 放量 1.2~3 倍突破 / 可接受 突破但缩量"
             },
             {
@@ -6879,7 +6867,7 @@
               "name": "评分与风控",
               "level": "no",
               "pass": false,
-              "value": "评分 20.5",
+              "value": "评分 20.2",
               "rule": "优选 ≥60 / 可接受 ≥45"
             }
           ],
@@ -6917,52 +6905,6 @@
         }
       },
       {
-        "code": "600857",
-        "name": "宁波中百",
-        "hybk": "一般零售",
-        "lbc": 1,
-        "zdp": 9.97,
-        "hs": 2.9,
-        "zbc": 0,
-        "ltsz": 33.6,
-        "consensus": 0,
-        "score": 20.5,
-        "parts": {
-          "board": 4.3,
-          "seal": 7.3,
-          "turn": 8.9,
-          "theme": 0.0,
-          "inst": 0.0,
-          "penalty": -0.0
-        },
-        "board_role": "独苗",
-        "board_leader": "广百股份",
-        "sector_n": 2
-      },
-      {
-        "code": "601091",
-        "name": "沈鼓集团",
-        "hybk": "专用设备",
-        "lbc": 1,
-        "zdp": 9.99,
-        "hs": 31.8,
-        "zbc": 2,
-        "ltsz": 44.2,
-        "consensus": 0,
-        "score": 20.3,
-        "parts": {
-          "board": 4.3,
-          "seal": 15.4,
-          "turn": 6.6,
-          "theme": 0.0,
-          "inst": 0.0,
-          "penalty": -6.0
-        },
-        "board_role": "跟风",
-        "board_leader": "中重科技",
-        "sector_n": 3
-      },
-      {
         "code": "605255",
         "name": "天普股份",
         "hybk": "汽车零部",
@@ -6972,10 +6914,10 @@
         "zbc": 2,
         "ltsz": 90.0,
         "consensus": 0,
-        "score": 19.7,
+        "score": 19.6,
         "parts": {
           "board": 12.9,
-          "seal": 1.6,
+          "seal": 1.5,
           "turn": 8.2,
           "theme": 3.0,
           "inst": 0.0,
@@ -6991,15 +6933,15 @@
         "hybk": "基础建设",
         "lbc": 1,
         "zdp": 9.98,
-        "hs": 2.5,
+        "hs": 2.6,
         "zbc": 1,
         "ltsz": 35.8,
         "consensus": 0,
         "score": 19.6,
         "parts": {
           "board": 4.3,
-          "seal": 9.6,
-          "turn": 8.7,
+          "seal": 9.5,
+          "turn": 8.8,
           "theme": 0.0,
           "inst": 0.0,
           "penalty": -3.0
@@ -7007,6 +6949,29 @@
         "board_role": "独苗",
         "board_leader": "成都路桥",
         "sector_n": 2
+      },
+      {
+        "code": "601091",
+        "name": "沈鼓集团",
+        "hybk": "专用设备",
+        "lbc": 1,
+        "zdp": 9.99,
+        "hs": 31.9,
+        "zbc": 2,
+        "ltsz": 44.2,
+        "consensus": 0,
+        "score": 19.3,
+        "parts": {
+          "board": 4.3,
+          "seal": 14.4,
+          "turn": 6.6,
+          "theme": 0.0,
+          "inst": 0.0,
+          "penalty": -6.0
+        },
+        "board_role": "跟风",
+        "board_leader": "中重科技",
+        "sector_n": 3
       },
       {
         "code": "002843",
@@ -7018,10 +6983,10 @@
         "zbc": 0,
         "ltsz": 37.9,
         "consensus": 0,
-        "score": 18.7,
+        "score": 18.5,
         "parts": {
           "board": 4.3,
-          "seal": 5.0,
+          "seal": 4.8,
           "turn": 9.4,
           "theme": 0.0,
           "inst": 0.0,
@@ -7041,10 +7006,10 @@
         "zbc": 2,
         "ltsz": 61.6,
         "consensus": 0,
-        "score": 18.3,
+        "score": 18.0,
         "parts": {
           "board": 4.3,
-          "seal": 10.6,
+          "seal": 10.3,
           "turn": 9.4,
           "theme": 0.0,
           "inst": 0.0,
@@ -7064,10 +7029,10 @@
         "zbc": 1,
         "ltsz": 84.9,
         "consensus": 0,
-        "score": 18.0,
+        "score": 17.8,
         "parts": {
           "board": 4.3,
-          "seal": 7.9,
+          "seal": 7.7,
           "turn": 8.8,
           "theme": 0.0,
           "inst": 0.0,
@@ -7110,10 +7075,10 @@
         "zbc": 1,
         "ltsz": 60.5,
         "consensus": 0,
-        "score": 15.6,
+        "score": 15.2,
         "parts": {
           "board": 4.3,
-          "seal": 4.4,
+          "seal": 4.0,
           "turn": 9.9,
           "theme": 0.0,
           "inst": 0.0,
@@ -7133,10 +7098,10 @@
         "zbc": 1,
         "ltsz": 57.4,
         "consensus": 0,
-        "score": 14.9,
+        "score": 15.0,
         "parts": {
           "board": 4.3,
-          "seal": 3.9,
+          "seal": 4.0,
           "turn": 9.7,
           "theme": 0.0,
           "inst": 0.0,
@@ -7179,10 +7144,10 @@
         "zbc": 4,
         "ltsz": 35.9,
         "consensus": 0,
-        "score": 10.0,
+        "score": 9.0,
         "parts": {
           "board": 4.3,
-          "seal": 4.6,
+          "seal": 3.6,
           "turn": 13.1,
           "theme": 0.0,
           "inst": 0.0,
@@ -7198,15 +7163,15 @@
         "hybk": "医疗服务",
         "lbc": 1,
         "zdp": 10.08,
-        "hs": 28.0,
+        "hs": 28.1,
         "zbc": 3,
         "ltsz": 51.0,
         "consensus": 0,
-        "score": 9.9,
+        "score": 8.9,
         "parts": {
           "board": 4.3,
-          "seal": 6.1,
-          "turn": 8.5,
+          "seal": 5.2,
+          "turn": 8.4,
           "theme": 0.0,
           "inst": 0.0,
           "penalty": -9.0
@@ -7221,14 +7186,14 @@
         "hybk": "白酒Ⅱ",
         "lbc": 1,
         "zdp": 10.03,
-        "hs": 32.2,
+        "hs": 32.3,
         "zbc": 4,
         "ltsz": 32.5,
         "consensus": 0,
-        "score": 4.4,
+        "score": 4.1,
         "parts": {
           "board": 4.3,
-          "seal": 5.7,
+          "seal": 5.4,
           "turn": 6.4,
           "theme": 0.0,
           "inst": 0.0,
@@ -7244,18 +7209,18 @@
         "hybk": "农产品加",
         "lbc": 1,
         "zdp": 10.02,
-        "hs": 30.3,
-        "zbc": 9,
+        "hs": 30.4,
+        "zbc": 10,
         "ltsz": 81.6,
         "consensus": 0,
         "score": 0.0,
         "parts": {
           "board": 4.3,
-          "seal": 0.1,
+          "seal": 4.3,
           "turn": 7.3,
           "theme": 0.0,
           "inst": 0.0,
-          "penalty": -27.0
+          "penalty": -30.0
         },
         "board_role": "独苗",
         "board_leader": "东方海洋",
@@ -7264,7 +7229,7 @@
     ]
   },
   "review": {
-    "asof": "2026-11-12 13:51",
+    "asof": "2026-11-12 13:54",
     "cluster": [
       {
         "name": "专用设备",
@@ -7756,14 +7721,6 @@
             "zbc": 0
           },
           {
-            "code": "002685",
-            "name": "华东重机",
-            "lbc": 1,
-            "hybk": "工程机械",
-            "fbt": "09:45",
-            "zbc": 0
-          },
-          {
             "code": "600853",
             "name": "龙建股份",
             "lbc": 1,
@@ -7809,14 +7766,6 @@
             "lbc": 1,
             "hybk": "渔业",
             "fbt": "11:23",
-            "zbc": 0
-          },
-          {
-            "code": "002647",
-            "name": "仁东控股",
-            "lbc": 1,
-            "hybk": "多元金融",
-            "fbt": "13:05",
             "zbc": 0
           },
           {
@@ -7876,14 +7825,6 @@
             "zbc": 1
           },
           {
-            "code": "601929",
-            "name": "吉视传媒",
-            "lbc": 1,
-            "hybk": "电视广播",
-            "fbt": "10:09",
-            "zbc": 1
-          },
-          {
             "code": "603958",
             "name": "哈森股份",
             "lbc": 1,
@@ -7897,6 +7838,14 @@
             "lbc": 1,
             "hybk": "电网设备",
             "fbt": "11:20",
+            "zbc": 1
+          },
+          {
+            "code": "601606",
+            "name": "长城军工",
+            "lbc": 1,
+            "hybk": "地面兵装",
+            "fbt": "13:52",
             "zbc": 1
           },
           {
@@ -7932,6 +7881,14 @@
             "zbc": 3
           },
           {
+            "code": "601929",
+            "name": "吉视传媒",
+            "lbc": 1,
+            "hybk": "电视广播",
+            "fbt": "10:09",
+            "zbc": 3
+          },
+          {
             "code": "002693",
             "name": "双成药业",
             "lbc": 1,
@@ -7953,7 +7910,7 @@
             "lbc": 1,
             "hybk": "农产品加",
             "fbt": "09:25",
-            "zbc": 9
+            "zbc": 10
           }
         ]
       },
@@ -8028,11 +7985,6 @@
           "name": "国统股份",
           "lbc": 1
         },
-        "工程机械": {
-          "code": "002685",
-          "name": "华东重机",
-          "lbc": 1
-        },
         "塑料": {
           "code": "002838",
           "name": "道恩股份",
@@ -8088,14 +8040,14 @@
           "name": "好当家",
           "lbc": 1
         },
-        "多元金融": {
-          "code": "002647",
-          "name": "仁东控股",
-          "lbc": 1
-        },
         "白酒Ⅱ": {
           "code": "000995",
           "name": "皇台酒业",
+          "lbc": 1
+        },
+        "地面兵装": {
+          "code": "601606",
+          "name": "长城军工",
           "lbc": 1
         }
       },
@@ -8108,7 +8060,7 @@
           "leader": "亚玛顿",
           "leader_lb": 4,
           "gap": 2,
-          "hs": 0.7,
+          "hs": 0.8,
           "zbc": 0,
           "fbt": "09:25"
         },
@@ -8159,10 +8111,10 @@
       }
     ],
     "mood": {
-      "n_zt": 35,
+      "n_zt": 34,
       "max_lb": 5,
-      "boom": 47,
-      "boom_rate": 57.1,
+      "boom": 51,
+      "boom_rate": 61.8,
       "rate_1to2": 4.5,
       "rate_2to3": 16.7,
       "stage": "分化",
@@ -8173,9 +8125,9 @@
       "why": [
         "首板晋级率 4.5%（<25%），接力效应弱",
         "最高标 5 板，空间由它决定，断板则梯队塌",
-        "打板溢价：昨日涨停股今日均 -0.20%（84 只）",
+        "打板溢价：昨日涨停股今日均 -0.26%（84 只）",
         "主线：专用设备3家、光伏设备2家、燃气Ⅱ2家",
-        "环境闸：上涨家数占比 16% < 45%；涨停 35 家 < 40 家 → 总仓 ≤0%"
+        "环境闸：上涨家数占比 17% < 45%；涨停 34 家 < 40 家 → 总仓 ≤0%"
       ],
       "watch": [
         "金辰股份（光伏设备 后排，龙头 亚玛顿 4 板）",
@@ -8728,7 +8680,7 @@
   },
   "dip_pool": {
     "ok": true,
-    "asof": "2026-11-12 13:51",
+    "asof": "2026-11-12 13:54",
     "rows": [
       {
         "code": "600629",
@@ -8739,37 +8691,37 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 11.47",
-        "price": 14.71,
-        "close": 14.71,
-        "chg": -3.16,
+        "price": 14.77,
+        "close": 14.77,
+        "chg": -2.76,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 3.55,
+          "ratio": 3.5,
           "target": 19.2,
-          "stop": 13.44,
+          "stop": 13.5,
           "atr": 0.84,
-          "upside": 30.5,
+          "upside": 30.0,
           "downside": -8.6,
           "ok": true
         },
         "abnormal": {
-          "dev3": 5.9,
-          "idx3": -1.01,
-          "dev": 6.91,
+          "dev3": 6.34,
+          "idx3": -0.93,
+          "dev": 7.27,
           "limit": 20.0,
-          "remain": 13.09,
+          "remain": 12.73,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 3.78,
+          "dev10": 3.95,
           "limit10": 100.0,
-          "remain10": 96.22,
+          "remain10": 96.05,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -23.4,
+          "ret20": -23.1,
           "paozi": false
         },
         "chan": {
-          "px": 14.71,
+          "px": 14.77,
           "zone": "中枢下",
           "fx": "bottom",
           "bi_n": 21,
@@ -8782,17 +8734,17 @@
           "merged": 196
         },
         "chip": {
-          "px": 14.71,
-          "profit_ratio": 23.8,
+          "px": 14.77,
+          "profit_ratio": 29.4,
           "avg_cost": 16.11,
           "support": 13.4,
           "resistance": 21.38,
           "concentration": 49.5,
           "main_cost": 14.02,
-          "dist_main": 4.9
+          "dist_main": 5.3
         },
         "anchors": {
-          "px": 14.71,
+          "px": 14.77,
           "anchors": {
             "low": 14.02,
             "breakout": 18.69,
@@ -8802,15 +8754,10 @@
           "n": 4,
           "avg_anchor": 16.1,
           "spread": 29.0,
-          "dist_anchor": -8.6,
+          "dist_anchor": -8.3,
           "agree": false
         },
-        "flow": {
-          "main": -0.25,
-          "main_pct": -5.25,
-          "xl": -0.13,
-          "lg": -0.12
-        },
+        "flow": null,
         "open": 15.3,
         "live": true
       },
@@ -8822,38 +8769,38 @@
         "board_leader": "日海智能",
         "lbc": 1,
         "type": "假阴真阳",
-        "why": "收 123.55 低于开盘 126.10，但涨幅 +5.6%，放量 1.63×",
-        "price": 123.58,
-        "close": 123.55,
-        "chg": 5.67,
+        "why": "收 123.47 低于开盘 126.10，但涨幅 +5.6%，放量 1.65×",
+        "price": 123.55,
+        "close": 123.47,
+        "chg": 5.64,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 2.05,
+          "ratio": 2.06,
           "target": 173.61,
           "stop": 99.13,
           "atr": 11.69,
-          "upside": 40.5,
-          "downside": -19.8,
+          "upside": 40.6,
+          "downside": -19.7,
           "ok": true
         },
         "abnormal": {
-          "dev3": 19.58,
-          "idx3": -1.01,
-          "dev": 20.59,
+          "dev3": 19.5,
+          "idx3": -0.93,
+          "dev": 20.43,
           "limit": 20.0,
-          "remain": -0.59,
+          "remain": -0.43,
           "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -2.4,
+          "dev10": -2.7,
           "limit10": 100.0,
-          "remain10": 102.4,
+          "remain10": 102.7,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": -26.7,
           "paozi": false
         },
         "chan": {
-          "px": 123.55,
+          "px": 123.47,
           "zone": "中枢下",
           "fx": "bottom",
           "bi_n": 20,
@@ -8866,9 +8813,9 @@
           "merged": 192
         },
         "chip": {
-          "px": 123.55,
+          "px": 123.47,
           "profit_ratio": 21.8,
-          "avg_cost": 162.9,
+          "avg_cost": 162.88,
           "support": 104.51,
           "resistance": 233.19,
           "concentration": 79.0,
@@ -8876,25 +8823,20 @@
           "dist_main": 7.2
         },
         "anchors": {
-          "px": 123.55,
+          "px": 123.47,
           "anchors": {
             "low": 115.23,
             "breakout": 221.21,
             "ma120": 183.21,
-            "turn": 116.65
+            "turn": 116.66
           },
           "n": 4,
-          "avg_anchor": 159.07,
+          "avg_anchor": 159.08,
           "spread": 66.6,
-          "dist_anchor": -22.3,
+          "dist_anchor": -22.4,
           "agree": false
         },
-        "flow": {
-          "main": 1.81,
-          "main_pct": 3.41,
-          "xl": 4.14,
-          "lg": -2.32
-        },
+        "flow": null,
         "open": 126.1,
         "live": true
       },
@@ -8922,15 +8864,15 @@
         },
         "abnormal": {
           "dev3": 13.2,
-          "idx3": -1.01,
-          "dev": 14.21,
+          "idx3": -0.93,
+          "dev": 14.13,
           "limit": 20.0,
-          "remain": 5.79,
+          "remain": 5.87,
           "risk": "中",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 20.4,
+          "dev10": 20.16,
           "limit10": 100.0,
-          "remain10": 79.6,
+          "remain10": 79.84,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": 2.8,
@@ -8965,21 +8907,16 @@
             "low": 2.11,
             "breakout": 2.62,
             "ma120": 2.2,
-            "turn": 2.05,
+            "turn": 2.06,
             "ma_glue": 2.09
           },
           "n": 5,
-          "avg_anchor": 2.21,
-          "spread": 25.7,
-          "dist_anchor": 0.7,
+          "avg_anchor": 2.22,
+          "spread": 25.3,
+          "dist_anchor": 0.6,
           "agree": false
         },
-        "flow": {
-          "main": -1.37,
-          "main_pct": -25.06,
-          "xl": -0.83,
-          "lg": -0.54
-        },
+        "flow": null,
         "open": 2.22,
         "live": true
       },
@@ -8992,30 +8929,30 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 6.99",
-        "price": 7.22,
+        "price": 7.21,
         "close": 7.21,
-        "chg": -5.12,
+        "chg": -5.26,
         "pool_ds": "20261111",
         "rr": {
           "ratio": 1.33,
           "target": 7.9,
           "stop": 6.69,
           "atr": 0.34,
-          "upside": 9.5,
-          "downside": -7.1,
+          "upside": 9.6,
+          "downside": -7.2,
           "ok": false
         },
         "abnormal": {
           "dev3": 4.04,
-          "idx3": -1.01,
-          "dev": 5.05,
+          "idx3": -0.93,
+          "dev": 4.97,
           "limit": 20.0,
-          "remain": 14.95,
+          "remain": 15.03,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 9.06,
+          "dev10": 8.82,
           "limit10": 100.0,
-          "remain10": 90.94,
+          "remain10": 91.18,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": 0.1,
@@ -9033,7 +8970,7 @@
         },
         "chip": {
           "px": 7.21,
-          "profit_ratio": 36.6,
+          "profit_ratio": 36.5,
           "avg_cost": 7.74,
           "support": 6.19,
           "resistance": 9.29,
@@ -9056,13 +8993,84 @@
           "dist_anchor": -7.5,
           "agree": false
         },
-        "flow": {
-          "main": -0.01,
-          "main_pct": -1.18,
-          "xl": -0.04,
-          "lg": 0.02
-        },
+        "flow": null,
         "open": 7.55,
+        "live": true
+      },
+      {
+        "code": "603042",
+        "name": "华脉科技",
+        "hybk": "通信设备",
+        "board_role": "跟风",
+        "board_leader": "日海智能",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 11.75",
+        "price": 13.0,
+        "close": 12.98,
+        "chg": -2.84,
+        "pool_ds": "20261111",
+        "rr": {
+          "ratio": 1.29,
+          "target": 15.0,
+          "stop": 11.41,
+          "atr": 0.84,
+          "upside": 15.6,
+          "downside": -12.1,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 9.54,
+          "idx3": -0.93,
+          "dev": 10.47,
+          "limit": 20.0,
+          "remain": 9.53,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 11.87,
+          "limit10": 100.0,
+          "remain10": 88.13,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": -11.4,
+          "paozi": false
+        },
+        "chan": {
+          "px": 12.98,
+          "zone": null,
+          "fx": "bottom",
+          "bi_n": 18,
+          "dir": "down",
+          "zs": null,
+          "beichi": false,
+          "merged": 185
+        },
+        "chip": {
+          "px": 12.98,
+          "profit_ratio": 21.6,
+          "avg_cost": 14.88,
+          "support": 11.71,
+          "resistance": 18.56,
+          "concentration": 46.0,
+          "main_cost": 13.48,
+          "dist_main": -3.7
+        },
+        "anchors": {
+          "px": 12.98,
+          "anchors": {
+            "low": 11.82,
+            "breakout": 14.67,
+            "ma120": 14.17,
+            "turn": 12.37
+          },
+          "n": 4,
+          "avg_anchor": 13.26,
+          "spread": 21.5,
+          "dist_anchor": -2.1,
+          "agree": false
+        },
+        "flow": null,
+        "open": 14.38,
         "live": true
       },
       {
@@ -9074,37 +9082,37 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 5.50",
-        "price": 10.45,
-        "close": 10.46,
-        "chg": -5.94,
+        "price": 10.53,
+        "close": 10.54,
+        "chg": -5.22,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 1.33,
-          "target": 12.19,
-          "stop": 9.16,
+          "ratio": 1.27,
+          "target": 12.28,
+          "stop": 9.17,
           "atr": 0.87,
-          "upside": 16.6,
-          "downside": -12.4,
+          "upside": 16.5,
+          "downside": -13.0,
           "ok": false
         },
         "abnormal": {
-          "dev3": 10.69,
-          "idx3": -1.01,
-          "dev": 11.7,
+          "dev3": 11.53,
+          "idx3": -0.93,
+          "dev": 12.46,
           "limit": 20.0,
-          "remain": 8.3,
+          "remain": 7.54,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 18.61,
+          "dev10": 19.25,
           "limit10": 100.0,
-          "remain10": 81.39,
+          "remain10": 80.75,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 26.3,
+          "ret20": 27.3,
           "paozi": false
         },
         "chan": {
-          "px": 10.46,
+          "px": 10.54,
           "zone": "中枢内",
           "fx": "bottom",
           "bi_n": 14,
@@ -9117,117 +9125,31 @@
           "merged": 187
         },
         "chip": {
-          "px": 10.46,
-          "profit_ratio": 70.7,
+          "px": 10.54,
+          "profit_ratio": 70.6,
           "avg_cost": 9.77,
           "support": 8.04,
           "resistance": 13.28,
           "concentration": 53.6,
           "main_cost": 10.87,
-          "dist_main": -3.8
+          "dist_main": -3.0
         },
         "anchors": {
-          "px": 10.46,
+          "px": 10.54,
           "anchors": {
             "low": 7.93,
             "breakout": 11.63,
             "ma120": 8.26,
-            "turn": 10.17
+            "turn": 10.18
           },
           "n": 4,
           "avg_anchor": 9.5,
-          "spread": 39.0,
-          "dist_anchor": 10.1,
+          "spread": 38.9,
+          "dist_anchor": 10.9,
           "agree": false
         },
-        "flow": {
-          "main": -0.15,
-          "main_pct": -1.74,
-          "xl": -0.15,
-          "lg": 0.0
-        },
+        "flow": null,
         "open": 10.74,
-        "live": true
-      },
-      {
-        "code": "603042",
-        "name": "华脉科技",
-        "hybk": "通信设备",
-        "board_role": "跟风",
-        "board_leader": "日海智能",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 11.75",
-        "price": 13.02,
-        "close": 13.02,
-        "chg": -2.69,
-        "pool_ds": "20261111",
-        "rr": {
-          "ratio": 1.23,
-          "target": 15.0,
-          "stop": 11.41,
-          "atr": 0.83,
-          "upside": 15.2,
-          "downside": -12.4,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 9.87,
-          "idx3": -1.01,
-          "dev": 10.88,
-          "limit": 20.0,
-          "remain": 9.12,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 12.44,
-          "limit10": 100.0,
-          "remain10": 87.56,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -11.1,
-          "paozi": false
-        },
-        "chan": {
-          "px": 13.02,
-          "zone": null,
-          "fx": "bottom",
-          "bi_n": 18,
-          "dir": "down",
-          "zs": null,
-          "beichi": false,
-          "merged": 185
-        },
-        "chip": {
-          "px": 13.02,
-          "profit_ratio": 25.3,
-          "avg_cost": 14.88,
-          "support": 11.71,
-          "resistance": 18.56,
-          "concentration": 46.0,
-          "main_cost": 13.48,
-          "dist_main": -3.4
-        },
-        "anchors": {
-          "px": 13.02,
-          "anchors": {
-            "low": 11.82,
-            "breakout": 14.67,
-            "ma120": 14.17,
-            "turn": 12.38
-          },
-          "n": 4,
-          "avg_anchor": 13.26,
-          "spread": 21.5,
-          "dist_anchor": -1.8,
-          "agree": false
-        },
-        "flow": {
-          "main": -0.14,
-          "main_pct": -1.95,
-          "xl": -0.27,
-          "lg": 0.13
-        },
-        "open": 14.38,
         "live": true
       },
       {
@@ -9239,37 +9161,37 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 7.41",
-        "price": 7.61,
-        "close": 7.61,
-        "chg": -4.64,
+        "price": 7.6,
+        "close": 7.6,
+        "chg": -4.76,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 1.2,
-          "target": 8.33,
+          "ratio": 1.22,
+          "target": 8.32,
           "stop": 7.01,
           "atr": 0.36,
-          "upside": 9.4,
-          "downside": -7.9,
+          "upside": 9.5,
+          "downside": -7.8,
           "ok": false
         },
         "abnormal": {
-          "dev3": 5.99,
-          "idx3": -1.01,
-          "dev": 7.0,
+          "dev3": 5.85,
+          "idx3": -0.93,
+          "dev": 6.78,
           "limit": 20.0,
-          "remain": 13.0,
+          "remain": 13.22,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 9.61,
+          "dev10": 9.23,
           "limit10": 100.0,
-          "remain10": 90.39,
+          "remain10": 90.77,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -5.3,
+          "ret20": -5.5,
           "paozi": false
         },
         "chan": {
-          "px": 7.61,
+          "px": 7.6,
           "zone": "中枢下",
           "fx": "bottom",
           "bi_n": 18,
@@ -9282,17 +9204,17 @@
           "merged": 190
         },
         "chip": {
-          "px": 7.61,
+          "px": 7.6,
           "profit_ratio": 26.1,
           "avg_cost": 8.0,
           "support": 6.87,
           "resistance": 8.83,
           "concentration": 24.5,
           "main_cost": 7.97,
-          "dist_main": -4.5
+          "dist_main": -4.6
         },
         "anchors": {
-          "px": 7.61,
+          "px": 7.6,
           "anchors": {
             "low": 7.97,
             "breakout": 8.84,
@@ -9302,97 +9224,11 @@
           "n": 4,
           "avg_anchor": 8.1,
           "spread": 15.6,
-          "dist_anchor": -6.0,
+          "dist_anchor": -6.2,
           "agree": false
         },
-        "flow": {
-          "main": -0.17,
-          "main_pct": -5.19,
-          "xl": -0.21,
-          "lg": 0.04
-        },
+        "flow": null,
         "open": 7.83,
-        "live": true
-      },
-      {
-        "code": "002861",
-        "name": "瀛通通讯",
-        "hybk": "消费电子",
-        "board_role": "独苗",
-        "board_leader": "瀛通通讯",
-        "lbc": 2,
-        "type": "后排二波",
-        "why": "2板，回踩未破最近涨停日最低 11.88",
-        "price": 13.16,
-        "close": 13.16,
-        "chg": -8.1,
-        "pool_ds": "20261111",
-        "rr": {
-          "ratio": 1.12,
-          "target": 14.8,
-          "stop": 11.7,
-          "atr": 0.82,
-          "upside": 12.5,
-          "downside": -11.1,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 11.15,
-          "idx3": -1.01,
-          "dev": 12.16,
-          "limit": 20.0,
-          "remain": 7.84,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 15.03,
-          "limit10": 100.0,
-          "remain10": 84.97,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 5.2,
-          "paozi": false
-        },
-        "chan": {
-          "px": 13.16,
-          "zone": null,
-          "fx": "top",
-          "bi_n": 16,
-          "dir": "up",
-          "zs": null,
-          "beichi": true,
-          "merged": 174
-        },
-        "chip": {
-          "px": 13.16,
-          "profit_ratio": 39.1,
-          "avg_cost": 14.23,
-          "support": 11.78,
-          "resistance": 22.41,
-          "concentration": 74.7,
-          "main_cost": 13.23,
-          "dist_main": -0.5
-        },
-        "anchors": {
-          "px": 13.16,
-          "anchors": {
-            "low": 13.23,
-            "breakout": 19.58,
-            "ma120": 16.24,
-            "turn": 12.72
-          },
-          "n": 4,
-          "avg_anchor": 15.44,
-          "spread": 44.4,
-          "dist_anchor": -14.8,
-          "agree": false
-        },
-        "flow": {
-          "main": 0.05,
-          "main_pct": 1.8,
-          "xl": 0.03,
-          "lg": 0.03
-        },
-        "open": 13.14,
         "live": true
       },
       {
@@ -9405,36 +9241,36 @@
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 1.96",
         "price": 2.05,
-        "close": 2.06,
+        "close": 2.04,
         "chg": -1.91,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 1.06,
-          "target": 2.25,
+          "ratio": 1.19,
+          "target": 2.23,
           "stop": 1.88,
           "atr": 0.1,
-          "upside": 9.2,
-          "downside": -8.7,
+          "upside": 9.3,
+          "downside": -7.8,
           "ok": false
         },
         "abnormal": {
-          "dev3": 9.57,
-          "idx3": -1.01,
-          "dev": 10.58,
+          "dev3": 8.51,
+          "idx3": -0.93,
+          "dev": 9.44,
           "limit": 20.0,
-          "remain": 9.42,
+          "remain": 10.56,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 9.77,
+          "dev10": 8.49,
           "limit10": 100.0,
-          "remain10": 90.23,
+          "remain10": 91.51,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -1.4,
+          "ret20": -2.4,
           "paozi": false
         },
         "chan": {
-          "px": 2.06,
+          "px": 2.04,
           "zone": "中枢内",
           "fx": "bottom",
           "bi_n": 23,
@@ -9447,36 +9283,107 @@
           "merged": 180
         },
         "chip": {
-          "px": 2.06,
-          "profit_ratio": 37.2,
-          "avg_cost": 2.22,
+          "px": 2.04,
+          "profit_ratio": 44.1,
+          "avg_cost": 2.21,
           "support": 1.88,
           "resistance": 2.64,
           "concentration": 34.3,
           "main_cost": 1.91,
-          "dist_main": 7.9
+          "dist_main": 6.8
         },
         "anchors": {
-          "px": 2.06,
+          "px": 2.04,
           "anchors": {
             "low": 1.91,
             "breakout": 2.8,
             "ma120": 2.36,
-            "turn": 2.0
+            "turn": 2.01
           },
           "n": 4,
           "avg_anchor": 2.27,
-          "spread": 39.3,
-          "dist_anchor": -9.2,
+          "spread": 39.2,
+          "dist_anchor": -10.1,
           "agree": false
         },
-        "flow": {
-          "main": -0.27,
-          "main_pct": -11.94,
-          "xl": -0.05,
-          "lg": -0.22
-        },
+        "flow": null,
         "open": 2.08,
+        "live": true
+      },
+      {
+        "code": "002861",
+        "name": "瀛通通讯",
+        "hybk": "消费电子",
+        "board_role": "独苗",
+        "board_leader": "瀛通通讯",
+        "lbc": 2,
+        "type": "后排二波",
+        "why": "2板，回踩未破最近涨停日最低 11.88",
+        "price": 13.19,
+        "close": 13.17,
+        "chg": -7.89,
+        "pool_ds": "20261111",
+        "rr": {
+          "ratio": 1.12,
+          "target": 14.81,
+          "stop": 11.7,
+          "atr": 0.82,
+          "upside": 12.5,
+          "downside": -11.2,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 11.23,
+          "idx3": -0.93,
+          "dev": 12.16,
+          "limit": 20.0,
+          "remain": 7.84,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 14.88,
+          "limit10": 100.0,
+          "remain10": 85.12,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 5.3,
+          "paozi": false
+        },
+        "chan": {
+          "px": 13.17,
+          "zone": null,
+          "fx": "top",
+          "bi_n": 16,
+          "dir": "up",
+          "zs": null,
+          "beichi": true,
+          "merged": 174
+        },
+        "chip": {
+          "px": 13.17,
+          "profit_ratio": 39.0,
+          "avg_cost": 14.23,
+          "support": 11.78,
+          "resistance": 22.41,
+          "concentration": 74.7,
+          "main_cost": 13.23,
+          "dist_main": -0.5
+        },
+        "anchors": {
+          "px": 13.17,
+          "anchors": {
+            "low": 13.23,
+            "breakout": 19.58,
+            "ma120": 16.24,
+            "turn": 12.72
+          },
+          "n": 4,
+          "avg_anchor": 15.44,
+          "spread": 44.4,
+          "dist_anchor": -14.7,
+          "agree": false
+        },
+        "flow": null,
+        "open": 13.14,
         "live": true
       },
       {
@@ -9488,37 +9395,37 @@
         "lbc": 2,
         "type": "后排二波",
         "why": "2板，回踩未破最近涨停日最低 2.69",
-        "price": 3.68,
-        "close": 3.69,
-        "chg": -3.92,
+        "price": 3.7,
+        "close": 3.7,
+        "chg": -3.39,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 1.02,
-          "target": 4.24,
+          "ratio": 1.01,
+          "target": 4.25,
           "stop": 3.15,
           "atr": 0.28,
-          "upside": 14.9,
-          "downside": -14.6,
+          "upside": 15.0,
+          "downside": -14.9,
           "ok": false
         },
         "abnormal": {
-          "dev3": 16.77,
-          "idx3": -1.01,
-          "dev": 17.78,
+          "dev3": 17.09,
+          "idx3": -0.93,
+          "dev": 18.02,
           "limit": 20.0,
-          "remain": 2.22,
-          "risk": "中",
+          "remain": 1.98,
+          "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 19.07,
+          "dev10": 19.14,
           "limit10": 100.0,
-          "remain10": 80.93,
+          "remain10": 80.86,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 10.8,
+          "ret20": 11.1,
           "paozi": false
         },
         "chan": {
-          "px": 3.69,
+          "px": 3.7,
           "zone": "中枢上",
           "fx": "bottom",
           "bi_n": 17,
@@ -9531,17 +9438,17 @@
           "merged": 172
         },
         "chip": {
-          "px": 3.69,
-          "profit_ratio": 84.8,
+          "px": 3.7,
+          "profit_ratio": 84.6,
           "avg_cost": 3.33,
           "support": 2.45,
           "resistance": 3.78,
-          "concentration": 40.0,
+          "concentration": 39.9,
           "main_cost": 3.34,
-          "dist_main": 10.5
+          "dist_main": 10.8
         },
         "anchors": {
-          "px": 3.69,
+          "px": 3.7,
           "anchors": {
             "low": 3.09,
             "breakout": 3.75,
@@ -9551,15 +9458,10 @@
           "n": 4,
           "avg_anchor": 3.33,
           "spread": 20.8,
-          "dist_anchor": 11.0,
+          "dist_anchor": 11.3,
           "agree": false
         },
-        "flow": {
-          "main": -0.36,
-          "main_pct": -5.36,
-          "xl": -0.16,
-          "lg": -0.21
-        },
+        "flow": null,
         "open": 4.21,
         "live": true
       },
@@ -9573,36 +9475,36 @@
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 36.18",
         "price": 42.03,
-        "close": 42.03,
+        "close": 41.99,
         "chg": -4.41,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 1.0,
-          "target": 48.37,
+          "ratio": 1.01,
+          "target": 48.34,
           "stop": 35.71,
-          "atr": 3.17,
+          "atr": 3.18,
           "upside": 15.1,
           "downside": -15.0,
           "ok": false
         },
         "abnormal": {
-          "dev3": 7.33,
-          "idx3": -1.01,
-          "dev": 8.34,
+          "dev3": 7.23,
+          "idx3": -0.93,
+          "dev": 8.16,
           "limit": 20.0,
-          "remain": 11.66,
+          "remain": 11.84,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 12.06,
+          "dev10": 11.71,
           "limit10": 100.0,
-          "remain10": 87.94,
+          "remain10": 88.29,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 13.9,
+          "ret20": 13.8,
           "paozi": false
         },
         "chan": {
-          "px": 42.03,
+          "px": 41.99,
           "zone": null,
           "fx": "bottom",
           "bi_n": 19,
@@ -9612,117 +9514,111 @@
           "merged": 191
         },
         "chip": {
-          "px": 42.03,
-          "profit_ratio": 58.1,
+          "px": 41.99,
+          "profit_ratio": 58.0,
           "avg_cost": 43.44,
           "support": 34.5,
           "resistance": 56.63,
           "concentration": 50.9,
           "main_cost": 39.06,
-          "dist_main": 7.6
+          "dist_main": 7.5
         },
         "anchors": {
-          "px": 42.03,
+          "px": 41.99,
           "anchors": {
             "low": 39.06,
             "breakout": 42.61,
             "ma120": 52.53,
-            "turn": 44.93
+            "turn": 44.92
           },
           "n": 4,
           "avg_anchor": 44.78,
           "spread": 30.1,
-          "dist_anchor": -6.1,
+          "dist_anchor": -6.2,
           "agree": false
         },
-        "flow": {
-          "main": 0.12,
-          "main_pct": 3.75,
-          "xl": 0.02,
-          "lg": 0.1
-        },
+        "flow": null,
         "open": 44.6,
         "live": true
       },
       {
-        "code": "002529",
-        "name": "海源复材",
-        "hybk": "专用设备",
-        "board_role": "跟风",
-        "board_leader": "达 意 隆",
+        "code": "002110",
+        "name": "三钢闽光",
+        "hybk": "普钢",
+        "board_role": "独苗",
+        "board_leader": "三钢闽光",
         "lbc": 1,
         "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 5.38",
-        "price": 7.11,
-        "close": 7.1,
-        "chg": 4.25,
+        "why": "1板，回踩未破最近涨停日最低 2.73",
+        "price": 2.97,
+        "close": 2.95,
+        "chg": -1.33,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 0.9,
-          "target": 8.0,
-          "stop": 6.1,
-          "atr": 0.45,
-          "upside": 12.7,
-          "downside": -14.1,
+          "ratio": 0.91,
+          "target": 3.17,
+          "stop": 2.71,
+          "atr": 0.11,
+          "upside": 7.4,
+          "downside": -8.1,
           "ok": false
         },
         "abnormal": {
-          "dev3": 13.6,
-          "idx3": -1.01,
-          "dev": 14.61,
+          "dev3": 7.66,
+          "idx3": -0.93,
+          "dev": 8.59,
           "limit": 20.0,
-          "remain": 5.39,
-          "risk": "中",
+          "remain": 11.41,
+          "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 26.29,
+          "dev10": 14.53,
           "limit10": 100.0,
-          "remain10": 73.71,
+          "remain10": 85.47,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 12.7,
+          "ret20": 3.5,
           "paozi": false
         },
         "chan": {
-          "px": 7.1,
-          "zone": null,
+          "px": 2.95,
+          "zone": "中枢下",
           "fx": "bottom",
-          "bi_n": 16,
+          "bi_n": 20,
           "dir": "down",
-          "zs": null,
+          "zs": {
+            "zg": 3.09,
+            "zd": 3.05
+          },
           "beichi": false,
-          "merged": 197
+          "merged": 191
         },
         "chip": {
-          "px": 7.1,
-          "profit_ratio": 94.5,
-          "avg_cost": 6.58,
-          "support": 5.78,
-          "resistance": 7.42,
-          "concentration": 24.9,
-          "main_cost": 6.79,
-          "dist_main": 4.6
+          "px": 2.95,
+          "profit_ratio": 59.3,
+          "avg_cost": 2.93,
+          "support": 2.65,
+          "resistance": 3.13,
+          "concentration": 16.4,
+          "main_cost": 2.98,
+          "dist_main": -1.0
         },
         "anchors": {
-          "px": 7.1,
+          "px": 2.95,
           "anchors": {
-            "low": 6.79,
-            "breakout": 7.17,
-            "ma120": 6.93,
-            "turn": 6.57
+            "low": 2.98,
+            "breakout": 2.92,
+            "ma120": 2.97,
+            "turn": 2.95,
+            "ma_glue": 2.82
           },
-          "n": 4,
-          "avg_anchor": 6.87,
-          "spread": 8.7,
-          "dist_anchor": 3.4,
+          "n": 5,
+          "avg_anchor": 2.93,
+          "spread": 5.5,
+          "dist_anchor": 0.8,
           "agree": true
         },
-        "flow": {
-          "main": 0.14,
-          "main_pct": 4.57,
-          "xl": -0.0,
-          "lg": 0.14
-        },
-        "open": 6.68,
+        "flow": null,
+        "open": 3.12,
         "live": true
       },
       {
@@ -9749,15 +9645,15 @@
         },
         "abnormal": {
           "dev3": 4.84,
-          "idx3": -1.01,
-          "dev": 5.85,
+          "idx3": -0.93,
+          "dev": 5.77,
           "limit": 20.0,
-          "remain": 14.15,
+          "remain": 14.23,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 12.81,
+          "dev10": 12.57,
           "limit10": 100.0,
-          "remain10": 87.19,
+          "remain10": 87.43,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": 5.9,
@@ -9801,98 +9697,8 @@
           "dist_anchor": 0.7,
           "agree": true
         },
-        "flow": {
-          "main": -0.42,
-          "main_pct": -21.06,
-          "xl": -0.43,
-          "lg": 0.01
-        },
+        "flow": null,
         "open": 3.21,
-        "live": true
-      },
-      {
-        "code": "002110",
-        "name": "三钢闽光",
-        "hybk": "普钢",
-        "board_role": "独苗",
-        "board_leader": "三钢闽光",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 2.73",
-        "price": 2.96,
-        "close": 2.96,
-        "chg": -1.66,
-        "pool_ds": "20261111",
-        "rr": {
-          "ratio": 0.87,
-          "target": 3.18,
-          "stop": 2.71,
-          "atr": 0.11,
-          "upside": 7.4,
-          "downside": -8.4,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 8.03,
-          "idx3": -1.01,
-          "dev": 9.04,
-          "limit": 20.0,
-          "remain": 10.96,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 15.15,
-          "limit10": 100.0,
-          "remain10": 84.85,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 3.9,
-          "paozi": false
-        },
-        "chan": {
-          "px": 2.96,
-          "zone": "中枢下",
-          "fx": "bottom",
-          "bi_n": 20,
-          "dir": "down",
-          "zs": {
-            "zg": 3.09,
-            "zd": 3.05
-          },
-          "beichi": false,
-          "merged": 191
-        },
-        "chip": {
-          "px": 2.96,
-          "profit_ratio": 59.3,
-          "avg_cost": 2.93,
-          "support": 2.65,
-          "resistance": 3.13,
-          "concentration": 16.4,
-          "main_cost": 2.98,
-          "dist_main": -0.7
-        },
-        "anchors": {
-          "px": 2.96,
-          "anchors": {
-            "low": 2.98,
-            "breakout": 2.92,
-            "ma120": 2.97,
-            "turn": 2.95,
-            "ma_glue": 2.82
-          },
-          "n": 5,
-          "avg_anchor": 2.93,
-          "spread": 5.5,
-          "dist_anchor": 1.1,
-          "agree": true
-        },
-        "flow": {
-          "main": 0.12,
-          "main_pct": 3.08,
-          "xl": -0.1,
-          "lg": 0.21
-        },
-        "open": 3.12,
         "live": true
       },
       {
@@ -9905,36 +9711,36 @@
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 2.02",
         "price": 2.18,
-        "close": 2.18,
+        "close": 2.17,
         "chg": -2.24,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 0.84,
-          "target": 2.35,
+          "ratio": 0.89,
+          "target": 2.34,
           "stop": 1.98,
           "atr": 0.08,
-          "upside": 7.7,
-          "downside": -9.2,
+          "upside": 7.8,
+          "downside": -8.8,
           "ok": false
         },
         "abnormal": {
-          "dev3": 9.55,
-          "idx3": -1.01,
-          "dev": 10.56,
+          "dev3": 9.05,
+          "idx3": -0.93,
+          "dev": 9.98,
           "limit": 20.0,
-          "remain": 9.44,
+          "remain": 10.02,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 14.82,
+          "dev10": 14.07,
           "limit10": 100.0,
-          "remain10": 85.18,
+          "remain10": 85.93,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 5.8,
+          "ret20": 5.3,
           "paozi": false
         },
         "chan": {
-          "px": 2.18,
+          "px": 2.17,
           "zone": "中枢内",
           "fx": "bottom",
           "bi_n": 19,
@@ -9947,17 +9753,17 @@
           "merged": 173
         },
         "chip": {
-          "px": 2.18,
+          "px": 2.17,
           "profit_ratio": 38.7,
           "avg_cost": 2.46,
           "support": 1.88,
           "resistance": 3.37,
           "concentration": 60.6,
           "main_cost": 2.2,
-          "dist_main": -0.9
+          "dist_main": -1.4
         },
         "anchors": {
-          "px": 2.18,
+          "px": 2.17,
           "anchors": {
             "low": 2.2,
             "breakout": 4.44,
@@ -9967,16 +9773,87 @@
           "n": 4,
           "avg_anchor": 2.94,
           "spread": 76.3,
-          "dist_anchor": -25.7,
+          "dist_anchor": -26.1,
           "agree": false
         },
-        "flow": {
-          "main": -0.2,
-          "main_pct": -8.96,
-          "xl": -0.02,
-          "lg": -0.17
-        },
+        "flow": null,
         "open": 2.27,
+        "live": true
+      },
+      {
+        "code": "002529",
+        "name": "海源复材",
+        "hybk": "专用设备",
+        "board_role": "跟风",
+        "board_leader": "达 意 隆",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 5.38",
+        "price": 7.12,
+        "close": 7.13,
+        "chg": 4.4,
+        "pool_ds": "20261111",
+        "rr": {
+          "ratio": 0.88,
+          "target": 8.03,
+          "stop": 6.1,
+          "atr": 0.45,
+          "upside": 12.7,
+          "downside": -14.4,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 14.08,
+          "idx3": -0.93,
+          "dev": 15.01,
+          "limit": 20.0,
+          "remain": 4.99,
+          "risk": "中",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 26.57,
+          "limit10": 100.0,
+          "remain10": 73.43,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 13.2,
+          "paozi": false
+        },
+        "chan": {
+          "px": 7.13,
+          "zone": null,
+          "fx": "bottom",
+          "bi_n": 16,
+          "dir": "down",
+          "zs": null,
+          "beichi": false,
+          "merged": 197
+        },
+        "chip": {
+          "px": 7.13,
+          "profit_ratio": 94.5,
+          "avg_cost": 6.58,
+          "support": 5.78,
+          "resistance": 7.42,
+          "concentration": 24.9,
+          "main_cost": 6.79,
+          "dist_main": 5.0
+        },
+        "anchors": {
+          "px": 7.13,
+          "anchors": {
+            "low": 6.79,
+            "breakout": 7.17,
+            "ma120": 6.93,
+            "turn": 6.57
+          },
+          "n": 4,
+          "avg_anchor": 6.87,
+          "spread": 8.7,
+          "dist_anchor": 3.9,
+          "agree": true
+        },
+        "flow": null,
+        "open": 6.68,
         "live": true
       },
       {
@@ -9988,37 +9865,37 @@
         "lbc": 2,
         "type": "后排二波",
         "why": "2板，回踩未破最近涨停日最低 3.61",
-        "price": 4.08,
-        "close": 4.08,
-        "chg": -7.27,
+        "price": 4.1,
+        "close": 4.1,
+        "chg": -6.82,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 0.75,
-          "target": 4.5,
+          "ratio": 0.72,
+          "target": 4.52,
           "stop": 3.52,
           "atr": 0.21,
-          "upside": 10.3,
-          "downside": -13.7,
+          "upside": 10.2,
+          "downside": -14.1,
           "ok": false
         },
         "abnormal": {
-          "dev3": 12.09,
-          "idx3": -1.01,
-          "dev": 13.1,
+          "dev3": 12.64,
+          "idx3": -0.93,
+          "dev": 13.57,
           "limit": 20.0,
-          "remain": 6.9,
+          "remain": 6.43,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 19.27,
+          "dev10": 19.6,
           "limit10": 100.0,
-          "remain10": 80.73,
+          "remain10": 80.4,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 9.1,
+          "ret20": 9.6,
           "paozi": false
         },
         "chan": {
-          "px": 4.08,
+          "px": 4.1,
           "zone": "中枢内",
           "fx": "top",
           "bi_n": 18,
@@ -10031,35 +9908,30 @@
           "merged": 189
         },
         "chip": {
-          "px": 4.08,
-          "profit_ratio": 60.9,
+          "px": 4.1,
+          "profit_ratio": 60.8,
           "avg_cost": 4.02,
           "support": 3.27,
           "resistance": 4.42,
           "concentration": 28.6,
           "main_cost": 4.16,
-          "dist_main": -1.9
+          "dist_main": -1.4
         },
         "anchors": {
-          "px": 4.08,
+          "px": 4.1,
           "anchors": {
             "low": 4.16,
             "breakout": 4.37,
             "ma120": 3.97,
-            "turn": 3.93
+            "turn": 3.94
           },
           "n": 4,
           "avg_anchor": 4.11,
-          "spread": 10.7,
-          "dist_anchor": -0.7,
+          "spread": 10.5,
+          "dist_anchor": -0.2,
           "agree": true
         },
-        "flow": {
-          "main": -0.5,
-          "main_pct": -9.74,
-          "xl": -0.38,
-          "lg": -0.12
-        },
+        "flow": null,
         "open": 4.05,
         "live": true
       },
@@ -10071,26 +9943,26 @@
         "board_leader": "日海智能",
         "lbc": 2,
         "type": "假阴真阳",
-        "why": "收 10.28 低于开盘 11.09，但涨幅 +1.2%，放量 3.47×",
-        "price": 10.29,
-        "close": 10.28,
-        "chg": 1.28,
+        "why": "收 10.30 低于开盘 11.09，但涨幅 +1.4%，放量 3.48×",
+        "price": 10.3,
+        "close": 10.3,
+        "chg": 1.38,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 0.7,
-          "target": 11.62,
+          "ratio": 0.69,
+          "target": 11.64,
           "stop": 8.37,
           "atr": 0.67,
           "upside": 13.0,
-          "downside": -18.6,
+          "downside": -18.7,
           "ok": false
         },
         "abnormal": {
-          "dev3": 22.38,
-          "idx3": -1.01,
-          "dev": 23.39,
+          "dev3": 22.62,
+          "idx3": -0.93,
+          "dev": 23.55,
           "limit": 20.0,
-          "remain": -3.39,
+          "remain": -3.55,
           "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
           "dev10": 28.86,
@@ -10098,11 +9970,11 @@
           "remain10": 71.14,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 29.1,
+          "ret20": 29.4,
           "paozi": false
         },
         "chan": {
-          "px": 10.28,
+          "px": 10.3,
           "zone": "中枢上",
           "fx": "bottom",
           "bi_n": 21,
@@ -10115,35 +9987,30 @@
           "merged": 186
         },
         "chip": {
-          "px": 10.28,
+          "px": 10.3,
           "profit_ratio": 84.8,
           "avg_cost": 9.0,
           "support": 7.81,
           "resistance": 10.65,
           "concentration": 31.6,
           "main_cost": 10.59,
-          "dist_main": -2.9
+          "dist_main": -2.7
         },
         "anchors": {
-          "px": 10.28,
+          "px": 10.3,
           "anchors": {
             "low": 8.49,
-            "breakout": 10.57,
+            "breakout": 10.58,
             "ma120": 8.43,
-            "turn": 9.09
+            "turn": 9.1
           },
           "n": 4,
-          "avg_anchor": 9.14,
-          "spread": 23.4,
-          "dist_anchor": 12.4,
+          "avg_anchor": 9.15,
+          "spread": 23.5,
+          "dist_anchor": 12.6,
           "agree": false
         },
-        "flow": {
-          "main": -0.08,
-          "main_pct": -0.74,
-          "xl": 0.43,
-          "lg": -0.51
-        },
+        "flow": null,
         "open": 11.09,
         "live": true
       },
@@ -10155,10 +10022,10 @@
         "board_leader": "锋龙股份",
         "lbc": 1,
         "type": "假阴真阳",
-        "why": "收 7.34 低于开盘 7.99，但涨幅 +1.1%，放量 2.28×",
-        "price": 7.35,
+        "why": "收 7.34 低于开盘 7.99，但涨幅 +1.1%，放量 2.33×",
+        "price": 7.31,
         "close": 7.34,
-        "chg": 1.24,
+        "chg": 0.69,
         "pool_ds": "20261111",
         "rr": {
           "ratio": 0.68,
@@ -10171,15 +10038,15 @@
         },
         "abnormal": {
           "dev3": 13.98,
-          "idx3": -1.01,
-          "dev": 14.99,
+          "idx3": -0.93,
+          "dev": 14.91,
           "limit": 20.0,
-          "remain": 5.01,
+          "remain": 5.09,
           "risk": "中",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 21.61,
+          "dev10": 21.37,
           "limit10": 100.0,
-          "remain10": 78.39,
+          "remain10": 78.63,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": 33.2,
@@ -10200,8 +10067,8 @@
         },
         "chip": {
           "px": 7.34,
-          "profit_ratio": 90.6,
-          "avg_cost": 6.37,
+          "profit_ratio": 90.5,
+          "avg_cost": 6.38,
           "support": 5.06,
           "resistance": 7.28,
           "concentration": 34.8,
@@ -10222,12 +10089,7 @@
           "dist_anchor": 11.4,
           "agree": false
         },
-        "flow": {
-          "main": -1.37,
-          "main_pct": -14.95,
-          "xl": -1.08,
-          "lg": -0.29
-        },
+        "flow": null,
         "open": 7.99,
         "live": true
       },
@@ -10240,37 +10102,37 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 7.65",
-        "price": 8.63,
-        "close": 8.63,
-        "chg": 1.77,
+        "price": 8.65,
+        "close": 8.64,
+        "chg": 2.0,
         "pool_ds": "20261111",
         "rr": {
           "ratio": 0.67,
-          "target": 9.58,
+          "target": 9.59,
           "stop": 7.22,
           "atr": 0.47,
           "upside": 11.0,
-          "downside": -16.3,
+          "downside": -16.4,
           "ok": false
         },
         "abnormal": {
-          "dev3": 11.79,
-          "idx3": -1.01,
-          "dev": 12.8,
+          "dev3": 11.92,
+          "idx3": -0.93,
+          "dev": 12.85,
           "limit": 20.0,
-          "remain": 7.2,
+          "remain": 7.15,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 22.23,
+          "dev10": 22.13,
           "limit10": 100.0,
-          "remain10": 77.77,
+          "remain10": 77.87,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 1.4,
+          "ret20": 1.5,
           "paozi": false
         },
         "chan": {
-          "px": 8.63,
+          "px": 8.64,
           "zone": "中枢下",
           "fx": "bottom",
           "bi_n": 15,
@@ -10283,17 +10145,17 @@
           "merged": 198
         },
         "chip": {
-          "px": 8.63,
+          "px": 8.64,
           "profit_ratio": 33.3,
           "avg_cost": 9.23,
           "support": 7.25,
           "resistance": 15.23,
           "concentration": 86.5,
           "main_cost": 8.69,
-          "dist_main": -0.7
+          "dist_main": -0.6
         },
         "anchors": {
-          "px": 8.63,
+          "px": 8.64,
           "anchors": {
             "low": 8.69,
             "breakout": 8.79,
@@ -10303,16 +10165,91 @@
           "n": 4,
           "avg_anchor": 9.13,
           "spread": 15.0,
-          "dist_anchor": -5.5,
+          "dist_anchor": -5.4,
           "agree": false
         },
-        "flow": {
-          "main": 0.02,
-          "main_pct": 0.7,
-          "xl": 0.08,
-          "lg": -0.06
-        },
+        "flow": null,
         "open": 8.43,
+        "live": true
+      },
+      {
+        "code": "002209",
+        "name": "达 意 隆",
+        "hybk": "专用设备",
+        "board_role": "龙头",
+        "board_leader": "达 意 隆",
+        "lbc": 2,
+        "type": "假阴真阳",
+        "why": "收 14.08 低于开盘 15.36，但涨幅 +0.9%，放量 8.92×",
+        "price": 14.08,
+        "close": 14.08,
+        "chg": 0.86,
+        "pool_ds": "20261111",
+        "rr": {
+          "ratio": 0.56,
+          "target": 15.59,
+          "stop": 11.37,
+          "atr": 0.75,
+          "upside": 10.7,
+          "downside": -19.2,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 22.01,
+          "idx3": -0.93,
+          "dev": 22.94,
+          "limit": 20.0,
+          "remain": -2.94,
+          "risk": "高",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 19.93,
+          "limit10": 100.0,
+          "remain10": 80.07,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 12.9,
+          "paozi": false
+        },
+        "chan": {
+          "px": 14.08,
+          "zone": "中枢上",
+          "fx": "bottom",
+          "bi_n": 15,
+          "dir": "down",
+          "zs": {
+            "zg": 12.63,
+            "zd": 12.56
+          },
+          "beichi": false,
+          "merged": 184
+        },
+        "chip": {
+          "px": 14.08,
+          "profit_ratio": 78.4,
+          "avg_cost": 12.79,
+          "support": 11.06,
+          "resistance": 14.37,
+          "concentration": 25.9,
+          "main_cost": 14.26,
+          "dist_main": -1.3
+        },
+        "anchors": {
+          "px": 14.08,
+          "anchors": {
+            "low": 12.19,
+            "breakout": 14.31,
+            "ma120": 11.91,
+            "turn": 12.79,
+            "ma_glue": 12.48
+          },
+          "n": 5,
+          "avg_anchor": 12.74,
+          "spread": 18.8,
+          "dist_anchor": 10.6,
+          "agree": false
+        },
+        "flow": null,
+        "open": 15.36,
         "live": true
       },
       {
@@ -10323,7 +10260,7 @@
         "board_leader": "青山纸业",
         "lbc": 1,
         "type": "假阴真阳",
-        "why": "收 3.37 低于开盘 3.61，但涨幅 +2.7%，放量 3.28×",
+        "why": "收 3.37 低于开盘 3.61，但涨幅 +2.7%，放量 3.37×",
         "price": 3.38,
         "close": 3.37,
         "chg": 3.05,
@@ -10339,15 +10276,15 @@
         },
         "abnormal": {
           "dev3": 15.41,
-          "idx3": -1.01,
-          "dev": 16.42,
+          "idx3": -0.93,
+          "dev": 16.34,
           "limit": 20.0,
-          "remain": 3.58,
+          "remain": 3.66,
           "risk": "中",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 19.64,
+          "dev10": 19.4,
           "limit10": 100.0,
-          "remain10": 80.36,
+          "remain10": 80.6,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
           "ret20": 8.4,
@@ -10368,7 +10305,7 @@
         },
         "chip": {
           "px": 3.37,
-          "profit_ratio": 42.3,
+          "profit_ratio": 42.2,
           "avg_cost": 3.45,
           "support": 2.81,
           "resistance": 4.06,
@@ -10390,98 +10327,8 @@
           "dist_anchor": 2.1,
           "agree": true
         },
-        "flow": {
-          "main": -0.76,
-          "main_pct": -7.48,
-          "xl": 0.13,
-          "lg": -0.89
-        },
+        "flow": null,
         "open": 3.61,
-        "live": true
-      },
-      {
-        "code": "002209",
-        "name": "达 意 隆",
-        "hybk": "专用设备",
-        "board_role": "龙头",
-        "board_leader": "达 意 隆",
-        "lbc": 2,
-        "type": "假阴真阳",
-        "why": "收 14.23 低于开盘 15.36，但涨幅 +1.9%，放量 8.79×",
-        "price": 14.29,
-        "close": 14.23,
-        "chg": 2.36,
-        "pool_ds": "20261111",
-        "rr": {
-          "ratio": 0.53,
-          "target": 15.74,
-          "stop": 11.37,
-          "atr": 0.75,
-          "upside": 10.6,
-          "downside": -20.1,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 23.31,
-          "idx3": -1.01,
-          "dev": 24.32,
-          "limit": 20.0,
-          "remain": -4.32,
-          "risk": "高",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 21.42,
-          "limit10": 100.0,
-          "remain10": 78.58,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 14.1,
-          "paozi": false
-        },
-        "chan": {
-          "px": 14.23,
-          "zone": "中枢上",
-          "fx": "bottom",
-          "bi_n": 15,
-          "dir": "down",
-          "zs": {
-            "zg": 12.63,
-            "zd": 12.56
-          },
-          "beichi": false,
-          "merged": 184
-        },
-        "chip": {
-          "px": 14.23,
-          "profit_ratio": 78.6,
-          "avg_cost": 12.79,
-          "support": 11.06,
-          "resistance": 14.37,
-          "concentration": 25.9,
-          "main_cost": 14.26,
-          "dist_main": -0.2
-        },
-        "anchors": {
-          "px": 14.23,
-          "anchors": {
-            "low": 12.19,
-            "breakout": 14.36,
-            "ma120": 11.91,
-            "turn": 12.78,
-            "ma_glue": 12.49
-          },
-          "n": 5,
-          "avg_anchor": 12.75,
-          "spread": 19.2,
-          "dist_anchor": 11.6,
-          "agree": false
-        },
-        "flow": {
-          "main": -0.38,
-          "main_pct": -7.35,
-          "xl": -0.34,
-          "lg": -0.04
-        },
-        "open": 15.36,
         "live": true
       },
       {
@@ -10492,38 +10339,38 @@
         "board_leader": "锋龙股份",
         "lbc": 3,
         "type": "假阴真阳",
-        "why": "收 57.04 低于开盘 58.39，但涨幅 +7.5%，放量 3.09×",
-        "price": 57.03,
-        "close": 57.04,
-        "chg": 7.44,
+        "why": "收 56.79 低于开盘 58.39，但涨幅 +7.0%，放量 3.14×",
+        "price": 56.91,
+        "close": 56.79,
+        "chg": 7.22,
         "pool_ds": "20261111",
         "rr": {
           "ratio": 0.47,
-          "target": 65.21,
+          "target": 64.96,
           "stop": 39.5,
           "atr": 4.09,
-          "upside": 14.3,
-          "downside": -30.8,
+          "upside": 14.4,
+          "downside": -30.4,
           "ok": false
         },
         "abnormal": {
-          "dev3": 30.05,
-          "idx3": -1.01,
-          "dev": 31.06,
+          "dev3": 29.48,
+          "idx3": -0.93,
+          "dev": 30.41,
           "limit": 20.0,
-          "remain": -11.06,
+          "remain": -10.41,
           "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 46.38,
+          "dev10": 45.51,
           "limit10": 100.0,
-          "remain10": 53.62,
+          "remain10": 54.49,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 65.1,
+          "ret20": 64.4,
           "paozi": false
         },
         "chan": {
-          "px": 57.04,
+          "px": 56.79,
           "zone": null,
           "fx": "bottom",
           "bi_n": 14,
@@ -10533,35 +10380,30 @@
           "merged": 192
         },
         "chip": {
-          "px": 57.04,
-          "profit_ratio": 78.8,
-          "avg_cost": 46.73,
+          "px": 56.79,
+          "profit_ratio": 78.6,
+          "avg_cost": 46.74,
           "support": 32.51,
           "resistance": 61.02,
           "concentration": 61.0,
           "main_cost": 41.58,
-          "dist_main": 37.2
+          "dist_main": 36.6
         },
         "anchors": {
-          "px": 57.04,
+          "px": 56.79,
           "anchors": {
             "low": 41.58,
-            "breakout": 57.14,
+            "breakout": 57.06,
             "ma120": 50.41,
-            "turn": 44.82
+            "turn": 44.84
           },
           "n": 4,
-          "avg_anchor": 48.49,
-          "spread": 32.1,
-          "dist_anchor": 17.6,
+          "avg_anchor": 48.47,
+          "spread": 31.9,
+          "dist_anchor": 17.2,
           "agree": false
         },
-        "flow": {
-          "main": -0.06,
-          "main_pct": -0.26,
-          "xl": -0.34,
-          "lg": 0.27
-        },
+        "flow": null,
         "open": 58.39,
         "live": true
       },
@@ -10573,38 +10415,38 @@
         "board_leader": "飞亚达",
         "lbc": 1,
         "type": "假阴真阳",
-        "why": "收 24.61 低于开盘 24.96，但涨幅 +6.3%，放量 2.62×",
-        "price": 24.6,
-        "close": 24.61,
-        "chg": 6.22,
+        "why": "收 24.52 低于开盘 24.96，但涨幅 +5.9%，放量 2.64×",
+        "price": 24.53,
+        "close": 24.52,
+        "chg": 5.92,
         "pool_ds": "20261111",
         "rr": {
-          "ratio": 0.43,
-          "target": 27.55,
+          "ratio": 0.44,
+          "target": 27.46,
           "stop": 17.79,
           "atr": 1.47,
-          "upside": 11.9,
-          "downside": -27.7,
+          "upside": 12.0,
+          "downside": -27.4,
           "ok": false
         },
         "abnormal": {
-          "dev3": 21.89,
-          "idx3": -1.01,
-          "dev": 22.9,
+          "dev3": 21.45,
+          "idx3": -0.93,
+          "dev": 22.38,
           "limit": 20.0,
-          "remain": -2.9,
+          "remain": -2.38,
           "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 46.28,
+          "dev10": 45.51,
           "limit10": 100.0,
-          "remain10": 53.72,
+          "remain10": 54.49,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 48.3,
+          "ret20": 47.7,
           "paozi": false
         },
         "chan": {
-          "px": 24.61,
+          "px": 24.52,
           "zone": "中枢上",
           "fx": "bottom",
           "bi_n": 14,
@@ -10617,35 +10459,30 @@
           "merged": 190
         },
         "chip": {
-          "px": 24.61,
-          "profit_ratio": 86.4,
-          "avg_cost": 20.05,
+          "px": 24.52,
+          "profit_ratio": 86.1,
+          "avg_cost": 20.06,
           "support": 16.6,
           "resistance": 27.67,
           "concentration": 55.2,
           "main_cost": 24.9,
-          "dist_main": -1.2
+          "dist_main": -1.5
         },
         "anchors": {
-          "px": 24.61,
+          "px": 24.52,
           "anchors": {
             "low": 17.52,
-            "breakout": 24.77,
+            "breakout": 24.74,
             "ma120": 19.55,
             "turn": 19.64
           },
           "n": 4,
-          "avg_anchor": 20.37,
-          "spread": 35.6,
-          "dist_anchor": 20.8,
+          "avg_anchor": 20.36,
+          "spread": 35.5,
+          "dist_anchor": 20.4,
           "agree": false
         },
-        "flow": {
-          "main": -0.08,
-          "main_pct": -0.57,
-          "xl": 0.51,
-          "lg": -0.58
-        },
+        "flow": null,
         "open": 24.96,
         "live": true
       },
@@ -10658,37 +10495,37 @@
         "lbc": 1,
         "type": "后排二波",
         "why": "1板，回踩未破最近涨停日最低 4.42",
-        "price": 5.18,
-        "close": 5.17,
-        "chg": 9.05,
+        "price": 5.15,
+        "close": 5.15,
+        "chg": 8.42,
         "pool_ds": "20261111",
         "rr": {
           "ratio": 0.4,
-          "target": 5.64,
+          "target": 5.62,
           "stop": 3.98,
           "atr": 0.24,
-          "upside": 9.1,
-          "downside": -23.0,
+          "upside": 9.2,
+          "downside": -22.7,
           "ok": false
         },
         "abnormal": {
-          "dev3": 25.49,
-          "idx3": -1.01,
-          "dev": 26.5,
+          "dev3": 25.0,
+          "idx3": -0.93,
+          "dev": 25.93,
           "limit": 20.0,
-          "remain": -6.5,
+          "remain": -5.93,
           "risk": "高",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 27.01,
+          "dev10": 26.29,
           "limit10": 100.0,
-          "remain10": 72.99,
+          "remain10": 73.71,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 14.6,
+          "ret20": 14.2,
           "paozi": false
         },
         "chan": {
-          "px": 5.17,
+          "px": 5.15,
           "zone": "中枢上",
           "fx": "bottom",
           "bi_n": 17,
@@ -10701,44 +10538,39 @@
           "merged": 181
         },
         "chip": {
-          "px": 5.17,
+          "px": 5.15,
           "profit_ratio": 98.4,
           "avg_cost": 4.56,
           "support": 4.04,
           "resistance": 5.46,
           "concentration": 31.1,
           "main_cost": 5.04,
-          "dist_main": 2.6
+          "dist_main": 2.2
         },
         "anchors": {
-          "px": 5.17,
+          "px": 5.15,
           "anchors": {
             "low": 5.04,
-            "breakout": 5.07,
+            "breakout": 5.06,
             "ma120": 4.43,
             "turn": 4.53,
             "ma_glue": 4.4
           },
           "n": 5,
           "avg_anchor": 4.69,
-          "spread": 14.3,
-          "dist_anchor": 10.1,
+          "spread": 14.1,
+          "dist_anchor": 9.8,
           "agree": true
         },
-        "flow": {
-          "main": -0.63,
-          "main_pct": -7.52,
-          "xl": -0.32,
-          "lg": -0.31
-        },
+        "flow": null,
         "open": 4.99,
         "live": true
       }
     ],
     "stat": {
-      "cand": 183,
+      "cand": 182,
       "no_k": 0,
-      "sealed": 35,
+      "sealed": 34,
       "no_type": 3
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
@@ -10746,23 +10578,23 @@
   "trade_date": "2026-11-12",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-12 13:52",
-    "amt": 15443.0,
-    "amt_est": 22936.0,
-    "amt_used": 22936.0,
-    "up": 825,
-    "down": 4386,
-    "flat": 84,
-    "breadth": 0.156,
-    "zt": 35,
+    "asof": "2026-11-12 13:56",
+    "amt": 15700.0,
+    "amt_est": 22864.0,
+    "amt_used": 22864.0,
+    "up": 885,
+    "down": 4320,
+    "flat": 90,
+    "breadth": 0.167,
+    "zt": 34,
     "flags": [
-      "上涨家数占比 16% < 45%",
-      "涨停 35 家 < 40 家"
+      "上涨家数占比 17% < 45%",
+      "涨停 34 家 < 40 家"
     ],
     "pos_cap": 0.0,
     "pass": false,
-    "up_ratio": 0.156,
-    "zt_count": 35
+    "up_ratio": 0.167,
+    "zt_count": 34
   },
   "force_close": [],
   "gate_history": {
@@ -12758,7 +12590,7 @@
       {
         "code": "603396",
         "name": "金辰股份",
-        "score": 48.4,
+        "score": 48.5,
         "close": 32.11,
         "gates": {
           "1": "ok",
@@ -12772,7 +12604,7 @@
       {
         "code": "603366",
         "name": "日出东方",
-        "score": 42.9,
+        "score": 42.7,
         "close": 13.17,
         "gates": {
           "1": "ok",
@@ -12786,7 +12618,7 @@
       {
         "code": "603706",
         "name": "东方环宇",
-        "score": 42.6,
+        "score": 42.5,
         "close": 26.87,
         "gates": {
           "1": "ok",
@@ -12800,7 +12632,7 @@
       {
         "code": "603536",
         "name": "惠发食品",
-        "score": 36.0,
+        "score": 35.7,
         "close": 13.04,
         "gates": {
           "1": "ok",
@@ -12812,15 +12644,15 @@
         }
       },
       {
-        "code": "601929",
-        "name": "吉视传媒",
-        "score": 35.3,
-        "close": 2.81,
+        "code": "601606",
+        "name": "长城军工",
+        "score": 32.2,
+        "close": 32.62,
         "gates": {
           "1": "ok",
           "2": "ok",
           "3": "warn",
-          "4": "ok",
+          "4": "no",
           "5": "ok",
           "6": "no"
         }
@@ -12828,7 +12660,7 @@
       {
         "code": "603725",
         "name": "天安新材",
-        "score": 30.8,
+        "score": 30.5,
         "close": 13.16,
         "gates": {
           "1": "ok",
@@ -12842,7 +12674,7 @@
       {
         "code": "002187",
         "name": "广百股份",
-        "score": 29.9,
+        "score": 29.8,
         "close": 6.34,
         "gates": {
           "1": "ok",
@@ -12856,7 +12688,7 @@
       {
         "code": "600467",
         "name": "好当家",
-        "score": 28.4,
+        "score": 27.8,
         "close": 2.48,
         "gates": {
           "1": "ok",
@@ -12868,24 +12700,10 @@
         }
       },
       {
-        "code": "002647",
-        "name": "仁东控股",
-        "score": 27.6,
-        "close": 7.8,
-        "gates": {
-          "1": "ok",
-          "2": "ok",
-          "3": "warn",
-          "4": "no",
-          "5": "ok",
-          "6": "no"
-        }
-      },
-      {
-        "code": "002685",
-        "name": "华东重机",
-        "score": 27.2,
-        "close": 5.29,
+        "code": "002021",
+        "name": "中捷资源",
+        "score": 26.1,
+        "close": 2.63,
         "gates": {
           "1": "ok",
           "2": "warn",
@@ -12896,13 +12714,13 @@
         }
       },
       {
-        "code": "002021",
-        "name": "中捷资源",
-        "score": 26.2,
-        "close": 2.63,
+        "code": "601929",
+        "name": "吉视传媒",
+        "score": 25.3,
+        "close": 2.81,
         "gates": {
           "1": "ok",
-          "2": "warn",
+          "2": "ok",
           "3": "warn",
           "4": "ok",
           "5": "ok",
@@ -12924,20 +12742,6 @@
         }
       },
       {
-        "code": "600558",
-        "name": "大西洋",
-        "score": 24.4,
-        "close": 5.96,
-        "gates": {
-          "1": "ok",
-          "2": "ok",
-          "3": "ok",
-          "4": "no",
-          "5": "ok",
-          "6": "no"
-        }
-      },
-      {
         "code": "603135",
         "name": "中重科技",
         "score": 24.3,
@@ -12954,7 +12758,7 @@
       {
         "code": "600853",
         "name": "龙建股份",
-        "score": 23.9,
+        "score": 23.8,
         "close": 4.21,
         "gates": {
           "1": "ok",
@@ -12968,7 +12772,7 @@
       {
         "code": "000573",
         "name": "粤宏远Ａ",
-        "score": 23.5,
+        "score": 23.4,
         "close": 4.35,
         "gates": {
           "1": "warn",
@@ -12980,9 +12784,23 @@
         }
       },
       {
+        "code": "600558",
+        "name": "大西洋",
+        "score": 23.2,
+        "close": 5.96,
+        "gates": {
+          "1": "ok",
+          "2": "ok",
+          "3": "ok",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
         "code": "001358",
         "name": "兴欣新材",
-        "score": 21.0,
+        "score": 20.9,
         "close": 24.22,
         "gates": {
           "1": "no",
@@ -13008,9 +12826,23 @@
         }
       },
       {
+        "code": "600857",
+        "name": "宁波中百",
+        "score": 20.4,
+        "close": 15.0,
+        "gates": {
+          "1": "ok",
+          "2": "no",
+          "3": "warn",
+          "4": "no",
+          "5": "ok",
+          "6": "no"
+        }
+      },
+      {
         "code": "002838",
         "name": "道恩股份",
-        "score": 20.5,
+        "score": 20.2,
         "close": 23.71,
         "gates": {
           "1": "ok",
@@ -13040,30 +12872,30 @@
   "premium": {
     "首板": {
       "n": 65,
-      "avg": -0.56,
-      "up_rate": 0.446,
+      "avg": -0.64,
+      "up_rate": 0.431,
       "zt_rate": 0.046
     },
     "2板": {
       "n": 12,
-      "avg": -1.85,
+      "avg": -1.81,
       "up_rate": 0.417,
       "zt_rate": 0.167
     },
     "3板+": {
       "n": 7,
-      "avg": 5.99,
+      "avg": 5.9,
       "up_rate": 0.857,
       "zt_rate": 0.429
     },
     "_all": {
       "n": 84,
-      "avg": -0.2
+      "avg": -0.26
     }
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-12 13:52",
+    "asof": "2026-11-12 13:56",
     "indexes": {
       "道琼斯": {
         "px": 52486.49,
@@ -13081,9 +12913,9 @@
         "time": "2026-11-11 16:42:03"
       },
       "恒生指数": {
-        "px": 24110.97,
-        "chg": -0.84,
-        "time": "2026/11/12 13:37:36"
+        "px": 24100.1,
+        "chg": -0.89,
+        "time": "2026/11/12 13:41:11"
       }
     },
     "worst": 1.31,
@@ -14939,7 +14771,7 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-12 13:50",
+    "asof": "2026-11-12 13:53",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
@@ -14951,17 +14783,37 @@
         "gap": 10.13,
         "price": 4.35,
         "chg": 10.13,
-        "vol": 58971
+        "vol": 59071
       },
       {
-        "code": "603725",
-        "name": "天安新材",
-        "prev": 11.96,
-        "open": 13.16,
-        "gap": 10.03,
-        "price": 13.16,
-        "chg": 10.03,
-        "vol": 69682
+        "code": "002520",
+        "name": "日发精机",
+        "prev": 7.26,
+        "open": 7.99,
+        "gap": 10.06,
+        "price": 7.33,
+        "chg": 0.96,
+        "vol": 1216693
+      },
+      {
+        "code": "600103",
+        "name": "青山纸业",
+        "prev": 3.28,
+        "open": 3.61,
+        "gap": 10.06,
+        "price": 3.37,
+        "chg": 2.74,
+        "vol": 2983073
+      },
+      {
+        "code": "002086",
+        "name": "东方海洋",
+        "prev": 4.69,
+        "open": 5.16,
+        "gap": 10.02,
+        "price": 5.16,
+        "chg": 10.02,
+        "vol": 4809190
       },
       {
         "code": "002931",
@@ -14969,9 +14821,9 @@
         "prev": 53.08,
         "open": 58.39,
         "gap": 10.0,
-        "price": 57.54,
-        "chg": 8.4,
-        "vol": 407404
+        "price": 56.79,
+        "chg": 6.99,
+        "vol": 412174
       },
       {
         "code": "603396",
@@ -14981,7 +14833,17 @@
         "gap": 10.0,
         "price": 32.11,
         "chg": 10.0,
-        "vol": 10205
+        "vol": 10368
+      },
+      {
+        "code": "002623",
+        "name": "亚玛顿",
+        "prev": 23.33,
+        "open": 25.66,
+        "gap": 9.99,
+        "price": 25.66,
+        "chg": 9.99,
+        "vol": 13672
       },
       {
         "code": "002425",
@@ -14989,9 +14851,9 @@
         "prev": 3.83,
         "open": 4.21,
         "gap": 9.92,
-        "price": 3.69,
-        "chg": -3.66,
-        "vol": 1709034
+        "price": 3.65,
+        "chg": -4.7,
+        "vol": 1747111
       },
       {
         "code": "603135",
@@ -15001,7 +14863,7 @@
         "gap": 9.84,
         "price": 10.18,
         "chg": 10.05,
-        "vol": 661864
+        "vol": 662172
       },
       {
         "code": "000678",
@@ -15009,9 +14871,9 @@
         "prev": 21.19,
         "open": 22.59,
         "gap": 6.61,
-        "price": 22.94,
-        "chg": 8.26,
-        "vol": 960315
+        "price": 22.68,
+        "chg": 7.03,
+        "vol": 1030909
       },
       {
         "code": "001282",
@@ -15019,9 +14881,19 @@
         "prev": 18.7,
         "open": 19.87,
         "gap": 6.26,
-        "price": 19.18,
-        "chg": 2.57,
-        "vol": 104851
+        "price": 18.82,
+        "chg": 0.64,
+        "vol": 122684
+      },
+      {
+        "code": "000710",
+        "name": "贝瑞基因",
+        "prev": 10.23,
+        "open": 10.8,
+        "gap": 5.57,
+        "price": 10.86,
+        "chg": 6.16,
+        "vol": 778798
       },
       {
         "code": "603366",
@@ -15031,7 +14903,7 @@
         "gap": 5.26,
         "price": 13.17,
         "chg": 10.03,
-        "vol": 1550881
+        "vol": 1551839
       },
       {
         "code": "002696",
@@ -15039,9 +14911,9 @@
         "prev": 10.62,
         "open": 10.99,
         "gap": 3.48,
-        "price": 11.53,
-        "chg": 8.57,
-        "vol": 1139832
+        "price": 11.56,
+        "chg": 8.85,
+        "vol": 1144897
       },
       {
         "code": "605255",
@@ -15051,59 +14923,29 @@
         "gap": 2.1,
         "price": 67.11,
         "chg": 10.0,
-        "vol": 17916
-      },
-      {
-        "code": "002843",
-        "name": "泰嘉股份",
-        "prev": 13.75,
-        "open": 13.98,
-        "gap": 1.67,
-        "price": 15.13,
-        "chg": 10.04,
-        "vol": 97264
-      },
-      {
-        "code": "603958",
-        "name": "哈森股份",
-        "prev": 16.71,
-        "open": 16.98,
-        "gap": 1.62,
-        "price": 18.38,
-        "chg": 9.99,
-        "vol": 89407
-      },
-      {
-        "code": "002628",
-        "name": "成都路桥",
-        "prev": 4.31,
-        "open": 4.35,
-        "gap": 0.93,
-        "price": 4.74,
-        "chg": 9.98,
-        "vol": 191918
-      },
-      {
-        "code": "600558",
-        "name": "大西洋",
-        "prev": 5.42,
-        "open": 5.47,
-        "gap": 0.92,
-        "price": 5.96,
-        "chg": 9.96,
-        "vol": 1331551
+        "vol": 17971
       }
     ],
     "top_low": [
       {
-        "code": "002838",
-        "name": "道恩股份",
-        "prev": 21.55,
-        "open": 21.3,
-        "gap": -1.16,
-        "price": 23.71,
+        "code": "601188",
+        "name": "龙江交通",
+        "prev": 4.29,
+        "open": 4.19,
+        "gap": -2.33,
+        "price": 4.72,
         "chg": 10.02,
-        "vol": 143098
+        "vol": 3405355
+      },
+      {
+        "code": "603259",
+        "name": "药明康德",
+        "prev": 148.7,
+        "open": 147.0,
+        "gap": -1.14,
+        "price": 149.88,
+        "chg": 0.79,
+        "vol": 283141
       },
       {
         "code": "600853",
@@ -15113,7 +14955,7 @@
         "gap": -0.78,
         "price": 4.21,
         "chg": 9.92,
-        "vol": 946827
+        "vol": 949405
       },
       {
         "code": "603175",
@@ -15123,27 +14965,17 @@
         "gap": -0.72,
         "price": 99.54,
         "chg": 10.0,
-        "vol": 29042
+        "vol": 29108
       },
       {
-        "code": "000596",
-        "name": "古井贡酒",
-        "prev": 103.05,
-        "open": 102.36,
-        "gap": -0.67,
-        "price": 106.26,
-        "chg": 3.11,
-        "vol": 40244
-      },
-      {
-        "code": "000568",
-        "name": "泸州老窖",
-        "prev": 76.99,
-        "open": 76.5,
-        "gap": -0.64,
-        "price": 76.77,
-        "chg": -0.29,
-        "vol": 102396
+        "code": "600276",
+        "name": "恒瑞医药",
+        "prev": 48.22,
+        "open": 47.9,
+        "gap": -0.66,
+        "price": 47.76,
+        "chg": -0.95,
+        "vol": 430280
       },
       {
         "code": "001318",
@@ -15153,7 +14985,17 @@
         "gap": -0.64,
         "price": 15.5,
         "chg": 10.01,
-        "vol": 317562
+        "vol": 318106
+      },
+      {
+        "code": "000568",
+        "name": "泸州老窖",
+        "prev": 76.99,
+        "open": 76.5,
+        "gap": -0.64,
+        "price": 76.76,
+        "chg": -0.3,
+        "vol": 102847
       },
       {
         "code": "600569",
@@ -15163,37 +15005,27 @@
         "gap": -0.55,
         "price": 2.0,
         "chg": 9.89,
-        "vol": 1234929
+        "vol": 1236309
       },
       {
-        "code": "000776",
-        "name": "广发证券",
-        "prev": 18.86,
-        "open": 18.76,
-        "gap": -0.53,
-        "price": 18.56,
-        "chg": -1.59,
-        "vol": 263947
-      },
-      {
-        "code": "002187",
-        "name": "广百股份",
-        "prev": 5.76,
-        "open": 5.73,
-        "gap": -0.52,
-        "price": 6.34,
-        "chg": 10.07,
-        "vol": 291716
-      },
-      {
-        "code": "600519",
-        "name": "贵州茅台",
-        "prev": 1402.3,
-        "open": 1395.13,
+        "code": "600802",
+        "name": "福建水泥",
+        "prev": 7.81,
+        "open": 7.77,
         "gap": -0.51,
-        "price": 1406.0,
-        "chg": 0.26,
-        "vol": 24346
+        "price": 8.3,
+        "chg": 6.27,
+        "vol": 1707952
+      },
+      {
+        "code": "601111",
+        "name": "中国国航",
+        "prev": 6.26,
+        "open": 6.23,
+        "gap": -0.48,
+        "price": 6.23,
+        "chg": -0.48,
+        "vol": 358356
       }
     ]
   },
