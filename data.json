@@ -943,7 +943,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-16T18:05:17.744736",
+  "last_update": "2026-11-16T18:50:59.365792",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1364,7 +1364,7 @@
     "active_roles": 2,
     "total_trades": 20,
     "roles_count": 7,
-    "last_update": "2026-11-16T16:58:42.744019"
+    "last_update": "2026-11-16T18:05:17.744736"
   },
   "data_version": 3,
   "theme_history": {
@@ -8904,87 +8904,6 @@
     "asof": "2026-11-16 16:35",
     "rows": [
       {
-        "code": "002086",
-        "name": "东方海洋",
-        "hybk": "农产品加",
-        "board_role": "独苗",
-        "board_leader": "东方海洋",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 2.04",
-        "price": 4.34,
-        "close": 4.34,
-        "chg": -9.96,
-        "pool_ds": "20261112",
-        "rr": {
-          "ratio": 1.46,
-          "target": 5.16,
-          "stop": 3.78,
-          "atr": 0.37,
-          "upside": 18.9,
-          "downside": -12.9,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": -7.46,
-          "idx3": 5.04,
-          "dev": -12.5,
-          "limit": 20.0,
-          "remain": 32.5,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 24.43,
-          "limit10": 100.0,
-          "remain10": 75.57,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 100.0,
-          "paozi": false
-        },
-        "chan": {
-          "px": 4.34,
-          "zone": null,
-          "fx": "top",
-          "bi_n": 14,
-          "dir": "up",
-          "zs": null,
-          "beichi": true,
-          "merged": 170
-        },
-        "chip": {
-          "px": 4.34,
-          "profit_ratio": 69.0,
-          "avg_cost": 3.49,
-          "support": 1.57,
-          "resistance": 4.89,
-          "concentration": 95.1,
-          "main_cost": 2.15,
-          "dist_main": 101.9
-        },
-        "anchors": {
-          "px": 4.34,
-          "anchors": {
-            "low": 2.15,
-            "breakout": 3.47,
-            "ma120": 2.16,
-            "turn": 4.79
-          },
-          "n": 4,
-          "avg_anchor": 3.14,
-          "spread": 84.0,
-          "dist_anchor": 38.1,
-          "agree": false
-        },
-        "flow": {
-          "main": -2.49,
-          "main_pct": -10.47,
-          "xl": -1.54,
-          "lg": -0.95
-        },
-        "open": 4.9,
-        "live": true
-      },
-      {
         "code": "000766",
         "name": "通化金马",
         "hybk": "化学制药",
@@ -9568,6 +9487,90 @@
           "lg": -0.45
         },
         "open": 9.25,
+        "live": true
+      },
+      {
+        "code": "603725",
+        "name": "天安新材",
+        "hybk": "家居用品",
+        "board_role": "独苗",
+        "board_leader": "天安新材",
+        "lbc": 2,
+        "type": "中军回踩",
+        "why": "2板回踩MA10（-0.5%），板块内非最高标",
+        "price": 11.14,
+        "close": 11.14,
+        "chg": -10.02,
+        "pool_ds": "20261112",
+        "rr": {
+          "ratio": 1.33,
+          "target": 13.25,
+          "stop": 9.56,
+          "atr": 1.05,
+          "upside": 18.9,
+          "downside": -14.2,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": -6.86,
+          "idx3": 5.04,
+          "dev": -11.9,
+          "limit": 20.0,
+          "remain": 31.9,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": -6.65,
+          "limit10": 100.0,
+          "remain10": 106.65,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": -5.7,
+          "paozi": false
+        },
+        "chan": {
+          "px": 11.14,
+          "zone": "中枢内",
+          "fx": "top",
+          "bi_n": 19,
+          "dir": "up",
+          "zs": {
+            "zg": 12.22,
+            "zd": 10.95
+          },
+          "beichi": false,
+          "merged": 193
+        },
+        "chip": {
+          "px": 11.14,
+          "profit_ratio": 30.7,
+          "avg_cost": 11.6,
+          "support": 10.0,
+          "resistance": 13.16,
+          "concentration": 27.2,
+          "main_cost": 13.07,
+          "dist_main": -14.8
+        },
+        "anchors": {
+          "px": 11.14,
+          "anchors": {
+            "low": 10.58,
+            "breakout": 13.38,
+            "ma120": 11.54,
+            "turn": 11.55
+          },
+          "n": 4,
+          "avg_anchor": 11.76,
+          "spread": 23.8,
+          "dist_anchor": -5.3,
+          "agree": false
+        },
+        "flow": {
+          "main": -0.19,
+          "main_pct": -4.77,
+          "xl": -0.3,
+          "lg": 0.11
+        },
+        "open": 11.4,
         "live": true
       },
       {
@@ -10904,14 +10907,14 @@
       "cand": 86,
       "no_k": 0,
       "sealed": 33,
-      "no_type": 2
+      "no_type": 3
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
   },
   "trade_date": "2026-11-16",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-16 18:05",
+    "asof": "2026-11-16 18:50",
     "amt": 14845.0,
     "amt_est": null,
     "amt_used": 14845.0,
@@ -13793,7 +13796,7 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-16 18:05",
+    "asof": "2026-11-16 18:50",
     "indexes": {
       "道琼斯": {
         "px": 52347.55,
@@ -13813,7 +13816,7 @@
       "恒生指数": {
         "px": 23753.84,
         "chg": 0.49,
-        "time": "2026/11/16 17:49:11"
+        "time": "2026/11/16 18:31:11"
       }
     },
     "worst": -0.91,
@@ -16057,7 +16060,7 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-16 18:03",
+    "asof": "2026-11-16 18:49",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
@@ -16100,16 +16103,6 @@
         "price": 14.1,
         "chg": 9.98,
         "vol": 584045
-      },
-      {
-        "code": "002187",
-        "name": "广百股份",
-        "prev": 6.97,
-        "open": 7.6,
-        "gap": 9.04,
-        "price": 7.67,
-        "chg": 10.04,
-        "vol": 430256
       },
       {
         "code": "002548",
@@ -16162,6 +16155,16 @@
         "vol": 1448306
       },
       {
+        "code": "600936",
+        "name": "北投科技",
+        "prev": 3.65,
+        "open": 3.73,
+        "gap": 2.19,
+        "price": 4.02,
+        "chg": 10.14,
+        "vol": 463198
+      },
+      {
         "code": "601188",
         "name": "龙江交通",
         "prev": 4.3,
@@ -16192,6 +16195,16 @@
         "vol": 379016
       },
       {
+        "code": "002861",
+        "name": "瀛通通讯",
+        "prev": 12.36,
+        "open": 12.45,
+        "gap": 0.73,
+        "price": 13.6,
+        "chg": 10.03,
+        "vol": 182853
+      },
+      {
         "code": "001318",
         "name": "阳光乳业",
         "prev": 13.29,
@@ -16200,16 +16213,6 @@
         "price": 14.62,
         "chg": 10.01,
         "vol": 435996
-      },
-      {
-        "code": "000533",
-        "name": "顺钠股份",
-        "prev": 8.93,
-        "open": 8.99,
-        "gap": 0.67,
-        "price": 9.82,
-        "chg": 9.97,
-        "vol": 452932
       }
     ],
     "top_low": [
@@ -16284,14 +16287,14 @@
         "vol": 162766
       },
       {
-        "code": "601211",
-        "name": "国泰海通",
-        "prev": 16.08,
-        "open": 15.95,
-        "gap": -0.81,
-        "price": 16.19,
-        "chg": 0.68,
-        "vol": 636705
+        "code": "000596",
+        "name": "古井贡酒",
+        "prev": 112.0,
+        "open": 111.0,
+        "gap": -0.89,
+        "price": 112.71,
+        "chg": 0.63,
+        "vol": 94859
       },
       {
         "code": "000628",
@@ -16304,14 +16307,14 @@
         "vol": 176043
       },
       {
-        "code": "600519",
-        "name": "贵州茅台",
-        "prev": 1435.26,
-        "open": 1426.3,
-        "gap": -0.62,
-        "price": 1453.9,
-        "chg": 1.3,
-        "vol": 39967
+        "code": "601519",
+        "name": "大智慧",
+        "prev": 8.18,
+        "open": 8.13,
+        "gap": -0.61,
+        "price": 8.08,
+        "chg": -1.22,
+        "vol": 370578
       }
     ]
   },
