@@ -943,7 +943,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-16T16:34:39.840621",
+  "last_update": "2026-11-16T16:38:06.651663",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -2923,7 +2923,7 @@
     "dt_count": 60,
     "zt_tc": 32,
     "dt_tc": 60,
-    "asof": "2026-11-16 16:32"
+    "asof": "2026-11-16 16:35"
   },
   "limit_decoded": {
     "ok": true,
@@ -3929,7 +3929,7 @@
     "seal_sum": 18.8,
     "mood": "温和",
     "mood_emoji": "🌤",
-    "asof": "2026-11-16 16:32",
+    "asof": "2026-11-16 16:35",
     "trade_date": "2026-11-16"
   },
   "research_feed": {
@@ -4659,19 +4659,11 @@
         "way": "特定对象调研,券商策略会"
       }
     ],
-    "asof": "2026-11-16 16:32"
+    "asof": "2026-11-16 16:35"
   },
   "yesterday_perf": {
     "ok": true,
     "rows": [
-      {
-        "code": "001358",
-        "name": "兴欣新材",
-        "yesterday_board_count": 2,
-        "today_pct": 1.39,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
       {
         "code": "002187",
         "name": "广百股份",
@@ -4687,6 +4679,14 @@
         "today_pct": 9.93,
         "is_zt_today": true,
         "lbc_today": 2
+      },
+      {
+        "code": "001358",
+        "name": "兴欣新材",
+        "yesterday_board_count": 2,
+        "today_pct": 1.39,
+        "is_zt_today": false,
+        "lbc_today": 0
       },
       {
         "code": "600467",
@@ -4969,7 +4969,7 @@
     },
     "basis": "昨日池实绩",
     "reason": "",
-    "asof": "2026-11-16 16:32"
+    "asof": "2026-11-16 16:35"
   },
   "margin_leverage": {
     "signal": {
@@ -5006,7 +5006,7 @@
   "last_month_push": "2026-10",
   "score_pool": {
     "ok": true,
-    "asof": "2026-11-16 16:32",
+    "asof": "2026-11-16 16:35",
     "universe": 32,
     "basis": "涨停梯队 + 题材热度 + 机构共识",
     "rows": [
@@ -7409,7 +7409,7 @@
     ]
   },
   "review": {
-    "asof": "2026-11-16 16:32",
+    "asof": "2026-11-16 16:35",
     "cluster": [
       {
         "name": "一般零售",
@@ -8275,7 +8275,7 @@
         "涨停 32 家 · 最高 4 板 · 晋级率 26.7",
         "打板溢价：昨日涨停股今日均 +0.96%（37 只）",
         "主线：一般零售3家、电池3家、游戏Ⅱ2家",
-        "环境闸：成交额 1.48 万亿 < 1.9 万亿；上涨家数占比 21% < 45%；涨停 32 家 < 40 家 → 总仓 ≤0%"
+        "环境闸：环境数据获取失败 → 禁止开仓 → 总仓 ≤0%"
       ],
       "watch": [
         "天虹股份（一般零售 后排，龙头 广百股份 3 板）",
@@ -8901,7 +8901,7 @@
   },
   "dip_pool": {
     "ok": true,
-    "asof": "2026-11-16 16:32",
+    "asof": "2026-11-16 16:35",
     "rows": [
       {
         "code": "000766",
@@ -8979,12 +8979,7 @@
           "dist_anchor": -6.1,
           "agree": false
         },
-        "flow": {
-          "main": -1.27,
-          "main_pct": -14.8,
-          "xl": -0.95,
-          "lg": -0.32
-        },
+        "flow": null,
         "open": 16.98,
         "live": true
       },
@@ -9063,12 +9058,7 @@
           "dist_anchor": 7.2,
           "agree": true
         },
-        "flow": {
-          "main": -0.54,
-          "main_pct": -10.56,
-          "xl": -0.29,
-          "lg": -0.24
-        },
+        "flow": null,
         "open": 18.26,
         "live": true
       },
@@ -9147,12 +9137,7 @@
           "dist_anchor": -4.6,
           "agree": true
         },
-        "flow": {
-          "main": -0.45,
-          "main_pct": -11.23,
-          "xl": -0.43,
-          "lg": -0.02
-        },
+        "flow": null,
         "open": 3.54,
         "live": true
       },
@@ -9231,12 +9216,7 @@
           "dist_anchor": -0.6,
           "agree": true
         },
-        "flow": {
-          "main": -0.1,
-          "main_pct": -2.06,
-          "xl": -0.06,
-          "lg": -0.05
-        },
+        "flow": null,
         "open": 11.86,
         "live": true
       },
@@ -9315,12 +9295,7 @@
           "dist_anchor": 0.5,
           "agree": false
         },
-        "flow": {
-          "main": 0.49,
-          "main_pct": 12.39,
-          "xl": -0.06,
-          "lg": 0.55
-        },
+        "flow": null,
         "open": 83.43,
         "live": true
       },
@@ -9396,12 +9371,7 @@
           "dist_anchor": 7.6,
           "agree": false
         },
-        "flow": {
-          "main": 0.36,
-          "main_pct": 5.24,
-          "xl": 0.2,
-          "lg": 0.16
-        },
+        "flow": null,
         "open": 64.17,
         "live": true
       },
@@ -9480,97 +9450,88 @@
           "dist_anchor": 1.4,
           "agree": false
         },
-        "flow": {
-          "main": -1.52,
-          "main_pct": -19.76,
-          "xl": -1.07,
-          "lg": -0.45
-        },
+        "flow": null,
         "open": 9.25,
         "live": true
       },
       {
-        "code": "603725",
-        "name": "天安新材",
-        "hybk": "家居用品",
+        "code": "000573",
+        "name": "粤宏远Ａ",
+        "hybk": "房地产开",
         "board_role": "独苗",
-        "board_leader": "天安新材",
-        "lbc": 2,
-        "type": "中军回踩",
-        "why": "2板回踩MA10（-0.5%），板块内非最高标",
-        "price": 11.14,
-        "close": 11.14,
-        "chg": -10.02,
+        "board_leader": "粤宏远Ａ",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 3.32",
+        "price": 3.8,
+        "close": 3.8,
+        "chg": -3.06,
         "pool_ds": "20261112",
         "rr": {
           "ratio": 1.33,
-          "target": 13.25,
-          "stop": 9.56,
-          "atr": 1.05,
-          "upside": 18.9,
-          "downside": -14.2,
+          "target": 4.38,
+          "stop": 3.36,
+          "atr": 0.29,
+          "upside": 15.3,
+          "downside": -11.5,
           "ok": false
         },
         "abnormal": {
-          "dev3": -6.86,
+          "dev3": -3.8,
           "idx3": 5.04,
-          "dev": -11.9,
+          "dev": -8.84,
           "limit": 20.0,
-          "remain": 31.9,
+          "remain": 28.84,
           "risk": "低",
           "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": -6.65,
+          "dev10": -6.55,
           "limit10": 100.0,
-          "remain10": 106.65,
+          "remain10": 106.55,
           "risk10": "低",
           "rule10": "连10日累计偏离 ≥100%",
-          "ret20": -5.7,
+          "ret20": -9.1,
           "paozi": false
         },
         "chan": {
-          "px": 11.14,
+          "px": 3.8,
           "zone": "中枢内",
           "fx": "top",
-          "bi_n": 19,
+          "bi_n": 18,
           "dir": "up",
           "zs": {
-            "zg": 12.22,
-            "zd": 10.95
+            "zg": 3.91,
+            "zd": 3.72
           },
           "beichi": false,
-          "merged": 193
+          "merged": 178
         },
         "chip": {
-          "px": 11.14,
-          "profit_ratio": 30.7,
-          "avg_cost": 11.6,
-          "support": 10.0,
-          "resistance": 13.16,
-          "concentration": 27.2,
-          "main_cost": 13.07,
-          "dist_main": -14.8
+          "px": 3.8,
+          "profit_ratio": 37.8,
+          "avg_cost": 3.91,
+          "support": 3.53,
+          "resistance": 4.56,
+          "concentration": 26.3,
+          "main_cost": 4.18,
+          "dist_main": -9.1
         },
         "anchors": {
-          "px": 11.14,
+          "px": 3.8,
           "anchors": {
-            "low": 10.58,
-            "breakout": 13.38,
-            "ma120": 11.54,
-            "turn": 11.55
+            "low": 3.86,
+            "breakout": 4.19,
+            "ma120": 3.82,
+            "turn": 3.86,
+            "ma_glue": 3.85
           },
-          "n": 4,
-          "avg_anchor": 11.76,
-          "spread": 23.8,
-          "dist_anchor": -5.3,
-          "agree": false
+          "n": 5,
+          "avg_anchor": 3.92,
+          "spread": 9.4,
+          "dist_anchor": -3.0,
+          "agree": true
         },
-        "flow": {
-          "main": -0.19,
-          "main_pct": -4.77,
-          "xl": -0.3,
-          "lg": 0.11
-        },
-        "open": 11.4,
+        "flow": null,
+        "open": 3.83,
         "live": true
       },
       {
@@ -9648,12 +9609,7 @@
           "dist_anchor": 12.4,
           "agree": false
         },
-        "flow": {
-          "main": -0.38,
-          "main_pct": -4.22,
-          "xl": -0.43,
-          "lg": 0.04
-        },
+        "flow": null,
         "open": 18.72,
         "live": true
       },
@@ -9729,12 +9685,7 @@
           "dist_anchor": -6.8,
           "agree": true
         },
-        "flow": {
-          "main": -0.05,
-          "main_pct": -1.53,
-          "xl": -0.04,
-          "lg": -0.01
-        },
+        "flow": null,
         "open": 5.14,
         "live": true
       },
@@ -9813,12 +9764,7 @@
           "dist_anchor": 2.7,
           "agree": true
         },
-        "flow": {
-          "main": -0.8,
-          "main_pct": -11.82,
-          "xl": -0.44,
-          "lg": -0.36
-        },
+        "flow": null,
         "open": 2.31,
         "live": true
       },
@@ -9897,12 +9843,7 @@
           "dist_anchor": -0.7,
           "agree": true
         },
-        "flow": {
-          "main": 0.29,
-          "main_pct": 4.73,
-          "xl": -0.04,
-          "lg": 0.33
-        },
+        "flow": null,
         "open": 44.68,
         "live": true
       },
@@ -9981,12 +9922,7 @@
           "dist_anchor": -0.1,
           "agree": true
         },
-        "flow": {
-          "main": 0.25,
-          "main_pct": 5.25,
-          "xl": -0.01,
-          "lg": 0.25
-        },
+        "flow": null,
         "open": 11.75,
         "live": true
       },
@@ -10062,12 +9998,7 @@
           "dist_anchor": 20.6,
           "agree": false
         },
-        "flow": {
-          "main": -1.25,
-          "main_pct": -15.7,
-          "xl": -0.01,
-          "lg": -1.25
-        },
+        "flow": null,
         "open": 3.32,
         "live": true
       },
@@ -10143,12 +10074,7 @@
           "dist_anchor": -1.1,
           "agree": false
         },
-        "flow": {
-          "main": -6.14,
-          "main_pct": -18.96,
-          "xl": -4.48,
-          "lg": -1.66
-        },
+        "flow": null,
         "open": 14.17,
         "live": true
       },
@@ -10227,12 +10153,7 @@
           "dist_anchor": 12.4,
           "agree": false
         },
-        "flow": {
-          "main": -0.69,
-          "main_pct": -4.6,
-          "xl": -0.25,
-          "lg": -0.45
-        },
+        "flow": null,
         "open": 7.84,
         "live": true
       },
@@ -10311,12 +10232,7 @@
           "dist_anchor": 13.9,
           "agree": false
         },
-        "flow": {
-          "main": -0.19,
-          "main_pct": -1.08,
-          "xl": -0.45,
-          "lg": 0.26
-        },
+        "flow": null,
         "open": 17.0,
         "live": true
       },
@@ -10392,12 +10308,7 @@
           "dist_anchor": 2.7,
           "agree": false
         },
-        "flow": {
-          "main": -0.7,
-          "main_pct": -9.23,
-          "xl": -0.66,
-          "lg": -0.04
-        },
+        "flow": null,
         "open": 2.65,
         "live": true
       },
@@ -10476,12 +10387,7 @@
           "dist_anchor": 21.1,
           "agree": false
         },
-        "flow": {
-          "main": 0.66,
-          "main_pct": 7.39,
-          "xl": 0.16,
-          "lg": 0.51
-        },
+        "flow": null,
         "open": 20.19,
         "live": true
       },
@@ -10560,12 +10466,7 @@
           "dist_anchor": 7.6,
           "agree": true
         },
-        "flow": {
-          "main": 0.18,
-          "main_pct": 2.11,
-          "xl": -0.02,
-          "lg": 0.2
-        },
+        "flow": null,
         "open": 4.56,
         "live": true
       },
@@ -10644,12 +10545,7 @@
           "dist_anchor": 12.2,
           "agree": false
         },
-        "flow": {
-          "main": 2.26,
-          "main_pct": 9.34,
-          "xl": 0.99,
-          "lg": 1.27
-        },
+        "flow": null,
         "open": 10.11,
         "live": true
       },
@@ -10725,12 +10621,7 @@
           "dist_anchor": 3.7,
           "agree": true
         },
-        "flow": {
-          "main": -0.24,
-          "main_pct": -2.27,
-          "xl": 0.22,
-          "lg": -0.47
-        },
+        "flow": null,
         "open": 13.78,
         "live": true
       },
@@ -10809,12 +10700,7 @@
           "dist_anchor": 8.7,
           "agree": false
         },
-        "flow": {
-          "main": 0.15,
-          "main_pct": 9.27,
-          "xl": 0.09,
-          "lg": 0.06
-        },
+        "flow": null,
         "open": 21.77,
         "live": true
       },
@@ -10893,12 +10779,7 @@
           "dist_anchor": 10.0,
           "agree": true
         },
-        "flow": {
-          "main": -0.54,
-          "main_pct": -15.79,
-          "xl": -0.15,
-          "lg": -0.4
-        },
+        "flow": null,
         "open": 26.38,
         "live": true
       }
@@ -10913,25 +10794,16 @@
   },
   "trade_date": "2026-11-16",
   "env_gate": {
-    "ok": true,
-    "asof": "2026-11-16 16:34",
-    "amt": 14845.0,
-    "amt_est": null,
-    "amt_used": 14845.0,
-    "up": 1126,
-    "down": 4072,
-    "flat": 96,
-    "breadth": 0.213,
-    "zt": 32,
-    "flags": [
-      "成交额 1.48 万亿 < 1.9 万亿",
-      "上涨家数占比 21% < 45%",
-      "涨停 32 家 < 40 家"
-    ],
+    "ok": false,
+    "asof": "2026-11-16 16:37",
     "pos_cap": 0.0,
+    "flags": [
+      "环境数据获取失败 → 禁止开仓"
+    ],
     "pass": false,
-    "up_ratio": 0.213,
-    "zt_count": 32
+    "up_ratio": null,
+    "zt_count": null,
+    "amt_used": 0
   },
   "force_close": [],
   "gate_history": {
@@ -13796,7 +13668,7 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-16 16:34",
+    "asof": "2026-11-16 16:37",
     "indexes": {
       "道琼斯": {
         "px": 52347.55,
@@ -13816,7 +13688,7 @@
       "恒生指数": {
         "px": 23753.84,
         "chg": 0.49,
-        "time": "2026/11/16 16:19:11"
+        "time": "2026/11/16 16:22:11"
       }
     },
     "worst": -0.91,
@@ -15866,7 +15738,7 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-16 16:32",
+    "asof": "2026-11-16 16:35",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
@@ -15891,24 +15763,14 @@
         "vol": 1920713
       },
       {
-        "code": "002905",
-        "name": "金逸影视",
-        "prev": 9.9,
-        "open": 10.89,
-        "gap": 10.0,
-        "price": 10.89,
-        "chg": 10.0,
-        "vol": 45190
-      },
-      {
-        "code": "000819",
-        "name": "岳阳兴长",
-        "prev": 12.82,
-        "open": 14.1,
-        "gap": 9.98,
-        "price": 14.1,
-        "chg": 9.98,
-        "vol": 584045
+        "code": "002187",
+        "name": "广百股份",
+        "prev": 6.97,
+        "open": 7.6,
+        "gap": 9.04,
+        "price": 7.67,
+        "chg": 10.04,
+        "vol": 430256
       },
       {
         "code": "002548",
@@ -15951,6 +15813,26 @@
         "vol": 445595
       },
       {
+        "code": "300528",
+        "name": "幸福蓝海",
+        "prev": 17.99,
+        "open": 18.72,
+        "gap": 4.06,
+        "price": 16.78,
+        "chg": -6.73,
+        "vol": 531046
+      },
+      {
+        "code": "002819",
+        "name": "东方中科",
+        "prev": 21.7,
+        "open": 22.48,
+        "gap": 3.59,
+        "price": 19.68,
+        "chg": -9.31,
+        "vol": 133516
+      },
+      {
         "code": "001393",
         "name": "维通利",
         "prev": 43.14,
@@ -15981,6 +15863,16 @@
         "vol": 557907
       },
       {
+        "code": "002685",
+        "name": "华东重机",
+        "prev": 5.54,
+        "open": 5.7,
+        "gap": 2.89,
+        "price": 6.09,
+        "chg": 9.93,
+        "vol": 1448306
+      },
+      {
         "code": "300237",
         "name": "美晨科技",
         "prev": 3.26,
@@ -15999,26 +15891,6 @@
         "price": 7.61,
         "chg": -1.17,
         "vol": 1948114
-      },
-      {
-        "code": "603686",
-        "name": "福龙马",
-        "prev": 13.6,
-        "open": 13.78,
-        "gap": 1.32,
-        "price": 14.05,
-        "chg": 3.31,
-        "vol": 767160
-      },
-      {
-        "code": "002205",
-        "name": "国统股份",
-        "prev": 12.93,
-        "open": 13.09,
-        "gap": 1.24,
-        "price": 14.22,
-        "chg": 9.98,
-        "vol": 379016
       }
     ],
     "top_low": [
@@ -16033,16 +15905,6 @@
         "vol": 44847
       },
       {
-        "code": "600467",
-        "name": "好当家",
-        "prev": 2.73,
-        "open": 2.65,
-        "gap": -2.93,
-        "price": 2.5,
-        "chg": -8.42,
-        "vol": 2970324
-      },
-      {
         "code": "603636",
         "name": "南威软件",
         "prev": 9.5,
@@ -16051,16 +15913,6 @@
         "price": 8.91,
         "chg": -6.21,
         "vol": 839967
-      },
-      {
-        "code": "002042",
-        "name": "华孚时尚",
-        "prev": 3.62,
-        "open": 3.54,
-        "gap": -2.21,
-        "price": 3.45,
-        "chg": -4.7,
-        "vol": 1143083
       },
       {
         "code": "601899",
@@ -16083,14 +15935,14 @@
         "vol": 405705
       },
       {
-        "code": "603259",
-        "name": "药明康德",
-        "prev": 146.3,
-        "open": 144.5,
-        "gap": -1.23,
-        "price": 144.41,
-        "chg": -1.29,
-        "vol": 273032
+        "code": "300750",
+        "name": "宁德时代",
+        "prev": 237.7,
+        "open": 234.01,
+        "gap": -1.55,
+        "price": 240.5,
+        "chg": 1.18,
+        "vol": 361135
       },
       {
         "code": "600809",
@@ -16103,14 +15955,14 @@
         "vol": 74999
       },
       {
-        "code": "603286",
-        "name": "日盈电子",
-        "prev": 64.91,
-        "open": 64.17,
-        "gap": -1.14,
-        "price": 59.56,
-        "chg": -8.24,
-        "vol": 114799
+        "code": "603259",
+        "name": "药明康德",
+        "prev": 146.3,
+        "open": 144.5,
+        "gap": -1.23,
+        "price": 144.41,
+        "chg": -1.29,
+        "vol": 273032
       },
       {
         "code": "300496",
@@ -16121,6 +15973,26 @@
         "price": 53.85,
         "chg": -2.45,
         "vol": 67540
+      },
+      {
+        "code": "600410",
+        "name": "华胜天成",
+        "prev": 14.3,
+        "open": 14.17,
+        "gap": -0.91,
+        "price": 13.9,
+        "chg": -2.8,
+        "vol": 2216532
+      },
+      {
+        "code": "600651",
+        "name": "飞乐音响",
+        "prev": 5.18,
+        "open": 5.14,
+        "gap": -0.77,
+        "price": 4.97,
+        "chg": -4.05,
+        "vol": 598426
       }
     ]
   },
