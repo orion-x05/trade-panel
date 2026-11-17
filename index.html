@@ -2933,6 +2933,33 @@ body::after{   /* 暗角 */
     return sec;
   }
 
+  /* 【高度与宽度】情绪两维：宽度=涨停家数，高度=最高连板 */
+  function renderHeightBreadth(d) {
+    const hb = d.height_breadth;
+    if (!hb || !hb.dates || !hb.dates.length) return;
+    const sec = card('oxHB', '高度与宽度 · 情绪周期');
+    const body = sec.querySelector('.body');
+    const W = Math.max.apply(null, hb.width.concat([1]));
+    const H = Math.max.apply(null, hb.height.concat([1]));
+    const color = { '双升': '#22c55e', '宽升高效': '#eab308', '宽降高效': '#f97316', '双降': '#64748b', '-': '#475569' };
+    let html = '';
+    for (let i = 0; i < hb.dates.length; i++) {
+      const c = color[hb.phase[i]] || '#64748b';
+      html += '<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;margin:3px 0">' +
+        '<span style="width:46px;color:#8b96a5">' + hb.dates[i].slice(5) + '</span>' +
+        '<span style="flex:1;height:7px;background:#161d27;border-radius:4px;overflow:hidden">' +
+          '<b style="display:block;height:100%;width:' + (hb.width[i] / W * 100).toFixed(1) + '%;background:#3b82f6"></b></span>' +
+        '<span style="width:24px;text-align:right;color:#93a4b8">' + hb.width[i] + '</span>' +
+        '<span style="width:52px;height:7px;background:#161d27;border-radius:4px;overflow:hidden">' +
+          '<b style="display:block;height:100%;width:' + (hb.height[i] / H * 100).toFixed(1) + '%;background:#f59e0b"></b></span>' +
+        '<span style="width:18px;text-align:right;color:#93a4b8">' + hb.height[i] + '</span>' +
+        '<span style="width:58px;text-align:right;color:' + c + '">' + hb.phase[i] + '</span>' +
+      '</div>';
+    }
+    html += '<div class="ox-hit">蓝=涨停家数（宽度）· 橙=最高连板（高度）· 绿=双升(进攻) 黄=宽升高效 橙=宽降高效 灰=双降(休息)</div>';
+    body.innerHTML = html;
+  }
+
   function draw() {
     const d = window.OX_DATA; if (!d) return;
     const rv = d.review || {};
@@ -2940,6 +2967,7 @@ body::after{   /* 暗角 */
 
     /* 1 情绪 + 梯队 */
     const c1 = card('oxRvMood', '连板梯队 · 情绪');
+    try { renderHeightBreadth(d); } catch (e) { console.warn('HB', e); }
     const tiers = ladder.tiers || {};
     const order = ['4板+', '3板', '2板', '首板'];
     const tierHtml = order.filter(k => tiers[k] && tiers[k].length).map(k => {
