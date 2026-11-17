@@ -3295,6 +3295,46 @@ def build_auction_gap(data):
     }
 
 
+def build_height_breadth(data, days=30):
+    """【高度与宽度】情绪周期的两个维度，按日成系列。
+
+    宽度 = 当日涨停家数（赚钱效应的广度）
+    高度 = 当日最高连板数（情绪的高度 / 接力意愿）
+    背离：
+      "双升"   宽度、高度同时抬升 —— 进攻区
+      "宽升高效" 宽度升、高度降或平 —— 有人做但不敢接力
+      "宽降高效" 宽度降、高度升 —— 退潮前夜，个别票硬撑
+      "双降"   两边都降 —— 休息区
+    数据来自 zt_archive（每日涨停池归档），不额外请求。
+    """
+    arc = data.get("zt_archive") or {}
+    if not arc:
+        return None
+    ds = sorted(arc.keys())[-days:]
+    width, height = [], []
+    for d in ds:
+        rows = arc.get(d) or []
+        width.append(len(rows))
+        height.append(max((int(r.get("lb") or 0) for r in rows), default=0))
+    phase = []
+    for i in range(len(ds)):
+        if i == 0:
+            phase.append("-")
+            continue
+        dw = width[i] - width[i - 1]
+        dh = height[i] - height[i - 1]
+        if dw > 0 and dh > 0:
+            phase.append("双升")
+        elif dw > 0 and dh <= 0:
+            phase.append("宽升高效")
+        elif dw <= 0 and dh > 0:
+            phase.append("宽降高效")
+        else:
+            phase.append("双降")
+    return {"dates": ds, "width": width, "height": height, "phase": phase,
+            "now": phase[-1] if phase else "-", "days": len(ds)}
+
+
 def build_env_gate(data):
     """【环境闸】决定今天该不该出手，比选哪只票更重要。
 
@@ -4671,6 +4711,15 @@ def main():
     market_trend = get_market_trend()
     data["market_trend"] = market_trend
     data["bull_only"] = bool(BULL_ONLY)
+
+    # 【高度与宽度】情绪两维序列（读 zt_archive，零额外请求）
+    try:
+        _hb = build_height_breadth(data)
+        if _hb:
+            data["height_breadth"] = _hb
+            print(f"  · 高度与宽度：{_hb['now']}（宽 {_hb['width'][-1]} / 高 {_hb['height'][-1]}）")
+    except Exception as _e:
+        print(f"  ⚠ 高度宽度计算失败：{_e}")
 
     # 【竞价异动】9:25 之后才有意义；收盘后保留当日最后一次快照
     try:
