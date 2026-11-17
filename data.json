@@ -952,7 +952,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-17T19:01:15.628251",
+  "last_update": "2026-11-17T19:37:13.754091",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1375,7 +1375,7 @@
     "active_roles": 1,
     "total_trades": 21,
     "roles_count": 7,
-    "last_update": "2026-11-17T18:06:13.043940"
+    "last_update": "2026-11-17T19:01:15.628251"
   },
   "data_version": 3,
   "theme_history": {
@@ -9294,90 +9294,6 @@
     "asof": "2026-11-17 17:43",
     "rows": [
       {
-        "code": "603396",
-        "name": "金辰股份",
-        "hybk": "光伏设备",
-        "board_role": "独苗",
-        "board_leader": "金辰股份",
-        "lbc": 3,
-        "type": "中军回踩",
-        "why": "3板回踩MA10（-1.3%），板块内非最高标",
-        "price": 28.61,
-        "close": 28.61,
-        "chg": -10.0,
-        "pool_ds": "20261113",
-        "rr": {
-          "ratio": 2.14,
-          "target": 35.32,
-          "stop": 25.48,
-          "atr": 2.09,
-          "upside": 23.5,
-          "downside": -11.0,
-          "ok": true
-        },
-        "abnormal": {
-          "dev3": -10.9,
-          "idx3": 3.9,
-          "dev": -14.8,
-          "limit": 20.0,
-          "remain": 34.8,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 3.11,
-          "limit10": 100.0,
-          "remain10": 96.89,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 7.8,
-          "paozi": false
-        },
-        "chan": {
-          "px": 28.61,
-          "zone": "中枢内",
-          "fx": "top",
-          "bi_n": 18,
-          "dir": "up",
-          "zs": {
-            "zg": 35.32,
-            "zd": 26.43
-          },
-          "beichi": false,
-          "merged": 199
-        },
-        "chip": {
-          "px": 28.61,
-          "profit_ratio": 53.0,
-          "avg_cost": 29.68,
-          "support": 21.18,
-          "resistance": 35.74,
-          "concentration": 49.1,
-          "main_cost": 26.75,
-          "dist_main": 7.0
-        },
-        "anchors": {
-          "px": 28.61,
-          "anchors": {
-            "low": 26.75,
-            "breakout": 34.88,
-            "ma120": 27.5,
-            "turn": 27.71
-          },
-          "n": 4,
-          "avg_anchor": 29.21,
-          "spread": 27.8,
-          "dist_anchor": -2.1,
-          "agree": false
-        },
-        "flow": {
-          "main": -0.21,
-          "main_pct": -67.42,
-          "xl": -0.25,
-          "lg": 0.03
-        },
-        "open": 28.61,
-        "live": true
-      },
-      {
         "code": "000819",
         "name": "岳阳兴长",
         "hybk": "炼化及贸",
@@ -9884,90 +9800,6 @@
         "live": true
       },
       {
-        "code": "000595",
-        "name": "新能股份",
-        "hybk": "化妆品",
-        "board_role": "独苗",
-        "board_leader": "新能股份",
-        "lbc": 1,
-        "type": "后排二波",
-        "why": "1板，回踩未破最近涨停日最低 4.54",
-        "price": 5.47,
-        "close": 5.47,
-        "chg": -10.03,
-        "pool_ds": "20261116",
-        "rr": {
-          "ratio": 1.33,
-          "target": 6.19,
-          "stop": 4.93,
-          "atr": 0.36,
-          "upside": 13.1,
-          "downside": -9.9,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 8.75,
-          "idx3": 3.9,
-          "dev": 4.85,
-          "limit": 20.0,
-          "remain": 15.15,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 5.18,
-          "limit10": 100.0,
-          "remain10": 94.82,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 6.2,
-          "paozi": false
-        },
-        "chan": {
-          "px": 5.47,
-          "zone": "中枢内",
-          "fx": "bottom",
-          "bi_n": 24,
-          "dir": "down",
-          "zs": {
-            "zg": 5.71,
-            "zd": 5.28
-          },
-          "beichi": false,
-          "merged": 203
-        },
-        "chip": {
-          "px": 5.47,
-          "profit_ratio": 36.7,
-          "avg_cost": 5.6,
-          "support": 4.59,
-          "resistance": 6.35,
-          "concentration": 31.4,
-          "main_cost": 5.62,
-          "dist_main": -2.7
-        },
-        "anchors": {
-          "px": 5.47,
-          "anchors": {
-            "low": 5.62,
-            "breakout": 5.83,
-            "ma120": 5.78,
-            "turn": 5.59
-          },
-          "n": 4,
-          "avg_anchor": 5.71,
-          "spread": 4.2,
-          "dist_anchor": -4.1,
-          "agree": true
-        },
-        "flow": {
-          "main": -0.96,
-          "main_pct": -17.47,
-          "xl": -0.52,
-          "lg": -0.44
-        },
-        "open": 5.67,
-        "live": true
-      },
-      {
         "code": "000156",
         "name": "华数传媒",
         "hybk": "电视广播",
@@ -10046,6 +9878,90 @@
           "lg": 0.13
         },
         "open": 8.36,
+        "live": true
+      },
+      {
+        "code": "000595",
+        "name": "新能股份",
+        "hybk": "电力",
+        "board_role": "独苗",
+        "board_leader": "新能股份",
+        "lbc": 2,
+        "type": "后排二波",
+        "why": "2板，回踩未破最近涨停日最低 4.54",
+        "price": 5.47,
+        "close": 5.47,
+        "chg": -10.03,
+        "pool_ds": "20261116",
+        "rr": {
+          "ratio": 1.33,
+          "target": 6.19,
+          "stop": 4.93,
+          "atr": 0.36,
+          "upside": 13.1,
+          "downside": -9.9,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 8.75,
+          "idx3": 3.9,
+          "dev": 4.85,
+          "limit": 20.0,
+          "remain": 15.15,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 5.18,
+          "limit10": 100.0,
+          "remain10": 94.82,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 6.2,
+          "paozi": false
+        },
+        "chan": {
+          "px": 5.47,
+          "zone": "中枢内",
+          "fx": "bottom",
+          "bi_n": 24,
+          "dir": "down",
+          "zs": {
+            "zg": 5.71,
+            "zd": 5.28
+          },
+          "beichi": false,
+          "merged": 203
+        },
+        "chip": {
+          "px": 5.47,
+          "profit_ratio": 36.7,
+          "avg_cost": 5.6,
+          "support": 4.59,
+          "resistance": 6.35,
+          "concentration": 31.4,
+          "main_cost": 5.62,
+          "dist_main": -2.7
+        },
+        "anchors": {
+          "px": 5.47,
+          "anchors": {
+            "low": 5.62,
+            "breakout": 5.83,
+            "ma120": 5.78,
+            "turn": 5.43
+          },
+          "n": 4,
+          "avg_anchor": 5.67,
+          "spread": 7.1,
+          "dist_anchor": -3.4,
+          "agree": true
+        },
+        "flow": {
+          "main": -0.96,
+          "main_pct": -17.47,
+          "xl": -0.52,
+          "lg": -0.44
+        },
+        "open": 5.67,
         "live": true
       },
       {
@@ -10550,90 +10466,6 @@
         "live": true
       },
       {
-        "code": "001358",
-        "name": "兴欣新材",
-        "hybk": "化学制品",
-        "board_role": "独苗",
-        "board_leader": "兴欣新材",
-        "lbc": 2,
-        "type": "后排二波",
-        "why": "2板，回踩未破最近涨停日最低 20.16",
-        "price": 25.31,
-        "close": 25.31,
-        "chg": -6.29,
-        "pool_ds": "20261113",
-        "rr": {
-          "ratio": 0.82,
-          "target": 28.36,
-          "stop": 21.61,
-          "atr": 1.52,
-          "upside": 12.0,
-          "downside": -14.6,
-          "ok": false
-        },
-        "abnormal": {
-          "dev3": 4.5,
-          "idx3": 3.9,
-          "dev": 0.6,
-          "limit": 20.0,
-          "remain": 19.4,
-          "risk": "低",
-          "rule": "连3日累计偏离 ≥20%（主板）",
-          "dev10": 8.54,
-          "limit10": 100.0,
-          "remain10": 91.46,
-          "risk10": "低",
-          "rule10": "连10日累计偏离 ≥100%",
-          "ret20": 10.6,
-          "paozi": false
-        },
-        "chan": {
-          "px": 25.31,
-          "zone": "中枢内",
-          "fx": "top",
-          "bi_n": 20,
-          "dir": "up",
-          "zs": {
-            "zg": 25.5,
-            "zd": 22.51
-          },
-          "beichi": false,
-          "merged": 184
-        },
-        "chip": {
-          "px": 25.31,
-          "profit_ratio": 51.7,
-          "avg_cost": 24.72,
-          "support": 21.37,
-          "resistance": 27.23,
-          "concentration": 23.7,
-          "main_cost": 25.53,
-          "dist_main": -0.9
-        },
-        "anchors": {
-          "px": 25.31,
-          "anchors": {
-            "low": 23.37,
-            "breakout": 26.76,
-            "ma120": 24.27,
-            "turn": 24.14
-          },
-          "n": 4,
-          "avg_anchor": 24.64,
-          "spread": 13.8,
-          "dist_anchor": 2.7,
-          "agree": true
-        },
-        "flow": {
-          "main": -0.09,
-          "main_pct": -3.42,
-          "xl": -0.15,
-          "lg": 0.06
-        },
-        "open": 24.31,
-        "live": true
-      },
-      {
         "code": "605378",
         "name": "野马电池",
         "hybk": "电池",
@@ -11051,6 +10883,171 @@
         "live": true
       },
       {
+        "code": "002748",
+        "name": "世龙实业",
+        "hybk": "化学原料",
+        "board_role": "独苗",
+        "board_leader": "世龙实业",
+        "lbc": 2,
+        "type": "后排二波",
+        "why": "2板，回踩未破最近涨停日最低 10.87",
+        "price": 13.06,
+        "close": 13.06,
+        "chg": -4.18,
+        "pool_ds": "20261116",
+        "rr": {
+          "ratio": 0.6,
+          "target": 14.43,
+          "stop": 10.78,
+          "atr": 0.68,
+          "upside": 10.5,
+          "downside": -17.5,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 15.99,
+          "idx3": 3.9,
+          "dev": 12.09,
+          "limit": 20.0,
+          "remain": 7.91,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 16.21,
+          "limit10": 100.0,
+          "remain10": 83.79,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 4.6,
+          "paozi": false
+        },
+        "chan": {
+          "px": 13.06,
+          "zone": null,
+          "fx": "bottom",
+          "bi_n": 20,
+          "dir": "up",
+          "zs": null,
+          "beichi": false,
+          "merged": 179
+        },
+        "chip": {
+          "px": 13.06,
+          "profit_ratio": 77.3,
+          "avg_cost": 12.05,
+          "support": 10.48,
+          "resistance": 13.4,
+          "concentration": 24.2,
+          "main_cost": 13.31,
+          "dist_main": -1.9
+        },
+        "anchors": {
+          "px": 13.06,
+          "anchors": {
+            "low": 10.56,
+            "breakout": 13.26,
+            "ma120": 11.36,
+            "turn": 11.56
+          },
+          "n": 4,
+          "avg_anchor": 11.69,
+          "spread": 23.1,
+          "dist_anchor": 11.8,
+          "agree": false
+        },
+        "flow": {
+          "main": -0.23,
+          "main_pct": -4.79,
+          "xl": -0.19,
+          "lg": -0.04
+        },
+        "open": 13.52,
+        "live": true
+      },
+      {
+        "code": "603983",
+        "name": "丸美生物",
+        "hybk": "化妆品",
+        "board_role": "独苗",
+        "board_leader": "丸美生物",
+        "lbc": 1,
+        "type": "后排二波",
+        "why": "1板，回踩未破最近涨停日最低 22.85",
+        "price": 27.47,
+        "close": 27.47,
+        "chg": 2.77,
+        "pool_ds": "20261116",
+        "rr": {
+          "ratio": 0.59,
+          "target": 29.89,
+          "stop": 23.38,
+          "atr": 1.21,
+          "upside": 8.8,
+          "downside": -14.9,
+          "ok": false
+        },
+        "abnormal": {
+          "dev3": 14.36,
+          "idx3": 3.9,
+          "dev": 10.46,
+          "limit": 20.0,
+          "remain": 9.54,
+          "risk": "低",
+          "rule": "连3日累计偏离 ≥20%（主板）",
+          "dev10": 6.81,
+          "limit10": 100.0,
+          "remain10": 93.19,
+          "risk10": "低",
+          "rule10": "连10日累计偏离 ≥100%",
+          "ret20": 5.9,
+          "paozi": false
+        },
+        "chan": {
+          "px": 27.47,
+          "zone": "中枢下",
+          "fx": "bottom",
+          "bi_n": 19,
+          "dir": "down",
+          "zs": {
+            "zg": 34.73,
+            "zd": 29.6
+          },
+          "beichi": false,
+          "merged": 185
+        },
+        "chip": {
+          "px": 27.47,
+          "profit_ratio": 39.8,
+          "avg_cost": 27.96,
+          "support": 20.95,
+          "resistance": 32.79,
+          "concentration": 42.4,
+          "main_cost": 27.79,
+          "dist_main": -1.2
+        },
+        "anchors": {
+          "px": 27.47,
+          "anchors": {
+            "low": 24.09,
+            "breakout": 27.88,
+            "ma120": 27.2,
+            "turn": 29.35
+          },
+          "n": 4,
+          "avg_anchor": 27.13,
+          "spread": 19.4,
+          "dist_anchor": 1.3,
+          "agree": false
+        },
+        "flow": {
+          "main": 0.15,
+          "main_pct": 4.06,
+          "xl": 0.02,
+          "lg": 0.13
+        },
+        "open": 26.82,
+        "live": true
+      },
+      {
         "code": "002035",
         "name": "华帝股份",
         "hybk": "厨卫电器",
@@ -11305,17 +11302,17 @@
       }
     ],
     "stat": {
-      "cand": 86,
+      "cand": 87,
       "no_k": 0,
-      "sealed": 38,
-      "no_type": 3
+      "sealed": 37,
+      "no_type": 2
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
   },
   "trade_date": "2026-11-17",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-17 19:01",
+    "asof": "2026-11-17 19:37",
     "amt": 14577.0,
     "amt_est": null,
     "amt_used": 14577.0,
@@ -14479,7 +14476,7 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-17 19:01",
+    "asof": "2026-11-17 19:37",
     "indexes": {
       "道琼斯": {
         "px": 51608.17,
@@ -16967,7 +16964,7 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-17 18:59",
+    "asof": "2026-11-17 19:36",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
@@ -17052,6 +17049,16 @@
         "vol": 1342194
       },
       {
+        "code": "002959",
+        "name": "小熊电器",
+        "prev": 36.27,
+        "open": 37.33,
+        "gap": 2.92,
+        "price": 39.9,
+        "chg": 10.01,
+        "vol": 106924
+      },
+      {
         "code": "301288",
         "name": "清研环境",
         "prev": 16.78,
@@ -17060,16 +17067,6 @@
         "price": 20.14,
         "chg": 20.02,
         "vol": 117714
-      },
-      {
-        "code": "600936",
-        "name": "北投科技",
-        "prev": 4.02,
-        "open": 4.08,
-        "gap": 1.49,
-        "price": 4.42,
-        "chg": 9.95,
-        "vol": 2408267
       },
       {
         "code": "601111",
@@ -17082,16 +17079,6 @@
         "vol": 501442
       },
       {
-        "code": "601021",
-        "name": "春秋航空",
-        "prev": 44.95,
-        "open": 45.49,
-        "gap": 1.2,
-        "price": 45.48,
-        "chg": 1.18,
-        "vol": 79606
-      },
-      {
         "code": "600029",
         "name": "南方航空",
         "prev": 5.14,
@@ -17102,16 +17089,6 @@
         "vol": 539822
       },
       {
-        "code": "002771",
-        "name": "真视通",
-        "prev": 10.8,
-        "open": 10.9,
-        "gap": 0.93,
-        "price": 11.88,
-        "chg": 10.0,
-        "vol": 121232
-      },
-      {
         "code": "600410",
         "name": "华胜天成",
         "prev": 13.9,
@@ -17120,6 +17097,26 @@
         "price": 15.29,
         "chg": 10.0,
         "vol": 928918
+      },
+      {
+        "code": "600900",
+        "name": "长江电力",
+        "prev": 30.49,
+        "open": 30.59,
+        "gap": 0.33,
+        "price": 30.6,
+        "chg": 0.36,
+        "vol": 934497
+      },
+      {
+        "code": "600887",
+        "name": "伊利股份",
+        "prev": 32.2,
+        "open": 32.29,
+        "gap": 0.28,
+        "price": 32.41,
+        "chg": 0.65,
+        "vol": 553995
       }
     ],
     "top_low": [
@@ -17204,14 +17201,14 @@
         "vol": 50642
       },
       {
-        "code": "603030",
-        "name": "全筑股份",
-        "prev": 1.76,
-        "open": 1.74,
-        "gap": -1.14,
-        "price": 1.94,
-        "chg": 10.23,
-        "vol": 749304
+        "code": "601899",
+        "name": "紫金矿业",
+        "prev": 25.96,
+        "open": 25.7,
+        "gap": -1.0,
+        "price": 25.99,
+        "chg": 0.12,
+        "vol": 2135713
       },
       {
         "code": "002652",
