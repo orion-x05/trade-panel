@@ -350,7 +350,42 @@ def load_bt_tune():
     return notes
 
 
+def refresh_archive_and_hb(data):
+    """【保存前定稿】用最终版 limit_decoded 覆盖当天归档，再重建高度宽度。
+
+    为什么要放在 save_data 里：归档与 height_breadth 原先写在 limit_decoded 重建之前，
+    读到的是上一轮留在 data.json 里的池子，导致「当日宽度」滞后一轮；11-19 更严重——
+    盘中几次运行把 41 家/4 板写成 19 家/3 板，再被更早的 8 家盖住。
+    放在落盘前这一刻，读到的一定是当轮最新池子。
+    """
+    ld = data.get("limit_decoded") or {}
+    td = str(ld.get("trade_date") or "")[:10]
+    rows = ld.get("zt_rows") or []
+    if td and rows:
+        arc = data.setdefault("zt_archive", {})
+        _new = [{"c": str(x.get("code")), "n": x.get("name"),
+                 "lb": int(x.get("lbc") or 0), "hy": x.get("hybk") or ""} for x in rows]
+        _old = arc.get(td) or []
+        closed = cn_now().hour >= 15
+        new_peak = max((x["lb"] for x in _new), default=0)
+        old_peak = max((x["lb"] for x in _old), default=0)
+        if closed or not _old or len(_new) >= len(_old) or new_peak > old_peak:
+            arc[td] = _new
+        for k in sorted(arc.keys())[:-120]:
+            arc.pop(k, None)
+    try:
+        hb = build_height_breadth(data)
+        if hb:
+            data["height_breadth"] = hb
+    except Exception as e:
+        print(f"  ⚠ 高度宽度重建失败：{e}")
+
+
 def save_data(data):
+    try:
+        refresh_archive_and_hb(data)
+    except Exception as e:
+        print(f"  ⚠ 归档定稿失败：{e}")
     try:
         update_role_metrics(data)
     except Exception as e:
