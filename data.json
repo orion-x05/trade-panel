@@ -966,7 +966,7 @@
       "maxDrawdown": 0.0006
     }
   ],
-  "last_update": "2026-11-19T00:39:50.034776",
+  "last_update": "2026-11-19T09:02:23.464097",
   "trades": [],
   "market_trend": "bear",
   "tuned_roles": {
@@ -1390,7 +1390,7 @@
     "active_roles": 1,
     "total_trades": 21,
     "roles_count": 7,
-    "last_update": "2026-11-19T00:23:31.766465"
+    "last_update": "2026-11-19T00:39:50.034776"
   },
   "data_version": 3,
   "theme_history": {
@@ -2437,6 +2437,64 @@
         "n": 1,
         "max_lb": 1
       }
+    },
+    "2026-11-19": {
+      "工程机械": {
+        "n": 1,
+        "max_lb": 4
+      },
+      "IT服务Ⅱ": {
+        "n": 7,
+        "max_lb": 2
+      },
+      "通用设备": {
+        "n": 3,
+        "max_lb": 2
+      },
+      "计算机设": {
+        "n": 3,
+        "max_lb": 2
+      },
+      "装修装饰": {
+        "n": 1,
+        "max_lb": 2
+      },
+      "环保设备": {
+        "n": 1,
+        "max_lb": 2
+      },
+      "化学原料": {
+        "n": 1,
+        "max_lb": 2
+      },
+      "通信服务": {
+        "n": 5,
+        "max_lb": 1
+      },
+      "元件": {
+        "n": 2,
+        "max_lb": 1
+      },
+      "纺织制造": {
+        "n": 2,
+        "max_lb": 1
+      },
+      "消费电子": {
+        "n": 1,
+        "max_lb": 1
+      },
+      "黑色家电": {
+        "n": 1,
+        "max_lb": 1
+      },
+      "通信设备": {
+        "n": 1,
+        "max_lb": 1
+      },
+      "调味发酵": {
+        "n": 1,
+        "max_lb": 1
+      }
     }
   },
   "theme_radar": {
@@ -2514,8 +2572,8 @@
         "avg_lb": 1.3,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 3,
-        "delta_n": 4,
+        "p_n": 7,
+        "delta_n": 0,
         "sector_pct": 12.85,
         "sector_limit_count": 7,
         "sector_rank": 2
@@ -2550,8 +2608,8 @@
         "avg_lb": 1.3,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 2,
-        "delta_n": 1,
+        "p_n": 3,
+        "delta_n": 0,
         "sector_pct": 10.01,
         "sector_limit_count": 3,
         "sector_rank": 3
@@ -2586,8 +2644,8 @@
         "avg_lb": 1.3,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 2,
-        "delta_n": 1,
+        "p_n": 3,
+        "delta_n": 0,
         "sector_pct": 16.7,
         "sector_limit_count": 3,
         "sector_rank": 4
@@ -2610,8 +2668,8 @@
         "avg_lb": 2.0,
         "stage": "发酵",
         "emoji": "🚀",
-        "p_n": 0,
-        "delta_n": 1,
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 9.79,
         "sector_limit_count": 1,
         "sector_rank": 5
@@ -2632,10 +2690,10 @@
           }
         ],
         "avg_lb": 2.0,
-        "stage": "退潮",
-        "emoji": "🌊",
-        "p_n": 3,
-        "delta_n": -2,
+        "stage": "发酵",
+        "emoji": "🚀",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 9.99,
         "sector_limit_count": 1,
         "sector_rank": 6
@@ -2656,10 +2714,10 @@
           }
         ],
         "avg_lb": 2.0,
-        "stage": "退潮",
-        "emoji": "🌊",
-        "p_n": 2,
-        "delta_n": -1,
+        "stage": "发酵",
+        "emoji": "🚀",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.02,
         "sector_limit_count": 1,
         "sector_rank": 7
@@ -2706,8 +2764,8 @@
         "avg_lb": 1.0,
         "stage": "持续",
         "emoji": "▶️",
-        "p_n": 0,
-        "delta_n": 5,
+        "p_n": 5,
+        "delta_n": 0,
         "sector_pct": 14.02,
         "sector_limit_count": 5,
         "sector_rank": 8
@@ -2734,10 +2792,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 2,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 2,
+        "delta_n": 0,
         "sector_pct": 10.0,
         "sector_limit_count": 2,
         "sector_rank": 9
@@ -2764,10 +2822,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 2,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 2,
+        "delta_n": 0,
         "sector_pct": 10.04,
         "sector_limit_count": 2,
         "sector_rank": 10
@@ -2788,10 +2846,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "退潮",
-        "emoji": "🌊",
-        "p_n": 2,
-        "delta_n": -1,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.0,
         "sector_limit_count": 1,
         "sector_rank": 11
@@ -2812,10 +2870,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 1,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.08,
         "sector_limit_count": 1,
         "sector_rank": 12
@@ -2836,10 +2894,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 1,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.05,
         "sector_limit_count": 1,
         "sector_rank": 13
@@ -2860,10 +2918,10 @@
           }
         ],
         "avg_lb": 1.0,
-        "stage": "启动",
-        "emoji": "🌱",
-        "p_n": 0,
-        "delta_n": 1,
+        "stage": "持续",
+        "emoji": "▶️",
+        "p_n": 1,
+        "delta_n": 0,
         "sector_pct": 10.05,
         "sector_limit_count": 1,
         "sector_rank": 14
@@ -3169,7 +3227,7 @@
     "dt_count": 40,
     "zt_tc": 41,
     "dt_tc": 40,
-    "asof": "2026-11-18 17:03"
+    "asof": "2026-11-19 09:00"
   },
   "limit_decoded": {
     "ok": true,
@@ -4121,12 +4179,156 @@
     "seal_sum": 38.4,
     "mood": "温和",
     "mood_emoji": "🌤",
-    "asof": "2026-11-18 17:03",
-    "trade_date": "2026-11-18"
+    "asof": "2026-11-19 09:00",
+    "trade_date": "2026-11-19"
   },
   "research_feed": {
     "ok": true,
     "reports": [
+      {
+        "title": "国家能源局力推流域水风光一体化，“十五五”水电设备市场空间广阔",
+        "code": "600875",
+        "name": "东方电气",
+        "org": "国信证券",
+        "rating": "增持",
+        "aim": null,
+        "pe": null,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845912"
+      },
+      {
+        "title": "基础业务单季收入创新高，高端产能与国产替代支撑中长期成长",
+        "code": "300487",
+        "name": "蓝晓科技",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 30.4,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845402"
+      },
+      {
+        "title": "汽车及服务器用板快速增长，高端产能持续布局",
+        "code": "002938",
+        "name": "鹏鼎控股",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 24.4,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845362"
+      },
+      {
+        "title": "可孚医疗：盈利能力持续提升，汇兑因素压制利润表现",
+        "code": "301087",
+        "name": "可孚医疗",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": null,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845352"
+      },
+      {
+        "title": "产品结构持续优化，AIPCB+封装基板共驱业绩高增",
+        "code": "002916",
+        "name": "深南电路",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 22.2,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845346"
+      },
+      {
+        "title": "山外山：设备增长动能持续强劲，自产耗材和海外市场增量显著",
+        "code": "688410",
+        "name": "山外山",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 23.2,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845310"
+      },
+      {
+        "title": "成本与汇兑压制Q3盈利，高端材料及全球化布局支撑成长",
+        "code": "600143",
+        "name": "金发科技",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 24.7,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845014"
+      },
+      {
+        "title": "毛利与费用双重挤压致Q3盈利承压，内生+外延蓄势中长期成长",
+        "code": "002749",
+        "name": "国光股份",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 20.5,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831845013"
+      },
+      {
+        "title": "存储与计算业务快速增长，AI及车规新品持续拓展",
+        "code": "300223",
+        "name": "君正股份",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 13.7,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831844977"
+      },
+      {
+        "title": "外延与弹性体放量驱动业绩高增，EPDM一体化及DVA产业化打开成长空间",
+        "code": "002838",
+        "name": "道恩股份",
+        "org": "太平洋",
+        "rating": "买入",
+        "aim": null,
+        "pe": 18.5,
+        "industry": "",
+        "date": "2026-11-19",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611191831844973"
+      },
+      {
+        "title": "端侧AI赋能场景数字化，物理AI与科学仪器拓展成长空间",
+        "code": "002415",
+        "name": "海康威视",
+        "org": "东吴证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": 17.9,
+        "industry": "",
+        "date": "2026-11-18",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611181831835378"
+      },
+      {
+        "title": "FIC双抗ADC宜泽康商业化落地，多管线开启全球III期临床",
+        "code": "688506",
+        "name": "百利天恒",
+        "org": "山西证券",
+        "rating": "买入",
+        "aim": null,
+        "pe": -83.3,
+        "industry": "",
+        "date": "2026-11-18",
+        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611181831829911"
+      },
       {
         "title": "北交所信息更新：硬质合金涨价冲击成本，金属陶瓷替代与提价传导改善可期",
         "code": "920942",
@@ -4462,154 +4664,118 @@
         "industry": "",
         "date": "2026-11-17",
         "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831790541"
-      },
-      {
-        "title": "三季报点评：收入高增长，用户平台及AI应用值得期待",
-        "code": "002517",
-        "name": "恺英网络",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 12.8,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831783111"
-      },
-      {
-        "title": "汽车轴承构筑主业壁垒，机器人开启第二增长极",
-        "code": "002708",
-        "name": "光洋股份",
-        "org": "山西证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 92.7,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831782162"
-      },
-      {
-        "title": "生产经营平稳运行，前三季度业绩创同期新高",
-        "code": "601857",
-        "name": "中国石油",
-        "org": "中银证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 12.1,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831781581"
-      },
-      {
-        "title": "液奶企稳，多元结构继续优化",
-        "code": "600887",
-        "name": "伊利股份",
-        "org": "山西证券",
-        "rating": "买入",
-        "aim": null,
-        "pe": 19.3,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831777655"
-      },
-      {
-        "title": "前三季度业绩同比增长29%，新增订单稳步增长",
-        "code": "600875",
-        "name": "东方电气",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 15.9,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831777103"
-      },
-      {
-        "title": "2026年三季报点评：三大业务协同发力，盈利能力显著提升",
-        "code": "300602",
-        "name": "飞荣达",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 23.9,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831777098"
-      },
-      {
-        "title": "Q3业绩高增长，数通领域持续深耕",
-        "code": "002463",
-        "name": "沪电股份",
-        "org": "太平洋",
-        "rating": "买入",
-        "aim": null,
-        "pe": 19.6,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831776413"
-      },
-      {
-        "title": "东星医疗：26Q3业绩高增，外延并购抬升成长天花板",
-        "code": "301290",
-        "name": "东星医疗",
-        "org": "太平洋",
-        "rating": "买入",
-        "aim": null,
-        "pe": 25.2,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831776402"
-      },
-      {
-        "title": "“存储”、“存储+”与“存储x”业务齐头并进",
-        "code": "688766",
-        "name": "普冉股份",
-        "org": "国信证券",
-        "rating": "增持",
-        "aim": null,
-        "pe": 14.3,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831773258"
-      },
-      {
-        "title": "鱼跃医疗：26Q3或迎拐点，收入利润均同比转正",
-        "code": "002223",
-        "name": "鱼跃医疗",
-        "org": "太平洋",
-        "rating": "买入",
-        "aim": null,
-        "pe": 19.1,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831772458"
-      },
-      {
-        "title": "奕瑞科技：收入逐季提速，新业务加速兑现",
-        "code": "688301",
-        "name": "奕瑞科技",
-        "org": "太平洋",
-        "rating": "买入",
-        "aim": null,
-        "pe": 28.8,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831772354"
-      },
-      {
-        "title": "华大智造：经营基本面发展向好，多组学业务增长势头最强",
-        "code": "688114",
-        "name": "华大智造",
-        "org": "太平洋",
-        "rating": "买入",
-        "aim": null,
-        "pe": null,
-        "industry": "",
-        "date": "2026-11-17",
-        "url": "https://data.eastmoney.com/report/zw_stock.jshtml?infocode=AP202611171831772257"
       }
     ],
     "consensus": [],
     "surveys": [
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "贵山私募基金",
+        "num": 5,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "淳阳基金",
+        "num": 6,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "聚纯投资",
+        "num": 7,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "财联社",
+        "num": 4,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "上市行/重鼎资产",
+        "num": 1,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "中昆金信投资",
+        "num": 2,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "华泰证券",
+        "num": 3,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "002589",
+        "name": "瑞康医药",
+        "date": "2026-11-18",
+        "orgs": "浓谷基金",
+        "num": 8,
+        "sum": 8,
+        "way": "特定对象调研,现场参观"
+      },
+      {
+        "code": "600150",
+        "name": "中国船舶",
+        "date": "2026-11-17",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "业绩说明会"
+      },
+      {
+        "code": "600350",
+        "name": "山东高速",
+        "date": "2026-11-18",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "上证路演中心视频直播和网络互动,业绩说明会"
+      },
+      {
+        "code": "600488",
+        "name": "津药药业",
+        "date": "2026-11-18",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "业绩说明会,网络互动"
+      },
+      {
+        "code": "603005",
+        "name": "晶方科技",
+        "date": "2026-11-18",
+        "orgs": "投资者",
+        "num": 1,
+        "sum": 1,
+        "way": "网络文字互动,业绩说明会"
+      },
       {
         "code": "000404",
         "name": "长虹华意",
@@ -4629,20 +4795,74 @@
         "way": "特定对象调研,线上视频会议"
       },
       {
-        "code": "000690",
-        "name": "宝新能源",
-        "date": "2026-11-17",
-        "orgs": "嘉实基金",
+        "code": "000598",
+        "name": "兴蓉环境",
+        "date": "2026-11-18",
+        "orgs": "大成基金",
+        "num": 2,
+        "sum": 3,
+        "way": "特定对象调研"
+      },
+      {
+        "code": "000598",
+        "name": "兴蓉环境",
+        "date": "2026-11-18",
+        "orgs": "长江证券",
         "num": 1,
         "sum": 3,
         "way": "特定对象调研"
       },
       {
+        "code": "000598",
+        "name": "兴蓉环境",
+        "date": "2026-11-18",
+        "orgs": "光大永明",
+        "num": 3,
+        "sum": 3,
+        "way": "特定对象调研"
+      },
+      {
+        "code": "000603",
+        "name": "盛达资源",
+        "date": "2026-11-18",
+        "orgs": "中信证券",
+        "num": 1,
+        "sum": 4,
+        "way": "特定对象调研,现场会议"
+      },
+      {
+        "code": "000603",
+        "name": "盛达资源",
+        "date": "2026-11-18",
+        "orgs": "中原证券",
+        "num": 2,
+        "sum": 4,
+        "way": "特定对象调研,现场会议"
+      },
+      {
+        "code": "000603",
+        "name": "盛达资源",
+        "date": "2026-11-18",
+        "orgs": "北合科技",
+        "num": 4,
+        "sum": 4,
+        "way": "特定对象调研,现场会议"
+      },
+      {
+        "code": "000603",
+        "name": "盛达资源",
+        "date": "2026-11-18",
+        "orgs": "禧悦私募基金",
+        "num": 3,
+        "sum": 4,
+        "way": "特定对象调研,现场会议"
+      },
+      {
         "code": "000690",
         "name": "宝新能源",
         "date": "2026-11-17",
-        "orgs": "兴业证券",
-        "num": 3,
+        "orgs": "嘉实基金",
+        "num": 1,
         "sum": 3,
         "way": "特定对象调研"
       },
@@ -4656,57 +4876,12 @@
         "way": "特定对象调研"
       },
       {
-        "code": "000703",
-        "name": "恒逸石化",
+        "code": "000690",
+        "name": "宝新能源",
         "date": "2026-11-17",
-        "orgs": "永赢基金",
-        "num": 4,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "前海辰星",
-        "num": 5,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "广发基金",
+        "orgs": "兴业证券",
         "num": 3,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "长江证券",
-        "num": 1,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "浙商证券",
-        "num": 2,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "求甄家办",
-        "num": 6,
-        "sum": 9,
+        "sum": 3,
         "way": "特定对象调研"
       },
       {
@@ -4717,428 +4892,16 @@
         "num": 9,
         "sum": 9,
         "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "陈亦凡,姚庆辉,何黎斌",
-        "num": 10,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "凯复私募",
-        "num": 7,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "000703",
-        "name": "恒逸石化",
-        "date": "2026-11-17",
-        "orgs": "虹普科技",
-        "num": 8,
-        "sum": 9,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-18",
-        "orgs": "泓德基金",
-        "num": 3,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-18",
-        "orgs": "中泰证券",
-        "num": 4,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-18",
-        "orgs": "太平洋保险",
-        "num": 1,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-18",
-        "orgs": "鹏扬基金",
-        "num": 2,
-        "sum": 4,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "中昆金信",
-        "num": 8,
-        "sum": 11,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "东方财富",
-        "num": 9,
-        "sum": 11,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "浓谷基金",
-        "num": 6,
-        "sum": 11,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "财联社",
-        "num": 7,
-        "sum": 11,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "兴业证券",
-        "num": 10,
-        "sum": 11,
-        "way": "特定对象调研"
-      },
-      {
-        "code": "002254",
-        "name": "泰和新材",
-        "date": "2026-11-17",
-        "orgs": "华泰证券",
-        "num": 2,
-        "sum": 11,
-        "way": "特定对象调研"
       }
     ],
-    "asof": "2026-11-18 17:03"
+    "asof": "2026-11-19 09:00"
   },
   "yesterday_perf": {
-    "ok": true,
-    "rows": [
-      {
-        "code": "002685",
-        "name": "华东重机",
-        "yesterday_board_count": 3,
-        "today_pct": 10.0,
-        "is_zt_today": true,
-        "lbc_today": 4
-      },
-      {
-        "code": "002451",
-        "name": "摩恩电气",
-        "yesterday_board_count": 1,
-        "today_pct": -3.37,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600881",
-        "name": "亚泰集团",
-        "yesterday_board_count": 1,
-        "today_pct": 1.73,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "000533",
-        "name": "顺钠股份",
-        "yesterday_board_count": 2,
-        "today_pct": -1.39,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002535",
-        "name": "林州重机",
-        "yesterday_board_count": 1,
-        "today_pct": 5.24,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "000707",
-        "name": "双环科技",
-        "yesterday_board_count": 1,
-        "today_pct": 10.02,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "600410",
-        "name": "华胜天成",
-        "yesterday_board_count": 1,
-        "today_pct": 10.01,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002843",
-        "name": "泰嘉股份",
-        "yesterday_board_count": 1,
-        "today_pct": 10.03,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "000521",
-        "name": "长虹美菱",
-        "yesterday_board_count": 2,
-        "today_pct": -0.63,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603206",
-        "name": "嘉环科技",
-        "yesterday_board_count": 1,
-        "today_pct": 4.57,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002771",
-        "name": "真视通",
-        "yesterday_board_count": 1,
-        "today_pct": 10.02,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "600936",
-        "name": "北投科技",
-        "yesterday_board_count": 2,
-        "today_pct": -5.43,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "300786",
-        "name": "国林科技",
-        "yesterday_board_count": 1,
-        "today_pct": -5.22,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002584",
-        "name": "西陇科学",
-        "yesterday_board_count": 1,
-        "today_pct": -1.01,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603324",
-        "name": "盛剑科技",
-        "yesterday_board_count": 1,
-        "today_pct": 9.99,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002983",
-        "name": "芯瑞达",
-        "yesterday_board_count": 1,
-        "today_pct": 1.71,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002912",
-        "name": "中新赛克",
-        "yesterday_board_count": 1,
-        "today_pct": -9.99,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002861",
-        "name": "瀛通通讯",
-        "yesterday_board_count": 2,
-        "today_pct": -7.49,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600202",
-        "name": "哈空调",
-        "yesterday_board_count": 1,
-        "today_pct": 1.97,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600467",
-        "name": "好当家",
-        "yesterday_board_count": 1,
-        "today_pct": 0.73,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600206",
-        "name": "有研新材",
-        "yesterday_board_count": 1,
-        "today_pct": 5.82,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002242",
-        "name": "九阳股份",
-        "yesterday_board_count": 1,
-        "today_pct": -9.99,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301209",
-        "name": "联合化学",
-        "yesterday_board_count": 1,
-        "today_pct": 13.31,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301288",
-        "name": "清研环境",
-        "yesterday_board_count": 1,
-        "today_pct": 13.36,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600619",
-        "name": "海立股份",
-        "yesterday_board_count": 1,
-        "today_pct": 4.58,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603078",
-        "name": "江化微",
-        "yesterday_board_count": 1,
-        "today_pct": -0.49,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "600261",
-        "name": "阳光照明",
-        "yesterday_board_count": 1,
-        "today_pct": -10.0,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002959",
-        "name": "小熊电器",
-        "yesterday_board_count": 2,
-        "today_pct": 4.06,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603931",
-        "name": "格林达",
-        "yesterday_board_count": 1,
-        "today_pct": -5.26,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002889",
-        "name": "东方嘉盛",
-        "yesterday_board_count": 1,
-        "today_pct": -5.39,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002652",
-        "name": "扬子新材",
-        "yesterday_board_count": 1,
-        "today_pct": -2.73,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603297",
-        "name": "永新光学",
-        "yesterday_board_count": 1,
-        "today_pct": -9.82,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "002855",
-        "name": "捷荣技术",
-        "yesterday_board_count": 1,
-        "today_pct": -4.34,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "301391",
-        "name": "卡莱特",
-        "yesterday_board_count": 1,
-        "today_pct": 20.01,
-        "is_zt_today": true,
-        "lbc_today": 2
-      },
-      {
-        "code": "002226",
-        "name": "江南化工",
-        "yesterday_board_count": 1,
-        "today_pct": -0.18,
-        "is_zt_today": false,
-        "lbc_today": 0
-      },
-      {
-        "code": "603030",
-        "name": "全筑股份",
-        "yesterday_board_count": 1,
-        "today_pct": 9.79,
-        "is_zt_today": true,
-        "lbc_today": 2
-      }
-    ],
-    "promote": {
-      "base_1to2": 31,
-      "hit_1to2": 7,
-      "base_2to3": 5,
-      "hit_2to3": 0
-    },
+    "ok": false,
+    "rows": [],
+    "promote": null,
     "basis": "昨日池实绩",
-    "reason": "",
-    "asof": "2026-11-18 17:03"
+    "reason": "昨日池与今日池完全相同（同一交易日），晋级率不可用"
   },
   "margin_leverage": {
     "signal": {
@@ -5175,7 +4938,7 @@
   "last_month_push": "2026-10",
   "score_pool": {
     "ok": true,
-    "asof": "2026-11-18 17:03",
+    "asof": "2026-11-19 09:00",
     "universe": 41,
     "basis": "涨停梯队 + 题材热度 + 机构共识",
     "rows": [
@@ -7762,7 +7525,7 @@
     ]
   },
   "review": {
-    "asof": "2026-11-18 17:03",
+    "asof": "2026-11-19 09:00",
     "cluster": [
       {
         "name": "IT服务Ⅱ",
@@ -7792,7 +7555,7 @@
         "name": "元件",
         "n": 2,
         "max_lb": 1,
-        "stage": "启动"
+        "stage": "持续"
       }
     ],
     "lhb": {
@@ -8655,18 +8418,17 @@
       "max_lb": 4,
       "boom": 32,
       "boom_rate": 46.3,
-      "rate_1to2": 22.6,
-      "rate_2to3": 0.0,
+      "rate_1to2": null,
+      "rate_2to3": null,
       "stage": "分化",
       "emoji": "⛅"
     },
     "expect": {
-      "dir": "谨慎",
+      "dir": "观察",
       "why": [
-        "首板晋级率 22.6%（<25%），接力效应弱",
-        "打板溢价：昨日涨停股今日均 +1.78%（36 只）",
+        "涨停 41 家 · 最高 4 板 · 晋级率 无数据",
         "主线：IT服务Ⅱ7家、通信服务5家、通用设备3家",
-        "环境闸：成交额 1.37 万亿 < 1.9 万亿；上涨家数占比 25% < 45% → 总仓 ≤50%"
+        "环境闸：环境数据缺失（上涨占比、成交额）→ 禁止开仓 → 总仓 ≤0%"
       ],
       "watch": [
         "龙虎榜净买 深南电路（机构） +3.2 亿",
@@ -9456,7 +9218,7 @@
   },
   "dip_pool": {
     "ok": true,
-    "asof": "2026-11-18 17:03",
+    "asof": "2026-11-19 09:00",
     "rows": [
       {
         "code": "002912",
@@ -9534,10 +9296,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.16,
-          "main_pct": -5.46,
-          "xl": -0.31,
-          "lg": 0.16
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 23.85,
         "live": true
@@ -9618,10 +9380,10 @@
           "agree": false
         },
         "flow": {
-          "main": -3.01,
-          "main_pct": -20.22,
-          "xl": -2.72,
-          "lg": -0.29
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 5.14,
         "live": true
@@ -9699,10 +9461,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.43,
-          "main_pct": -10.67,
-          "xl": -0.32,
-          "lg": -0.11
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 7.84,
         "live": true
@@ -9780,10 +9542,10 @@
           "agree": false
         },
         "flow": {
-          "main": -7.71,
-          "main_pct": -13.54,
-          "xl": -7.78,
-          "lg": 0.08
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 32.5,
         "live": true
@@ -9864,10 +9626,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.03,
-          "main_pct": 0.69,
-          "xl": -0.06,
-          "lg": 0.09
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 28.75,
         "live": true
@@ -9945,10 +9707,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.26,
-          "main_pct": -3.73,
-          "xl": -0.03,
-          "lg": -0.23
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 14.91,
         "live": true
@@ -10026,10 +9788,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.55,
-          "main_pct": -10.05,
-          "xl": -0.24,
-          "lg": -0.3
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 14.47,
         "live": true
@@ -10110,10 +9872,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.71,
-          "main_pct": 5.69,
-          "xl": -0.09,
-          "lg": 0.79
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 25.4,
         "live": true
@@ -10191,10 +9953,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.18,
-          "main_pct": -2.73,
-          "xl": -0.36,
-          "lg": 0.18
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 14.89,
         "live": true
@@ -10275,10 +10037,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.32,
-          "main_pct": -6.49,
-          "xl": -0.22,
-          "lg": -0.09
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 2.79,
         "live": true
@@ -10360,10 +10122,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.05,
-          "main_pct": 0.75,
-          "xl": 0.31,
-          "lg": -0.27
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 5.54,
         "live": true
@@ -10444,10 +10206,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.25,
-          "main_pct": -7.86,
-          "xl": -0.16,
-          "lg": -0.1
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 24.5,
         "live": true
@@ -10525,10 +10287,10 @@
           "agree": false
         },
         "flow": {
-          "main": -5.86,
-          "main_pct": -9.93,
-          "xl": -4.17,
-          "lg": -1.68
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 40.01,
         "live": true
@@ -10606,10 +10368,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.92,
-          "main_pct": -6.37,
-          "xl": -0.9,
-          "lg": -0.02
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 8.7,
         "live": true
@@ -10687,10 +10449,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.38,
-          "main_pct": 2.45,
-          "xl": 1.32,
-          "lg": -0.94
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 63.25,
         "live": true
@@ -10768,10 +10530,10 @@
           "agree": true
         },
         "flow": {
-          "main": -1.04,
-          "main_pct": -5.47,
-          "xl": -0.27,
-          "lg": -0.77
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 10.11,
         "live": true
@@ -10853,10 +10615,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.07,
-          "main_pct": -1.53,
-          "xl": -0.12,
-          "lg": 0.05
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 15.04,
         "live": true
@@ -10934,10 +10696,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.4,
-          "main_pct": -4.55,
-          "xl": -0.66,
-          "lg": 0.26
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 4.14,
         "live": true
@@ -11015,10 +10777,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.81,
-          "main_pct": -7.7,
-          "xl": -0.42,
-          "lg": -0.39
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 2.64,
         "live": true
@@ -11096,10 +10858,10 @@
           "agree": true
         },
         "flow": {
-          "main": -1.37,
-          "main_pct": -10.4,
-          "xl": -0.48,
-          "lg": -0.89
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 13.5,
         "live": true
@@ -11180,10 +10942,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.74,
-          "main_pct": -16.25,
-          "xl": -0.43,
-          "lg": -0.3
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 1.78,
         "live": true
@@ -11261,10 +11023,10 @@
           "agree": true
         },
         "flow": {
-          "main": -0.1,
-          "main_pct": -1.35,
-          "xl": 0.54,
-          "lg": -0.64
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 5.21,
         "live": true
@@ -11345,10 +11107,10 @@
           "agree": false
         },
         "flow": {
-          "main": 0.13,
-          "main_pct": 3.02,
-          "xl": 0.33,
-          "lg": -0.2
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 20.92,
         "live": true
@@ -11429,10 +11191,10 @@
           "agree": false
         },
         "flow": {
-          "main": -0.76,
-          "main_pct": -9.07,
-          "xl": -0.41,
-          "lg": -0.35
+          "main": 0.0,
+          "main_pct": 0.0,
+          "xl": 0.0,
+          "lg": 0.0
         },
         "open": 40.0,
         "live": true
@@ -11446,25 +11208,24 @@
     },
     "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"
   },
-  "trade_date": "2026-11-18",
+  "trade_date": "2026-11-19",
   "env_gate": {
     "ok": true,
-    "asof": "2026-11-19 00:39",
-    "amt": 13697.0,
+    "asof": "2026-11-19 09:02",
+    "amt": 0.0,
     "amt_est": null,
-    "amt_used": 13697.0,
-    "up": 1310,
-    "down": 3853,
-    "flat": 131,
-    "breadth": 0.247,
+    "amt_used": 0,
+    "up": 0,
+    "down": 0,
+    "flat": 0,
+    "breadth": null,
     "zt": 41,
     "flags": [
-      "成交额 1.37 万亿 < 1.9 万亿",
-      "上涨家数占比 25% < 45%"
+      "环境数据缺失（上涨占比、成交额）→ 禁止开仓"
     ],
-    "pos_cap": 0.5,
+    "pos_cap": 0.0,
     "pass": false,
-    "up_ratio": 0.247,
+    "up_ratio": null,
     "zt_count": 41
   },
   "force_close": [],
@@ -15176,22 +14937,22 @@
   },
   "overseas": {
     "ok": true,
-    "asof": "2026-11-19 00:39",
+    "asof": "2026-11-19 09:02",
     "indexes": {
       "道琼斯": {
-        "px": 50148.82,
-        "chg": -1.2,
-        "time": "2026-11-18 11:39:41"
+        "px": 50198.17,
+        "chg": -1.11,
+        "time": "2026-11-18 16:57:27"
       },
       "纳斯达克": {
-        "px": 24291.51,
-        "chg": -0.15,
-        "time": "2026-11-18 11:39:40"
+        "px": 24429.88,
+        "chg": 0.42,
+        "time": "2026-11-18 17:15:59"
       },
       "标普500": {
-        "px": 7301.58,
-        "chg": -0.53,
-        "time": "2026-11-18 11:39:40"
+        "px": 7323.63,
+        "chg": -0.23,
+        "time": "2026-11-18 16:57:25"
       },
       "恒生指数": {
         "px": 23294.75,
@@ -15199,7 +14960,7 @@
         "time": "2026/11/18 18:31:03"
       }
     },
-    "worst": -0.53,
+    "worst": -0.23,
     "risk": "低"
   },
   "zt_archive": {
@@ -17912,7 +17673,7 @@
   },
   "auction_gap": {
     "ok": true,
-    "asof": "2026-11-19 00:38",
+    "asof": "2026-11-19 09:00",
     "status": "estimated",
     "note": "已过竞价窗口，量为盘中累计，仅作参考",
     "top_gap": [
@@ -17935,16 +17696,6 @@
         "price": 22.9,
         "chg": 9.99,
         "vol": 19615
-      },
-      {
-        "code": "002194",
-        "name": "武汉凡谷",
-        "prev": 8.46,
-        "open": 9.3,
-        "gap": 9.93,
-        "price": 9.31,
-        "chg": 10.05,
-        "vol": 178463
       },
       {
         "code": "603030",
@@ -17987,6 +17738,16 @@
         "vol": 1895131
       },
       {
+        "code": "603657",
+        "name": "春光科技",
+        "prev": 30.85,
+        "open": 32.33,
+        "gap": 4.8,
+        "price": 33.94,
+        "chg": 10.02,
+        "vol": 16215
+      },
+      {
         "code": "000707",
         "name": "双环科技",
         "prev": 4.59,
@@ -17997,14 +17758,14 @@
         "vol": 822784
       },
       {
-        "code": "002463",
-        "name": "沪电股份",
-        "prev": 72.9,
-        "open": 76.3,
-        "gap": 4.66,
-        "price": 80.19,
-        "chg": 10.0,
-        "vol": 1048115
+        "code": "600410",
+        "name": "华胜天成",
+        "prev": 15.29,
+        "open": 15.99,
+        "gap": 4.58,
+        "price": 16.82,
+        "chg": 10.01,
+        "vol": 2086558
       },
       {
         "code": "002843",
@@ -18017,14 +17778,14 @@
         "vol": 690342
       },
       {
-        "code": "301396",
-        "name": "宏景科技",
-        "prev": 95.5,
-        "open": 97.48,
-        "gap": 2.07,
-        "price": 114.6,
-        "chg": 20.0,
-        "vol": 193478
+        "code": "002916",
+        "name": "深南电路",
+        "prev": 182.9,
+        "open": 187.94,
+        "gap": 2.76,
+        "price": 201.19,
+        "chg": 10.0,
+        "vol": 137636
       },
       {
         "code": "002403",
@@ -18047,14 +17808,14 @@
         "vol": 3165968
       },
       {
-        "code": "688316",
-        "name": "青云科技-U",
-        "prev": 42.35,
-        "open": 43.0,
-        "gap": 1.53,
-        "price": 50.82,
-        "chg": 20.0,
-        "vol": 6443707
+        "code": "603629",
+        "name": "利通电子",
+        "prev": 55.39,
+        "open": 56.28,
+        "gap": 1.61,
+        "price": 60.93,
+        "chg": 10.0,
+        "vol": 361831
       },
       {
         "code": "300991",
@@ -18068,16 +17829,6 @@
       }
     ],
     "top_low": [
-      {
-        "code": "600156",
-        "name": "华升股份",
-        "prev": 7.35,
-        "open": 7.1,
-        "gap": -3.4,
-        "price": 8.09,
-        "chg": 10.07,
-        "vol": 582038
-      },
       {
         "code": "000596",
         "name": "古井贡酒",
@@ -18129,6 +17880,16 @@
         "vol": 29847
       },
       {
+        "code": "000568",
+        "name": "泸州老窖",
+        "prev": 81.77,
+        "open": 81.38,
+        "gap": -0.48,
+        "price": 81.5,
+        "chg": -0.33,
+        "vol": 121349
+      },
+      {
         "code": "600887",
         "name": "伊利股份",
         "prev": 32.41,
@@ -18137,16 +17898,6 @@
         "price": 32.39,
         "chg": -0.06,
         "vol": 621675
-      },
-      {
-        "code": "000895",
-        "name": "双汇发展",
-        "prev": 25.5,
-        "open": 25.4,
-        "gap": -0.39,
-        "price": 25.7,
-        "chg": 0.78,
-        "vol": 141546
       },
       {
         "code": "600839",
@@ -18167,6 +17918,16 @@
         "price": 18.38,
         "chg": 0.05,
         "vol": 1323592
+      },
+      {
+        "code": "601021",
+        "name": "春秋航空",
+        "prev": 45.48,
+        "open": 45.31,
+        "gap": -0.37,
+        "price": 45.21,
+        "chg": -0.59,
+        "vol": 66525
       }
     ]
   },
