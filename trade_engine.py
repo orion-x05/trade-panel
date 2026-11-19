@@ -4738,8 +4738,18 @@ def main():
         _rows = _ld.get("zt_rows") or []
         if _td and _rows:
             arc = data.setdefault("zt_archive", {})
-            arc[_td] = [{"c": str(x.get("code")), "n": x.get("name"),
-                         "lb": int(x.get("lbc") or 0), "hy": x.get("hybk") or ""} for x in _rows]
+            _new = [{"c": str(x.get("code")), "n": x.get("name"),
+                     "lb": int(x.get("lbc") or 0), "hy": x.get("hybk") or ""} for x in _rows]
+            _old = arc.get(_td) or []
+            # 【定稿规则】盘中每次运行都会重写当天归档，若不设规则，炸板回落后的最后一次运行
+            # 会把当天高点盖掉（实测 11-19：41 家 / 4 板 被写成 19 家 / 3 板），
+            # 导致"高度与宽度"这张卡的当日值是最后一瞥的快照而非当天峰值。
+            # 规则：收盘（>=15:00）无条件写定稿；盘中只在新数据更大时更新，不让回落覆盖高点。
+            _closed = cn_now().hour >= 15
+            _new_peak = max((x["lb"] for x in _new), default=0)
+            _old_peak = max((x["lb"] for x in _old), default=0)
+            if _closed or not _old or len(_new) > len(_old) or _new_peak > _old_peak:
+                arc[_td] = _new
             for _k in sorted(arc.keys())[:-120]:
                 arc.pop(_k, None)
     except Exception as _e:
