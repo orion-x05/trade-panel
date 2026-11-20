@@ -2870,10 +2870,20 @@ def do_sell(player, hold, st, reason, data, ratio=1.0):
     # 3) 文案区分清仓/部分止盈，附剩余持仓；bp<=0 时收益率显示 -- 防除零
     action = "清仓" if cleared else f"部分止盈{int(ratio*100)}%"
     pnl_pct = f"{profit/(bp*sell_qty)*100:.2f}%" if bp > 0 and sell_qty > 0 else "--"
-    push_report(
+    # 【推送去重】同一天、同一角色、同一只票、同一原因，只推一条。
+    # 2026-11-20 盘中两轮运行各推了一次「D1 清仓 海螺水泥」，文案里止损线还不一样
+    # （峰值/ATR 每轮都有细微变化），看起来像卖了两笔。成交是对的，重复的是通知。
+    _pk = f"SELL|{cn_now().strftime('%Y-%m-%d')}|{player['id']}|{hold['code']}|{reason[:12]}"
+    _seen = data.setdefault("push_keys", [])
+    if _pk in _seen:
+        print(f"  ⏭️  卖出推送已发过，跳过：{player['id']} {hold['name']}")
+    else:
+        push_report(
         f"📉 {player['id']} {action} {hold['name']} {'盈利' if profit>=0 else '亏损'}{abs(profit):.2f}元",
-        f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{pnl_pct}\n剩余：{max(0, hold['qty'])}股\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
+            f"股票：{hold['name']}({hold['code']})\n数量：{sell_qty}股\n价格：{st['price']:.2f}元\n盈亏：{profit:.2f}元\n收益率：{pnl_pct}\n剩余：{max(0, hold['qty'])}股\n原因：{reason}\n时间：{cn_now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        _seen.append(_pk)
+        data["push_keys"] = _seen[-200:]
     print(f"  ✅ {player['id']} {action} {hold['name']} {sell_qty}股 @{st['price']:.2f} 盈亏{profit:.2f}")
 
 # ==================== 主函数 ====================
