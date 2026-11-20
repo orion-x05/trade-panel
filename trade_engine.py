@@ -60,7 +60,8 @@ SL_MIN, SL_MAX, TP_MIN, TP_MAX = 3.0, 12.0, 5.0, 25.0
 # sl/tp 百分比不再决定止损距离，降级为：盈亏比 RR 来源 + 回测调参(bt_tune)通道。
 RISK_PER_TRADE = 0.015  # 单笔风险预算：最多亏总权益 1.5%（要波动大一点：10万本金单笔风险 1500 元）
 MAX_SINGLE_PCT = 0.25   # 单票硬顶：占总权益 25%
-FUSE_PCT = 0.12         # 保险丝：浮亏 -12% 无条件全部清仓（防跳空，正常情况ATR止损先触发）
+FUSE_PCT = 0.12
+TURN_MAX = 15.0        # 【低吸池】换手率上限(%)：超过视为筹码涣散，不进低吸池         # 保险丝：浮亏 -12% 无条件全部清仓（防跳空，正常情况ATR止损先触发）
 DEFAULT_ATR_PCT = 2.0   # 无ATR数据时的默认波动率（与前端 defAtr=买入价×2% 一致）
 # ===== W2 两段式建仓（补丁_止损与信号降噪.md 第三章；设计原则来自 position_plan.py）=====
 # 第 1 批：信号确认日尾盘试仓 1/3（整百股，至少 1 手）
@@ -4229,6 +4230,31 @@ def build_dip_pool(data, limit=24):
         if not typ:
             _stat["no_type"] += 1
             continue
+
+        # 【缩量回踩】放量下跌的回踩和缩量回踩是两回事：量要缩到最近的涨停日六成以下。
+        # 涨停日取近 12 根里涨幅最大的那天（基本就是那根板）。
+        _zt_i = max(range(max(0, len(k) - 12), len(k)),
+                    key=lambda j: (k[j]["c"] / k[j - 1]["c"]) if j > 0 else 0)
+        _zt_v = k[_zt_i].get("v") or 0
+        if _zt_v > 0 and (last.get("v") or 0) > _zt_v * 0.6:
+            _stat["vol_high"] = _stat.get("vol_high", 0) + 1
+            continue
+
+        # 【换手上限】换手过高=筹码散了，反弹没力（襄阳轴承 11-20 换手 33% 就是反例）。
+        # 流通股本用涨停池里的流通市值反推，拿不到就跳过这条（宁可放行）。
+        _turn = None
+        try:
+            _ltsz = float(s.get("ltsz") or 0)          # 流通市值（元）
+            if _ltsz > 0 and px > 0:
+                _float_shares = _ltsz / px               # 流通股数（股）
+                _vol_shares = (last.get("v") or 0) * 100  # 腾讯 K 线成交量单位是手
+                if _float_shares > 0:
+                    _turn = _vol_shares / _float_shares * 100
+        except Exception:
+            _turn = None
+        if _turn is not None and _turn > TURN_MAX:
+            _stat["turn_high"] = _stat.get("turn_high", 0) + 1
+            continue
         px = last["c"]
         rr = calc_rr([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k], px)
         ab = calc_abnormal([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k],
@@ -4280,7 +4306,7 @@ def build_dip_pool(data, limit=24):
     rows.sort(key=lambda r: (-(1 if (r.get("rr") or {}).get("ok") else 0),
                              -((r.get("rr") or {}).get("ratio") or 0)))
     print(f"  🎣 低吸池筛选：候选 {_stat['cand']} → K线不足 {_stat['no_k']} · 今日仍封板 {_stat['sealed']} · "
-          f"位置不符 {_stat['no_type']} → 入选 {len(rows)}")
+          f"位置不符 {_stat['no_type']} · 量未缩 {_stat.get('vol_high',0)} · 换手过高 {_stat.get('turn_high',0)} → 入选 {len(rows)}")
     return {"ok": bool(rows), "asof": today_asof, "rows": rows, "stat": _stat,
             "basis": "近3日涨停 → 今日回调未封板 → 五类位置 + 回调位赔率"}
 
@@ -5009,6 +5035,16 @@ def main():
                 data["env_gate"] = _e2
                 _ENV_CAP = float(_e2.get("pos_cap", 1.0))
                 _ENV_NOTE = "；".join(_e2.get("flags") or [])
+                # 【情绪仓位系数】用「高度与宽度」再压一档：退潮期不开新仓/半仓。
+                # 依据：2026-11 复盘——双降、宽降高效的日子里做接力，接一个埋一个。
+                _hb = data.get("height_breadth") or {}
+                _ph = _hb.get("now") or ""
+                _MOOD_K = {"双升": 1.0, "-": 1.0, "宽降高效": 0.5, "双降": 0.35}.get(_ph, 1.0)
+                if _MOOD_K < 1.0:
+                    _ENV_CAP = round(_ENV_CAP * _MOOD_K, 2)
+                    _ENV_NOTE = (_ENV_NOTE + "；" if _ENV_NOTE else "") + f"情绪{_ph}→×{_MOOD_K}"
+                data["mood_cap_k"] = _MOOD_K
+                data["mood_phase"] = _ph
                 print(f"  🚧 环境闸：仓位上限 {int(_ENV_CAP*100)}% · 成交额 {( _e2.get('amt_used') or 0)/10000:.2f} 万亿 · 上涨占比 "
                       f"{( _e2.get('breadth') or 0)*100:.0f}%" + (f" · {_ENV_NOTE}" if _ENV_NOTE else ""))
         except Exception as _e:
