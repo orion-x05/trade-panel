@@ -3371,6 +3371,29 @@ def build_height_breadth(data, days=30):
             "now": phase[-1] if phase else "-", "days": len(ds)}
 
 
+def dip_type_winrate(k, typ, hold=5, target=3.0, min_n=3):
+    """【同形态历史胜率】这只票过去出现同一种低吸形态后，5 日内最高涨幅 ≥3% 的比例。
+
+    只用这只票自己的历史（不跨股票），所以样本通常很少——样本 < min_n 时返回 (None, n)，
+    宁可不给数字，也不给一个凑出来的概率。
+    """
+    if not typ or len(k) < 60:
+        return None, 0
+    hit = tot = 0
+    for j in range(40, len(k) - hold):
+        sub = k[:j + 1]
+        t, _ = classify_dip(sub, 0, "")
+        if t != typ:
+            continue
+        tot += 1
+        hi = max(x["c"] for x in k[j + 1:j + 1 + hold])
+        if hi / k[j]["c"] - 1 >= target / 100.0:
+            hit += 1
+    if tot < min_n:
+        return None, tot
+    return round(hit / tot * 100, 1), tot
+
+
 def build_env_gate(data):
     """【环境闸】决定今天该不该出手，比选哪只票更重要。
 
@@ -4260,11 +4283,16 @@ def build_dip_pool(data, limit=24):
         ab = calc_abnormal([[x["d"], x["o"], x["c"], x["h"], x["l"], x["v"]] for x in k],
                            code, s.get("name"), idx_dev)
         _br = _role_map.get(str(code)) or {}
+        try:
+            _wr, _wr_n = dip_type_winrate(k, typ)
+        except Exception:
+            _wr, _wr_n = None, 0
         rows.append({
             "code": code, "name": s.get("name"), "hybk": s.get("hybk") or "",
             "board_role": _br.get("role"), "board_leader": _br.get("leader"),
             "lbc": int(s.get("lbc") or 0), "type": typ, "why": why,
             "price": round(px, 2), "close": round(px, 2),
+            "winrate": _wr, "wr_n": _wr_n,
             "chg": round(chg, 2), "pool_ds": s.get("pool_ds"),
             "rr": rr, "abnormal": ab,
             "chan": chan_analysis([{"d": x["d"], "o": x["o"], "c": x["c"], "h": x["h"], "l": x["l"]} for x in k]),
