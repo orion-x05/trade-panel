@@ -5077,7 +5077,16 @@ def main():
                 _ENV_NOTE = "；".join(_e2.get("flags") or [])
                 # 【情绪仓位系数】用「高度与宽度」再压一档：退潮期不开新仓/半仓。
                 # 依据：2026-11 复盘——双降、宽降高效的日子里做接力，接一个埋一个。
+                # 【防读到隔夜值】height_breadth 若还不是今天的，就地重算一次。
+                # 2026-11-24 的教训：库里留着昨天的「双升」，mood_cap_k 算出 1.0，
+                # 而当天其实是「双降」该 0.35——数字齐全、不报错，仓位差了三倍。
                 _hb = data.get("height_breadth") or {}
+                _today = cn_now().strftime("%Y-%m-%d")
+                if (_hb.get("dates") or [""])[-1] != _today:
+                    _hb2 = build_height_breadth(data)
+                    if _hb2:
+                        _hb = _hb2
+                        data["height_breadth"] = _hb2
                 _ph = _hb.get("now") or ""
                 _MOOD_K = {"双升": 1.0, "-": 1.0, "宽降高效": 0.5, "双降": 0.35}.get(_ph, 1.0)
                 if _MOOD_K < 1.0:
